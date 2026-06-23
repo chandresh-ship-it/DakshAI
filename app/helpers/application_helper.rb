@@ -9,4 +9,8 @@ module ApplicationHelper
       hash[feature['name']] = feature['help_url'] if feature['help_url']
     end
   end
+
+  def application_title
+    'DakshAI'
+  end
 end
