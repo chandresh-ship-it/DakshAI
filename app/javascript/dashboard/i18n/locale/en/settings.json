@@ -922,7 +922,7 @@
     }
   },
   "BRANDING_SETTINGS": {
-    "TITLE": "Branding & Custom Domain",
+    "TITLE": "Branding",
     "CUSTOM_DOMAIN": {
       "TITLE": "Custom Domain",
       "DESCRIPTION": "Configure CNAME validation to map your custom domain to your workspace.",
@@ -933,17 +933,22 @@
       "PENDING": "Pending",
       "CNAME_INSTRUCTION": "Please configure your DNS provider to add a CNAME record pointing your domain to our server."
     },
+    "BRAND_NAME": {
+      "TITLE": "Brand Name",
+      "DESCRIPTION": "Customize the brand name displayed across the system to replace DakshAI.",
+      "PLACEHOLDER": "Enter brand name (e.g. MyBrand)"
+    },
     "LOGO_SETTINGS": {
       "TITLE": "Upload Logos",
       "DESCRIPTION": "Upload your brand logos used across the dashboard and portal.",
       "LIGHT_LOGO": {
-        "TITLE": "Light Mode Logo",
-        "NOTE": "Drag-and-drop zone light backgrounds",
+        "TITLE": "Primary Logo",
+        "NOTE": "For light backgrounds",
         "LIMIT": "max 500kb"
       },
       "DARK_LOGO": {
         "TITLE": "Dark Mode Logo",
-        "NOTE": "Drag-and-drop zone for dark interfaces",
+        "NOTE": "For dark backgrounds",
         "LIMIT": "max 500kb"
       },
       "FAVICON": {
@@ -954,6 +959,18 @@
       "CHOOSE_FILE": "Choose file",
       "REMOVE": "Remove",
       "UPLOAD": "Upload"
+    },
+    "LAYOUT_SETTINGS": {
+      "TITLE": "Workspace Layout Settings",
+      "DESCRIPTION": "Configure the dashboard layout for all agents in your workspace.",
+      "CLASSIC": {
+        "TITLE": "Classic Layout",
+        "DESCRIPTION": "Standard docked navigation layout on the left."
+      },
+      "SIDEBAR": {
+        "TITLE": "Modern Layout",
+        "DESCRIPTION": "Sleek floating navigation layout on the right."
+      }
     },
     "COLOR_SETTINGS": {
       "TITLE": "Color Customization",

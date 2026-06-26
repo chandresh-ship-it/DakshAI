@@ -1,5 +1,5 @@
 <script>
-import { defineAsyncComponent, ref, computed } from 'vue';
+import { defineAsyncComponent, ref, computed, watch } from 'vue';
 
 import NextSidebar from 'next/sidebar/Sidebar.vue';
 import WootKeyShortcutModal from 'dashboard/components/widgets/modal/WootKeyShortcutModal.vue';
@@ -9,6 +9,7 @@ import UpgradePage from 'dashboard/routes/dashboard/upgrade/UpgradePage.vue';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useWindowSize } from '@vueuse/core';
+import { useMapGetter } from 'dashboard/composables/store';
 
 import wootConstants from 'dashboard/constants/globals';
 
@@ -44,6 +45,32 @@ export default {
     const { accountId } = useAccount();
     const { width: windowWidth } = useWindowSize();
     const callsStore = useCallsStore();
+    const getAccount = useMapGetter('accounts/getAccount');
+    const globalConfig = useMapGetter('globalConfig/get');
+
+    const activeLayout = computed(() => {
+      if (!accountId.value) return 'classic';
+      const account = getAccount.value(accountId.value);
+      return account?.custom_attributes?.brand_colors?.layout || 'classic';
+    });
+
+    const activeBrandName = computed(() => {
+      if (!accountId.value) return '';
+      const account = getAccount.value(accountId.value);
+      return account?.custom_attributes?.brand_colors?.brand_name || '';
+    });
+
+    watch(
+      activeBrandName,
+      newName => {
+        if (newName) {
+          document.title = newName;
+        } else {
+          document.title = globalConfig.value?.installationName || 'DakshAI';
+        }
+      },
+      { immediate: true }
+    );
 
     return {
       uiSettings,
@@ -51,6 +78,7 @@ export default {
       accountId,
       upgradePageRef,
       windowWidth,
+      activeLayout,
       hasActiveCall: computed(() => callsStore.hasActiveCall),
       hasIncomingCall: computed(() => callsStore.hasIncomingCall),
     };
@@ -130,9 +158,21 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-grow overflow-hidden text-n-slate-12">
+  <div
+    class="flex flex-grow overflow-hidden text-n-slate-12"
+    :class="{
+      'bg-n-slate-3 p-4 gap-4 flex-row-reverse':
+        activeLayout === 'documentation',
+    }"
+  >
     <NextSidebar
       :is-mobile-sidebar-open="isMobileSidebarOpen"
+      :class="{
+        'rounded-2xl border border-n-weak shadow-md overflow-hidden bg-n-background':
+          activeLayout === 'documentation',
+        '!border-l-0 ltr:!border-r-0 rtl:!border-l-0':
+          activeLayout === 'documentation',
+      }"
       @toggle-account-modal="toggleAccountModal"
       @open-key-shortcut-modal="toggleKeyShortcutModal"
       @close-key-shortcut-modal="closeKeyShortcutModal"
@@ -142,6 +182,10 @@ export default {
 
     <main
       class="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1"
+      :class="{
+        'rounded-2xl border border-n-weak shadow-md':
+          activeLayout === 'documentation',
+      }"
     >
       <UpgradePage
         v-show="showUpgradePage"

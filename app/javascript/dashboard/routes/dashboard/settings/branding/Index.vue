@@ -10,11 +10,11 @@ import { LocalStorage } from 'shared/helpers/localStorage';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { setColorTheme } from 'dashboard/helper/themeHelper';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
-import SettingsLayout from '../SettingsLayout.vue';
 import SectionLayout from '../account/components/SectionLayout.vue';
 import WithLabel from 'v3/components/Form/WithLabel.vue';
 import NextInput from 'next/input/Input.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
+import RadioCard from 'dashboard/components-next/radioCard/RadioCard.vue';
 
 const store = useStore();
 const { t } = useI18n();
@@ -26,16 +26,21 @@ const isUpdating = computed(() => uiFlags.value.isUpdating);
 
 const customDomain = ref('');
 const isVerified = ref(false);
+const brandName = ref('');
 const primaryColor = ref('#1F93FF');
 const textColor = ref('#FFFFFF');
 const backgroundColor = ref('#1A1E29');
+const activeLayout = ref('classic');
+
+const PORTAL_LAYOUTS = {
+  CLASSIC: 'classic',
+  DOCUMENTATION: 'documentation',
+};
 
 const lightLogoInput = ref(null);
-const darkLogoInput = ref(null);
 const faviconInput = ref(null);
 
 const lightLogoFile = ref(null);
-const darkLogoFile = ref(null);
 const faviconFile = ref(null);
 
 const lightLogoPreview = computed(() => {
@@ -43,12 +48,6 @@ const lightLogoPreview = computed(() => {
     return window.URL.createObjectURL(lightLogoFile.value);
   const account = getAccount.value(accountId.value);
   return account?.logo_url || null;
-});
-
-const darkLogoPreview = computed(() => {
-  if (darkLogoFile.value) return window.URL.createObjectURL(darkLogoFile.value);
-  const account = getAccount.value(accountId.value);
-  return account?.dark_logo_url || null;
 });
 
 const faviconPreview = computed(() => {
@@ -67,6 +66,8 @@ const initFromAccount = () => {
   primaryColor.value = colors.primary || '#1F93FF';
   textColor.value = colors.text || '#FFFFFF';
   backgroundColor.value = colors.background || '#1A1E29';
+  activeLayout.value = colors.layout || 'classic';
+  brandName.value = colors.brand_name || '';
 };
 
 watch(activeAccount, initFromAccount, { immediate: true });
@@ -78,7 +79,6 @@ const handleVerify = () => {
 const handleCancel = () => {
   initFromAccount();
   lightLogoFile.value = null;
-  darkLogoFile.value = null;
   faviconFile.value = null;
 };
 
@@ -88,17 +88,20 @@ const handleSave = async () => {
     if (customDomain.value)
       formData.append('custom_domain', customDomain.value);
     if (lightLogoFile.value) formData.append('logo', lightLogoFile.value);
-    if (darkLogoFile.value) formData.append('dark_logo', darkLogoFile.value);
     if (faviconFile.value) formData.append('favicon', faviconFile.value);
 
     // Send brand colors as nested hash
     formData.append('brand_colors[primary]', primaryColor.value);
     formData.append('brand_colors[text]', textColor.value);
     formData.append('brand_colors[background]', backgroundColor.value);
+    formData.append('brand_colors[layout]', activeLayout.value);
+    formData.append('brand_colors[brand_name]', brandName.value);
 
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: true });
     const response = await AccountAPI.update(formData);
     store.commit('accounts/EDIT_ACCOUNT', response.data);
+    lightLogoFile.value = null;
+    faviconFile.value = null;
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
 
     // Automatically switch appearance to custom when branding colors are updated
@@ -122,11 +125,6 @@ const onLightLogoChange = event => {
   if (file) lightLogoFile.value = file;
 };
 
-const onDarkLogoChange = event => {
-  const [file] = event.target.files;
-  if (file) darkLogoFile.value = file;
-};
-
 const onFaviconChange = event => {
   const [file] = event.target.files;
   if (file) faviconFile.value = file;
@@ -134,27 +132,22 @@ const onFaviconChange = event => {
 </script>
 
 <template>
-  <SettingsLayout :no-records-found="false">
-    <template #header>
-      <BaseSettingsHeader
-        :title="$t('BRANDING_SETTINGS.TITLE')"
-        :description="$t('BRANDING_SETTINGS.DESCRIPTION')"
-        feature-name="branding"
-      />
-    </template>
+  <div class="grid max-w-2xl ltr:mr-auto rtl:ml-auto">
+    <BaseSettingsHeader
+      :title="$t('BRANDING_SETTINGS.TITLE')"
+      :description="$t('BRANDING_SETTINGS.DESCRIPTION')"
+      feature-name="branding"
+    />
 
-    <template #body>
+    <div class="flex flex-col w-full mt-3">
       <div class="flex flex-col w-full max-w-2xl">
         <!-- Custom Domain -->
         <SectionLayout
           :title="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TITLE')"
           :description="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.DESCRIPTION')"
-          class="!pt-0 border-b border-n-weak"
+          class="!pt-0"
         >
-          <WithLabel
-            name="custom-domain"
-            :label="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.LABEL')"
-          >
+          <WithLabel name="custom-domain">
             <div class="flex items-center gap-3 w-full">
               <NextInput
                 v-model="customDomain"
@@ -197,14 +190,30 @@ const onFaviconChange = event => {
           </WithLabel>
         </SectionLayout>
 
+        <!-- Brand Name -->
+        <SectionLayout
+          with-border
+          :title="$t('BRANDING_SETTINGS.BRAND_NAME.TITLE')"
+          :description="$t('BRANDING_SETTINGS.BRAND_NAME.DESCRIPTION')"
+        >
+          <WithLabel name="brand-name">
+            <NextInput
+              v-model="brandName"
+              type="text"
+              class="w-full"
+              :placeholder="$t('BRANDING_SETTINGS.BRAND_NAME.PLACEHOLDER')"
+            />
+          </WithLabel>
+        </SectionLayout>
+
         <!-- Logo Upload -->
         <SectionLayout
+          with-border
           :title="$t('BRANDING_SETTINGS.LOGO_SETTINGS.TITLE')"
           :description="$t('BRANDING_SETTINGS.LOGO_SETTINGS.DESCRIPTION')"
-          class="border-b border-n-weak"
         >
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Light Mode Logo -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Primary Logo -->
             <div
               class="flex flex-col items-center p-4 border border-dashed border-n-strong rounded-xl bg-n-surface-2 text-center"
             >
@@ -218,7 +227,7 @@ const onFaviconChange = event => {
                 class="w-16 h-16 rounded-lg bg-white border border-n-strong flex items-center justify-center mb-4 overflow-hidden"
               >
                 <img
-                  v-if="lightLogoFile"
+                  v-if="lightLogoPreview"
                   :src="lightLogoPreview"
                   class="w-full h-full object-contain"
                   :alt="$t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.TITLE')"
@@ -252,54 +261,6 @@ const onFaviconChange = event => {
               </div>
             </div>
 
-            <!-- Dark Mode Logo -->
-            <div
-              class="flex flex-col items-center p-4 border border-dashed border-n-strong rounded-xl bg-n-surface-2 text-center"
-            >
-              <span class="text-sm font-semibold text-n-slate-12 mb-1">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.TITLE') }}
-              </span>
-              <span class="text-xs text-n-slate-11 mb-4">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.NOTE') }}
-              </span>
-              <div
-                class="w-16 h-16 rounded-lg bg-slate-900 border border-n-strong flex items-center justify-center mb-4 overflow-hidden"
-              >
-                <img
-                  v-if="darkLogoFile"
-                  :src="darkLogoPreview"
-                  class="w-full h-full object-contain"
-                  :alt="$t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.TITLE')"
-                />
-                <span v-else class="i-lucide-image text-slate-600 size-6" />
-              </div>
-              <div class="flex flex-col gap-2 w-full">
-                <input
-                  ref="darkLogoInput"
-                  type="file"
-                  accept="image/*"
-                  class="hidden"
-                  @change="onDarkLogoChange"
-                />
-                <NextButton
-                  class="w-full"
-                  blue
-                  size="small"
-                  type="button"
-                  @click="darkLogoInput.click()"
-                >
-                  {{
-                    darkLogoFile
-                      ? darkLogoFile.name
-                      : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
-                  }}
-                </NextButton>
-                <span class="text-xs text-n-slate-11">
-                  {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.LIMIT') }}
-                </span>
-              </div>
-            </div>
-
             <!-- Favicon -->
             <div
               class="flex flex-col items-center p-4 border border-dashed border-n-strong rounded-xl bg-n-surface-2 text-center"
@@ -314,7 +275,7 @@ const onFaviconChange = event => {
                 class="w-16 h-16 rounded-lg bg-n-surface-1 border border-n-strong flex items-center justify-center mb-4 overflow-hidden"
               >
                 <img
-                  v-if="faviconFile"
+                  v-if="faviconPreview"
                   :src="faviconPreview"
                   class="w-full h-full object-contain"
                   :alt="$t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.TITLE')"
@@ -350,8 +311,367 @@ const onFaviconChange = event => {
           </div>
         </SectionLayout>
 
+        <!-- Layout Settings -->
+        <SectionLayout
+          with-border
+          :title="$t('BRANDING_SETTINGS.LAYOUT_SETTINGS.TITLE')"
+          :description="$t('BRANDING_SETTINGS.LAYOUT_SETTINGS.DESCRIPTION')"
+        >
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-n-slate-11">
+            <RadioCard
+              :id="PORTAL_LAYOUTS.CLASSIC"
+              :is-active="activeLayout === PORTAL_LAYOUTS.CLASSIC"
+              :label="$t('BRANDING_SETTINGS.LAYOUT_SETTINGS.CLASSIC.TITLE')"
+              :description="
+                $t('BRANDING_SETTINGS.LAYOUT_SETTINGS.CLASSIC.DESCRIPTION')
+              "
+              @select="value => (activeLayout = value)"
+            >
+              <div
+                class="w-full mt-2 rounded-md overflow-hidden border border-solid border-n-weak bg-n-slate-2 dark:bg-n-slate-1"
+              >
+                <svg
+                  viewBox="0 0 120 70"
+                  class="w-full h-auto"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect
+                    width="120"
+                    height="70"
+                    rx="4"
+                    fill="currentColor"
+                    class="text-n-surface-1"
+                  />
+                  <path
+                    d="M4,0 L22,0 L22,70 L4,70 C1.79,70 0,68.21 0,66 L0,4 C0,1.79 1.79,0 4,0 Z"
+                    fill="currentColor"
+                    class="text-n-slate-2 dark:text-n-slate-1"
+                  />
+                  <line
+                    x1="22"
+                    y1="0"
+                    x2="22"
+                    y2="70"
+                    stroke="currentColor"
+                    class="text-n-weak"
+                    stroke-width="0.5"
+                  />
+                  <rect
+                    x="4"
+                    y="6"
+                    width="14"
+                    height="4"
+                    rx="1"
+                    fill="currentColor"
+                    class="text-n-slate-6 dark:text-n-slate-4"
+                  />
+                  <rect
+                    x="4"
+                    y="14"
+                    width="14"
+                    height="2"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-5 dark:text-n-slate-3"
+                  />
+                  <rect
+                    x="4"
+                    y="19"
+                    width="14"
+                    height="2"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-5 dark:text-n-slate-3"
+                  />
+                  <rect
+                    x="4"
+                    y="24"
+                    width="14"
+                    height="2"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-5 dark:text-n-slate-3"
+                  />
+                  <rect
+                    x="22"
+                    y="0"
+                    width="30"
+                    height="70"
+                    fill="currentColor"
+                    class="text-n-slate-1 dark:text-n-slate-2"
+                  />
+                  <line
+                    x1="52"
+                    y1="0"
+                    x2="52"
+                    y2="70"
+                    stroke="currentColor"
+                    class="text-n-weak"
+                    stroke-width="0.5"
+                  />
+                  <rect
+                    x="26"
+                    y="8"
+                    width="22"
+                    height="3"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-4 dark:text-n-slate-3"
+                  />
+                  <rect
+                    x="26"
+                    y="13"
+                    width="15"
+                    height="2"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-3 dark:text-n-slate-4"
+                  />
+                  <line
+                    x1="22"
+                    y1="20"
+                    x2="52"
+                    y2="20"
+                    stroke="currentColor"
+                    class="text-n-weak"
+                    stroke-width="0.5"
+                  />
+                  <rect
+                    x="26"
+                    y="25"
+                    width="22"
+                    height="3"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-4 dark:text-n-slate-3"
+                  />
+                  <rect
+                    x="26"
+                    y="30"
+                    width="15"
+                    height="2"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-3 dark:text-n-slate-4"
+                  />
+                  <line
+                    x1="22"
+                    y1="37"
+                    x2="52"
+                    y2="37"
+                    stroke="currentColor"
+                    class="text-n-weak"
+                    stroke-width="0.5"
+                  />
+                  <rect
+                    x="58"
+                    y="6"
+                    width="35"
+                    height="4"
+                    rx="1"
+                    fill="currentColor"
+                    class="text-n-slate-6 dark:text-n-slate-4"
+                  />
+                  <line
+                    x1="52"
+                    y1="16"
+                    x2="120"
+                    y2="16"
+                    stroke="currentColor"
+                    class="text-n-weak"
+                    stroke-width="0.5"
+                  />
+                  <rect
+                    x="58"
+                    y="24"
+                    width="28"
+                    height="6"
+                    rx="2"
+                    fill="currentColor"
+                    class="text-n-slate-3 dark:text-n-slate-2"
+                  />
+                  <rect
+                    x="86"
+                    y="35"
+                    width="28"
+                    height="6"
+                    rx="2"
+                    fill="currentColor"
+                    class="text-n-iris-9 dark:text-n-iris-8"
+                  />
+                </svg>
+              </div>
+            </RadioCard>
+
+            <RadioCard
+              :id="PORTAL_LAYOUTS.DOCUMENTATION"
+              :is-active="activeLayout === PORTAL_LAYOUTS.DOCUMENTATION"
+              :label="$t('BRANDING_SETTINGS.LAYOUT_SETTINGS.SIDEBAR.TITLE')"
+              :description="
+                $t('BRANDING_SETTINGS.LAYOUT_SETTINGS.SIDEBAR.DESCRIPTION')
+              "
+              @select="value => (activeLayout = value)"
+            >
+              <div
+                class="w-full mt-2 rounded-md overflow-hidden border border-solid border-n-weak bg-n-slate-2 dark:bg-n-slate-1"
+              >
+                <svg
+                  viewBox="0 0 120 70"
+                  class="w-full h-auto"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect
+                    width="120"
+                    height="70"
+                    rx="4"
+                    fill="currentColor"
+                    class="text-n-slate-2 dark:text-n-slate-3"
+                  />
+                  <rect
+                    x="4"
+                    y="4"
+                    width="88"
+                    height="62"
+                    rx="3"
+                    fill="currentColor"
+                    class="text-n-surface-1"
+                  />
+                  <rect
+                    x="10"
+                    y="10"
+                    width="30"
+                    height="4"
+                    rx="1"
+                    fill="currentColor"
+                    class="text-n-slate-5 dark:text-n-slate-4"
+                  />
+                  <line
+                    x1="4"
+                    y1="18"
+                    x2="92"
+                    y2="18"
+                    stroke="currentColor"
+                    class="text-n-weak"
+                    stroke-width="0.5"
+                  />
+                  <rect
+                    x="4"
+                    y="18"
+                    width="26"
+                    height="48"
+                    fill="currentColor"
+                    class="text-n-slate-1 dark:text-n-slate-2"
+                  />
+                  <line
+                    x1="30"
+                    y1="18"
+                    x2="30"
+                    y2="66"
+                    stroke="currentColor"
+                    class="text-n-weak"
+                    stroke-width="0.5"
+                  />
+                  <rect
+                    x="8"
+                    y="24"
+                    width="18"
+                    height="2"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-4 dark:text-n-slate-3"
+                  />
+                  <rect
+                    x="8"
+                    y="28"
+                    width="12"
+                    height="1.5"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-3 dark:text-n-slate-4"
+                  />
+                  <line
+                    x1="4"
+                    y1="33"
+                    x2="30"
+                    y2="33"
+                    stroke="currentColor"
+                    class="text-n-weak"
+                    stroke-width="0.5"
+                  />
+                  <rect
+                    x="36"
+                    y="24"
+                    width="24"
+                    height="5"
+                    rx="1.5"
+                    fill="currentColor"
+                    class="text-n-slate-3 dark:text-n-slate-2"
+                  />
+                  <rect
+                    x="64"
+                    y="33"
+                    width="24"
+                    height="5"
+                    rx="1.5"
+                    fill="currentColor"
+                    class="text-n-iris-9 dark:text-n-iris-8"
+                  />
+                  <rect
+                    x="96"
+                    y="4"
+                    width="20"
+                    height="62"
+                    rx="3"
+                    fill="currentColor"
+                    class="text-n-slate-6 dark:text-n-slate-4"
+                  />
+                  <rect
+                    x="99"
+                    y="8"
+                    width="14"
+                    height="4"
+                    rx="1"
+                    fill="currentColor"
+                    class="text-n-slate-9 dark:text-n-slate-6"
+                  />
+                  <rect
+                    x="99"
+                    y="16"
+                    width="14"
+                    height="2"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-8 dark:text-n-slate-5"
+                  />
+                  <rect
+                    x="99"
+                    y="21"
+                    width="14"
+                    height="2"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-8 dark:text-n-slate-5"
+                  />
+                  <rect
+                    x="99"
+                    y="26"
+                    width="14"
+                    height="2"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-n-slate-8 dark:text-n-slate-5"
+                  />
+                </svg>
+              </div>
+            </RadioCard>
+          </div>
+        </SectionLayout>
+
         <!-- Color Customization -->
         <SectionLayout
+          with-border
           :title="$t('BRANDING_SETTINGS.COLOR_SETTINGS.TITLE')"
           :description="$t('BRANDING_SETTINGS.COLOR_SETTINGS.DESCRIPTION')"
         >
@@ -433,6 +753,6 @@ const onFaviconChange = event => {
           </NextButton>
         </div>
       </div>
-    </template>
-  </SettingsLayout>
+    </div>
+  </div>
 </template>

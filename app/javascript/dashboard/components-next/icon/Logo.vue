@@ -1,17 +1,31 @@
 <script setup>
-import { useAttrs } from 'vue';
+import { useAttrs, computed } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
 
 const attrs = useAttrs();
 const globalConfig = useMapGetter('globalConfig/get');
+const currentAccountId = useMapGetter('getCurrentAccountId');
+const getAccount = useMapGetter('accounts/getAccount');
+
+const logoUrl = computed(() => {
+  let account = null;
+  if (
+    getAccount?.value &&
+    typeof getAccount.value === 'function' &&
+    currentAccountId?.value
+  ) {
+    account = getAccount.value(currentAccountId.value);
+  }
+  return (
+    account?.logo_url ||
+    globalConfig.value?.logoThumbnail ||
+    globalConfig.value?.logo
+  );
+});
 </script>
 
 <template>
-  <img
-    v-if="globalConfig.logoThumbnail"
-    v-bind="attrs"
-    :src="globalConfig.logoThumbnail"
-  />
+  <img v-if="logoUrl" v-bind="attrs" :src="logoUrl" />
   <svg
     v-else
     v-once

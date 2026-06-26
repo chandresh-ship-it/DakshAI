@@ -1,20 +1,29 @@
-/**
- * Composable for branding-related utilities
- * Provides methods to customize text with installation-specific branding
- */
 import { useMapGetter } from 'dashboard/composables/store.js';
 
 export function useBranding() {
   const globalConfig = useMapGetter('globalConfig/get');
+  const currentAccountId = useMapGetter('getCurrentAccountId');
+  const getAccount = useMapGetter('accounts/getAccount');
+
   /**
-   * Replaces "Chatwoot" in text with the installation name from global config
+   * Replaces "Chatwoot" or "DakshAI" in text with the installation name or custom brand name
    * @param {string} text - The text to process
-   * @returns {string} - Text with "Chatwoot" replaced by installation name
+   * @returns {string} - Text with "Chatwoot" / "DakshAI" replaced by installation/brand name
    */
   const replaceInstallationName = text => {
     if (!text) return text;
 
-    const installationName = globalConfig.value?.installationName;
+    let customBrandName = '';
+    if (
+      getAccount?.value &&
+      typeof getAccount.value === 'function' &&
+      currentAccountId?.value
+    ) {
+      const account = getAccount.value(currentAccountId.value);
+      customBrandName = account?.custom_attributes?.brand_colors?.brand_name;
+    }
+    const installationName =
+      customBrandName || globalConfig.value?.installationName;
     if (!installationName) return text;
 
     return text.replace(/Chatwoot|DakshAI/g, installationName);
