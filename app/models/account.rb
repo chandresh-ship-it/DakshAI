@@ -5,6 +5,7 @@
 #  id                    :integer          not null, primary key
 #  auto_resolve_duration :integer
 #  custom_attributes     :jsonb
+#  custom_domain         :string
 #  domain                :string(100)
 #  feature_flags         :bigint           default(0), not null
 #  internal_attributes   :jsonb            not null
@@ -101,6 +102,9 @@ class Account < ApplicationRecord
   has_many :working_hours, dependent: :destroy_async
 
   has_one_attached :contacts_export
+  has_one_attached :logo
+  has_one_attached :dark_logo
+  has_one_attached :favicon
 
   enum :locale, LANGUAGES_CONFIG.map { |key, val| [val[:iso_639_1_code], key] }.to_h, prefix: true
   enum :status, { active: 0, suspended: 1 }
@@ -144,6 +148,24 @@ class Account < ApplicationRecord
 
   def support_email
     super.presence || ENV.fetch('MAILER_SENDER_EMAIL') { GlobalConfig.get('MAILER_SUPPORT_EMAIL')['MAILER_SUPPORT_EMAIL'] }
+  end
+
+  def logo_url
+    return Rails.application.routes.url_helpers.url_for(logo) if logo.attached?
+
+    ''
+  end
+
+  def dark_logo_url
+    return Rails.application.routes.url_helpers.url_for(dark_logo) if dark_logo.attached?
+
+    ''
+  end
+
+  def favicon_url
+    return Rails.application.routes.url_helpers.url_for(favicon) if favicon.attached?
+
+    ''
   end
 
   def usage_limits

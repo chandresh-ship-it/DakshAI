@@ -26,6 +26,11 @@ const getThemeOptions = t => [
     label: t('COMMAND_BAR.COMMANDS.SYSTEM_MODE'),
     icon: ICON_SYSTEM_MODE,
   },
+  {
+    key: 'custom',
+    label: t('COMMAND_BAR.COMMANDS.CUSTOM_MODE', 'Custom Theme'), // Fallback to 'Custom Theme'
+    icon: ICON_APPEARANCE,
+  },
 ];
 
 const setAppearance = theme => {
@@ -34,6 +39,7 @@ const setAppearance = theme => {
     '(prefers-color-scheme: dark)'
   ).matches;
   setColorTheme(isOSOnDarkMode);
+  window.dispatchEvent(new CustomEvent('theme-changed'));
 };
 
 export function useAppearanceHotKeys() {

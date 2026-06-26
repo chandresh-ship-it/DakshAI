@@ -330,6 +330,7 @@
     "INTEGRATIONS": "Integrations",
     "PROFILE_SETTINGS": "Profile Settings",
     "ACCOUNT_SETTINGS": "Account Settings",
+    "BRANDING": "Branding & Custom Domain",
     "APPLICATIONS": "Applications",
     "LABELS": "Labels",
     "CUSTOM_ATTRIBUTES": "Custom Attributes",
@@ -919,5 +920,56 @@
       "CONFIRM_BUTTON_LABEL": "Delete",
       "CANCEL_BUTTON_LABEL": "Cancel"
     }
+  },
+  "BRANDING_SETTINGS": {
+    "TITLE": "Branding & Custom Domain",
+    "CUSTOM_DOMAIN": {
+      "TITLE": "Custom Domain",
+      "DESCRIPTION": "Configure CNAME validation to map your custom domain to your workspace.",
+      "LABEL": "Custom Domain",
+      "PLACEHOLDER": "support.client.com",
+      "VERIFY": "Verify",
+      "VERIFIED": "Verified",
+      "PENDING": "Pending",
+      "CNAME_INSTRUCTION": "Please configure your DNS provider to add a CNAME record pointing your domain to our server."
+    },
+    "LOGO_SETTINGS": {
+      "TITLE": "Upload Logos",
+      "DESCRIPTION": "Upload your brand logos used across the dashboard and portal.",
+      "LIGHT_LOGO": {
+        "TITLE": "Light Mode Logo",
+        "NOTE": "Drag-and-drop zone light backgrounds",
+        "LIMIT": "max 500kb"
+      },
+      "DARK_LOGO": {
+        "TITLE": "Dark Mode Logo",
+        "NOTE": "Drag-and-drop zone for dark interfaces",
+        "LIMIT": "max 500kb"
+      },
+      "FAVICON": {
+        "TITLE": "Favicon",
+        "NOTE": "Drag-and-drop for browser tab icon",
+        "LIMIT": "16x16 or 32x32px"
+      },
+      "CHOOSE_FILE": "Choose file",
+      "REMOVE": "Remove",
+      "UPLOAD": "Upload"
+    },
+    "COLOR_SETTINGS": {
+      "TITLE": "Color Customization",
+      "DESCRIPTION": "Brand your customer-facing widgets and portals.",
+      "PRIMARY": "Primary Color",
+      "TEXT": "Text Color",
+      "BACKGROUND": "Background Color",
+      "SUCCESS": "Success Accent",
+      "WARNING": "Warning Color",
+      "SELECT_COLOR": "Select Color"
+    },
+    "DESCRIPTION": "Configure your workspace branding including custom domain, logos, and color scheme.",
+    "CANCEL": "Cancel",
+    "SAVE": "Save changes",
+    "SAVE_SUCCESS": "Branding settings saved successfully.",
+    "SAVE_ERROR": "Failed to save branding settings. Please try again."
   }
 }
+

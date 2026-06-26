@@ -45,6 +45,19 @@ class DashboardController < ActionController::Base
 
   def set_global_config
     @global_config = GlobalConfig.get(*GLOBAL_CONFIG_KEYS).merge(app_config)
+
+    # White-labeling overrides: Inject Account branding into global config
+    account = Account.find_by(custom_domain: request.host) || Account.first
+    return unless account
+
+    @global_config['LOGO'] = account.logo_url if account.logo.attached?
+    @global_config['LOGO_DARK'] = account.dark_logo_url if account.dark_logo.attached?
+    @global_config['LOGO_THUMBNAIL'] = account.favicon_url if account.favicon.attached?
+
+    # For brand colors on login page
+    return unless account.custom_attributes['brand_colors'].present?
+
+    @global_config['BRAND_COLORS'] = account.custom_attributes['brand_colors']
   end
 
   def set_dashboard_scripts

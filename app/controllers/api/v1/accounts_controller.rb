@@ -55,9 +55,9 @@ class Api::V1::AccountsController < Api::BaseController
   end
 
   def update
-    @account.assign_attributes(account_params.slice(:name, :locale, :domain, :support_email))
-    @account.custom_attributes.merge!(custom_attributes_params)
-    @account.settings.merge!(settings_params)
+    @account.assign_attributes(account_params.slice(:name, :locale, :domain, :support_email, :custom_domain, :logo, :dark_logo, :favicon))
+    @account.custom_attributes = @account.custom_attributes.merge(custom_attributes_params.to_h)
+    @account.settings = @account.settings.merge(settings_params.to_h)
     @account.custom_attributes['onboarding_step'] = 'invite_team' if @account.custom_attributes['onboarding_step'] == 'account_update'
     @account.save!
   end
@@ -106,11 +106,12 @@ class Api::V1::AccountsController < Api::BaseController
   end
 
   def account_params
-    params.permit(:account_name, :email, :name, :password, :locale, :domain, :support_email, :user_full_name)
+    params.permit(:account_name, :email, :name, :password, :locale, :domain, :support_email, :user_full_name, :custom_domain, :logo, :dark_logo,
+                  :favicon)
   end
 
   def custom_attributes_params
-    params.permit(:industry, :company_size, :timezone, :referral_source, :user_role, :website)
+    params.permit(:industry, :company_size, :timezone, :referral_source, :user_role, :website, brand_colors: {})
   end
 
   def settings_params
