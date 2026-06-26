@@ -137,11 +137,20 @@ export default {
         }
       }
 
-      // Only apply full background and text overrides if custom mode is selected
+      // Apply background + text for:
+      // - custom domain branding (BRAND_COLORS from globalConfig — always applies)
+      // - user-selected 'custom' color scheme
+      // - login page (no currentAccountId)
       const selectedColorScheme =
         window.localStorage.getItem('color_scheme') || 'auto';
+      const hasDomainBranding =
+        window.globalConfig && window.globalConfig.BRAND_COLORS;
 
-      if (selectedColorScheme === 'custom') {
+      if (
+        hasDomainBranding ||
+        selectedColorScheme === 'custom' ||
+        !this.currentAccountId
+      ) {
         if (text) {
           const textRgb = hexToRgbSpace(text);
           if (textRgb) {
@@ -159,6 +168,7 @@ export default {
         }
       }
     },
+
     setLocale(locale) {
       if (locale) {
         this.$root.$i18n.locale = locale;

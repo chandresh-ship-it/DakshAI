@@ -1,5 +1,9 @@
 <script>
 import SnackbarContainer from './components/SnackBar/Container.vue';
+import {
+  hexToRgbSpace,
+  generateThemeVariables,
+} from 'dashboard/helper/colorHelper';
 
 export default {
   components: { SnackbarContainer },
@@ -10,6 +14,10 @@ export default {
     this.setColorTheme();
     this.listenToThemeChanges();
     this.setLocale(window.chatwootConfig.selectedLocale);
+    // Apply brand colors from server-injected globalConfig (for custom domain branding on login page)
+    if (window.globalConfig && window.globalConfig.BRAND_COLORS) {
+      this.applyBrandColors(window.globalConfig.BRAND_COLORS);
+    }
   },
   methods: {
     setColorTheme() {
@@ -37,6 +45,36 @@ export default {
     setLocale(locale) {
       if (locale) {
         this.$root.$i18n.locale = locale;
+      }
+    },
+    applyBrandColors(colors) {
+      if (!colors) return;
+      const { primary, text, background } = colors;
+
+      if (primary) {
+        const primaryRgb = hexToRgbSpace(primary);
+        if (primaryRgb) {
+          document.documentElement.style.setProperty(
+            '--woot-brand',
+            primaryRgb
+          );
+        }
+      }
+
+      if (text) {
+        const textRgb = hexToRgbSpace(text);
+        if (textRgb) {
+          document.documentElement.style.setProperty('--slate-12', textRgb);
+        }
+      }
+
+      if (background) {
+        const themeVars = generateThemeVariables(background);
+        if (themeVars) {
+          Object.entries(themeVars).forEach(([key, value]) => {
+            if (value) document.documentElement.style.setProperty(key, value);
+          });
+        }
       }
     },
   },

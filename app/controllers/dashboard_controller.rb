@@ -52,8 +52,10 @@ class DashboardController < ActionController::Base
   end
 
   def apply_branding_overrides(account)
-    @global_config['LOGO'] = account.logo_url if account.logo.attached?
-    @global_config['LOGO_DARK'] = account.dark_logo_url if account.dark_logo.attached?
+    if account.logo.attached?
+      @global_config['LOGO'] = account.logo_url
+      @global_config['LOGO_DARK'] = account.dark_logo.attached? ? account.dark_logo_url : account.logo_url
+    end
     @global_config['LOGO_THUMBNAIL'] = account.favicon_url if account.favicon.attached?
 
     # For brand colors on login page
@@ -61,11 +63,100 @@ class DashboardController < ActionController::Base
     return if brand_colors.blank?
 
     @global_config['BRAND_COLORS'] = brand_colors
+    @brand_colors = brand_colors
     brand_name = brand_colors['brand_name']
     return if brand_name.blank?
 
     @global_config['INSTALLATION_NAME'] = brand_name
     @global_config['BRAND_NAME'] = brand_name
+  end
+
+  # Convert a hex color (#rrggbb) to "r g b" format for CSS custom properties
+  def hex_to_rgb_space(hex)
+    return nil if hex.blank?
+
+    hex = hex.delete('#')
+    r = hex[0..1].to_i(16)
+    g = hex[2..3].to_i(16)
+    b = hex[4..5].to_i(16)
+    "#{r} #{g} #{b}"
+  rescue StandardError
+    nil
+  end
+  helper_method :hex_to_rgb_space
+
+  # Lighten a hex color by adding `amount` to its lightness (0..1 scale).
+  # Mirrors the JS `lighten()` from color2k used in generateThemeVariables.
+  def lighten_hex(hex, amount)
+    return nil if hex.blank?
+
+    hex = hex.delete('#')
+    r = hex[0..1].to_i(16) / 255.0
+    g = hex[2..3].to_i(16) / 255.0
+    b = hex[4..5].to_i(16) / 255.0
+
+    # RGB → HSL
+    max_c = [r, g, b].max
+    min_c = [r, g, b].min
+    l = ((max_c + min_c) / 2.0).clamp(0.0, 1.0)
+
+    # Lighten (clamp 0..1)
+    l = (l + amount).clamp(0.0, 1.0)
+
+    d = max_c - min_c
+    s = d.zero? ? 0 : d / (1 - ((2 * l) - 1).abs)
+
+    h = compute_hue(r, g, b, max_c, d)
+
+    # HSL → RGB
+    c  = (1 - ((2 * l) - 1).abs) * s
+    x  = c * (1 - (((h / 60.0) % 2) - 1).abs)
+    m  = l - (c / 2.0)
+
+    r2, g2, b2 = hue_to_rgb_components(h, c, x)
+
+    "#{((r2 + m) * 255).round} #{((g2 + m) * 255).round} #{((b2 + m) * 255).round}"
+  rescue StandardError
+    hex_to_rgb_space(hex)
+  end
+  helper_method :lighten_hex
+
+  # Build an inline style string with CSS custom properties for brand colors.
+  def brand_colors_inline_style(brand_colors)
+    parts = []
+    parts << "--woot-brand: #{hex_to_rgb_space(brand_colors['primary'])}" if brand_colors['primary'].present?
+    parts << "--slate-12: #{hex_to_rgb_space(brand_colors['text'])}" if brand_colors['text'].present?
+    parts << "--background-color: #{hex_to_rgb_space(brand_colors['background'])}" if brand_colors['background'].present?
+    parts.compact.join('; ')
+  end
+  helper_method :brand_colors_inline_style
+
+  def compute_hue(r, g, b, max_c, d)
+    return 0 if d.zero?
+
+    if max_c == r
+      60 * (((g - b) / d) % 6)
+    elsif max_c == g
+      60 * (((b - r) / d) + 2)
+    else
+      60 * (((r - g) / d) + 4)
+    end
+  end
+
+  def hue_to_rgb_components(h, c, x)
+    if h < 60
+      [c, x, 0]
+    elsif h < 120
+      [x, c, 0]
+    elsif h < 180
+      [0, c, x]
+    elsif h < 240
+      [0, x, c]
+    elsif h < 300
+      [x, 0, c]
+    else
+      [c, 0, x]
+    end
   end
 
   def set_dashboard_scripts

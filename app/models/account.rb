@@ -151,19 +151,19 @@ class Account < ApplicationRecord
   end
 
   def logo_url
-    return Rails.application.routes.url_helpers.url_for(logo) if logo.attached?
+    return Rails.application.routes.url_helpers.rails_blob_path(logo, only_path: true) if logo.attached?
 
     ''
   end
 
   def dark_logo_url
-    return Rails.application.routes.url_helpers.url_for(dark_logo) if dark_logo.attached?
+    return Rails.application.routes.url_helpers.rails_blob_path(dark_logo, only_path: true) if dark_logo.attached?
 
     ''
   end
 
   def favicon_url
-    return Rails.application.routes.url_helpers.url_for(favicon) if favicon.attached?
+    return Rails.application.routes.url_helpers.rails_blob_path(favicon, only_path: true) if favicon.attached?
 
     ''
   end

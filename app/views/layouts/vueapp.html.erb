@@ -64,6 +64,7 @@
       }
       window.errorLoggingConfig = '<%= ENV.fetch('SENTRY_FRONTEND_DSN', '') || ENV.fetch('SENTRY_DSN', '') %>'
     </script>
+
     <% if @global_config['CLOUD_ANALYTICS_TOKEN'].present? %>
     <script>
       window.analyticsConfig = {
@@ -73,7 +74,35 @@
     <% end %>
     <%= vite_client_tag %>
     <%= vite_javascript_tag @application_pack %>
+    <% if @brand_colors.present? %>
+    <style id="brand-colors">
+      /* Brand colors injected server-side for custom domain: <%= request.host %> */
+      /* Selector covers html/:root (light mode) AND .dark (when body/html gets dark class) */
+      html, :root, .dark {
+        <% if (rgb = hex_to_rgb_space(@brand_colors['primary'])) %>
+        --woot-brand: <%= rgb %> !important;
+        <% end %>
+        <% if (rgb = hex_to_rgb_space(@brand_colors['text'])) %>
+        --slate-12: <%= rgb %> !important;
+        <% end %>
+        <% if (bg = @brand_colors['background']).present? %>
+        --background-color: <%= hex_to_rgb_space(bg) %> !important;
+        --surface-1: <%= lighten_hex(bg, 0.03) %> !important;
+        --surface-2: <%= lighten_hex(bg, 0.05) %> !important;
+        --surface-active: <%= lighten_hex(bg, 0.1) %> !important;
+        --solid-1: <%= lighten_hex(bg, 0.02) %> !important;
+        --solid-2: <%= lighten_hex(bg, 0.04) %> !important;
+        --solid-3: <%= lighten_hex(bg, 0.08) %> !important;
+        --card-color: <%= hex_to_rgb_space(bg) %> !important;
+        --border-strong: <%= lighten_hex(bg, 0.15) %> !important;
+        --border-weak: <%= lighten_hex(bg, 0.08) %> !important;
+        --label-background: <%= lighten_hex(bg, 0.04) %> !important;
+        <% end %>
+      }
+    </style>
+    <% end %>
   </head>
+
   <body class="text-slate-600">
     <div id="app"></div>
     <noscript id="noscript">This app works best with JavaScript enabled.</noscript>
