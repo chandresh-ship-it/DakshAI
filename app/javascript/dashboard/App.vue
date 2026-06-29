@@ -87,6 +87,7 @@ export default {
       handler(newColors) {
         if (newColors) {
           this.applyBrandColors(newColors);
+          this.initializeColorTheme();
         }
       },
     },
@@ -117,11 +118,14 @@ export default {
       }
     },
     initializeColorTheme() {
-      setColorTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      setColorTheme(
+        window.matchMedia('(prefers-color-scheme: dark)').matches,
+        this.accountBrandColors
+      );
     },
     listenToThemeChanges() {
       const mql = window.matchMedia('(prefers-color-scheme: dark)');
-      mql.onchange = e => setColorTheme(e.matches);
+      mql.onchange = e => setColorTheme(e.matches, this.accountBrandColors);
     },
     applyBrandColors(colors) {
       if (!colors) return;

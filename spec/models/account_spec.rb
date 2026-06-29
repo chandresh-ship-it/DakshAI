@@ -387,4 +387,39 @@ RSpec.describe Account do
       end
     end
   end
+
+  describe 'parent-child relationships' do
+    let(:parent_account) { create(:account, status: :active) }
+    let(:child_account) { create(:account, parent: parent_account, status: :active) }
+
+    it 'defines relationships' do
+      expect(child_account.parent).to eq(parent_account)
+      expect(parent_account.sub_accounts).to include(child_account)
+    end
+
+    it 'propagates status suspension' do
+      child_account
+      parent_account.reload.update!(status: :suspended)
+      expect(child_account.reload.status).to eq('suspended')
+    end
+
+    it 'propagates status activation' do
+      child_account
+      parent_account.reload.update!(status: :suspended)
+      expect(child_account.reload.status).to eq('suspended')
+
+      parent_account.update!(status: :active)
+      expect(child_account.reload.status).to eq('active')
+    end
+
+    it 'inherits limits and custom attributes' do
+      parent_account.update!(
+        limits: { 'agents' => 10, 'inboxes' => 5 },
+        custom_attributes: { 'plan_name' => 'premium' }
+      )
+
+      expect(child_account.limits).to eq({ 'agents' => 10, 'inboxes' => 5 })
+      expect(child_account.custom_attributes['plan_name']).to eq('premium')
+    end
+  end
 end

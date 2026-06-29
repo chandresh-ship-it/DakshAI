@@ -44,10 +44,12 @@ class AccountBuilder
   end
 
   def create_account
+    custom_attrs = {}
+    custom_attrs['onboarding_step'] = 'account_details' if @user.nil?
     @account = Account.create!(
       name: account_name,
       locale: I18n.locale,
-      custom_attributes: { 'onboarding_step' => 'account_details' }
+      custom_attributes: custom_attrs
     )
     Current.account = @account
   end

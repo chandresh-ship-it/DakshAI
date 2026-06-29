@@ -3,6 +3,7 @@ import SnackbarContainer from './components/SnackBar/Container.vue';
 import {
   hexToRgbSpace,
   generateThemeVariables,
+  isDarkBackground,
 } from 'dashboard/helper/colorHelper';
 
 export default {
@@ -21,24 +22,45 @@ export default {
   },
   methods: {
     setColorTheme() {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      const hasDomainBranding =
+        window.globalConfig && window.globalConfig.BRAND_COLORS;
+      const isBrandDark =
+        hasDomainBranding &&
+        window.globalConfig.BRAND_COLORS.background &&
+        isDarkBackground(window.globalConfig.BRAND_COLORS.background);
+
+      if (
+        isBrandDark ||
+        window.matchMedia('(prefers-color-scheme: dark)').matches
+      ) {
         this.theme = 'dark';
         document.documentElement.classList.add('dark');
+        document.body.classList.add('dark');
       } else {
         this.theme = 'light';
         document.documentElement.classList.remove('dark');
+        document.body.classList.remove('dark');
       }
     },
     listenToThemeChanges() {
       const mql = window.matchMedia('(prefers-color-scheme: dark)');
 
       mql.onchange = e => {
-        if (e.matches) {
+        const hasDomainBranding =
+          window.globalConfig && window.globalConfig.BRAND_COLORS;
+        const isBrandDark =
+          hasDomainBranding &&
+          window.globalConfig.BRAND_COLORS.background &&
+          isDarkBackground(window.globalConfig.BRAND_COLORS.background);
+
+        if (isBrandDark || e.matches) {
           this.theme = 'dark';
           document.documentElement.classList.add('dark');
+          document.body.classList.add('dark');
         } else {
           this.theme = 'light';
           document.documentElement.classList.remove('dark');
+          document.body.classList.remove('dark');
         }
       };
     },

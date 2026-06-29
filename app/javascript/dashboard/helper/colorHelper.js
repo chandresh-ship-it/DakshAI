@@ -63,3 +63,13 @@ export const clearCustomThemeVariables = () => {
   ];
   keys.forEach(key => document.documentElement.style.removeProperty(key));
 };
+
+export const isDarkBackground = backgroundHex => {
+  if (!backgroundHex) return false;
+  try {
+    return getLuminance(backgroundHex) < 0.5;
+  } catch {
+    return false;
+  }
+};
+

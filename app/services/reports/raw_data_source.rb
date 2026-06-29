@@ -59,29 +59,49 @@ class Reports::RawDataSource < Reports::DataSource
     ).count
   end
 
+  def account_ids
+    @account_ids ||= [account.id] + account.sub_accounts.pluck(:id)
+  end
+
   def average_scope
-    scope.reporting_events.where(name: raw_event_name, created_at: range, account_id: account.id)
+    if scope.is_a?(Account)
+      ReportingEvent.where(name: raw_event_name, created_at: range, account_id: account_ids)
+    else
+      scope.reporting_events.where(name: raw_event_name, created_at: range, account_id: account_ids)
+    end
   end
 
   def count_scope
     case metric.to_s
     when 'conversations_count'
-      scope.conversations.where(account_id: account.id, created_at: range)
+      if scope.is_a?(Account)
+        Conversation.where(account_id: account_ids, created_at: range)
+      else
+        scope.conversations.where(account_id: account_ids, created_at: range)
+      end
     when 'incoming_messages_count'
-      scope.messages.where(account_id: account.id, created_at: range).incoming.unscope(:order)
+      if scope.is_a?(Account)
+        Message.where(account_id: account_ids, created_at: range).incoming.unscope(:order)
+      else
+        scope.messages.where(account_id: account_ids, created_at: range).incoming.unscope(:order)
+      end
     when 'outgoing_messages_count'
-      scope.messages.where(account_id: account.id, created_at: range).outgoing.unscope(:order)
+      if scope.is_a?(Account)
+        Message.where(account_id: account_ids, created_at: range).outgoing.unscope(:order)
+      else
+        scope.messages.where(account_id: account_ids, created_at: range).outgoing.unscope(:order)
+      end
     else
       reporting_event_count_scope
     end
   end
 
   def reporting_event_count_scope
-    events = scope.reporting_events.where(
-      name: raw_event_name,
-      account_id: account.id,
-      created_at: range
-    )
+    events = if scope.is_a?(Account)
+               ReportingEvent.where(name: raw_event_name, account_id: account_ids, created_at: range)
+             else
+               scope.reporting_events.where(name: raw_event_name, account_id: account_ids, created_at: range)
+             end
 
     return events.where.not(conversation_id: bot_handoff_conversation_ids_subquery) if raw_count_strategy == :exclude_bot_handoffs
     return events unless raw_count_strategy == :distinct_conversation
@@ -90,25 +110,24 @@ class Reports::RawDataSource < Reports::DataSource
   end
 
   def bot_handoff_conversation_ids_subquery
-    scope.reporting_events.where(
-      name: :conversation_bot_handoff,
-      account_id: account.id,
-      created_at: range
-    ).where.not(conversation_id: nil).select(:conversation_id)
+    if scope.is_a?(Account)
+      ReportingEvent.where(name: :conversation_bot_handoff, account_id: account_ids, created_at: range).where.not(conversation_id: nil).select(:conversation_id)
+    else
+      scope.reporting_events.where(name: :conversation_bot_handoff, account_id: account_ids, created_at: range).where.not(conversation_id: nil).select(:conversation_id)
+    end
   end
 
   def summary_scope
-    scope = account.reporting_events.where(created_at: range)
+    scope = ReportingEvent.where(account_id: account_ids, created_at: range)
     return scope.joins(:conversation) if dimension_type == 'team'
 
     scope
   end
 
   def summary_conversation_counts
-    account.conversations
-           .where(created_at: range)
-           .group(summary_conversation_group_by_key)
-           .count
+    Conversation.where(account_id: account_ids, created_at: range)
+                .group(summary_conversation_group_by_key)
+                .count
   end
 
   def merge_summary_results(metric_results, conversation_counts)

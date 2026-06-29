@@ -17,10 +17,16 @@
 #  support_email         :string(100)
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
+#  parent_id             :bigint
 #
 # Indexes
 #
-#  index_accounts_on_status  (status)
+#  index_accounts_on_parent_id  (parent_id)
+#  index_accounts_on_status     (status)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (parent_id => accounts.id)
 #
 
 class Account < ApplicationRecord
@@ -57,6 +63,9 @@ class Account < ApplicationRecord
   store_accessor :settings, :keep_pending_on_bot_failure
   store_accessor :settings, :captain_auto_resolve_mode
   include AccountCaptainAutoResolve
+
+  belongs_to :parent, class_name: 'Account', optional: true
+  has_many :sub_accounts, class_name: 'Account', foreign_key: 'parent_id', dependent: :destroy
 
   has_many :account_users, dependent: :destroy_async
   has_many :agent_bot_inboxes, dependent: :destroy_async
@@ -115,6 +124,7 @@ class Account < ApplicationRecord
   after_create_commit :notify_creation
   after_update_commit :clear_unread_conversation_counts_cache, if: :saved_change_to_feature_conversation_unread_counts?
   after_destroy :remove_account_sequences
+  after_save :propagate_status_change, if: :saved_change_to_status?
 
   def agents
     users.where(account_users: { role: :agent })
@@ -196,6 +206,18 @@ class Account < ApplicationRecord
     clear_unread_conversation_counts_cache
   end
 
+  def custom_attributes
+    if parent_id.present?
+      parent.custom_attributes.slice('plan_name', 'subscribed_quantity', 'subscription_status').merge(super || {})
+    else
+      super || {}
+    end
+  end
+
+  def limits
+    parent_id.present? ? parent.limits : super
+  end
+
   private
 
   def notify_creation
@@ -237,6 +259,14 @@ class Account < ApplicationRecord
   def remove_account_sequences
     ActiveRecord::Base.connection.exec_query("drop sequence IF EXISTS camp_dpid_seq_#{id}")
     ActiveRecord::Base.connection.exec_query("drop sequence IF EXISTS conv_dpid_seq_#{id}")
+  end
+
+  def propagate_status_change
+    if suspended?
+      sub_accounts.update_all(status: :suspended)
+    elsif active?
+      sub_accounts.update_all(status: :active)
+    end
   end
 end
 

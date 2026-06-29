@@ -30,14 +30,40 @@ const globalConfig = useMapGetter('globalConfig/get');
 
 const userAccounts = useMapGetter('getUserAccounts');
 
+const isAdmin = computed(() => {
+  if (currentUser.value.type === 'SuperAdmin') return true;
+
+  const current = (currentUser.value.accounts || []).find(
+    a => a.id === accountId.value
+  );
+  return current?.role === 'administrator';
+});
+
 const showAccountSwitcher = computed(
-  () => userAccounts.value.length > 1 && currentAccount.value.name
+  () =>
+    (userAccounts.value.length > 1 ||
+      (globalConfig.value.createNewAccountFromDashboard && isAdmin.value)) &&
+    currentAccount.value.name
 );
 
 const sortedCurrentUserAccounts = computed(() => {
-  return [...(currentUser.value.accounts || [])].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  const accounts = currentUser.value.accounts || [];
+  const parents = accounts.filter(a => !a.parent_id).sort((a, b) => a.name.localeCompare(b.name));
+  const result = [];
+  
+  parents.forEach(parent => {
+    result.push(parent);
+    const children = accounts.filter(a => a.parent_id === parent.id).sort((a, b) => a.name.localeCompare(b.name));
+    children.forEach(child => {
+      result.push({ ...child, isChild: true });
+    });
+  });
+  
+  const childIdsInResult = result.map(a => a.id);
+  const orphans = accounts.filter(a => a.parent_id && !childIdsInResult.includes(a.id)).sort((a, b) => a.name.localeCompare(b.name));
+  result.push(...orphans);
+  
+  return result;
 });
 
 const onChangeAccount = newId => {
@@ -109,10 +135,13 @@ const emitNewAccount = () => {
             <div
               :for="account.name"
               class="text-left rtl:text-right flex gap-2 items-center"
+              :class="{ 'pl-5 text-n-slate-11': account.isChild }"
             >
+              <span v-if="account.isChild" class="text-n-slate-9 mr-1">↳</span>
               <span
                 class="text-n-slate-12 max-w-36 truncate min-w-0"
                 :title="account.name"
+                :class="{ '!text-n-slate-11': account.isChild }"
               >
                 {{ account.name }}
               </span>
@@ -136,7 +165,7 @@ const emitNewAccount = () => {
           </template>
         </DropdownItem>
       </DropdownSection>
-      <DropdownItem v-if="globalConfig.createNewAccountFromDashboard">
+      <DropdownItem v-if="globalConfig.createNewAccountFromDashboard && isAdmin">
         <ButtonNext
           color="slate"
           variant="faded"

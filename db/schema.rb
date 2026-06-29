@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_25_101058) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_29_081542) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -74,6 +74,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_25_101058) do
     t.jsonb "internal_attributes", default: {}, null: false
     t.jsonb "settings", default: {}
     t.string "custom_domain"
+    t.bigint "parent_id"
+    t.index ["parent_id"], name: "index_accounts_on_parent_id"
     t.index ["status"], name: "index_accounts_on_status"
   end
 
@@ -1322,6 +1324,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_25_101058) do
     t.index ["inbox_id"], name: "index_working_hours_on_inbox_id"
   end
 
+  add_foreign_key "accounts", "accounts", column: "parent_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "inboxes", "portals"

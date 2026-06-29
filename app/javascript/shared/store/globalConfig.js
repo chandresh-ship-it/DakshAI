@@ -35,7 +35,7 @@ const state = {
   brandName,
   chatwootInboxToken,
   deploymentEnv,
-  createNewAccountFromDashboard,
+  createNewAccountFromDashboard: parseBoolean(createNewAccountFromDashboard),
   directUploadsEnabled: parseBoolean(directUploadsEnabled),
   disableUserProfileUpdate: parseBoolean(disableUserProfileUpdate),
   displayManifest,

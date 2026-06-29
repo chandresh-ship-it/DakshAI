@@ -68,6 +68,7 @@
   value: false
   description: 'Allow users to create new accounts from the dashboard'
   locked: false
+  type: boolean
 - name: HCAPTCHA_SITE_KEY
   value:
   locked: false

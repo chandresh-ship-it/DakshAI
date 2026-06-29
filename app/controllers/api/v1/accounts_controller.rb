@@ -123,7 +123,12 @@ class Api::V1::AccountsController < Api::BaseController
   end
 
   def check_signup_enabled
-    raise ActionController::RoutingError, 'Not Found' unless GlobalConfigService.account_signup_enabled?
+    return if GlobalConfigService.account_signup_enabled?
+    return if current_user.present? &&
+              (current_user.is_a?(SuperAdmin) || current_user.account_users.exists?(role: :administrator)) &&
+              ActiveModel::Type::Boolean.new.cast(GlobalConfig.get_value('CREATE_NEW_ACCOUNT_FROM_DASHBOARD'))
+
+    raise ActionController::RoutingError, 'Not Found'
   end
 
   def api_only_signup?

@@ -47,7 +47,10 @@ class DashboardController < ActionController::Base
     @global_config = GlobalConfig.get(*GLOBAL_CONFIG_KEYS).merge(app_config)
 
     # White-labeling overrides: Inject Account branding into global config
-    account = Account.find_by(custom_domain: request.host)
+    account_id = request.path.match(%r{/app/accounts/(\d+)})&.captures&.first
+    account = Account.find_by(id: account_id) if account_id
+    account ||= Account.find_by(custom_domain: request.host)
+
     apply_branding_overrides(account) if account
   end
 
@@ -120,6 +123,35 @@ class DashboardController < ActionController::Base
     hex_to_rgb_space(hex)
   end
   helper_method :lighten_hex
+
+  # Determines if a hex color has dark luminance (< 0.5)
+  # Mirrors the JS `getLuminance()` from color2k used in generateThemeVariables.
+  def dark_background?(hex)
+    return false if hex.blank?
+
+    hex = hex.delete('#')
+    if hex.length == 3
+      r = hex[0].dup.concat(hex[0]).to_i(16) / 255.0
+      g = hex[1].dup.concat(hex[1]).to_i(16) / 255.0
+      b = hex[2].dup.concat(hex[2]).to_i(16) / 255.0
+    elsif hex.length == 6
+      r = hex[0..1].to_i(16) / 255.0
+      g = hex[2..3].to_i(16) / 255.0
+      b = hex[4..5].to_i(16) / 255.0
+    else
+      return false
+    end
+
+    l_r = r <= 0.03928 ? r / 12.92 : ((r + 0.055) / 1.055)**2.4
+    l_g = g <= 0.03928 ? g / 12.92 : ((g + 0.055) / 1.055)**2.4
+    l_b = b <= 0.03928 ? b / 12.92 : ((b + 0.055) / 1.055)**2.4
+
+    luminance = (0.2126 * l_r) + (0.7152 * l_g) + (0.0722 * l_b)
+    luminance < 0.5
+  rescue StandardError
+    false
+  end
+  helper_method :dark_background?
 
   # Build an inline style string with CSS custom properties for brand colors.
   def brand_colors_inline_style(brand_colors)
