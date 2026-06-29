@@ -57,6 +57,21 @@ RSpec.describe AccountBuilder do
         _user, account = account_builder.perform
         expect(account.custom_attributes['onboarding_step']).to eq('account_details')
       end
+
+      it 'assigns the parent_id if provided' do
+        parent_account = create(:account)
+        builder_with_parent = described_class.new(
+          account_name: account_name,
+          email: 'another@example.com',
+          user_full_name: user_full_name,
+          user_password: user_password,
+          confirmed: true,
+          parent_id: parent_account.id
+        )
+        allow(Account::SignUpEmailValidationService).to receive(:new).with('another@example.com').and_return(validation_service)
+        _user, account = builder_with_parent.perform
+        expect(account.parent_id).to eq(parent_account.id)
+      end
     end
   end
 end

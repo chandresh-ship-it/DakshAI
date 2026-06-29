@@ -162,18 +162,21 @@ class Account < ApplicationRecord
 
   def logo_url
     return Rails.application.routes.url_helpers.rails_blob_path(logo, only_path: true) if logo.attached?
+    return parent.logo_url if parent_id.present?
 
     ''
   end
 
   def dark_logo_url
     return Rails.application.routes.url_helpers.rails_blob_path(dark_logo, only_path: true) if dark_logo.attached?
+    return parent.dark_logo_url if parent_id.present?
 
     ''
   end
 
   def favicon_url
     return Rails.application.routes.url_helpers.rails_blob_path(favicon, only_path: true) if favicon.attached?
+    return parent.favicon_url if parent_id.present?
 
     ''
   end
@@ -208,7 +211,7 @@ class Account < ApplicationRecord
 
   def custom_attributes
     if parent_id.present?
-      parent.custom_attributes.slice('plan_name', 'subscribed_quantity', 'subscription_status').merge(super || {})
+      parent.custom_attributes.slice('plan_name', 'subscribed_quantity', 'subscription_status', 'brand_colors').merge(super || {})
     else
       super || {}
     end

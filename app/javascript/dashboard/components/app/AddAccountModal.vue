@@ -46,6 +46,7 @@ export default {
       try {
         const account_id = await this.$store.dispatch('accounts/create', {
           account_name: this.accountName,
+          parent_id: this.$route.params.accountId,
         });
         this.$emit('closeAccountCreateModal');
         useAlert(this.$t('CREATE_ACCOUNT.API.SUCCESS_MESSAGE'));

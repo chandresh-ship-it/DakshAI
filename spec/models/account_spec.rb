@@ -415,11 +415,20 @@ RSpec.describe Account do
     it 'inherits limits and custom attributes' do
       parent_account.update!(
         limits: { 'agents' => 10, 'inboxes' => 5 },
-        custom_attributes: { 'plan_name' => 'premium' }
+        custom_attributes: {
+          'plan_name' => 'premium',
+          'brand_colors' => { 'primary' => '#ff0000' }
+        }
       )
+
+      allow(parent_account).to receive(:logo_url).and_return('/parent_logo.png')
+      allow(parent_account).to receive(:favicon_url).and_return('/parent_favicon.ico')
 
       expect(child_account.limits).to eq({ 'agents' => 10, 'inboxes' => 5 })
       expect(child_account.custom_attributes['plan_name']).to eq('premium')
+      expect(child_account.custom_attributes['brand_colors']).to eq({ 'primary' => '#ff0000' })
+      expect(child_account.logo_url).to eq('/parent_logo.png')
+      expect(child_account.favicon_url).to eq('/parent_favicon.ico')
     end
   end
 end

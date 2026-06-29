@@ -22,13 +22,20 @@ class Api::V1::AccountsController < Api::BaseController
   end
 
   def create
+    parent_id = account_params[:parent_id]
+    if parent_id.present? && !(current_user.present? && (current_user.is_a?(SuperAdmin) || current_user.account_users.exists?(account_id: parent_id,
+                                                                                                                              role: :administrator)))
+      raise ActionController::RoutingError, 'Not Found'
+    end
+
     @user, @account = AccountBuilder.new(
       account_name: account_params[:account_name],
       user_full_name: account_params[:user_full_name],
       email: account_params[:email],
       user_password: account_params[:password],
       locale: account_params[:locale],
-      user: current_user
+      user: current_user,
+      parent_id: parent_id
     ).perform
     enqueue_branding_enrichment
     if @user
@@ -107,7 +114,7 @@ class Api::V1::AccountsController < Api::BaseController
 
   def account_params
     params.permit(:account_name, :email, :name, :password, :locale, :domain, :support_email, :user_full_name, :custom_domain, :logo, :dark_logo,
-                  :favicon)
+                  :favicon, :parent_id)
   end
 
   def custom_attributes_params
