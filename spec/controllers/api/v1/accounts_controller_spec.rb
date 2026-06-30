@@ -85,6 +85,38 @@ RSpec.describe 'Accounts API', type: :request do
       end
     end
 
+    context 'when creating a sub-account' do
+      let(:main_account) { create(:account) }
+      let(:sub_account) { create(:account, parent: main_account) }
+      let(:admin_user) { create(:user, account: main_account, role: :administrator) }
+      let(:sub_account_admin) { create(:user, account: sub_account, role: :administrator) }
+
+      it 'allows creating under a main account' do
+        with_modified_env ENABLE_ACCOUNT_SIGNUP: 'true' do
+          post api_v1_accounts_url,
+               params: { account_name: 'Child Account', email: Faker::Internet.email,
+                         user_full_name: Faker::Name.name, password: 'Password1!', parent_id: main_account.id },
+               headers: admin_user.create_new_auth_token,
+               as: :json
+
+          expect(response).to have_http_status(:success)
+          expect(Account.last.parent_id).to eq(main_account.id)
+        end
+      end
+
+      it 'does not allow creating under a sub-account' do
+        with_modified_env ENABLE_ACCOUNT_SIGNUP: 'true' do
+          post api_v1_accounts_url,
+               params: { account_name: 'Grandchild Account', email: Faker::Internet.email,
+                         user_full_name: Faker::Name.name, password: 'Password1!', parent_id: sub_account.id },
+               headers: sub_account_admin.create_new_auth_token,
+               as: :json
+
+          expect(response).to have_http_status(:not_found)
+        end
+      end
+    end
+
     context 'when ENABLE_ACCOUNT_SIGNUP env variable is set to false' do
       it 'responds 404 on requests' do
         params = { account_name: 'test', email: email, user_full_name: user_full_name }

@@ -23,10 +23,7 @@ class Api::V1::AccountsController < Api::BaseController
 
   def create
     parent_id = account_params[:parent_id]
-    if parent_id.present? && !(current_user.present? && (current_user.is_a?(SuperAdmin) || current_user.account_users.exists?(account_id: parent_id,
-                                                                                                                              role: :administrator)))
-      raise ActionController::RoutingError, 'Not Found'
-    end
+    validate_parent_account(parent_id)
 
     @user, @account = AccountBuilder.new(
       account_name: account_params[:account_name],
@@ -38,22 +35,7 @@ class Api::V1::AccountsController < Api::BaseController
       parent_id: parent_id
     ).perform
     enqueue_branding_enrichment
-    if @user
-      # Authenticated users (dashboard "add account") and api_only signups
-      # need the full response with account_id. API-only deployments have no
-      # frontend to handle the email confirmation flow, so they need auth
-      # tokens to proceed.
-      # Unauthenticated web signup returns only the email — no session is
-      # created until the user confirms via the email link.
-      if current_user || api_only_signup?
-        send_auth_headers(@user)
-        render 'api/v1/accounts/create', format: :json, locals: { resource: @user }
-      else
-        render json: { email: @user.email }
-      end
-    else
-      render_error_response(CustomExceptions::Account::SignupFailed.new({}))
-    end
+    render_create_response
   end
 
   def cache_keys
@@ -149,6 +131,37 @@ class Api::V1::AccountsController < Api::BaseController
 
   def validate_captcha
     raise ActionController::InvalidAuthenticityToken, 'Invalid Captcha' unless ChatwootCaptcha.new(params[:h_captcha_client_response]).valid?
+  end
+
+  def validate_parent_account(parent_id)
+    return if parent_id.blank?
+
+    parent_account = Account.find_by(id: parent_id)
+    raise ActionController::RoutingError, 'Not Found' if parent_account.nil? || parent_account.parent_id.present?
+
+    return if current_user.present? && (current_user.is_a?(SuperAdmin) ||
+              current_user.account_users.exists?(account_id: parent_id, role: :administrator))
+
+    raise ActionController::RoutingError, 'Not Found'
+  end
+
+  def render_create_response
+    if @user
+      # Authenticated users (dashboard "add account") and api_only signups
+      # need the full response with account_id. API-only deployments have no
+      # frontend to handle the email confirmation flow, so they need auth
+      # tokens to proceed.
+      # Unauthenticated web signup returns only the email — no session is
+      # created until the user confirms via the email link.
+      if current_user || api_only_signup?
+        send_auth_headers(@user)
+        render 'api/v1/accounts/create', format: :json, locals: { resource: @user }
+      else
+        render json: { email: @user.email }
+      end
+    else
+      render_error_response(CustomExceptions::Account::SignupFailed.new({}))
+    end
   end
 
   def pundit_user
