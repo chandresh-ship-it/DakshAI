@@ -180,6 +180,19 @@ For local testing and production deployments, the following Caddy config handles
 
 ---
 
-## 7. Conclusion
+## 8. Hierarchical Multi-Tenancy & Sub-Account Restrictions
+
+To support white-labeled reseller setups, we enforce a strict two-level hierarchical tenancy structure (Main Account ➔ Sub-Accounts):
+- **Main Account (Parent)**: Represents the root tenant/reseller (where `parent_id` is `nil`).
+- **Sub-Account (Child)**: Represents the client/sub-brand of the reseller (where `parent_id` points to the Main Account's ID).
+
+To prevent multi-level nesting (sub-accounts of sub-accounts) and keep the switcher list clean:
+1. **API Validation**: In [Api::V1::AccountsController#create](file:///Users/deependrasankhala/Documents/chandresh/chatwoot/app/controllers/api/v1/accounts_controller.rb), when a `parent_id` is specified, the controller validates that the parent account is itself a Main Account (i.e. has `parent_id: nil`). Attempting to nest an account under another sub-account raises a `404 Not Found` routing error.
+2. **UI Controls**: In [SidebarAccountSwitcher.vue](file:///Users/deependrasankhala/Documents/chandresh/chatwoot/app/javascript/dashboard/components-next/sidebar/SidebarAccountSwitcher.vue), the "Add Account" button is hidden for administrators of sub-accounts (sub-admins), ensuring they cannot initiate the account creation flow.
+
+---
+
+## 9. Conclusion
 
 By shifting custom domain lookup to both **Portals** and **Accounts** and utilizing **On-Demand TLS (Caddy)**, we achieve a highly scalable, multi-tenant SaaS model. Clients can fully rebrand the system, map custom subdomains, and serve their agents/visitors with zero manual setup by the core engineering team.
+
