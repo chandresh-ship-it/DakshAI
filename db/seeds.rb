@@ -133,4 +133,11 @@ unless Rails.env.production?
       status: :enabled
     )
   end
+
+  # Seed Exotel Voice Agent Inbox
+  unless account.inboxes.exists?(name: 'Exotel Voice Agent')
+    api_channel = Channel::Api.create!(account: account)
+    exotel_inbox = account.inboxes.create!(name: 'Exotel Voice Agent', channel: api_channel)
+    InboxMember.create!(user: user, inbox: exotel_inbox) if user
+  end
 end
