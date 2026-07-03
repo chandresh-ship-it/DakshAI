@@ -1,6 +1,10 @@
 import { frontendURL } from '../../../helper/URLHelper';
 import ContactsIndex from './pages/ContactsIndex.vue';
 import ContactManageView from './pages/ContactManageView.vue';
+import BulkActionsView from './pages/BulkActionsView.vue';
+import TasksView from './pages/TasksView.vue';
+import CompaniesView from './pages/CompaniesView.vue';
+import ContactsPageRouteView from './pages/ContactsPageRouteView.vue';
 import { FEATURE_FLAGS } from '../../../featureFlags';
 
 const commonMeta = {
@@ -11,7 +15,7 @@ const commonMeta = {
 export const routes = [
   {
     path: frontendURL('accounts/:accountId/contacts'),
-    component: ContactsIndex,
+    component: ContactsPageRouteView,
     meta: commonMeta,
     children: [
       {
@@ -36,6 +40,24 @@ export const routes = [
         path: 'active',
         name: 'contacts_dashboard_active',
         component: ContactsIndex,
+        meta: commonMeta,
+      },
+      {
+        path: 'bulk-actions',
+        name: 'contacts_dashboard_bulk_actions',
+        component: BulkActionsView,
+        meta: commonMeta,
+      },
+      {
+        path: 'tasks',
+        name: 'contacts_dashboard_tasks',
+        component: TasksView,
+        meta: commonMeta,
+      },
+      {
+        path: 'companies',
+        name: 'contacts_dashboard_companies',
+        component: CompaniesView,
         meta: commonMeta,
       },
     ],

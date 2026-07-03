@@ -19,7 +19,7 @@ import {
 } from 'dashboard/composables/useTransformKeys';
 
 import ContactsHeader from 'dashboard/components-next/Contacts/ContactsHeader/ContactHeader.vue';
-import CreateNewContactDialog from 'dashboard/components-next/Contacts/ContactsForm/CreateNewContactDialog.vue';
+import AddContactDrawer from 'dashboard/components-next/Contacts/Drawers/AddContactDrawer.vue';
 import ContactExportDialog from 'dashboard/components-next/Contacts/ContactsForm/ContactExportDialog.vue';
 import ContactImportDialog from 'dashboard/components-next/Contacts/ContactsForm/ContactImportDialog.vue';
 import CreateSegmentDialog from 'dashboard/components-next/Contacts/ContactsForm/CreateSegmentDialog.vue';
@@ -50,7 +50,7 @@ const { t } = useI18n();
 const store = useStore();
 const router = useRouter();
 
-const createNewContactDialogRef = ref(null);
+const addContactDrawerRef = ref(null);
 const contactExportDialogRef = ref(null);
 const contactImportDialogRef = ref(null);
 const createSegmentDialogRef = ref(null);
@@ -69,7 +69,7 @@ const hasActiveSegments = computed(
 const activeSegmentName = computed(() => props.activeSegment?.name);
 
 const openCreateNewContactDialog = () => {
-  createNewContactDialogRef.value?.dialogRef.open();
+  addContactDrawerRef.value?.open();
 };
 const openContactImportDialog = () =>
   contactImportDialogRef.value?.dialogRef.open();
@@ -83,7 +83,7 @@ const openDeleteSegmentDialog = () =>
 const onCreate = async contact => {
   try {
     await store.dispatch('contacts/create', contact);
-    createNewContactDialogRef.value?.onSuccess();
+    addContactDrawerRef.value?.close();
     useAlert(
       t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.SUCCESS_MESSAGE')
     );
@@ -309,7 +309,7 @@ defineExpose({
     </template>
   </ContactsHeader>
 
-  <CreateNewContactDialog ref="createNewContactDialogRef" @create="onCreate" />
+  <AddContactDrawer ref="addContactDrawerRef" @create="onCreate" />
   <ContactExportDialog ref="contactExportDialogRef" @export="onExport" />
   <ContactImportDialog ref="contactImportDialogRef" @import="onImport" />
   <CreateSegmentDialog ref="createSegmentDialogRef" @create="onCreateSegment" />

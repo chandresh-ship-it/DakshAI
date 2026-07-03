@@ -11,9 +11,12 @@ import filterQueryGenerator from 'dashboard/helper/filterQueryGenerator';
 import ContactsListLayout from 'dashboard/components-next/Contacts/ContactsListLayout.vue';
 import ContactEmptyState from 'dashboard/components-next/Contacts/EmptyState/ContactEmptyState.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import ContactsList from 'dashboard/components-next/Contacts/Pages/ContactsList.vue';
+import ContactsTable from 'dashboard/components-next/Contacts/Pages/ContactsTable.vue';
 import ContactsBulkActionBar from '../components/ContactsBulkActionBar.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
+import Popover from 'dashboard/components-next/popover/Popover.vue';
+import ColumnManager from 'dashboard/components-next/Contacts/ColumnManager.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 import BulkActionsAPI from 'dashboard/api/bulkActions';
 
 const DEFAULT_SORT_FIELD = 'last_activity_at';
@@ -56,6 +59,23 @@ const { sort: initialSort, order: initialOrder } =
 const sortState = reactive({
   activeSort: initialSort,
   activeOrdering: initialOrder,
+});
+
+const visibleColumns = computed({
+  get: () =>
+    uiSettings.value?.contacts_visible_columns || [
+      'email',
+      'phoneNumber',
+      'company',
+      'createdAt',
+      'lastActivity',
+      'tags',
+    ],
+  set: val => {
+    updateUISettings({
+      contacts_visible_columns: val,
+    });
+  },
 });
 
 const activeLabel = computed(() => route.params.label);
@@ -471,6 +491,7 @@ watch(searchQuery, value => {
 });
 
 onMounted(async () => {
+  store.dispatch('attributes/get');
   if (!activeSegmentId.value) {
     if (searchQuery.value) {
       await searchContacts(searchQuery.value, pageNumber.value, false, {
@@ -558,10 +579,34 @@ onMounted(async () => {
         </div>
 
         <div v-else class="flex flex-col gap-4 pt-4 pb-6">
-          <ContactsList
+          <div class="flex items-center justify-between px-6 mb-2">
+            <span class="text-xs text-n-slate-11 font-medium">
+              {{
+                t('CONTACTS_BULK_ACTIONS.SELECTED_COUNT', {
+                  count: selectedCount,
+                })
+              }}
+            </span>
+            <Popover align="end">
+              <Button
+                label="Manage Fields"
+                icon="i-lucide-settings-2"
+                variant="ghost"
+                color="slate"
+                size="sm"
+              />
+              <template #content>
+                <ColumnManager v-model:visible-columns="visibleColumns" />
+              </template>
+            </Popover>
+          </div>
+
+          <ContactsTable
             :contacts="contacts"
             :selected-contact-ids="selectedContactIds"
+            :visible-columns="visibleColumns"
             @toggle-contact="toggleContactSelection"
+            @toggle-all="toggleSelectAll"
           />
           <Dialog
             v-if="selectedCount"
