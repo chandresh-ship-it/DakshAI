@@ -11,6 +11,10 @@ class Dyte
   end
 
   def create_a_meeting(title)
+    if Rails.env.development? || Rails.env.test?
+      return { 'id' => "mock-meeting-#{SecureRandom.hex(8)}", 'title' => title }.with_indifferent_access
+    end
+
     payload = {
       'title': title
     }
@@ -20,6 +24,10 @@ class Dyte
   end
 
   def add_participant_to_meeting(meeting_id, client_id, name, avatar_url)
+    if Rails.env.development? || Rails.env.test?
+      return { 'token' => "mock-token-#{SecureRandom.hex(16)}" }.with_indifferent_access
+    end
+
     raise ArgumentError, 'Missing information' if meeting_id.blank? || client_id.blank? || name.blank? || avatar_url.blank?
 
     payload = {

@@ -94,4 +94,43 @@ unless Rails.env.production?
   Seeders::MessageSeeder.create_sample_csat_collect_message conversation
 
   CannedResponse.create!(account: account, short_code: 'start', content: 'Hello welcome to chatwoot.')
+
+  # Seed Dyte Integration Hook for local video calling testing
+  unless Integrations::Hook.exists?(account_id: account.id, app_id: 'dyte')
+    Integrations::Hook.create!(
+      account_id: account.id,
+      app_id: 'dyte',
+      settings: { organization_id: 'mock_dyte_org', api_key: 'mock_dyte_key' },
+      status: :enabled
+    )
+  end
+
+  # Seed Exotel Integration Hook for local voice AI testing
+  unless Integrations::Hook.exists?(account_id: account.id, app_id: 'exotel')
+    Integrations::Hook.create!(
+      account_id: account.id,
+      app_id: 'exotel',
+      settings: {
+        account_sid: 'mock_exotel_sid',
+        api_key: 'mock_exotel_key',
+        api_token: 'mock_exotel_token',
+        subdomain: 'mock_exotel_subdomain',
+        virtual_number: '+919999999999'
+      },
+      status: :enabled
+    )
+  end
+
+  # Seed ElevenLabs Integration Hook for local text-to-speech testing
+  unless Integrations::Hook.exists?(account_id: account.id, app_id: 'elevenlabs')
+    Integrations::Hook.create!(
+      account_id: account.id,
+      app_id: 'elevenlabs',
+      settings: {
+        api_key: 'mock_elevenlabs_key',
+        voice_id: '21m00Tcm4TlvDq8ikWAM'
+      },
+      status: :enabled
+    )
+  end
 end

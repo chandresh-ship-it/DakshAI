@@ -358,6 +358,12 @@ Rails.application.routes.draw do
                 post :add_participant_to_meeting
               end
             end
+            resource :exotel, controller: 'exotel', only: [] do
+              collection do
+                post :incoming_call
+                post :speech_callback
+              end
+            end
             resource :shopify, controller: 'shopify', only: [:destroy] do
               collection do
                 post :auth

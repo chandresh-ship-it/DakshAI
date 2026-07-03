@@ -317,3 +317,95 @@ leadsquared:
       'conversation_activity_score',
       'transcript_activity_score',
     ]
+
+exotel:
+  id: exotel
+  logo: exotel.png
+  i18n_key: exotel
+  action: /exotel
+  hook_type: account
+  allow_multiple_hooks: false
+  settings_json_schema:
+    {
+      'type': 'object',
+      'properties':
+        {
+          'api_key': { 'type': 'string' },
+          'api_token': { 'type': 'string' },
+          'account_sid': { 'type': 'string' },
+          'subdomain': { 'type': 'string' },
+          'virtual_number': { 'type': 'string' }
+        },
+      'required': ['api_key', 'api_token', 'account_sid', 'subdomain', 'virtual_number'],
+      'additionalProperties': false,
+    }
+  settings_form_schema:
+    [
+      {
+        'label': 'Account SID',
+        'type': 'text',
+        'name': 'account_sid',
+        'validation': 'required',
+      },
+      {
+        'label': 'API Key',
+        'type': 'text',
+        'name': 'api_key',
+        'validation': 'required',
+      },
+      {
+        'label': 'API Token',
+        'type': 'text',
+        'name': 'api_token',
+        'validation': 'required',
+      },
+      {
+        'label': 'Subdomain',
+        'type': 'text',
+        'name': 'subdomain',
+        'validation': 'required',
+      },
+      {
+        'label': 'Virtual Number',
+        'type': 'text',
+        'name': 'virtual_number',
+        'validation': 'required',
+      }
+    ]
+  visible_properties: ['account_sid', 'virtual_number']
+
+elevenlabs:
+  id: elevenlabs
+  logo: elevenlabs.png
+  i18n_key: elevenlabs
+  action: /elevenlabs
+  hook_type: account
+  allow_multiple_hooks: false
+  settings_json_schema:
+    {
+      'type': 'object',
+      'properties':
+        {
+          'api_key': { 'type': 'string' },
+          'voice_id': { 'type': 'string' }
+        },
+      'required': ['api_key'],
+      'additionalProperties': false,
+    }
+  settings_form_schema:
+    [
+      {
+        'label': 'API Key',
+        'type': 'text',
+        'name': 'api_key',
+        'validation': 'required',
+      },
+      {
+        'label': 'Voice ID',
+        'type': 'text',
+        'name': 'voice_id',
+        'placeholder': 'e.g., 21m00Tcm4TlvDq8ikWAM (Rachel)',
+      }
+    ]
+  visible_properties: ['voice_id']
+

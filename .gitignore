@@ -104,3 +104,6 @@ CLAUDE.local.md
 .pnpm-store/*
 local/
 Procfile.worktree
+
+# Voice Agent synthesized audio files
+/public/voice_agent/*.mp3

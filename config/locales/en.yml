@@ -350,6 +350,14 @@ en:
       short_description: 'Start video/voice calls with customers directly from DakshAI.'
       description: 'Dyte is a product that integrates audio and video functionalities into your application. With this integration, your agents can start video/voice calls with your customers directly from DakshAI.'
       meeting_name: '%{agent_name} has started a meeting'
+    exotel:
+      name: 'Exotel Telephony'
+      short_description: 'Integrate Exotel virtual numbers to route calls to voice AI agents.'
+      description: 'Connect your Exotel account to allow life-like Voice AI agents to answer customer calls, interact with them, and log recordings in DakshAI.'
+    elevenlabs:
+      name: 'ElevenLabs Voice AI'
+      short_description: 'Synthesize hyper-realistic speech for your conversational voice AI agents.'
+      description: 'ElevenLabs generates lifelike spoken audio from text responses, enabling voice AI agents to converse naturally on phone calls.'
     slack:
       name: 'Slack'
       short_description: 'Receive notifications and respond to conversations directly in Slack.'
