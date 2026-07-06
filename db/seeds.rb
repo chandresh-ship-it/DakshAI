@@ -140,4 +140,37 @@ unless Rails.env.production?
     exotel_inbox = account.inboxes.create!(name: 'Exotel Voice Agent', channel: api_channel)
     InboxMember.create!(user: user, inbox: exotel_inbox) if user
   end
+
+  # Seed Bulk Action Audit Logs for manual testing
+  if BulkActionAudit.count.zero?
+    BulkActionAudit.create!(
+      action_label: 'Add Tag "VIP" to leads',
+      operation_type: 'add_tag',
+      status: :completed,
+      user_id: user.id,
+      account_id: account.id,
+      statistics: { total: 100, success: 95, failed: 5 },
+      completed_at: 10.minutes.ago,
+      created_at: 15.minutes.ago
+    )
+    BulkActionAudit.create!(
+      action_label: 'Remove Tag "Lead" from old contacts',
+      operation_type: 'remove_tag',
+      status: :processing,
+      user_id: user.id,
+      account_id: account.id,
+      statistics: { total: 50, success: 23, failed: 0 },
+      created_at: 1.minute.ago
+    )
+    BulkActionAudit.create!(
+      action_label: 'Delete inactive spam contacts',
+      operation_type: 'delete',
+      status: :failed,
+      user_id: user.id,
+      account_id: account.id,
+      statistics: { total: 120, success: 0, failed: 120 },
+      completed_at: 2.hours.ago,
+      created_at: 2.hours.ago
+    )
+  end
 end

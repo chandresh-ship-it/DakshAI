@@ -692,6 +692,42 @@
       "SINGULAR_DESCRIPTION": "This will permanently delete the selected contact. This action cannot be undone.",
       "CONFIRM_MULTIPLE": "Delete contacts",
       "CONFIRM_SINGLE": "Delete contact"
+    },
+    "AUDIT": {
+      "TITLE": "Bulk Actions Logs",
+      "SUBTITLE": "Track progress and results for bulk actions.",
+      "TABLE": {
+        "ACTION_NAME": "Action Name",
+        "OPERATION": "Operation",
+        "CREATED_AT": "Created At",
+        "COMPLETED_AT": "Completed At",
+        "STATUS": "Status",
+        "STATISTICS": "Progress / Statistics",
+        "ACTIONS": "Actions"
+      },
+      "FILTER": {
+        "STATUS": "All Statuses",
+        "OPERATION": "All Actions",
+        "DATE_FROM": "Created From",
+        "DATE_TO": "Created To"
+      },
+      "STATUS": {
+        "PENDING": "Pending",
+        "PROCESSING": "Processing",
+        "COMPLETED": "Completed",
+        "FAILED": "Failed"
+      },
+      "OPERATION": {
+        "ADD_LABEL": "Add Tag",
+        "REMOVE_LABEL": "Remove Tag",
+        "DELETE": "Delete Contacts",
+        "SEND_SMS": "Send SMS",
+        "SEND_EMAIL": "Send Email"
+      },
+      "EMPTY": {
+        "TITLE": "No bulk actions logs found",
+        "SUBTITLE": "When you run batch updates, additions, or deletions on your contacts, the progress and results will be tracked here."
+      }
     }
   },
 

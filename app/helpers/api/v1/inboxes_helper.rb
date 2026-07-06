@@ -104,15 +104,22 @@ module Api::V1::InboxesHelper
   end
 
   def account_channels_method
-    {
-      'web_widget' => Current.account.web_widgets,
-      'api' => Current.account.api_channels,
-      'email' => Current.account.email_channels,
-      'line' => Current.account.line_channels,
-      'telegram' => Current.account.telegram_channels,
-      'whatsapp' => Current.account.whatsapp_channels,
-      'sms' => Current.account.sms_channels
-    }[permitted_params[:channel][:type]]
+    case permitted_params[:channel][:type]
+    when 'web_widget'
+      Current.account.web_widgets
+    when 'api'
+      Current.account.api_channels
+    when 'email'
+      Current.account.email_channels
+    when 'line'
+      Current.account.line_channels
+    when 'telegram'
+      Current.account.telegram_channels
+    when 'whatsapp'
+      Current.account.respond_to?(:whatsapp_channels) ? Current.account.whatsapp_channels : nil
+    when 'sms'
+      Current.account.sms_channels
+    end
   end
 
   def validate_limit
