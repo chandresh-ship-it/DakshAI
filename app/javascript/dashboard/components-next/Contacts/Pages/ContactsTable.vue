@@ -61,9 +61,15 @@ const handleSelectRow = (id, event) => {
 
 const isSelected = id => selectedIdsSet.value.has(id);
 
+const parseDateString = dateString => {
+  if (!dateString) return null;
+  const isUnixTimestamp = typeof dateString === 'number' || (!isNaN(dateString) && !String(dateString).includes('-') && !String(dateString).includes('T'));
+  return new Date(isUnixTimestamp ? Number(dateString) * 1000 : dateString);
+};
+
 const formatDate = dateString => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
+  const date = parseDateString(dateString);
+  if (!date) return '';
   return date.toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -72,8 +78,8 @@ const formatDate = dateString => {
 };
 
 const getRelativeTime = dateString => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
+  const date = parseDateString(dateString);
+  if (!date) return '';
   const diffMs = new Date() - date;
   const diffMins = Math.floor(diffMs / 60000);
   if (diffMins < 1) return 'Just now';
