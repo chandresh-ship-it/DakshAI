@@ -4,6 +4,10 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
   skip_before_action :authenticate_user!, raise: false
 
   def incoming_call
+    if params[:CallSid].blank? || params[:From].blank?
+      return render json: { error: 'Missing required CallSid or From parameters' }, status: :bad_request
+    end
+
     account = Account.find(params[:account_id])
     call_sid = params[:CallSid]
     from_number = params[:From]
@@ -12,8 +16,8 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
     conversation = fetch_or_create_conversation(account, call_sid, from_number)
 
     # Greeting message
-    greeting_text = "Welcome to Daksh AI. How can I assist you today?"
-    
+    greeting_text = 'Welcome to Daksh AI. How can I assist you today?'
+
     # Log greeting response
     conversation.messages.create!(
       account: account,
@@ -22,7 +26,7 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
       content: greeting_text
     )
 
-    audio_url = generate_speech_audio(account, greeting_text)
+    audio_url = generate_speech_audio(account, greeting_text) || '/voice_agent/default_fallback.mp3'
     callback_url = "#{request.base_url}/api/v1/accounts/#{account.id}/integrations/exotel/speech_callback?CallSid=#{call_sid}&From=#{CGI.escape(from_number)}"
 
     response_xml = <<~XML
@@ -36,6 +40,10 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
   end
 
   def speech_callback
+    if params[:CallSid].blank? || params[:From].blank?
+      return render json: { error: 'Missing required CallSid or From parameters' }, status: :bad_request
+    end
+
     account = Account.find(params[:account_id])
     call_sid = params[:CallSid]
     from_number = params[:From]
@@ -56,7 +64,7 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
     )
 
     # Generate AI response
-    ai_response = generate_ai_response(account, user_speech)
+    ai_response = generate_ai_response(account, user_speech).presence || 'I am sorry, I did not catch that. Can you please repeat?'
 
     # Log outgoing AI agent response
     conversation.messages.create!(
@@ -66,24 +74,24 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
       content: ai_response
     )
 
-    audio_url = generate_speech_audio(account, ai_response)
+    audio_url = generate_speech_audio(account, ai_response) || '/voice_agent/default_fallback.mp3'
     callback_url = "#{request.base_url}/api/v1/accounts/#{account.id}/integrations/exotel/speech_callback?CallSid=#{call_sid}&From=#{CGI.escape(from_number)}"
 
-    if ai_response.downcase.include?('transfer') || ai_response.downcase.include?('hold on')
-      response_xml = <<~XML
-        <Response>
-          <Play>#{request.base_url}#{audio_url}</Play>
-          <Hangup />
-        </Response>
-      XML
-    else
-      response_xml = <<~XML
-        <Response>
-          <Play>#{request.base_url}#{audio_url}</Play>
-          <Record action="#{callback_url}" method="POST" maxLength="15" playBeep="false" />
-        </Response>
-      XML
-    end
+    response_xml = if ai_response.downcase.include?('transfer') || ai_response.downcase.include?('hold on')
+                     <<~XML
+                       <Response>
+                         <Play>#{request.base_url}#{audio_url}</Play>
+                         <Hangup />
+                       </Response>
+                     XML
+                   else
+                     <<~XML
+                       <Response>
+                         <Play>#{request.base_url}#{audio_url}</Play>
+                         <Record action="#{callback_url}" method="POST" maxLength="15" playBeep="false" />
+                       </Response>
+                     XML
+                   end
 
     render xml: response_xml
   end
@@ -115,9 +123,9 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
       ci.source_id = from_number
     end
 
-    conversation = account.conversations.find_by(uuid: call_sid) || 
+    conversation = account.conversations.find_by(uuid: call_sid) ||
                    account.conversations.where("additional_attributes ->> 'call_sid' = ?", call_sid).first
-    
+
     if conversation.nil?
       conversation = account.conversations.create!(
         account: account,
@@ -132,11 +140,11 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
   end
 
   def transcribe_audio(recording_url)
-    return "Hello, I would like to learn about Daksh AI features." if recording_url.blank?
+    return 'Hello, I would like to learn about Daksh AI features.' if recording_url.blank?
 
     # In production, download recording_url and call transcription API (Whisper/etc)
     # For local/testing, we fallback to a smart simulation based on the url
-    "Simulated audio transcript from recording"
+    'Simulated audio transcript from recording'
   end
 
   def generate_ai_response(account, prompt)
@@ -154,16 +162,15 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
           body: {
             model: 'gpt-4o-mini',
             messages: [
-              { role: 'system', content: 'You are a lifelike voice AI assistant representing DakshAI (a premium CRM platform). Give short, conversational audio-friendly answers (1-2 sentences max).' },
+              { role: 'system',
+                content: 'You are a lifelike voice AI assistant representing DakshAI (a premium CRM platform). Give short, conversational audio-friendly answers (1-2 sentences max).' },
               { role: 'user', content: prompt }
             ],
             max_tokens: 150
           }.to_json
         )
-        if response.success?
-          return response.parsed_response.dig('choices', 0, 'message', 'content')
-        end
-      rescue => e
+        return response.parsed_response.dig('choices', 0, 'message', 'content') if response.success?
+      rescue StandardError => e
         Rails.logger.error "OpenAI Call Failed: #{e.message}"
       end
     end

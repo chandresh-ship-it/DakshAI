@@ -37,6 +37,13 @@ RSpec.describe 'Exotel Integration Webhook API', type: :request do
       expect(conversation.messages.count).to eq(1)
       expect(conversation.messages.first.content).to include('Welcome to Daksh')
     end
+
+    it 'returns a bad request error if required parameters are missing' do
+      post "/api/v1/accounts/#{account.id}/integrations/exotel/incoming_call", params: {}
+
+      expect(response).to have_http_status(:bad_request)
+      expect(JSON.parse(response.body)['error']).to eq('Missing required CallSid or From parameters')
+    end
   end
 
   describe 'POST /api/v1/accounts/:account_id/integrations/exotel/speech_callback' do
