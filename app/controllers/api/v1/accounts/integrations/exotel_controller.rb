@@ -91,6 +91,7 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
   private
 
   def fetch_or_create_conversation(account, call_sid, from_number)
+    from_number = normalize_phone_number(from_number)
     contact = account.contacts.find_by(phone_number: from_number)
     if contact.nil?
       contact = account.contacts.create!(
@@ -191,5 +192,15 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
 
     client = ElevenLabs.new(api_key, voice_id)
     client.text_to_speech(text)
+  end
+
+  def normalize_phone_number(phone_number)
+    return nil if phone_number.blank?
+
+    # URL-decoded '+' can turn into a space
+    normalized = phone_number.strip.gsub(/\A\s+/, '+')
+    # Prepend '+' if missing
+    normalized = "+#{normalized}" unless normalized.start_with?('+')
+    normalized
   end
 end
