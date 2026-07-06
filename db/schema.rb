@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_29_081542) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_03_103501) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -262,6 +262,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_29_081542) do
     t.datetime "updated_at", null: false
     t.boolean "active", default: true, null: false
     t.index ["account_id"], name: "index_automation_rules_on_account_id"
+  end
+
+  create_table "bulk_action_audits", force: :cascade do |t|
+    t.string "action_label", null: false
+    t.string "operation_type", null: false
+    t.integer "status", default: 0, null: false
+    t.bigint "user_id", null: false
+    t.bigint "account_id", null: false
+    t.jsonb "statistics", default: {}
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_bulk_action_audits_on_account_id"
+    t.index ["user_id"], name: "index_bulk_action_audits_on_user_id"
   end
 
   create_table "calls", force: :cascade do |t|
@@ -638,6 +652,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_29_081542) do
     t.index ["inbox_id"], name: "index_contact_inboxes_on_inbox_id"
     t.index ["pubsub_token"], name: "index_contact_inboxes_on_pubsub_token", unique: true
     t.index ["source_id"], name: "index_contact_inboxes_on_source_id"
+  end
+
+  create_table "contact_tasks", force: :cascade do |t|
+    t.bigint "contact_id", null: false
+    t.bigint "task_id", null: false
+    t.index ["contact_id", "task_id"], name: "index_contact_tasks_on_contact_id_and_task_id", unique: true
   end
 
   create_table "contacts", id: :serial, force: :cascade do |t|
@@ -1232,6 +1252,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_29_081542) do
     t.integer "taggings_count", default: 0
     t.index "lower((name)::text) gin_trgm_ops", name: "tags_name_trgm_idx", using: :gin
     t.index ["name"], name: "index_tags_on_name", unique: true
+  end
+
+  create_table "tasks", force: :cascade do |t|
+    t.string "title", null: false
+    t.text "description"
+    t.boolean "completed", default: false, null: false
+    t.datetime "due_at"
+    t.bigint "assignee_id"
+    t.bigint "account_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_tasks_on_account_id"
+    t.index ["assignee_id"], name: "index_tasks_on_assignee_id"
   end
 
   create_table "team_members", force: :cascade do |t|

@@ -194,6 +194,8 @@ Rails.application.routes.draw do
               resources :notes, only: [:index]
             end
           end
+          resources :tasks
+          resources :bulk_action_audits, only: [:index, :show]
           resources :contacts, only: [:index, :show, :update, :create, :destroy] do
             collection do
               get :active
