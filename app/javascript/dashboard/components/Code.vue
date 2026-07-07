@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import 'highlight.js/styles/default.css';
 import 'highlight.js/lib/common';
 import NextButton from 'dashboard/components-next/button/Button.vue';
@@ -27,6 +27,11 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const isCopied = ref(false);
+
+const buttonLabel = computed(() => {
+  return isCopied.value ? 'Copied!' : t('COMPONENTS.CODE.BUTTON_TEXT');
+});
 
 const scrubbedScript = computed(() => {
   // remove trailing and leading extra lines and not spaces
@@ -55,7 +60,11 @@ const codepenScriptValue = computed(() => {
 const onCopy = async e => {
   e.preventDefault();
   await copyTextToClipboard(scrubbedScript.value);
-  useAlert(t('COMPONENTS.CODE.COPY_SUCCESSFUL'));
+  useAlert(t('COMPONENTS.CODE.COPY_SUCCESSFUL') || 'Code Copied.');
+  isCopied.value = true;
+  setTimeout(() => {
+    isCopied.value = false;
+  }, 2500);
 };
 </script>
 
@@ -84,7 +93,7 @@ const onCopy = async e => {
         slate
         xs
         faded
-        :label="t('COMPONENTS.CODE.BUTTON_TEXT')"
+        :label="buttonLabel"
         @click="onCopy"
       />
     </div>
