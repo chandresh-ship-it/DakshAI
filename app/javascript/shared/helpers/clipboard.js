@@ -6,13 +6,35 @@
  * @throws {Error} unable to copy text to clipboard
  */
 export const copyTextToClipboard = async data => {
-  try {
-    const text =
-      typeof data === 'object' && data !== null
-        ? JSON.stringify(data, null, 2)
-        : String(data ?? '');
+  const text =
+    typeof data === 'object' && data !== null
+      ? JSON.stringify(data, null, 2)
+      : String(data ?? '');
 
-    await navigator.clipboard.writeText(text);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (error) {
+      // Fall through to fallback method
+    }
+  }
+
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.top = '0';
+    textarea.style.left = '0';
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    if (!successful) {
+      throw new Error('copy command was unsuccessful');
+    }
   } catch (error) {
     throw new Error(`Unable to copy text to clipboard: ${error.message}`);
   }
