@@ -2,6 +2,6 @@
   <!-- Circle Mark -->
   <path d="M256 546C397.385 546 512 431.385 512 290C512 148.615 397.385 34 256 34C114.615 34 0 148.615 0 290C0 431.385 114.615 546 256 546Z" fill="#2781F6"/>
   <path d="M367 410H247.99C182.388 410 129 356.608 129 290.989C129 225.392 182.388 172 247.992 172C313.612 172 367 225.392 367 290.989V410Z" fill="white" stroke="white" stroke-width="6"/>
-  <!-- Text "DakshAI" -->
-  <text x="590" y="390" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="260" fill="#FFFFFF" letter-spacing="-0.03em">DakshAI</text>
+  <!-- Text "newrelay" -->
+  <text x="590" y="390" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="260" fill="#FFFFFF" letter-spacing="-0.03em">newrelay</text>
 </svg>

@@ -60,9 +60,21 @@ RSpec.describe Contact do
   end
 
   context 'when phone number format' do
-    it 'will throw error for existing invalid phone number' do
+    it 'normalizes phone number with spaces, brackets, and dashes' do
       contact = create(:contact)
-      expect { contact.update!(phone_number: '123456789') }.to raise_error(ActiveRecord::RecordInvalid)
+      expect(contact.update!(phone_number: '+1 (202) 456-1111')).to be true
+      expect(contact.phone_number).to eq '+12024561111'
+    end
+
+    it 'normalizes phone number missing the leading plus or containing spaces' do
+      contact = create(:contact)
+      expect(contact.update!(phone_number: ' 919252525777')).to be true
+      expect(contact.phone_number).to eq '+919252525777'
+    end
+
+    it 'will throw error for completely invalid phone number' do
+      contact = create(:contact)
+      expect { contact.update!(phone_number: 'abc') }.to raise_error(ActiveRecord::RecordInvalid)
     end
 
     it 'updates phone number when adding valid phone number' do

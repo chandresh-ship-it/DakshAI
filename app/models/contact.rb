@@ -217,7 +217,21 @@ class Contact < ApplicationRecord
 
   def prepare_contact_attributes
     prepare_email_attribute
+    prepare_phone_number_attribute
     prepare_jsonb_attributes
+  end
+
+  def prepare_phone_number_attribute
+    return if phone_number.blank?
+
+    cleaned = phone_number.gsub(/[^0-9+]/, '')
+    parsed = TelephoneNumber.parse(cleaned)
+    if parsed.e164_number.present?
+      self.phone_number = parsed.e164_number.start_with?('+') ? parsed.e164_number : "+#{parsed.e164_number}"
+    else
+      cleaned = "+#{cleaned}" unless cleaned.start_with?('+')
+      self.phone_number = cleaned if cleaned.match?(/\A\+[1-9]\d{1,14}\z/)
+    end
   end
 
   def prepare_email_attribute
