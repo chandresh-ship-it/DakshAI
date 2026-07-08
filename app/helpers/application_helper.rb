@@ -11,6 +11,6 @@ module ApplicationHelper
   end
 
   def application_title
-    'newrelay'
+    'Newrelay'
   end
 end
