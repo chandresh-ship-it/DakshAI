@@ -1,6 +1,6 @@
 {
   "LOGIN": {
-    "TITLE": "Login to newrelay",
+    "TITLE": "Login to Newrelay",
     "EMAIL": {
       "LABEL": "Email",
       "PLACEHOLDER": "example{'@'}companyname.com",
