@@ -66,7 +66,7 @@ export default {
         if (newName) {
           document.title = newName;
         } else {
-          document.title = globalConfig.value?.installationName || 'DakshAI';
+          document.title = globalConfig.value?.installationName || 'newrelay';
         }
       },
       { immediate: true }

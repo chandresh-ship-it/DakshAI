@@ -163,7 +163,7 @@ class Api::V1::Accounts::Integrations::ExotelController < Api::BaseController
             model: 'gpt-4o-mini',
             messages: [
               { role: 'system',
-                content: 'You are a lifelike voice AI assistant representing DakshAI (a premium CRM platform). Give short, conversational audio-friendly answers (1-2 sentences max).' },
+                content: 'You are a lifelike voice AI assistant representing newrelay (a premium CRM platform). Give short, conversational audio-friendly answers (1-2 sentences max).' },
               { role: 'user', content: prompt }
             ],
             max_tokens: 150
