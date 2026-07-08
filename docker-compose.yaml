@@ -92,9 +92,9 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - postgres:/data/postgres
+      - postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=chatwoot
+      - POSTGRES_DB=newrelay_production
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=
       - POSTGRES_HOST_AUTH_METHOD=trust
