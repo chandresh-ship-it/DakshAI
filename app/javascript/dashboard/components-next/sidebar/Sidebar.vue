@@ -453,6 +453,19 @@ const menuItems = computed(() => {
       ],
     },
     {
+      name: 'Reputation',
+      icon: 'i-lucide-star',
+      label: t('SIDEBAR.REPUTATION'),
+      to: accountScopedRoute('reputation_overview'),
+      activeOn: [
+        'reputation_overview',
+        'reputation_reviews',
+        'reputation_requests',
+        'reputation_widgets',
+        'reputation_settings',
+      ],
+    },
+    {
       name: 'Contacts',
       label: t('SIDEBAR.CONTACTS'),
       icon: 'i-lucide-contact',

@@ -196,6 +196,19 @@ Rails.application.routes.draw do
           end
           resources :tasks
           resources :bulk_action_audits, only: [:index, :show]
+          namespace :reputation do
+            resources :reviews, only: [:index] do
+              member do
+                post :reply
+                get :ai_draft
+                patch :ignore
+              end
+            end
+            resources :integrations, only: [:index, :create, :destroy]
+            resources :templates, only: [:index, :create, :update, :destroy]
+            resources :review_requests, only: [:index, :create]
+            resources :widgets, only: [:index, :create, :update, :destroy]
+          end
           resources :contacts, only: [:index, :show, :update, :create, :destroy] do
             collection do
               get :active
@@ -660,6 +673,10 @@ Rails.application.routes.draw do
   get 'instagram/callback', to: 'instagram/callbacks#show'
   get 'tiktok/callback', to: 'tiktok/callbacks#show'
   get 'notion/callback', to: 'notion/callbacks#show'
+  get 'reputation/oauth/callback', to: 'reputation/oauth_callbacks#show'
+  get 'reputation/widget/:token/reviews', to: 'reputation/public_widgets#reviews'
+  get 'r/:token', to: 'reputation/public_widgets#redirect'
+  post 'reputation/feedback', to: 'reputation/feedback#create'
   # ----------------------------------------------------------------------
   # Routes for external service verifications
   get '.well-known/assetlinks.json' => 'android_app#assetlinks'

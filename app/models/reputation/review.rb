@@ -1,3 +1,27 @@
+# == Schema Information
+#
+# Table name: reputation_reviews
+#
+#  id                        :bigint           not null, primary key
+#  body                      :text
+#  provider                  :string           not null
+#  rating                    :integer
+#  reviewed_at               :datetime
+#  reviewer_name             :string
+#  status                    :string           default("pending")
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  account_id                :bigint           not null
+#  external_id               :string           not null
+#  reputation_integration_id :bigint           not null
+#
+# Indexes
+#
+#  idx_reputation_reviews_unique                          (account_id,external_id,provider) UNIQUE
+#  index_reputation_reviews_on_account_id                 (account_id)
+#  index_reputation_reviews_on_account_id_and_status      (account_id,status)
+#  index_reputation_reviews_on_reputation_integration_id  (reputation_integration_id)
+#
 class Reputation::Review < ApplicationRecord
   self.table_name = 'reputation_reviews'
 

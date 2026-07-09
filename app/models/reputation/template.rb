@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: reputation_templates
+#
+#  id         :bigint           not null, primary key
+#  active     :boolean          default(TRUE)
+#  body       :text             not null
+#  channel    :string           not null
+#  name       :string           not null
+#  subject    :string
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  account_id :bigint           not null
+#
+# Indexes
+#
+#  index_reputation_templates_on_account_id              (account_id)
+#  index_reputation_templates_on_account_id_and_channel  (account_id,channel)
+#
 class Reputation::Template < ApplicationRecord
   self.table_name = 'reputation_templates'
 

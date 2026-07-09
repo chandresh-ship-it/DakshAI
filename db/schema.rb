@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_03_103501) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_09_000008) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1196,6 +1196,108 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_03_103501) do
     t.index ["account_id", "date", "dimension_type", "dimension_id", "metric"], name: "index_rollup_unique_key", unique: true
     t.index ["account_id", "dimension_type", "date"], name: "index_rollup_summary"
     t.index ["account_id", "metric", "date"], name: "index_rollup_timeseries"
+  end
+
+  create_table "reputation_feedback_submissions", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "reputation_review_request_id", null: false
+    t.integer "rating", null: false
+    t.text "body"
+    t.string "reviewer_name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_reputation_feedback_submissions_on_account_id"
+    t.index ["reputation_review_request_id"], name: "idx_on_reputation_review_request_id_f7ad17c20e"
+  end
+
+  create_table "reputation_integrations", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "provider", null: false
+    t.string "location_id", null: false
+    t.string "location_name"
+    t.text "access_token"
+    t.text "refresh_token"
+    t.datetime "token_expires_at"
+    t.string "status", default: "active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "provider", "location_id"], name: "idx_reputation_integrations_unique", unique: true
+    t.index ["account_id"], name: "index_reputation_integrations_on_account_id"
+  end
+
+  create_table "reputation_review_replies", force: :cascade do |t|
+    t.bigint "reputation_review_id", null: false
+    t.bigint "account_id", null: false
+    t.text "body", null: false
+    t.string "status", default: "draft"
+    t.datetime "published_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_reputation_review_replies_on_account_id"
+    t.index ["reputation_review_id"], name: "index_reputation_review_replies_on_reputation_review_id"
+  end
+
+  create_table "reputation_review_requests", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "reputation_template_id", null: false
+    t.bigint "contact_id", null: false
+    t.string "channel", null: false
+    t.string "status", default: "sent"
+    t.string "token", null: false
+    t.datetime "clicked_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "status"], name: "index_reputation_review_requests_on_account_id_and_status"
+    t.index ["account_id"], name: "index_reputation_review_requests_on_account_id"
+    t.index ["contact_id"], name: "index_reputation_review_requests_on_contact_id"
+    t.index ["reputation_template_id"], name: "index_reputation_review_requests_on_reputation_template_id"
+    t.index ["token"], name: "index_reputation_review_requests_on_token", unique: true
+  end
+
+  create_table "reputation_reviews", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "reputation_integration_id", null: false
+    t.string "external_id", null: false
+    t.string "provider", null: false
+    t.integer "rating"
+    t.text "body"
+    t.string "reviewer_name"
+    t.string "status", default: "pending"
+    t.datetime "reviewed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "external_id", "provider"], name: "idx_reputation_reviews_unique", unique: true
+    t.index ["account_id", "status"], name: "index_reputation_reviews_on_account_id_and_status"
+    t.index ["account_id"], name: "index_reputation_reviews_on_account_id"
+    t.index ["reputation_integration_id"], name: "index_reputation_reviews_on_reputation_integration_id"
+  end
+
+  create_table "reputation_templates", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.string "channel", null: false
+    t.text "body", null: false
+    t.string "subject"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "channel"], name: "index_reputation_templates_on_account_id_and_channel"
+    t.index ["account_id"], name: "index_reputation_templates_on_account_id"
+  end
+
+  create_table "reputation_widgets", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.string "style", default: "carousel"
+    t.integer "min_rating", default: 4
+    t.boolean "active", default: true
+    t.string "token", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "hide_watermark", default: false, null: false
+    t.index ["account_id"], name: "index_reputation_widgets_on_account_id"
+    t.index ["token"], name: "index_reputation_widgets_on_token", unique: true
   end
 
   create_table "sla_events", force: :cascade do |t|

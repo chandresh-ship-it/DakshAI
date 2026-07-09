@@ -1,3 +1,27 @@
+# == Schema Information
+#
+# Table name: reputation_review_requests
+#
+#  id                     :bigint           not null, primary key
+#  channel                :string           not null
+#  clicked_at             :datetime
+#  completed_at           :datetime
+#  status                 :string           default("sent")
+#  token                  :string           not null
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  account_id             :bigint           not null
+#  contact_id             :bigint           not null
+#  reputation_template_id :bigint           not null
+#
+# Indexes
+#
+#  index_reputation_review_requests_on_account_id              (account_id)
+#  index_reputation_review_requests_on_account_id_and_status   (account_id,status)
+#  index_reputation_review_requests_on_contact_id              (contact_id)
+#  index_reputation_review_requests_on_reputation_template_id  (reputation_template_id)
+#  index_reputation_review_requests_on_token                   (token) UNIQUE
+#
 class Reputation::ReviewRequest < ApplicationRecord
   self.table_name = 'reputation_review_requests'
 

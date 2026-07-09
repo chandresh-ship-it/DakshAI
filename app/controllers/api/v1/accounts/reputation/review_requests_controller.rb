@@ -1,0 +1,26 @@
+class Api::V1::Accounts::Reputation::ReviewRequestsController < Api::V1::Accounts::BaseController
+  # GET /api/v1/accounts/:account_id/reputation/review_requests
+  def index
+    requests = current_account.reputation_review_requests
+                               .includes(:reputation_template, :contact)
+                               .order(created_at: :desc)
+                               .limit(50)
+    render json: requests.as_json(
+      only: %i[id channel status created_at clicked_at completed_at],
+      include: {
+        reputation_template: { only: %i[id name channel] },
+        contact: { only: %i[id name phone_number email] }
+      }
+    )
+  end
+
+  # POST /api/v1/accounts/:account_id/reputation/review_requests
+  def create
+    Reputation::ReviewRequestSendService.new(
+      account: current_account,
+      template_id: params.require(:template_id),
+      contact_id: params.require(:contact_id)
+    ).send!
+    head :created
+  end
+end
