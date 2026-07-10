@@ -43,6 +43,50 @@ class Api::V1::Accounts::Reputation::IntegrationsController < Api::V1::Accounts:
 
   # rubocop:disable Metrics/MethodLength
   def seed_mock_reviews(integration)
+    if integration.provider == 'google' && ENV.fetch('GOOGLE_MAPS_API_KEY', nil).present?
+      fetch_and_create_real_google_reviews(integration)
+    else
+      seed_mock_templates(integration)
+    end
+  end
+
+  def fetch_and_create_real_google_reviews(integration)
+    raw_reviews = fetch_google_reviews_from_api(integration.location_id)
+    if raw_reviews.any?
+      save_real_google_reviews(integration, raw_reviews)
+    else
+      seed_mock_templates(integration)
+    end
+  rescue StandardError => e
+    Rails.logger.error "Failed to fetch real Google reviews: #{e.message}"
+    seed_mock_templates(integration)
+  end
+
+  def fetch_google_reviews_from_api(place_id)
+    api_key = ENV.fetch('GOOGLE_MAPS_API_KEY', nil)
+    url = "https://maps.googleapis.com/maps/api/place/details/json?place_id=#{place_id}&fields=reviews,name,rating&key=#{api_key}"
+    response = HTTParty.get(url, verify: false)
+    return [] unless response.success? && response.parsed_response['result']
+
+    response.parsed_response.dig('result', 'reviews') || []
+  end
+
+  def save_real_google_reviews(integration, raw_reviews)
+    raw_reviews.each do |raw|
+      integration.reputation_reviews.create!(
+        account: integration.account,
+        provider: 'google',
+        external_id: "#{raw['time']}_#{SecureRandom.hex(2)}",
+        reviewer_name: raw['author_name'] || 'Google User',
+        rating: raw['rating'].to_i,
+        body: raw['text'],
+        status: :pending,
+        reviewed_at: Time.zone.at(raw['time'].to_i)
+      )
+    end
+  end
+
+  def seed_mock_templates(integration)
     templates = review_templates_for(integration.provider)
     templates.each do |t|
       integration.reputation_reviews.create!(
