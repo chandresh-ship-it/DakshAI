@@ -107,3 +107,4 @@ Procfile.worktree
 
 # Voice Agent synthesized audio files
 /public/voice_agent/*.mp3
+.aider*

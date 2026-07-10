@@ -19,6 +19,11 @@ class TriggerScheduledItemsJob < ApplicationJob
 
     # Job to sync whatsapp templates
     Channels::Whatsapp::TemplatesSyncSchedulerJob.perform_later
+
+    # Enqueue review sync for each active reputation integration
+    Reputation::Integration.where(status: :active).find_each(batch_size: 50) do |integration|
+      Reputation::ReviewSyncJob.perform_later(integration.id)
+    end
   end
 end
 

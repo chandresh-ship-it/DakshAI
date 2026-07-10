@@ -110,6 +110,11 @@ class Account < ApplicationRecord
   has_many :working_hours, dependent: :destroy_async
   has_many :tasks, dependent: :destroy_async
   has_many :bulk_action_audits, dependent: :destroy_async
+  has_many :reputation_integrations, dependent: :destroy_async, class_name: 'Reputation::Integration'
+  has_many :reputation_reviews, dependent: :destroy_async, class_name: 'Reputation::Review'
+  has_many :reputation_templates, dependent: :destroy_async, class_name: 'Reputation::Template'
+  has_many :reputation_review_requests, dependent: :destroy_async, class_name: 'Reputation::ReviewRequest'
+  has_many :reputation_widgets, dependent: :destroy_async, class_name: 'Reputation::Widget'
 
   has_one_attached :contacts_export
   has_one_attached :logo
