@@ -27,9 +27,24 @@ class Reputation::Review < ApplicationRecord
 
   belongs_to :account
   belongs_to :reputation_integration, class_name: 'Reputation::Integration'
-  has_one :reputation_review_reply, class_name: 'Reputation::ReviewReply', foreign_key: :reputation_review_id, dependent: :destroy
+  has_one :reputation_review_reply,
+          class_name: 'Reputation::ReviewReply',
+          foreign_key: :reputation_review_id,
+          dependent: :destroy,
+          inverse_of: :reputation_review
 
-  enum :provider, { google: 'google', facebook: 'facebook' }
+  enum :provider, {
+    google: 'google',
+    facebook: 'facebook',
+    agoda: 'agoda',
+    airbnb: 'airbnb',
+    aliexpress: 'aliexpress',
+    amazon: 'amazon',
+    angi: 'angi',
+    apple_app_store: 'apple_app_store',
+    avvo: 'avvo',
+    custom: 'custom'
+  }
   enum :status, { pending: 'pending', replied: 'replied', ignored: 'ignored' }
 
   validates :external_id, :provider, :rating, presence: true

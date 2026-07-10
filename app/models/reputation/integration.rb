@@ -23,7 +23,11 @@ class Reputation::Integration < ApplicationRecord
   self.table_name = 'reputation_integrations'
 
   belongs_to :account
-  has_many :reputation_reviews, foreign_key: :reputation_integration_id, dependent: :destroy
+  has_many :reputation_reviews,
+           class_name: 'Reputation::Review',
+           foreign_key: :reputation_integration_id,
+           dependent: :destroy,
+           inverse_of: :reputation_integration
 
   encrypts :access_token, :refresh_token
 
