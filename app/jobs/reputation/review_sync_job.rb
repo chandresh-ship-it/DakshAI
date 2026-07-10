@@ -22,6 +22,8 @@ class Reputation::ReviewSyncJob < ApplicationJob
   end
 
   def fetch_google_reviews(integration)
+    return [] if integration.access_token.blank?
+
     response = HTTParty.get(
       "https://mybusiness.googleapis.com/v4/#{integration.location_id}/reviews",
       headers: { 'Authorization' => "Bearer #{integration.access_token}" }
@@ -30,6 +32,8 @@ class Reputation::ReviewSyncJob < ApplicationJob
   end
 
   def fetch_facebook_reviews(integration)
+    return [] if integration.access_token.blank?
+
     response = HTTParty.get(
       "https://graph.facebook.com/#{integration.location_id}/ratings",
       query: { access_token: integration.access_token, fields: 'reviewer,rating,review_text,created_time' }
@@ -54,8 +58,8 @@ class Reputation::ReviewSyncJob < ApplicationJob
     when 'google'
       {
         external_id: raw['reviewId'],
-        rating: raw.dig('starRating') == 'FIVE' ? 5 : raw.dig('starRating').to_s.length, # GBP uses enum
-        body: raw.dig('comment'),
+        rating: raw['starRating'] == 'FIVE' ? 5 : raw['starRating'].to_s.length, # GBP uses enum
+        body: raw['comment'],
         reviewer_name: raw.dig('reviewer', 'displayName'),
         reviewed_at: raw['createTime']
       }

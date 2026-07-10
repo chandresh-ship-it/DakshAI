@@ -63,7 +63,7 @@ class Api::V1::Accounts::Reputation::IntegrationsController < Api::V1::Accounts:
     when 'google'
       [
         { reviewer_name: 'Sarah Jenkins', rating: 5,
-          body: 'Absolutely wonderful experience! The team was prompt, professional, and went above and beyond my expectations. Highly recommend to everyone.',
+          body: 'Absolutely wonderful experience! The team was prompt, professional, and went above and beyond. Highly recommend to everyone.',
           reviewed_at: 1.day.ago },
         { reviewer_name: 'Michael Chen', rating: 4,
           body: 'Very satisfied with the quality of service and overall communication. Will be back and will definitely recommend!',
