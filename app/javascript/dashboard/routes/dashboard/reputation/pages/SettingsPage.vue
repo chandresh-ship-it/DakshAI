@@ -21,6 +21,13 @@ const selectedPlatform = ref(null);
 const listingUrl = ref('');
 const listingName = ref('');
 
+// Google Business modal
+const showGoogleModal = ref(false);
+const googleBusinessUrl = ref('');
+const googleBusinessName = ref('');
+const googleConnecting = ref(false);
+const googleError = ref('');
+
 // Custom platform modal
 const showCustomModal = ref(false);
 const customPlatformName = ref('');
@@ -86,13 +93,6 @@ async function loadData() {
   }
 }
 
-const connectGoogle = () => {
-  const clientId = window.chatwootConfig?.reputationGoogleClientId;
-  const redirect = `${window.location.origin}/reputation/oauth/callback?provider=google`;
-  window.location.href =
-    `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirect}&response_type=code&scope=https://www.googleapis.com/auth/business.manage&state=${accountId}`;
-};
-
 const connectFacebook = () => {
   const appId = window.chatwootConfig?.reputationFacebookAppId;
   const redirect = `${window.location.origin}/reputation/oauth/callback?provider=facebook`;
@@ -102,7 +102,10 @@ const connectFacebook = () => {
 
 function openConnectModal(platform) {
   if (platform.id === 'google') {
-    connectGoogle();
+    googleBusinessUrl.value = '';
+    googleBusinessName.value = '';
+    googleError.value = '';
+    showGoogleModal.value = true;
     return;
   }
   if (platform.id === 'facebook') {
@@ -113,6 +116,52 @@ function openConnectModal(platform) {
   listingUrl.value = '';
   listingName.value = '';
   showConnectModal.value = true;
+}
+
+// Extract Place ID from a Google Maps URL or direct Place ID input
+function extractGooglePlaceId(url) {
+  if (!url) return null;
+  // Direct ChIJ... place ID
+  if (/^ChIJ/.test(url.trim())) return url.trim();
+  // g.page/r/<place_id>/review
+  const gpage = url.match(/g\.page\/r\/([A-Za-z0-9_-]+)/);
+  if (gpage) return gpage[1];
+  // place_id= param
+  const placeParam = url.match(/place_id=([^&]+)/);
+  if (placeParam) return decodeURIComponent(placeParam[1]);
+  // maps.google.com/.../@lat,lng or place/name/
+  // Fallback: use the whole URL as location_id (truncated)
+  return url.trim().slice(0, 200);
+}
+
+async function submitGoogleConnection() {
+  googleError.value = '';
+  if (!googleBusinessUrl.value.trim() || !googleBusinessName.value.trim()) {
+    googleError.value = 'Please enter both your Google Business URL and business name.';
+    return;
+  }
+  const locationId = extractGooglePlaceId(googleBusinessUrl.value);
+  if (!locationId) {
+    googleError.value = 'Could not parse a valid Google Business URL. Please copy the link from your Google Business Profile.';
+    return;
+  }
+  googleConnecting.value = true;
+  try {
+    const { data } = await axios.post(`${baseApi()}/integrations`, {
+      integration: {
+        provider: 'google',
+        location_id: locationId,
+        location_name: googleBusinessName.value.trim()
+      }
+    });
+    integrations.value.unshift(data);
+    showGoogleModal.value = false;
+  } catch (err) {
+    const msg = err?.response?.data?.errors?.[0];
+    googleError.value = msg || 'This business may already be connected, or the connection failed. Please try again.';
+  } finally {
+    googleConnecting.value = false;
+  }
 }
 
 async function submitConnection() {
@@ -848,6 +897,83 @@ onMounted(loadData);
           </div>
         </div>
       </main>
+    </div>
+
+    <!-- Google Business Connection Modal -->
+    <div
+      v-if="showGoogleModal"
+      class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+    >
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 max-w-lg w-full shadow-2xl p-6 space-y-5">
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-500 font-extrabold text-xs">GB</div>
+            <h3 class="font-extrabold text-slate-900 dark:text-white text-base">Connect Google Business Profile</h3>
+          </div>
+          <button class="text-slate-400 hover:text-slate-650" @click="showGoogleModal = false">
+            <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <!-- How to get the URL -->
+        <div class="bg-slate-50 dark:bg-slate-850/50 rounded-xl border border-slate-100 dark:border-slate-800 p-4 space-y-2">
+          <p class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">How to find your Google Business URL</p>
+          <ol class="text-xs text-slate-600 dark:text-slate-350 space-y-1 list-decimal list-inside">
+            <li>Go to <span class="font-semibold text-slate-800 dark:text-white">business.google.com</span> and sign in</li>
+            <li>Click your business → <span class="font-semibold">Ask for reviews</span></li>
+            <li>Copy the <span class="font-semibold">short link</span> (starts with <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded text-[10px]">g.page/r/</code>)</li>
+            <li>Or from Google Maps → Share → Copy Link</li>
+          </ol>
+        </div>
+
+        <!-- Inputs -->
+        <div class="space-y-4">
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Google Business URL or Place ID</label>
+            <input
+              v-model="googleBusinessUrl"
+              type="text"
+              placeholder="https://g.page/r/XXXXXXXXXX/review or ChIJ..."
+              class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-750 dark:bg-slate-850 p-2.5 focus:outline-none focus:ring-2 focus:ring-woot-500"
+            />
+            <p class="text-[10px] text-slate-400">Paste your review shortlink, Google Maps link, or Place ID directly.</p>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Business Name</label>
+            <input
+              v-model="googleBusinessName"
+              type="text"
+              placeholder="e.g. Acme Restaurant — Main Branch"
+              class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-750 dark:bg-slate-850 p-2.5 focus:outline-none focus:ring-2 focus:ring-woot-500"
+            />
+          </div>
+        </div>
+
+        <!-- Error -->
+        <div v-if="googleError" class="text-xs text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-xl px-4 py-2.5">
+          {{ googleError }}
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-2 pt-1">
+          <button
+            class="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-500 dark:text-slate-350 rounded-xl transition-all"
+            @click="showGoogleModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            class="px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2 disabled:opacity-60"
+            :disabled="googleConnecting"
+            @click="submitGoogleConnection"
+          >
+            <svg v-if="googleConnecting" class="size-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            {{ googleConnecting ? 'Connecting...' : 'Connect Google Business' }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Connection Modal for standard listings -->
