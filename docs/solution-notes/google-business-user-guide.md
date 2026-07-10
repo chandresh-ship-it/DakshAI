@@ -64,9 +64,11 @@ Your integration will connect immediately, and Google reviews will start appeari
 
 ## 3. How It Works Under the Hood
 
-### Review Seeding
-Upon successful connection, Newrelay automatically creates 5 realistic, mock Google Business reviews (varying between 3 to 5 stars, with realistic English user comments and appropriate metadata). These represent actual consumer behavior and let you verify the auto-responder AI and widget presentation instantly.
+### Review Seeding & Live Review Fetching
+Upon successful connection, the backend checks for the presence of the `GOOGLE_MAPS_API_KEY` environment variable:
+*   **Without API Key (Development/Demo Mode):** It automatically creates 5 realistic, mock Google Business reviews (varying between 3 to 5 stars, with appropriate metadata). This allows you to verify the auto-responder AI and widget presentation instantly without complex setup.
+*   **With API Key (Production Mode):** If you add `GOOGLE_MAPS_API_KEY=your_key` to your `.env` file, the integration will query Google's official **Places API Details** endpoint to pull your actual live reviews from Google and save them directly in the database!
 
 ### Background Synchronization
-* **Sync Interval**: Background review sync checks run every 30 minutes via Sidekiq (`Reputation::ReviewSyncJob`).
-* **Manual Connection Guard**: The worker checks if the integration contains active OAuth credentials. For manual URL connections, it skips API requests to avoid authorization failures while keeping the integration active and mock reviews intact.
+*   **Sync Interval**: Background review sync checks run every 30 minutes via Sidekiq (`Reputation::ReviewSyncJob`).
+*   **Manual Connection Guard**: The worker checks if the integration contains active OAuth credentials. For manual URL connections, it gracefully skips standard OAuth API requests (to avoid authorization failures) while keeping the live reviews active.
