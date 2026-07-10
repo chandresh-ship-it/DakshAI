@@ -204,7 +204,11 @@ Rails.application.routes.draw do
                 patch :ignore
               end
             end
-            resources :integrations, only: [:index, :create, :destroy]
+            resources :integrations, only: [:index, :create, :destroy] do
+              collection do
+                get :google_locations
+              end
+            end
             resources :templates, only: [:index, :create, :update, :destroy]
             resources :review_requests, only: [:index, :create]
             resources :widgets, only: [:index, :create, :update, :destroy]

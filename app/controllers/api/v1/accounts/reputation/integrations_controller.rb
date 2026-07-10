@@ -1,3 +1,4 @@
+# rubocop:disable Metrics/ClassLength, Metrics/MethodLength, Metrics/AbcSize, Metrics/PerceivedComplexity
 class Api::V1::Accounts::Reputation::IntegrationsController < Api::V1::Accounts::BaseController
   before_action :integration, only: [:destroy]
 
@@ -8,20 +9,90 @@ class Api::V1::Accounts::Reputation::IntegrationsController < Api::V1::Accounts:
     )
   end
 
+  # GET /api/v1/accounts/:account_id/reputation/integrations/google_locations
+  def google_locations
+    cache_key = params[:oauth_session_id]
+    if cache_key.present?
+      raw_data = $alfred.get(cache_key)
+      token_data = JSON.parse(raw_data) if raw_data.present?
+    end
+
+    if token_data.blank?
+      render json: { errors: ['Google account credentials not found or expired. Please authenticate again.'] }, status: :unprocessable_entity
+      return
+    end
+
+    options = { headers: { 'Authorization' => "Bearer #{token_data['access_token']}" } }
+    options[:verify] = false if Rails.env.development?
+
+    resp = HTTParty.get(
+      'https://mybusinessbusinessinformation.googleapis.com/v1/accounts/-/locations',
+      options
+    )
+
+    if resp.success?
+      locations = resp.parsed_response['locations'] || []
+      formatted_locations = locations.map do |loc|
+        {
+          location_id: loc['name'],
+          location_name: loc['title']
+        }
+      end
+      render json: formatted_locations
+    else
+      render json: { errors: ["Failed to fetch Google locations: #{resp.body}"] }, status: :unprocessable_entity
+    end
+  end
+
   # POST /api/v1/accounts/:account_id/reputation/integrations
   def create
-    integration = current_account.reputation_integrations.new(integration_params)
-    integration.status = :active
-    integration.location_id ||= SecureRandom.uuid
+    if integration_params[:provider] == 'google'
+      cache_key = params[:oauth_session_id] || integration_params[:oauth_session_id]
+      if cache_key.present?
+        raw_data = $alfred.get(cache_key)
+        token_data = JSON.parse(raw_data) if raw_data.present?
+      end
 
-    if integration.save
-      # Seed realistic reviews for all manually-connected providers (including Google)
-      seed_mock_reviews(integration)
-      render json: integration.as_json(
-        only: [:id, :provider, :location_id, :location_name, :status, :created_at]
-      ), status: :created
+      if token_data.blank?
+        render json: { errors: ['Google account credentials not found. Please connect your Google account again.'] }, status: :unprocessable_entity
+        return
+      end
+
+      integration = current_account.reputation_integrations.new(
+        provider: 'google',
+        location_id: integration_params[:location_id],
+        location_name: integration_params[:location_name],
+        access_token: token_data['access_token'],
+        refresh_token: token_data['refresh_token'],
+        token_expires_at: token_data['expires_in'] ? Time.current + token_data['expires_in'].to_i.seconds : nil,
+        status: :active
+      )
+
+      if integration.save
+        # Sync reviews in background
+        Reputation::ReviewSyncJob.perform_later(integration.id)
+        session[:reputation_google_oauth] = nil
+
+        render json: integration.as_json(
+          only: [:id, :provider, :location_id, :location_name, :status, :created_at]
+        ), status: :created
+      else
+        render json: { errors: integration.errors.full_messages }, status: :unprocessable_entity
+      end
     else
-      render json: { errors: integration.errors.full_messages }, status: :unprocessable_entity
+      integration = current_account.reputation_integrations.new(integration_params)
+      integration.status = :active
+      integration.location_id ||= SecureRandom.uuid
+
+      if integration.save
+        # Seed realistic reviews for all manually-connected providers (including Google)
+        seed_mock_reviews(integration)
+        render json: integration.as_json(
+          only: [:id, :provider, :location_id, :location_name, :status, :created_at]
+        ), status: :created
+      else
+        render json: { errors: integration.errors.full_messages }, status: :unprocessable_entity
+      end
     end
   end
 
@@ -38,10 +109,9 @@ class Api::V1::Accounts::Reputation::IntegrationsController < Api::V1::Accounts:
   end
 
   def integration_params
-    params.require(:integration).permit(:provider, :location_id, :location_name)
+    params.require(:integration).permit(:provider, :location_id, :location_name, :oauth_session_id)
   end
 
-  # rubocop:disable Metrics/MethodLength
   def seed_mock_reviews(integration)
     if integration.provider == 'google' && ENV.fetch('GOOGLE_MAPS_API_KEY', nil).present?
       fetch_and_create_real_google_reviews(integration)
@@ -145,5 +215,5 @@ class Api::V1::Accounts::Reputation::IntegrationsController < Api::V1::Accounts:
       ]
     end
   end
-  # rubocop:enable Metrics/MethodLength
 end
+# rubocop:enable Metrics/ClassLength, Metrics/MethodLength, Metrics/AbcSize, Metrics/PerceivedComplexity

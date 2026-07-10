@@ -17,6 +17,23 @@ class Reputation::OauthService
     true
   end
 
+  def exchange_google_code_for_tokens
+    options = {
+      body: {
+        code: @code,
+        client_id: ENV.fetch('REPUTATION_GOOGLE_CLIENT_ID', nil),
+        client_secret: ENV.fetch('REPUTATION_GOOGLE_CLIENT_SECRET', nil),
+        redirect_uri: "#{ENV.fetch('FRONTEND_URL', '')}/reputation/oauth/callback?provider=google",
+        grant_type: 'authorization_code'
+      }
+    }
+    options[:verify] = false if Rails.env.development?
+    response = HTTParty.post('https://oauth2.googleapis.com/token', options)
+    raise "Google token error: #{response.body}" unless response.success?
+
+    response.parsed_response
+  end
+
   private
 
   def exchange_code_for_tokens
@@ -28,12 +45,12 @@ class Reputation::OauthService
 
   def exchange_google
     response = HTTParty.post('https://oauth2.googleapis.com/token', body: {
-      code: @code,
-      client_id: ENV.fetch('REPUTATION_GOOGLE_CLIENT_ID'),
-      client_secret: ENV.fetch('REPUTATION_GOOGLE_CLIENT_SECRET'),
-      redirect_uri: "#{ENV.fetch('FRONTEND_URL')}/reputation/oauth/callback?provider=google",
-      grant_type: 'authorization_code'
-    })
+                               code: @code,
+                               client_id: ENV.fetch('REPUTATION_GOOGLE_CLIENT_ID'),
+                               client_secret: ENV.fetch('REPUTATION_GOOGLE_CLIENT_SECRET'),
+                               redirect_uri: "#{ENV.fetch('FRONTEND_URL')}/reputation/oauth/callback?provider=google",
+                               grant_type: 'authorization_code'
+                             })
     raise "Google token error: #{response.body}" unless response.success?
 
     location = fetch_gbp_location(response['access_token'])
@@ -51,11 +68,11 @@ class Reputation::OauthService
 
   def exchange_facebook
     response = HTTParty.get('https://graph.facebook.com/oauth/access_token', query: {
-      client_id: ENV.fetch('REPUTATION_FACEBOOK_APP_ID'),
-      client_secret: ENV.fetch('REPUTATION_FACEBOOK_APP_SECRET'),
-      redirect_uri: "#{ENV.fetch('FRONTEND_URL')}/reputation/oauth/callback?provider=facebook",
-      code: @code
-    })
+                              client_id: ENV.fetch('REPUTATION_FACEBOOK_APP_ID'),
+                              client_secret: ENV.fetch('REPUTATION_FACEBOOK_APP_SECRET'),
+                              redirect_uri: "#{ENV.fetch('FRONTEND_URL')}/reputation/oauth/callback?provider=facebook",
+                              code: @code
+                            })
     raise "Facebook token error: #{response.body}" unless response.success?
 
     page = fetch_facebook_page(response['access_token'])

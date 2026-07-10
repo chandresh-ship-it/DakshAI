@@ -7,6 +7,8 @@ class Reputation::ReplyPublisherJob < ApplicationJob
     review = reply.reputation_review
     integration = review.reputation_integration
 
+    integration.refresh_token! if integration.provider == 'google'
+
     publish(integration, review, reply)
 
     reply.update!(status: :published, published_at: Time.current)
@@ -27,7 +29,7 @@ class Reputation::ReplyPublisherJob < ApplicationJob
       "https://mybusiness.googleapis.com/v4/#{review.external_id}/reply",
       headers: {
         'Authorization' => "Bearer #{integration.access_token}",
-        'Content-Type'  => 'application/json'
+        'Content-Type' => 'application/json'
       },
       body: { comment: reply.body }.to_json
     ).tap { |r| raise "Google reply failed: #{r.body}" unless r.success? }

@@ -1,6 +1,7 @@
 <script setup>
 /* eslint-disable */
 import { ref, onMounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 const axios = window.axios;
 
 const accountId = window.__STORE__?.getters['auth/getCurrentAccount']?.id || 
@@ -12,6 +13,9 @@ const integrations = ref([]);
 const templates = ref([]);
 const activeTemplate = ref(null);
 const loading = ref(true);
+
+const route = useRoute();
+const router = useRouter();
 const saving = ref(false);
 const disconnectLoading = ref(null);
 
@@ -22,11 +26,13 @@ const listingUrl = ref('');
 const listingName = ref('');
 
 // Google Business modal
-const showGoogleModal = ref(false);
-const googleBusinessUrl = ref('');
-const googleBusinessName = ref('');
-const googleConnecting = ref(false);
-const googleError = ref('');
+const showLocationModal = ref(false);
+const googleLocations = ref([]);
+const selectedLocation = ref(null);
+const loadingLocations = ref(false);
+const connectingLocation = ref(false);
+const locationError = ref('');
+const currentOauthSessionId = ref('');
 
 // Custom platform modal
 const showCustomModal = ref(false);
@@ -95,17 +101,29 @@ async function loadData() {
 
 const connectFacebook = () => {
   const appId = window.chatwootConfig?.reputationFacebookAppId;
+  if (!appId) {
+    alert('Facebook App ID is not configured in the environment.');
+    return;
+  }
   const redirect = `${window.location.origin}/reputation/oauth/callback?provider=facebook`;
   window.location.href =
     `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirect}&scope=pages_show_list,pages_read_engagement&state=${accountId}`;
 };
 
+const connectGoogle = () => {
+  const clientId = window.chatwootConfig?.reputationGoogleClientId;
+  if (!clientId) {
+    alert('Google Client ID is not configured in the environment. Please add REPUTATION_GOOGLE_CLIENT_ID to your .env file and restart the server.');
+    return;
+  }
+  const redirect = `${window.location.origin}/reputation/oauth/callback?provider=google`;
+  window.location.href =
+    `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirect}&scope=https://www.googleapis.com/auth/business.manage&response_type=code&access_type=offline&prompt=consent&state=${accountId}`;
+};
+
 function openConnectModal(platform) {
   if (platform.id === 'google') {
-    googleBusinessUrl.value = '';
-    googleBusinessName.value = '';
-    googleError.value = '';
-    showGoogleModal.value = true;
+    connectGoogle();
     return;
   }
   if (platform.id === 'facebook') {
@@ -118,49 +136,66 @@ function openConnectModal(platform) {
   showConnectModal.value = true;
 }
 
-// Extract Place ID from a Google Maps URL or direct Place ID input
-function extractGooglePlaceId(url) {
-  if (!url) return null;
-  // Direct ChIJ... place ID
-  if (/^ChIJ/.test(url.trim())) return url.trim();
-  // g.page/r/<place_id>/review
-  const gpage = url.match(/g\.page\/r\/([A-Za-z0-9_-]+)/);
-  if (gpage) return gpage[1];
-  // place_id= param
-  const placeParam = url.match(/place_id=([^&]+)/);
-  if (placeParam) return decodeURIComponent(placeParam[1]);
-  // maps.google.com/.../@lat,lng or place/name/
-  // Fallback: use the whole URL as location_id (truncated)
-  return url.trim().slice(0, 200);
+async function checkGoogleOauthCallback() {
+  if (route.query.google_oauth === 'error') {
+    const errorMsg = route.query.message || 'Unknown OAuth error occurred';
+    alert(`Google Authentication Failed: ${errorMsg}`);
+    
+    const newQuery = { ...route.query };
+    delete newQuery.google_oauth;
+    delete newQuery.message;
+    router.replace({ query: newQuery });
+    return;
+  }
+
+  if (route.query.google_oauth === 'success') {
+    currentOauthSessionId.value = route.query.oauth_session_id;
+
+    // Remove OAuth params from URL cleanly via Vue Router
+    const newQuery = { ...route.query };
+    delete newQuery.google_oauth;
+    delete newQuery.oauth_session_id;
+    router.replace({ query: newQuery });
+
+    showLocationModal.value = true;
+    loadingLocations.value = true;
+    locationError.value = '';
+    try {
+      const { data } = await axios.get(`${baseApi()}/integrations/google_locations?oauth_session_id=${currentOauthSessionId.value}`);
+      googleLocations.value = data;
+      if (data.length > 0) {
+        selectedLocation.value = data[0];
+      }
+    } catch (err) {
+      locationError.value = err?.response?.data?.errors?.[0] || 'Failed to fetch Google locations. Please authenticate again.';
+    } finally {
+      loadingLocations.value = false;
+    }
+  }
 }
 
-async function submitGoogleConnection() {
-  googleError.value = '';
-  if (!googleBusinessUrl.value.trim() || !googleBusinessName.value.trim()) {
-    googleError.value = 'Please enter both your Google Business URL and business name.';
+async function submitGoogleLocationConnection() {
+  if (!selectedLocation.value) {
+    locationError.value = 'Please select a Google Business Profile location to connect.';
     return;
   }
-  const locationId = extractGooglePlaceId(googleBusinessUrl.value);
-  if (!locationId) {
-    googleError.value = 'Could not parse a valid Google Business URL. Please copy the link from your Google Business Profile.';
-    return;
-  }
-  googleConnecting.value = true;
+  connectingLocation.value = true;
+  locationError.value = '';
   try {
     const { data } = await axios.post(`${baseApi()}/integrations`, {
       integration: {
         provider: 'google',
-        location_id: locationId,
-        location_name: googleBusinessName.value.trim()
+        location_id: selectedLocation.value.location_id,
+        location_name: selectedLocation.value.location_name,
+        oauth_session_id: currentOauthSessionId.value
       }
     });
     integrations.value.unshift(data);
-    showGoogleModal.value = false;
+    showLocationModal.value = false;
   } catch (err) {
-    const msg = err?.response?.data?.errors?.[0];
-    googleError.value = msg || 'This business may already be connected, or the connection failed. Please try again.';
+    locationError.value = err?.response?.data?.errors?.[0] || 'Failed to connect Google Business location.';
   } finally {
-    googleConnecting.value = false;
+    connectingLocation.value = false;
   }
 }
 
@@ -351,7 +386,10 @@ function handleTabChange(tabId) {
   }
 }
 
-onMounted(loadData);
+onMounted(async () => {
+  await loadData();
+  checkGoogleOauthCallback();
+});
 </script>
 
 <template>
@@ -899,9 +937,9 @@ onMounted(loadData);
       </main>
     </div>
 
-    <!-- Google Business Connection Modal -->
+    <!-- Google Business Location Selection Modal -->
     <div
-      v-if="showGoogleModal"
+      v-if="showLocationModal"
       class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
     >
       <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 max-w-lg w-full shadow-2xl p-6 space-y-5">
@@ -909,68 +947,62 @@ onMounted(loadData);
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="p-2 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-500 font-extrabold text-xs">GB</div>
-            <h3 class="font-extrabold text-slate-900 dark:text-white text-base">Connect Google Business Profile</h3>
+            <h3 class="font-extrabold text-slate-900 dark:text-white text-base">Select Google Business Location</h3>
           </div>
-          <button class="text-slate-400 hover:text-slate-650" @click="showGoogleModal = false">
+          <button class="text-slate-400 hover:text-slate-650" @click="showLocationModal = false">
             <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
 
-        <!-- How to get the URL -->
-        <div class="bg-slate-50 dark:bg-slate-850/50 rounded-xl border border-slate-100 dark:border-slate-800 p-4 space-y-2">
-          <p class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">How to find your Google Business URL</p>
-          <ol class="text-xs text-slate-600 dark:text-slate-350 space-y-1 list-decimal list-inside">
-            <li>Go to <span class="font-semibold text-slate-800 dark:text-white">business.google.com</span> and sign in</li>
-            <li>Click your business → <span class="font-semibold">Ask for reviews</span></li>
-            <li>Copy the <span class="font-semibold">short link</span> (starts with <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded text-[10px]">g.page/r/</code>)</li>
-            <li>Or from Google Maps → Share → Copy Link</li>
-          </ol>
+        <!-- Content -->
+        <div v-if="loadingLocations" class="flex flex-col items-center justify-center py-10 space-y-3">
+          <div class="size-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+          <p class="text-xs text-slate-500">Fetching locations from Google Business...</p>
         </div>
 
-        <!-- Inputs -->
-        <div class="space-y-4">
-          <div class="space-y-1">
-            <label class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Google Business URL or Place ID</label>
-            <input
-              v-model="googleBusinessUrl"
-              type="text"
-              placeholder="https://g.page/r/XXXXXXXXXX/review or ChIJ..."
-              class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-750 dark:bg-slate-850 p-2.5 focus:outline-none focus:ring-2 focus:ring-woot-500"
-            />
-            <p class="text-[10px] text-slate-400">Paste your review shortlink, Google Maps link, or Place ID directly.</p>
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Business Name</label>
-            <input
-              v-model="googleBusinessName"
-              type="text"
-              placeholder="e.g. Acme Restaurant — Main Branch"
-              class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-750 dark:bg-slate-850 p-2.5 focus:outline-none focus:ring-2 focus:ring-woot-500"
-            />
-          </div>
+        <div v-else-if="locationError" class="text-xs text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-xl px-4 py-2.5">
+          {{ locationError }}
         </div>
 
-        <!-- Error -->
-        <div v-if="googleError" class="text-xs text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-xl px-4 py-2.5">
-          {{ googleError }}
+        <div v-else-if="googleLocations.length === 0" class="text-center py-10 space-y-2">
+          <p class="text-sm font-bold text-slate-700 dark:text-slate-350">No locations found</p>
+          <p class="text-xs text-slate-400">Your Google Account has no registered Google Business Profile locations.</p>
+        </div>
+
+        <div v-else class="space-y-4">
+          <p class="text-xs text-slate-500">
+            We found the following Google Business Profile locations. Select the location you want to link to this account:
+          </p>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Select Location</label>
+            <select
+              v-model="selectedLocation"
+              class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-750 dark:bg-slate-850 p-2.5 focus:outline-none focus:ring-2 focus:ring-woot-500"
+            >
+              <option v-for="loc in googleLocations" :key="loc.location_id" :value="loc">
+                {{ loc.location_name }}
+              </option>
+            </select>
+          </div>
         </div>
 
         <!-- Footer -->
         <div class="flex justify-end gap-2 pt-1">
           <button
-            class="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-500 dark:text-slate-350 rounded-xl transition-all"
-            @click="showGoogleModal = false"
+            class="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-500 dark:text-slate-355 rounded-xl transition-all"
+            @click="showLocationModal = false"
           >
             Cancel
           </button>
           <button
+            v-if="googleLocations.length > 0 && !locationError"
             class="px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2 disabled:opacity-60"
-            :disabled="googleConnecting"
-            @click="submitGoogleConnection"
+            :disabled="connectingLocation || loadingLocations"
+            @click="submitGoogleLocationConnection"
           >
-            <svg v-if="googleConnecting" class="size-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-            {{ googleConnecting ? 'Connecting...' : 'Connect Google Business' }}
+            <svg v-if="connectingLocation" class="size-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            {{ connectingLocation ? 'Connecting...' : 'Connect Location' }}
           </button>
         </div>
       </div>

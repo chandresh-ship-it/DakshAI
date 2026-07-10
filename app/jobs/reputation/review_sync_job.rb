@@ -7,6 +7,8 @@ class Reputation::ReviewSyncJob < ApplicationJob
     integration = Reputation::Integration.find(integration_id)
     return unless integration.active?
 
+    integration.refresh_token! if integration.provider == 'google'
+
     reviews = fetch_reviews(integration)
     upsert_reviews(integration, reviews)
   end
@@ -57,7 +59,7 @@ class Reputation::ReviewSyncJob < ApplicationJob
     case provider
     when 'google'
       {
-        external_id: raw['reviewId'],
+        external_id: raw['name'],
         rating: raw['starRating'] == 'FIVE' ? 5 : raw['starRating'].to_s.length, # GBP uses enum
         body: raw['comment'],
         reviewer_name: raw.dig('reviewer', 'displayName'),
