@@ -360,7 +360,7 @@ const previewReviewsList = computed(() => {
                 :class="
                   activeWidget.active
                     ? 'bg-woot-500'
-                    : 'bg-slate-250 dark:bg-slate-700'
+                    : 'bg-slate-200 dark:bg-slate-700'
                 "
                 @click="activeWidget.active = !activeWidget.active"
               >
@@ -381,7 +381,7 @@ const previewReviewsList = computed(() => {
                 :class="
                   activeWidget.hide_watermark
                     ? 'bg-woot-500'
-                    : 'bg-slate-255 dark:bg-slate-700'
+                    : 'bg-slate-200 dark:bg-slate-700'
                 "
                 @click="
                   activeWidget.hide_watermark = !activeWidget.hide_watermark
