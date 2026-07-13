@@ -39,11 +39,6 @@ class Api::V1::Accounts::Reputation::IntegrationsController < Api::V1::Accounts:
         }
       end
       render json: formatted_locations
-    elsif Rails.env.development?
-      render json: [
-        { location_id: 'locations/mock-12345', location_name: 'Mock Business Profile (Dev Quota Bypassed)' },
-        { location_id: 'locations/mock-67890', location_name: 'Second Mock Location' }
-      ]
     else
       render json: { errors: ["Failed to fetch Google locations: #{resp.body}"] }, status: :unprocessable_entity
     end
