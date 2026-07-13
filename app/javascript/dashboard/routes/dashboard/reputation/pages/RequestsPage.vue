@@ -29,7 +29,7 @@ async function loadData() {
       axios.get(`${baseUrl()}/templates`).catch(() => ({ data: [] }))
     ]);
     requests.value = reqRes.data;
-    templates.value = tempRes.data.filter(t => t.active);
+    templates.value = tempRes.data.filter(t => t.active && t.template_type !== 'video');
   } catch (err) {
     console.error('Failed to load review requests data', err);
   } finally {
@@ -56,6 +56,16 @@ async function searchContacts() {
     loadingContacts.value = false;
   }
 }
+
+const openModal = async () => {
+  showModal.value = true;
+  try {
+    const tempRes = await axios.get(`${baseUrl()}/templates`);
+    templates.value = tempRes.data.filter(t => t.active && t.template_type !== 'video');
+  } catch (err) {
+    console.error('Failed to load templates', err);
+  }
+};
 
 watch(contactsQuery, () => {
   searchContacts();
@@ -141,7 +151,7 @@ const statusColor = s => {
       </div>
       <button
         class="px-4 py-2 bg-woot-500 hover:bg-woot-600 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
-        @click="showModal = true"
+        @click="openModal"
       >
         <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
         New Request

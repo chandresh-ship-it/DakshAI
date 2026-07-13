@@ -236,10 +236,10 @@ onMounted(loadData);
               </div>
             </div>
             <button
-              class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-all"
-              @click="connectFacebook"
+              disabled
+              class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs font-semibold shadow-sm cursor-not-allowed"
             >
-              Connect
+              Coming Soon
             </button>
           </div>
         </div>
@@ -419,10 +419,10 @@ onMounted(loadData);
               </button>
               <button
                 v-if="!integrations.some(i => i.provider === 'facebook')"
-                class="flex-1 py-2 px-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-350 transition-colors flex items-center justify-center gap-1.5"
-                @click="connectFacebook"
+                disabled
+                class="flex-1 py-2 px-3 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/20 rounded-xl text-xs font-bold text-slate-400 dark:text-slate-500 cursor-not-allowed flex items-center justify-center gap-1.5"
               >
-                Connect Facebook
+                Facebook (Soon)
               </button>
             </div>
           </div>

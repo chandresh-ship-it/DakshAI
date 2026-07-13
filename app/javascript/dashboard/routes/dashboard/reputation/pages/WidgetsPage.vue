@@ -12,6 +12,7 @@ const widgets = ref([]);
 const activeWidget = ref(null);
 const loading = ref(true);
 const saving = ref(false);
+const isEditing = ref(false);
 const copiedId = ref(null);
 
 // Carousel slide index
@@ -68,9 +69,7 @@ async function loadWidgets() {
   try {
     const { data } = await axios.get(baseUrl());
     widgets.value = data;
-    if (data.length > 0) {
-      activeWidget.value = { ...data[0] };
-    }
+    // Don't auto-set activeWidget here anymore since we start in list mode
   } catch (err) {
     console.error('Failed to load widgets', err);
   } finally {
@@ -90,6 +89,7 @@ async function createWidget() {
     });
     widgets.value.unshift(data);
     activeWidget.value = { ...data };
+    isEditing.value = true;
   } catch (err) {
     alert('Failed to create widget');
   }
@@ -127,11 +127,8 @@ async function deleteWidget(id) {
   try {
     await axios.delete(`${baseUrl()}/${id}`);
     widgets.value = widgets.value.filter(w => w.id !== id);
-    if (widgets.value.length > 0) {
-      activeWidget.value = { ...widgets.value[0] };
-    } else {
-      activeWidget.value = null;
-    }
+    activeWidget.value = null;
+    isEditing.value = false;
   } catch (err) {
     alert('Failed to delete widget');
   }
@@ -179,8 +176,8 @@ const previewReviewsList = computed(() => {
 <template>
   <div class="p-6 max-w-7xl mx-auto space-y-6">
     <!-- eslint-disable -->
-    <!-- Header -->
-    <div class="flex items-center justify-between">
+    <!-- Header (List Mode) -->
+    <div v-if="!isEditing" class="flex items-center justify-between">
       <div>
         <h2
           class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight"
@@ -255,46 +252,59 @@ const previewReviewsList = computed(() => {
       </p>
     </div>
 
-    <!-- Main Workspace -->
-    <div v-else class="grid lg:grid-cols-12 gap-8 items-start">
-      <!-- Configurator column -->
-      <div class="lg:col-span-5 space-y-6">
-        <!-- List selector -->
-        <div
-          class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-850 shadow-sm p-4"
-        >
-          <label
-            class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"
-            >Select Widget</label>
-          <div class="space-y-1">
-            <button
-              v-for="w in widgets"
-              :key="w.id"
-              class="w-full text-left px-3.5 py-2.5 rounded-xl transition-all flex items-center justify-between text-xs font-bold"
-              :class="
-                activeWidget?.id === w.id
-                  ? 'bg-woot-50 dark:bg-woot-950/20 text-woot-650 dark:text-woot-400 ring-1 ring-woot-500/30'
-                  : 'hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-350'
-              "
-              @click="activeWidget = { ...w }"
-            >
-              <div class="truncate">
-                <span>{{ w.name }}</span>
-                <p
-                  class="text-[10px] text-slate-400 font-normal mt-0.5 capitalize"
-                >
-                  {{ w.style }} · min {{ w.min_rating }}★
-                </p>
-              </div>
-              <span
-                class="size-2 rounded-full inline-block"
-                :class="w.active ? 'bg-emerald-500' : 'bg-slate-300'"
-              />
-            </button>
+    <!-- Widgets List View -->
+    <div v-if="!loading && !isEditing && widgets.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div 
+        v-for="w in widgets" 
+        :key="w.id"
+        class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-850 rounded-2xl shadow-sm hover:shadow-md transition-all p-5 flex flex-col space-y-4 cursor-pointer group"
+        @click="activeWidget = { ...w }; isEditing = true;"
+      >
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="font-extrabold text-slate-800 dark:text-slate-100 text-sm group-hover:text-woot-500 transition-colors">{{ w.name }}</h3>
+            <p class="text-[10px] text-slate-400 font-normal mt-0.5 capitalize">{{ w.style }} Widget</p>
           </div>
+          <span 
+            class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
+            :class="w.active ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'"
+          >
+            {{ w.active ? 'Active' : 'Inactive' }}
+          </span>
         </div>
 
-        <!-- Customizer Config Card -->
+        <div class="flex items-center gap-4 text-xs font-medium text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+          <div class="flex items-center gap-1.5">
+            <span class="text-yellow-400 text-sm">★</span>
+            <span>{{ w.min_rating }}+ Stars only</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Workspace (Edit Mode) -->
+    <div v-if="isEditing" class="space-y-6">
+      <!-- Edit Mode Header -->
+      <div class="flex items-center gap-4 border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
+        <button 
+          class="p-2 -ml-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors"
+          @click="isEditing = false; activeWidget = null;"
+        >
+          <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+        <div>
+          <h2 class="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            Edit {{ activeWidget?.name || 'Widget' }}
+          </h2>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-12 gap-8 items-start">
+        <!-- Configurator column -->
+        <div class="lg:col-span-5 space-y-6">
+          <!-- Customizer Config Card -->
         <div
           v-if="activeWidget"
           class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-850 shadow-sm p-6 space-y-4"
@@ -338,6 +348,7 @@ const previewReviewsList = computed(() => {
                 <option :value="5">5 Stars only</option>
                 <option :value="4">4 Stars & Above</option>
                 <option :value="3">3 Stars & Above</option>
+                <option :value="1">All Ratings (1-5 Stars)</option>
               </select>
             </div>
 
@@ -651,6 +662,7 @@ const previewReviewsList = computed(() => {
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>

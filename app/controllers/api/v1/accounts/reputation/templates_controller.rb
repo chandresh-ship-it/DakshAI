@@ -31,6 +31,6 @@ class Api::V1::Accounts::Reputation::TemplatesController < Api::V1::Accounts::Ba
   end
 
   def template_params
-    params.require(:template).permit(:name, :channel, :body, :subject, :active)
+    params.require(:template).permit(:name, :channel, :body, :subject, :active, :template_type)
   end
 end

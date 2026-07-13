@@ -1,7 +1,8 @@
 <script setup>
 /* eslint-disable */
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import html2canvas from 'html2canvas';
 const axios = window.axios;
 
 const accountId = window.__STORE__?.getters['auth/getCurrentAccount']?.id || 
@@ -48,8 +49,16 @@ const aiEnabled = ref(localStorage.getItem('rep_ai_enabled') === 'true');
 const aiMinRating = ref(localStorage.getItem('rep_ai_min_rating') || '4');
 const aiInstructions = ref(localStorage.getItem('rep_ai_instructions') || 'Thank customers for their feedback, address any concerns politely, and offer support contact.');
 const customSlug = ref(localStorage.getItem('rep_custom_slug') || 'my-business');
-const spamMinRating = ref(localStorage.getItem('rep_spam_min_rating') || '1');
-const spamKeywords = ref(localStorage.getItem('rep_spam_keywords') || 'fake, scam, spam');
+const qrTitle = ref(localStorage.getItem('rep_qr_title') || 'Scan to Review');
+watch(qrTitle, (val) => localStorage.setItem('rep_qr_title', val));
+
+const qrUrl = computed(() => {
+  if (customSlug.value.startsWith('http')) return customSlug.value;
+  return `${window.location.origin}/r/${customSlug.value}`;
+});
+const qrImgSrc = computed(() => `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrUrl.value)}`);
+
+const spamMinRating = ref(localStorage.getItem('rep_spam_min_rating') || '3');
 
 const baseApi = () => `/api/v1/accounts/${accountId}/reputation`;
 
@@ -66,14 +75,14 @@ const sidebarItems = [
 
 const platforms = [
   { id: 'google', name: 'Google Business', logoColor: 'text-red-500 bg-red-50 dark:bg-red-950/20' },
-  { id: 'facebook', name: 'Facebook Page', logoColor: 'text-blue-600 bg-blue-50 dark:bg-blue-950/20' },
-  { id: 'agoda', name: 'Agoda', logoColor: 'text-sky-500 bg-sky-50 dark:bg-sky-950/20' },
-  { id: 'airbnb', name: 'Airbnb', logoColor: 'text-rose-500 bg-rose-50 dark:bg-rose-950/20' },
-  { id: 'aliexpress', name: 'AliExpress', logoColor: 'text-orange-500 bg-orange-50 dark:bg-orange-950/20' },
-  { id: 'amazon', name: 'Amazon', logoColor: 'text-amber-600 bg-amber-50 dark:bg-amber-950/20' },
-  { id: 'angi', name: 'Angi', logoColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20' },
-  { id: 'apple_app_store', name: 'Apple App Store', logoColor: 'text-slate-700 bg-slate-100 dark:bg-slate-800/40' },
-  { id: 'avvo', name: 'Avvo', logoColor: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/20' }
+  { id: 'facebook', name: 'Facebook Page', logoColor: 'text-blue-600 bg-blue-50 dark:bg-blue-950/20', comingSoon: true },
+  { id: 'agoda', name: 'Agoda', logoColor: 'text-sky-500 bg-sky-50 dark:bg-sky-950/20', comingSoon: true },
+  { id: 'airbnb', name: 'Airbnb', logoColor: 'text-rose-500 bg-rose-50 dark:bg-rose-950/20', comingSoon: true },
+  { id: 'aliexpress', name: 'AliExpress', logoColor: 'text-orange-500 bg-orange-50 dark:bg-orange-950/20', comingSoon: true },
+  { id: 'amazon', name: 'Amazon', logoColor: 'text-amber-600 bg-amber-50 dark:bg-amber-950/20', comingSoon: true },
+  { id: 'angi', name: 'Angi', logoColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20', comingSoon: true },
+  { id: 'apple_app_store', name: 'Apple App Store', logoColor: 'text-slate-700 bg-slate-100 dark:bg-slate-800/40', comingSoon: true },
+  { id: 'avvo', name: 'Avvo', logoColor: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/20', comingSoon: true }
 ];
 
 const filteredPlatforms = computed(() => {
@@ -257,6 +266,30 @@ async function disconnect(id) {
   }
 }
 
+const downloadingCard = ref(false);
+async function downloadFullCard() {
+  const card = document.getElementById('qr-print-card');
+  if (!card) return;
+  
+  downloadingCard.value = true;
+  try {
+    const canvas = await html2canvas(card, {
+      scale: 3, 
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+    const link = document.createElement('a');
+    link.download = 'Reputation_Poster.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch (err) {
+    console.error('Failed to generate image', err);
+    alert('Could not download image. Please use the Print Poster option instead.');
+  } finally {
+    downloadingCard.value = false;
+  }
+}
+
 function getIntegrationForPlatform(platformId) {
   return integrations.value.filter(i => i.provider === platformId);
 }
@@ -303,6 +336,7 @@ function newTemplate() {
     subject: 'Share your feedback with us!',
     body: 'Hi {{contact.name}},\n\nThank you for choosing us! We would love to hear your feedback. Please share your review here:\n{{review_link}}',
     active: true,
+    template_type: 'standard',
     isNew: true
   };
 }
@@ -316,6 +350,7 @@ async function saveTemplate() {
         template: {
           name: activeTemplate.value.name,
           channel: activeTemplate.value.channel,
+          template_type: activeTemplate.value.template_type,
           subject: activeTemplate.value.subject,
           body: activeTemplate.value.body,
           active: activeTemplate.value.active
@@ -328,6 +363,7 @@ async function saveTemplate() {
         template: {
           name: activeTemplate.value.name,
           channel: activeTemplate.value.channel,
+          template_type: activeTemplate.value.template_type,
           subject: activeTemplate.value.subject,
           body: activeTemplate.value.body,
           active: activeTemplate.value.active
@@ -536,6 +572,13 @@ onMounted(async () => {
                     Syncing Reviews
                   </div>
                   <button
+                    v-else-if="platform.comingSoon"
+                    disabled
+                    class="w-full py-2 bg-slate-50 dark:bg-slate-850 text-slate-400 dark:text-slate-500 rounded-xl text-xs font-bold border border-slate-100 dark:border-slate-800 shadow-sm cursor-not-allowed"
+                  >
+                    Coming Soon
+                  </button>
+                  <button
                     v-else
                     class="w-full py-2 bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-250 rounded-xl text-xs font-bold border border-slate-150 dark:border-slate-800 shadow-sm transition-all"
                     @click="openConnectModal(platform)"
@@ -607,7 +650,7 @@ onMounted(async () => {
                 :class="
                   aiEnabled
                     ? 'bg-woot-500'
-                    : 'bg-slate-250 dark:bg-slate-700'
+                    : 'bg-slate-300 dark:bg-slate-700'
                 "
                 @click="aiEnabled = !aiEnabled"
               >
@@ -662,17 +705,15 @@ onMounted(async () => {
 
           <div class="space-y-4">
             <div class="space-y-1">
-              <label class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Shortlink Custom Path Slug</label>
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-slate-400 select-none">/r/</span>
-                <input
-                  v-model="customSlug"
-                  type="text"
-                  class="flex-1 text-xs rounded-xl border border-slate-200 dark:border-slate-750 dark:bg-slate-850 p-2.5 focus:outline-none focus:ring-2 focus:ring-woot-500"
-                />
-              </div>
+              <label class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Review Invite URL</label>
+              <input
+                v-model="customSlug"
+                type="text"
+                placeholder="https://g.page/r/your-business/review"
+                class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-750 dark:bg-slate-850 p-2.5 focus:outline-none focus:ring-2 focus:ring-woot-500"
+              />
               <p class="text-[10px] text-slate-400 font-semibold mt-1">
-                Your direct invite URL: <span class="text-woot-500 select-all">http://localhost:3000/r/{{ customSlug }}</span>
+                Enter your own external URL (e.g. Google or Facebook review link) or a custom slug. This link is used for your QR code.
               </p>
             </div>
 
@@ -751,6 +792,18 @@ onMounted(async () => {
                 </div>
               </div>
 
+              <!-- Template Category -->
+              <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Template Category</label>
+                <select
+                  v-model="activeTemplate.template_type"
+                  class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-750 dark:bg-slate-850 p-2.5 focus:outline-none focus:ring-2 focus:ring-woot-500"
+                >
+                  <option value="standard">Standard Review Request</option>
+                  <option value="video">Video Testimonial Request</option>
+                </select>
+              </div>
+
               <!-- Subject (Only if email) -->
               <div v-if="activeTemplate.channel === 'email'" class="space-y-1">
                 <label class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Email Subject</label>
@@ -795,7 +848,7 @@ onMounted(async () => {
                     id="t-active"
                     v-model="activeTemplate.active"
                     type="checkbox"
-                    class="rounded text-woot-500 focus:ring-woot-500 size-4"
+                    class="rounded bg-slate-200 dark:bg-slate-700 border-transparent text-woot-500 focus:ring-woot-500 size-4"
                   />
                   <label for="t-active" class="text-xs text-slate-600 dark:text-slate-300 font-medium">Template Active</label>
                 </div>
@@ -828,44 +881,49 @@ onMounted(async () => {
             <p class="text-xs text-slate-400 mt-0.5">Generate QR code for tables, counters, or physical print review invites</p>
           </div>
 
-          <div class="flex flex-col items-center justify-center p-8 space-y-6 text-center">
-            <!-- Simulated high-fidelity QR Code card -->
-            <div class="p-6 bg-white rounded-2xl shadow-md border border-slate-100 flex flex-col items-center space-y-4">
-              <!-- Mock SVG QR code pattern -->
-              <svg class="size-48 text-slate-900" viewBox="0 0 100 100" fill="currentColor">
-                <rect x="0" y="0" width="25" height="25"/>
-                <rect x="5" y="5" width="15" height="15" fill="white"/>
-                <rect x="8" y="8" width="9" height="9"/>
+          <div>
+            <label class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Custom Title for QR Code</label>
+            <input
+              v-model="qrTitle"
+              type="text"
+              class="w-full mt-1 text-xs rounded-xl border border-slate-200 dark:border-slate-750 dark:bg-slate-850 p-2.5 focus:outline-none focus:ring-2 focus:ring-woot-500"
+              placeholder="e.g. Scan to Review"
+            />
+          </div>
+
+          <div class="flex flex-col items-center justify-center p-8 space-y-6 text-center w-full">
+            <!-- High-fidelity QR Code Poster -->
+            <div 
+              id="qr-print-card" 
+              class="relative bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden w-full max-w-[340px]"
+            >
+              <div class="absolute top-0 left-0 w-full h-28 bg-gradient-to-br from-woot-500 to-indigo-600"></div>
+              
+              <div class="relative z-10 flex flex-col items-center pt-10 px-6 pb-6">
+                <div class="size-[72px] bg-white rounded-full p-2 shadow-md border border-slate-50 flex items-center justify-center mb-4">
+                  <svg class="size-10 text-woot-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                </div>
                 
-                <rect x="75" y="0" width="25" height="25"/>
-                <rect x="80" y="5" width="15" height="15" fill="white"/>
-                <rect x="83" y="8" width="9" height="9"/>
+                <h3 class="font-extrabold text-slate-900 text-xl text-center leading-tight">
+                  {{ qrTitle || 'We value your feedback!' }}
+                </h3>
+                <p class="mt-2 text-slate-500 text-xs text-center font-medium">
+                  Open your phone's camera and point it at the code below to leave us a review.
+                </p>
+
+                <div class="mt-6 p-4 bg-white rounded-2xl shadow-sm border border-slate-100 ring-4 ring-slate-50">
+                  <img
+                    :src="qrImgSrc"
+                    alt="QR Code"
+                    class="size-48 object-contain"
+                  />
+                </div>
                 
-                <rect x="0" y="75" width="25" height="25"/>
-                <rect x="5" y="80" width="15" height="15" fill="white"/>
-                <rect x="8" y="83" width="9" height="9"/>
-                
-                <!-- Random dots inside -->
-                <rect x="30" y="5" width="5" height="5"/>
-                <rect x="45" y="10" width="10" height="5"/>
-                <rect x="60" y="5" width="5" height="15"/>
-                <rect x="35" y="20" width="15" height="5"/>
-                <rect x="5" y="35" width="10" height="5"/>
-                <rect x="25" y="30" width="5" height="10"/>
-                <rect x="40" y="40" width="15" height="15"/>
-                <rect x="65" y="35" width="10" height="5"/>
-                <rect x="85" y="30" width="5" height="10"/>
-                <rect x="15" y="60" width="10" height="5"/>
-                <rect x="35" y="65" width="5" height="10"/>
-                <rect x="55" y="60" width="15" height="5"/>
-                <rect x="75" y="55" width="5" height="15"/>
-                <rect x="30" y="85" width="10" height="5"/>
-                <rect x="50" y="80" width="5" height="15"/>
-                <rect x="65" y="85" width="15" height="5"/>
-              </svg>
-              <div>
-                <p class="text-xs font-bold text-slate-800">Scan to Review</p>
-                <p class="text-[9px] text-slate-400 mt-0.5">/r/{{ customSlug }}</p>
+                <p class="mt-5 text-[10px] text-slate-400 font-medium truncate w-full px-4">
+                  {{ qrUrl }}
+                </p>
               </div>
             </div>
 
@@ -879,13 +937,15 @@ onMounted(async () => {
                 class="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-650 dark:text-slate-300 rounded-xl shadow-sm transition-all"
                 onclick="window.print()"
               >
-                Print QR Code
+                Print Poster (Save as PDF)
               </button>
               <button
-                class="px-4 py-2 bg-woot-500 hover:bg-woot-600 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
-                @click="alert('QR code download started!')"
+                class="px-4 py-2 bg-woot-500 hover:bg-woot-600 text-white rounded-xl text-xs font-bold shadow-sm transition-all text-center flex items-center justify-center min-w-[140px]"
+                :disabled="downloadingCard"
+                @click="downloadFullCard"
               >
-                Download PNG
+                <svg v-if="downloadingCard" class="size-3.5 animate-spin mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3m0 0l-3 3-3-3" /></svg>
+                {{ downloadingCard ? 'Downloading...' : 'Download Full PNG' }}
               </button>
             </div>
           </div>
@@ -1136,3 +1196,26 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
+<style>
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  #qr-print-card, #qr-print-card * {
+    visibility: visible;
+  }
+  
+  #qr-print-card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1.8);
+    width: 340px !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0;
+  }
+}
+</style>
