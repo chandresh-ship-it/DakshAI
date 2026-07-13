@@ -19,7 +19,7 @@ class Reputation::OauthCallbacksController < ApplicationController
   private
 
   def settings_url
-    "#{ENV.fetch('FRONTEND_URL')}/app/accounts/#{current_account.id}/reputation/settings"
+    "#{ENV.fetch('FRONTEND_URL', '')}/app/accounts/#{current_account.id}/reputation/settings"
   end
 
   def handle_google_callback
@@ -31,7 +31,7 @@ class Reputation::OauthCallbacksController < ApplicationController
     token_data = oauth_service.exchange_google_code_for_tokens
 
     cache_key = "reputation_google_oauth_#{current_account.id}_#{SecureRandom.hex(10)}"
-    $alfred.set(cache_key, token_data.to_json, ex: 15.minutes.to_i)
+    $alfred.with { |redis| redis.set(cache_key, token_data.to_json, ex: 15.minutes.to_i) }
 
     redirect_to "#{settings_url}?google_oauth=success&oauth_session_id=#{cache_key}",
                 notice: 'Google Account authenticated. Please select a business profile location to connect.'

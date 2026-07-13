@@ -13,7 +13,7 @@ class Api::V1::Accounts::Reputation::IntegrationsController < Api::V1::Accounts:
   def google_locations
     cache_key = params[:oauth_session_id]
     if cache_key.present?
-      raw_data = $alfred.get(cache_key)
+      raw_data = $alfred.with { |redis| redis.get(cache_key) }
       token_data = JSON.parse(raw_data) if raw_data.present?
     end
 
@@ -39,6 +39,11 @@ class Api::V1::Accounts::Reputation::IntegrationsController < Api::V1::Accounts:
         }
       end
       render json: formatted_locations
+    elsif Rails.env.development?
+      render json: [
+        { location_id: 'locations/mock-12345', location_name: 'Mock Business Profile (Dev Quota Bypassed)' },
+        { location_id: 'locations/mock-67890', location_name: 'Second Mock Location' }
+      ]
     else
       render json: { errors: ["Failed to fetch Google locations: #{resp.body}"] }, status: :unprocessable_entity
     end
@@ -49,7 +54,7 @@ class Api::V1::Accounts::Reputation::IntegrationsController < Api::V1::Accounts:
     if integration_params[:provider] == 'google'
       cache_key = params[:oauth_session_id] || integration_params[:oauth_session_id]
       if cache_key.present?
-        raw_data = $alfred.get(cache_key)
+        raw_data = $alfred.with { |redis| redis.get(cache_key) }
         token_data = JSON.parse(raw_data) if raw_data.present?
       end
 

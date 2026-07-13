@@ -46,9 +46,9 @@ class Reputation::OauthService
   def exchange_google
     response = HTTParty.post('https://oauth2.googleapis.com/token', body: {
                                code: @code,
-                               client_id: ENV.fetch('REPUTATION_GOOGLE_CLIENT_ID'),
-                               client_secret: ENV.fetch('REPUTATION_GOOGLE_CLIENT_SECRET'),
-                               redirect_uri: "#{ENV.fetch('FRONTEND_URL')}/reputation/oauth/callback?provider=google",
+                               client_id: ENV.fetch('REPUTATION_GOOGLE_CLIENT_ID', nil),
+                               client_secret: ENV.fetch('REPUTATION_GOOGLE_CLIENT_SECRET', nil),
+                               redirect_uri: "#{ENV.fetch('FRONTEND_URL', '')}/reputation/oauth/callback?provider=google",
                                grant_type: 'authorization_code'
                              })
     raise "Google token error: #{response.body}" unless response.success?
@@ -70,7 +70,7 @@ class Reputation::OauthService
     response = HTTParty.get('https://graph.facebook.com/oauth/access_token', query: {
                               client_id: ENV.fetch('REPUTATION_FACEBOOK_APP_ID'),
                               client_secret: ENV.fetch('REPUTATION_FACEBOOK_APP_SECRET'),
-                              redirect_uri: "#{ENV.fetch('FRONTEND_URL')}/reputation/oauth/callback?provider=facebook",
+                              redirect_uri: "#{ENV.fetch('FRONTEND_URL', '')}/reputation/oauth/callback?provider=facebook",
                               code: @code
                             })
     raise "Facebook token error: #{response.body}" unless response.success?
