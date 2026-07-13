@@ -2,7 +2,7 @@
 # GET /reputation/widget/:token/reviews
 # GET /reputation/widget/:token/reviews?rating_min=4
 class Reputation::PublicWidgetsController < ApplicationController
-  skip_before_action :verify_authenticity_token
+  skip_before_action :verify_authenticity_token, raise: false
 
   def reviews
     widget = Reputation::Widget.find_by!(token: params[:token])
@@ -18,19 +18,11 @@ class Reputation::PublicWidgetsController < ApplicationController
     render json: { widget: widget.slice(:style, :min_rating, :hide_watermark), reviews: reviews }
   end
 
-  # GET /r/:token  — tracks click and redirects to review platform
+  # GET /r/:token  — tracks click and redirects to video testimonial recorder
   def redirect
     request = Reputation::ReviewRequest.find_by!(token: params[:token])
     request.update!(status: :clicked, clicked_at: Time.current) if request.sent? || request.delivered?
-    redirect_to review_url(request), allow_other_host: true
-  end
-
-  private
-
-  def review_url(request)
-    integration = request.account.reputation_integrations
-                         .where(provider: 'google').first
-    # ponytail: hardcoded to GBP search fallback — dynamic per-location URL in Phase 5 polish
-    integration ? "https://search.google.com/local/writereview?placeid=#{integration.location_id}" : '/'
+    
+    redirect_to new_reputation_video_testimonial_path(account_id: request.account_id, token: params[:token])
   end
 end

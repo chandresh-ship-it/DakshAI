@@ -2,15 +2,16 @@
 #
 # Table name: reputation_templates
 #
-#  id         :bigint           not null, primary key
-#  active     :boolean          default(TRUE)
-#  body       :text             not null
-#  channel    :string           not null
-#  name       :string           not null
-#  subject    :string
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  account_id :bigint           not null
+#  id            :bigint           not null, primary key
+#  active        :boolean          default(TRUE)
+#  body          :text             not null
+#  channel       :string           not null
+#  name          :string           not null
+#  subject       :string
+#  template_type :string           default("standard"), not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  account_id    :bigint           not null
 #
 # Indexes
 #
@@ -25,6 +26,7 @@ class Reputation::Template < ApplicationRecord
                                         foreign_key: :reputation_template_id, dependent: :nullify
 
   enum :channel, { sms: 'sms', email: 'email' }
+  enum :template_type, { standard: 'standard', video: 'video' }
 
   validates :name, :channel, :body, presence: true
   validates :subject, presence: true, if: :email?

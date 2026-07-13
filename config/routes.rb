@@ -212,6 +212,12 @@ Rails.application.routes.draw do
             resources :templates, only: [:index, :create, :update, :destroy]
             resources :review_requests, only: [:index, :create]
             resources :widgets, only: [:index, :create, :update, :destroy]
+            resources :video_testimonials, only: [:index, :destroy] do
+              collection do
+                post :dispatch_request
+                get :requests_index
+              end
+            end
           end
           resources :contacts, only: [:index, :show, :update, :create, :destroy] do
             collection do
@@ -681,6 +687,9 @@ Rails.application.routes.draw do
   get 'reputation/widget/:token/reviews', to: 'reputation/public_widgets#reviews'
   get 'r/:token', to: 'reputation/public_widgets#redirect'
   post 'reputation/feedback', to: 'reputation/feedback#create'
+  
+  get 'reputation/video/:account_id/new', to: 'reputation/public_video_testimonials#new', as: :new_reputation_video_testimonial
+  post 'reputation/video/:account_id', to: 'reputation/public_video_testimonials#create', as: :reputation_video_testimonials
   # ----------------------------------------------------------------------
   # Routes for external service verifications
   get '.well-known/assetlinks.json' => 'android_app#assetlinks'

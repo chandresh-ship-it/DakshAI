@@ -2,6 +2,8 @@ class Api::V1::Accounts::Reputation::ReviewRequestsController < Api::V1::Account
   # GET /api/v1/accounts/:account_id/reputation/review_requests
   def index
     requests = current_account.reputation_review_requests
+                               .joins(:reputation_template)
+                               .where(reputation_templates: { template_type: [nil, 'standard'] })
                                .includes(:reputation_template, :contact)
                                .order(created_at: :desc)
                                .limit(50)
