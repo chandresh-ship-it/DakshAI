@@ -19,10 +19,6 @@ const selectedContact = ref(null);
 const selectedTemplateId = ref('');
 const sendingRequest = ref(false);
 
-const selectedTemplate = computed(() => {
-  return templates.value.find(t => t.id === selectedTemplateId.value) || null;
-});
-
 const baseUrl = () => `/api/v1/accounts/${accountId}/reputation`;
 
 async function loadData() {
@@ -86,11 +82,11 @@ function selectContact(contact) {
 }
 
 async function sendRequest() {
-  if (!selectedContact.value || !selectedTemplate.value) return;
+  if (!selectedContact.value || !selectedTemplateId.value) return;
   sendingRequest.value = true;
   try {
     await axios.post(`${baseUrl()}/review_requests`, {
-      template_id: selectedTemplate.value.id,
+      template_id: selectedTemplateId.value,
       contact_id: selectedContact.value.id
     });
     // Reset composer state
@@ -130,12 +126,20 @@ const conversionRates = computed(() => {
 });
 
 const previewBody = computed(() => {
-  if (!selectedTemplate.value) return '';
-  let body = selectedTemplate.value.body;
+  if (!selectedTemplateId.value) return '';
+  const template = templates.value.find(t => t.id == selectedTemplateId.value);
+  if (!template) return '';
+  
+  let body = template.body || '';
   const name = selectedContact.value ? selectedContact.value.name : 'Customer';
   body = body.replace(/\{\{\s*contact\.name\s*\}\}/g, name);
   body = body.replace(/\{\{\s*review_link\s*\}\}/g, `${window.location.origin}/r/example-token`);
   return body;
+});
+
+const getSelectedTemplateSubject = computed(() => {
+  const template = templates.value.find(t => t.id == selectedTemplateId.value);
+  return template ? template.subject : '';
 });
 
 const statusColor = s => {
@@ -315,10 +319,10 @@ const statusColor = s => {
           </div>
 
           <!-- Message Body Preview -->
-          <div v-if="selectedTemplate" class="p-4 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-150 dark:border-slate-800/80 space-y-2">
+          <div v-if="selectedTemplateId" class="p-4 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-150 dark:border-slate-800/80 space-y-2">
             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dynamic Preview</label>
-            <div v-if="selectedTemplate.subject" class="text-xs font-bold text-slate-800 dark:text-slate-200">
-              Subject: {{ selectedTemplate.subject }}
+            <div v-if="getSelectedTemplateSubject" class="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Subject: {{ getSelectedTemplateSubject }}
             </div>
             <p class="text-xs text-slate-650 dark:text-slate-300 leading-relaxed italic whitespace-pre-wrap">
               "{{ previewBody }}"
@@ -335,7 +339,7 @@ const statusColor = s => {
           </button>
           <button
             class="px-5 py-2 text-xs font-bold bg-woot-500 hover:bg-woot-600 text-white rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
-            :disabled="!selectedContact || !selectedTemplate || sendingRequest"
+            :disabled="!selectedContact || !selectedTemplateId || sendingRequest"
             @click="sendRequest"
           >
             <svg v-if="sendingRequest" class="size-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3m0 0l-3 3-3-3" /></svg>
