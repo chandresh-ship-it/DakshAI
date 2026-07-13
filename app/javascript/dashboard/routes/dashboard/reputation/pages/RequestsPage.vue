@@ -16,8 +16,12 @@ const contactsQuery = ref('');
 const contactsList = ref([]);
 const loadingContacts = ref(false);
 const selectedContact = ref(null);
-const selectedTemplate = ref(null);
+const selectedTemplateId = ref('');
 const sendingRequest = ref(false);
+
+const selectedTemplate = computed(() => {
+  return templates.value.find(t => t.id === selectedTemplateId.value) || null;
+});
 
 const baseUrl = () => `/api/v1/accounts/${accountId}/reputation`;
 
@@ -67,7 +71,11 @@ const openModal = async () => {
   }
 };
 
-watch(contactsQuery, () => {
+watch(contactsQuery, (newVal) => {
+  if (selectedContact.value && newVal !== selectedContact.value.name) {
+    selectedContact.value = null;
+  }
+  if (selectedContact.value) return;
   searchContacts();
 });
 
@@ -88,7 +96,7 @@ async function sendRequest() {
     // Reset composer state
     showModal.value = false;
     selectedContact.value = null;
-    selectedTemplate.value = null;
+    selectedTemplateId.value = '';
     contactsQuery.value = '';
     loadData();
   } catch (err) {
@@ -298,11 +306,11 @@ const statusColor = s => {
           <div class="space-y-1.5">
             <label class="block text-xs font-bold text-slate-450 uppercase tracking-wider">Invite Template</label>
             <select
-              v-model="selectedTemplate"
+              v-model="selectedTemplateId"
               class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-850 p-3 focus:outline-none focus:ring-2 focus:ring-woot-500"
             >
-              <option :value="null">Select template...</option>
-              <option v-for="t in templates" :key="t.id" :value="t">{{ t.name }} ({{ t.channel }})</option>
+              <option value="">Select template...</option>
+              <option v-for="t in templates" :key="t.id" :value="t.id">{{ t.name }} ({{ t.channel }})</option>
             </select>
           </div>
 
