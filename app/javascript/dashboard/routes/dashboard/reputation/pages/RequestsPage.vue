@@ -82,8 +82,8 @@ function selectContact(contact) {
 }
 
 async function sendRequest() {
-  if (!selectedContact.value) {
-    alert("Please select a recipient contact from the search dropdown.");
+  if (!selectedContact.value && (!contactsQuery.value || !contactsQuery.value.includes('@'))) {
+    alert("Please select a recipient contact, or type a valid email address.");
     return;
   }
   if (!selectedTemplateId.value) {
@@ -93,10 +93,14 @@ async function sendRequest() {
   
   sendingRequest.value = true;
   try {
-    await axios.post(`${baseUrl()}/review_requests`, {
-      template_id: selectedTemplateId.value,
-      contact_id: selectedContact.value.id
-    });
+    const payload = { template_id: selectedTemplateId.value };
+    if (selectedContact.value) {
+      payload.contact_id = selectedContact.value.id;
+    } else {
+      payload.email = contactsQuery.value.trim();
+    }
+    
+    await axios.post(`${baseUrl()}/review_requests`, payload);
     // Reset composer state
     showModal.value = false;
     selectedContact.value = null;

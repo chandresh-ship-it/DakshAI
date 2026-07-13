@@ -18,10 +18,24 @@ class Api::V1::Accounts::Reputation::ReviewRequestsController < Api::V1::Account
 
   # POST /api/v1/accounts/:account_id/reputation/review_requests
   def create
+    contact_id = params[:contact_id]
+    
+    if contact_id.blank? && params[:email].present?
+      email = params[:email].to_s.strip
+      contact = current_account.contacts.find_by(email: email)
+      if contact.nil?
+        contact = current_account.contacts.create!(
+          name: email.split('@').first,
+          email: email
+        )
+      end
+      contact_id = contact.id
+    end
+
     Reputation::ReviewRequestSendService.new(
       account: current_account,
       template_id: params.require(:template_id),
-      contact_id: params.require(:contact_id)
+      contact_id: contact_id
     ).send!
     head :created
   end
