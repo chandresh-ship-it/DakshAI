@@ -82,7 +82,15 @@ function selectContact(contact) {
 }
 
 async function sendRequest() {
-  if (!selectedContact.value || !selectedTemplateId.value) return;
+  if (!selectedContact.value) {
+    alert("Please select a recipient contact from the search dropdown.");
+    return;
+  }
+  if (!selectedTemplateId.value) {
+    alert("Please select an invite template.");
+    return;
+  }
+  
   sendingRequest.value = true;
   try {
     await axios.post(`${baseUrl()}/review_requests`, {
@@ -339,7 +347,8 @@ const statusColor = s => {
           </button>
           <button
             class="px-5 py-2 text-xs font-bold bg-woot-500 hover:bg-woot-600 text-white rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
-            :disabled="!selectedContact || !selectedTemplateId || sendingRequest"
+            :class="{'opacity-50 cursor-not-allowed': sendingRequest}"
+            :disabled="sendingRequest"
             @click="sendRequest"
           >
             <svg v-if="sendingRequest" class="size-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3m0 0l-3 3-3-3" /></svg>
