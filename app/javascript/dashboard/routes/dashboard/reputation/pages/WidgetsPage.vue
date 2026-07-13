@@ -374,7 +374,7 @@ const previewReviewsList = computed(() => {
             </div>
 
             <div class="flex items-center justify-between py-2">
-              <span class="text-xs font-bold text-slate-450">Hide newrelay watermark</span>
+              <span class="text-xs font-bold text-slate-450">Hide NewRelay watermark</span>
               <button
                 type="button"
                 class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none"
@@ -545,7 +545,7 @@ const previewReviewsList = computed(() => {
                 class="text-center pt-2 text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800/80"
               >
                 Powered by
-                <span class="font-bold text-slate-650 dark:text-slate-350">newrelay</span>
+                <span class="font-bold text-slate-650 dark:text-slate-350">NewRelay</span>
               </div>
             </div>
             <div v-else class="text-xs text-slate-400 text-center py-10">
@@ -598,7 +598,7 @@ const previewReviewsList = computed(() => {
               class="text-center pt-2 text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800/80"
             >
               Powered by
-              <span class="font-bold text-slate-650 dark:text-slate-350">newrelay</span>
+              <span class="font-bold text-slate-650 dark:text-slate-350">NewRelay</span>
             </div>
             <div
               v-if="previewReviewsList.length === 0"
