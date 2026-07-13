@@ -137,25 +137,23 @@ function openConnectModal(platform) {
 }
 
 async function checkGoogleOauthCallback() {
-  if (route.query.google_oauth === 'error') {
-    const errorMsg = route.query.message || 'Unknown OAuth error occurred';
+  const params = new URLSearchParams(window.location.search);
+  const oauthStatus = params.get('google_oauth');
+
+  if (oauthStatus === 'error') {
+    const errorMsg = params.get('message') || 'Unknown OAuth error occurred';
     alert(`Google Authentication Failed: ${errorMsg}`);
     
-    const newQuery = { ...route.query };
-    delete newQuery.google_oauth;
-    delete newQuery.message;
-    router.replace({ query: newQuery });
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
     return;
   }
 
-  if (route.query.google_oauth === 'success') {
-    currentOauthSessionId.value = route.query.oauth_session_id;
+  if (oauthStatus === 'success') {
+    currentOauthSessionId.value = params.get('oauth_session_id');
 
-    // Remove OAuth params from URL cleanly via Vue Router
-    const newQuery = { ...route.query };
-    delete newQuery.google_oauth;
-    delete newQuery.oauth_session_id;
-    router.replace({ query: newQuery });
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
 
     showLocationModal.value = true;
     loadingLocations.value = true;
