@@ -960,6 +960,22 @@
       "APPLY": "Apply Palette",
       "ERROR": "Failed to generate palettes. Please try again."
     },
+    "THEME_SETTINGS": {
+      "TITLE": "Appearance settings",
+      "DESCRIPTION": "Select the default interface style for your dashboard.",
+      "LIGHT": {
+        "TITLE": "Light mode",
+        "DESCRIPTION": "Clean, light styling"
+      },
+      "DARK": {
+        "TITLE": "Dark mode",
+        "DESCRIPTION": "Sleek, dark styling"
+      },
+      "CUSTOM": {
+        "TITLE": "Custom branding",
+        "DESCRIPTION": "Apply custom color palette below"
+      }
+    },
     "COLOR_SETTINGS": {
       "TITLE": "Color customization",
       "DESCRIPTION": "Brand your customer-facing widgets and portals.",

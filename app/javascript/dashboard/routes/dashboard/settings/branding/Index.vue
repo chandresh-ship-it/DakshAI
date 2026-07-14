@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -87,8 +87,25 @@ const cnameTarget = computed(() => {
   }
 });
 
+let isWatcherEnabled = false;
+
+const activeTheme = ref(
+  LocalStorage.get(LOCAL_STORAGE_KEYS.COLOR_SCHEME) || 'light'
+);
+
+const setTheme = theme => {
+  activeTheme.value = theme;
+  LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, theme);
+  const isOSOnDarkMode = window.matchMedia(
+    '(prefers-color-scheme: dark)'
+  ).matches;
+  setColorTheme(isOSOnDarkMode);
+  window.dispatchEvent(new CustomEvent('theme-changed'));
+};
+
 const initFromAccount = () => {
   if (!activeAccount.value) return;
+  isWatcherEnabled = false;
   customDomain.value = activeAccount.value.custom_domain || '';
 
   const colors = activeAccount.value.custom_attributes?.brand_colors || {};
@@ -97,6 +114,10 @@ const initFromAccount = () => {
   backgroundColor.value = colors.background || '#1A1E29';
   activeLayout.value = colors.layout || 'classic';
   brandName.value = colors.brand_name || '';
+
+  nextTick(() => {
+    isWatcherEnabled = true;
+  });
 };
 
 watch(activeAccount, initFromAccount, { immediate: true });
@@ -132,14 +153,12 @@ const handleSave = async (shouldReload = true) => {
     faviconFile.value = null;
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
 
-    // Automatically switch appearance to custom when branding colors are updated
-    if (primaryColor.value || backgroundColor.value || textColor.value) {
-      LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, 'custom');
-      const isOSOnDarkMode = window.matchMedia(
-        '(prefers-color-scheme: dark)'
-      ).matches;
-      setColorTheme(isOSOnDarkMode);
-    }
+    // Save current active theme to localStorage on save
+    LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, activeTheme.value);
+    const isOSOnDarkMode = window.matchMedia(
+      '(prefers-color-scheme: dark)'
+    ).matches;
+    setColorTheme(isOSOnDarkMode);
 
     useAlert(t('BRANDING_SETTINGS.SAVE_SUCCESS'));
 
@@ -226,12 +245,9 @@ const buttonTextColor = computed(() => {
 watch(
   [primaryColor, textColor, backgroundColor],
   () => {
-    if (LocalStorage.get(LOCAL_STORAGE_KEYS.COLOR_SCHEME) !== 'custom') {
-      LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, 'custom');
-      const isOSOnDarkMode = window.matchMedia(
-        '(prefers-color-scheme: dark)'
-      ).matches;
-      setColorTheme(isOSOnDarkMode);
+    if (!isWatcherEnabled) return;
+    if (activeTheme.value !== 'custom') {
+      setTheme('custom');
     }
     applyLivePreview();
   },
@@ -496,6 +512,75 @@ const handleMagicPaletteApplied = palette => {
                 </span>
               </div>
             </div>
+          </div>
+        </SectionLayout>
+
+        <!-- Appearance Settings -->
+        <SectionLayout
+          with-border
+          :title="$t('BRANDING_SETTINGS.THEME_SETTINGS.TITLE')"
+          :description="$t('BRANDING_SETTINGS.THEME_SETTINGS.DESCRIPTION')"
+        >
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Light -->
+            <button
+              type="button"
+              class="flex flex-col items-center p-4 border rounded-xl bg-n-surface-2 hover:bg-n-surface-3 transition-all text-center cursor-pointer"
+              :class="
+                activeTheme === 'light'
+                  ? 'border-n-brand ring-2 ring-n-brand/20'
+                  : 'border-n-strong'
+              "
+              @click="setTheme('light')"
+            >
+              <span class="i-lucide-sun text-amber-500 size-6 mb-2" />
+              <span class="text-sm font-semibold text-n-slate-12">
+                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.LIGHT.TITLE') }}
+              </span>
+              <span class="text-xs text-n-slate-11 mt-1">
+                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.LIGHT.DESCRIPTION') }}
+              </span>
+            </button>
+
+            <!-- Dark -->
+            <button
+              type="button"
+              class="flex flex-col items-center p-4 border rounded-xl bg-n-surface-2 hover:bg-n-surface-3 transition-all text-center cursor-pointer"
+              :class="
+                activeTheme === 'dark'
+                  ? 'border-n-brand ring-2 ring-n-brand/20'
+                  : 'border-n-strong'
+              "
+              @click="setTheme('dark')"
+            >
+              <span class="i-lucide-moon text-blue-500 size-6 mb-2" />
+              <span class="text-sm font-semibold text-n-slate-12">
+                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.DARK.TITLE') }}
+              </span>
+              <span class="text-xs text-n-slate-11 mt-1">
+                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.DARK.DESCRIPTION') }}
+              </span>
+            </button>
+
+            <!-- Custom -->
+            <button
+              type="button"
+              class="flex flex-col items-center p-4 border rounded-xl bg-n-surface-2 hover:bg-n-surface-3 transition-all text-center cursor-pointer"
+              :class="
+                activeTheme === 'custom'
+                  ? 'border-n-brand ring-2 ring-n-brand/20'
+                  : 'border-n-strong'
+              "
+              @click="setTheme('custom')"
+            >
+              <span class="i-lucide-palette text-emerald-500 size-6 mb-2" />
+              <span class="text-sm font-semibold text-n-slate-12">
+                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.CUSTOM.TITLE') }}
+              </span>
+              <span class="text-xs text-n-slate-11 mt-1">
+                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.CUSTOM.DESCRIPTION') }}
+              </span>
+            </button>
           </div>
         </SectionLayout>
 
