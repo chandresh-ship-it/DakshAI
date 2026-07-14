@@ -15,6 +15,7 @@ import WithLabel from 'v3/components/Form/WithLabel.vue';
 import NextInput from 'next/input/Input.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import RadioCard from 'dashboard/components-next/radioCard/RadioCard.vue';
+import MagicBrandingModal from './components/MagicBrandingModal.vue';
 
 const store = useStore();
 const { t } = useI18n();
@@ -41,6 +42,7 @@ const faviconInput = ref(null);
 
 const lightLogoFile = ref(null);
 const faviconFile = ref(null);
+const isMagicModalOpen = ref(false);
 
 const lightLogoPreview = computed(() => {
   if (lightLogoFile.value)
@@ -147,6 +149,12 @@ const onLightLogoChange = event => {
 const onFaviconChange = event => {
   const [file] = event.target.files;
   if (file) faviconFile.value = file;
+};
+
+const handleMagicPaletteApplied = palette => {
+  if (palette.primary) primaryColor.value = palette.primary;
+  if (palette.text) textColor.value = palette.text;
+  if (palette.background) backgroundColor.value = palette.background;
 };
 </script>
 
@@ -733,6 +741,19 @@ const onFaviconChange = event => {
           :title="$t('BRANDING_SETTINGS.COLOR_SETTINGS.TITLE')"
           :description="$t('BRANDING_SETTINGS.COLOR_SETTINGS.DESCRIPTION')"
         >
+          <template #headerActions>
+            <NextButton
+              type="button"
+              blue
+              size="small"
+              class="w-full sm:w-auto mt-2 sm:mt-0"
+              @click="isMagicModalOpen = true"
+            >
+              <span class="i-lucide-sparkles size-4" />
+              {{ $t('BRANDING_SETTINGS.MAGIC_AI.BUTTON') }}
+            </NextButton>
+          </template>
+
           <div class="flex flex-col gap-4">
             <div
               class="flex items-center justify-between p-3 border border-n-strong rounded-lg bg-n-surface-2"
@@ -812,5 +833,11 @@ const onFaviconChange = event => {
         </div>
       </div>
     </div>
+
+    <MagicBrandingModal
+      :show="isMagicModalOpen"
+      @close="isMagicModalOpen = false"
+      @apply="handleMagicPaletteApplied"
+    />
   </div>
 </template>

@@ -939,6 +939,23 @@
       "DESCRIPTION": "Customize the brand name displayed across the system to replace newrelay.",
       "PLACEHOLDER": "Enter brand name (e.g. MyBrand)"
     },
+    "MAGIC_AI": {
+      "BUTTON": "Magic AI Generation",
+      "TITLE": "Generate Magic Branding",
+      "TABS": {
+        "URL": "From URL",
+        "PROMPT": "From Text",
+        "IMAGE": "From Image"
+      },
+      "URL_PLACEHOLDER": "https://www.your-brand.com",
+      "PROMPT_PLACEHOLDER": "Describe your brand vibe (e.g., A minimalist wellness brand with calm earthy tones, or a neon cyberpunk dark mode theme).",
+      "UPLOAD_IMAGE": "Upload Image",
+      "CHANGE_IMAGE": "Change Image",
+      "GENERATE": "Generate Palettes",
+      "RESULTS": "AI Suggestions",
+      "APPLY": "Apply Palette",
+      "ERROR": "Failed to generate palettes. Please try again."
+    },
     "LOGO_SETTINGS": {
       "TITLE": "Upload Logos",
       "DESCRIPTION": "Upload your brand logos used across the dashboard and portal.",

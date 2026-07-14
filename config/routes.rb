@@ -60,6 +60,7 @@ Rails.application.routes.draw do
             post :bulk_create, on: :collection
           end
           namespace :captain do
+            resource :branding, only: [:create], controller: 'branding'
             resource :preferences, only: [:show, :update]
             resources :assistants do
               member do
