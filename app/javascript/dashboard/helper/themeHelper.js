@@ -10,8 +10,10 @@ export const setColorTheme = (isOSOnDarkMode, brandColors) => {
   // But skip clearing if BRAND_COLORS are injected by the server (custom domain branding).
   const hasDomainBranding =
     window.globalConfig && window.globalConfig.BRAND_COLORS;
-  
-  const activeBrandColors = brandColors || (hasDomainBranding ? window.globalConfig.BRAND_COLORS : null);
+
+  const activeBrandColors =
+    brandColors ||
+    (hasDomainBranding ? window.globalConfig.BRAND_COLORS : null);
 
   if (selectedColorScheme !== 'custom' && !hasDomainBranding) {
     clearCustomThemeVariables();
@@ -22,10 +24,16 @@ export const setColorTheme = (isOSOnDarkMode, brandColors) => {
     activeBrandColors.background &&
     isDarkBackground(activeBrandColors.background);
 
-  const isDark =
-    isBrandDark ||
+  let isDark =
     (selectedColorScheme === 'auto' && isOSOnDarkMode) ||
     selectedColorScheme === 'dark';
+
+  if (
+    selectedColorScheme === 'custom' ||
+    (hasDomainBranding && selectedColorScheme === 'auto')
+  ) {
+    isDark = !!isBrandDark;
+  }
 
   if (isDark) {
     document.body.classList.add('dark');
@@ -37,4 +45,3 @@ export const setColorTheme = (isOSOnDarkMode, brandColors) => {
     document.documentElement.style.setProperty('color-scheme', 'light');
   }
 };
-
