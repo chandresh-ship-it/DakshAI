@@ -14,6 +14,7 @@ import {
   generatePrimaryColorVariables,
   generateThemeVariables,
   hexToRgbSpace,
+  clearCustomThemeVariables,
 } from 'dashboard/helper/colorHelper';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SectionLayout from '../account/components/SectionLayout.vue';
@@ -96,6 +97,11 @@ const activeTheme = ref(
 const setTheme = theme => {
   activeTheme.value = theme;
   LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, theme);
+
+  if (theme !== 'custom') {
+    clearCustomThemeVariables();
+  }
+
   const isOSOnDarkMode = window.matchMedia(
     '(prefers-color-scheme: dark)'
   ).matches;
@@ -586,6 +592,7 @@ const handleMagicPaletteApplied = palette => {
 
         <!-- Color Customization -->
         <SectionLayout
+          v-if="activeTheme === 'custom'"
           with-border
           :title="$t('BRANDING_SETTINGS.COLOR_SETTINGS.TITLE')"
           :description="$t('BRANDING_SETTINGS.COLOR_SETTINGS.DESCRIPTION')"
