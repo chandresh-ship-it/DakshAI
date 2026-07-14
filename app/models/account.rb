@@ -13,6 +13,7 @@
 #  locale                :integer          default("en")
 #  name                  :string           not null
 #  settings              :jsonb
+#  ssl_settings          :jsonb
 #  status                :integer          default("active")
 #  support_email         :string(100)
 #  created_at            :datetime         not null
@@ -132,6 +133,8 @@ class Account < ApplicationRecord
   after_update_commit :clear_unread_conversation_counts_cache, if: :saved_change_to_feature_conversation_unread_counts?
   after_destroy :remove_account_sequences
   after_save :propagate_status_change, if: :saved_change_to_status?
+  before_save :set_pending_ssl_status, if: :will_save_change_to_custom_domain?
+  after_save :enqueue_cloudflare_verification, if: :saved_change_to_custom_domain?
 
   def agents
     users.where(account_users: { role: :agent })
@@ -277,6 +280,23 @@ class Account < ApplicationRecord
     elsif active?
       sub_accounts.update_all(status: :active)
     end
+  end
+
+  def set_pending_ssl_status
+    if custom_domain.blank?
+      self.ssl_settings = {}
+      return
+    end
+
+    self.ssl_settings = (ssl_settings || {}).merge(
+      'cf_status' => 'pending_validation'
+    )
+  end
+
+  def enqueue_cloudflare_verification
+    return if custom_domain.blank?
+
+    Enterprise::CloudflareVerificationJob.perform_later('Account', id)
   end
 end
 

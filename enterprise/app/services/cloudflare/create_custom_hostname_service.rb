@@ -1,9 +1,9 @@
 class Cloudflare::CreateCustomHostnameService < Cloudflare::BaseCloudflareZoneService
-  pattr_initialize [:portal!]
+  pattr_initialize [:record!]
 
   def perform
     return { errors: ['Cloudflare API token or zone ID not found'] } if api_token.blank? || zone_id.blank?
-    return { errors: ['No hostname found'] } if @portal.custom_domain.blank?
+    return { errors: ['No hostname found'] } if @record.custom_domain.blank?
 
     response = create_hostname
 
@@ -12,7 +12,7 @@ class Cloudflare::CreateCustomHostnameService < Cloudflare::BaseCloudflareZoneSe
     data = response.parsed_response['result']
 
     if data.present?
-      update_portal_ssl_settings(@portal, data)
+      update_ssl_settings(@record, data)
       return { data: data }
     end
 
@@ -26,7 +26,7 @@ class Cloudflare::CreateCustomHostnameService < Cloudflare::BaseCloudflareZoneSe
       "#{BASE_URI}/zones/#{zone_id}/custom_hostnames",
       headers: headers,
       body: {
-        hostname: @portal.custom_domain,
+        hostname: @record.custom_domain,
         ssl: {
           method: 'http',
           type: 'dv'

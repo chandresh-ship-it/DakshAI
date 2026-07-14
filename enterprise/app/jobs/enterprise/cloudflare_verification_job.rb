@@ -1,22 +1,22 @@
 class Enterprise::CloudflareVerificationJob < ApplicationJob
   queue_as :default
 
-  def perform(portal_id)
-    portal = Portal.find(portal_id)
-    return unless portal && portal.custom_domain.present?
+  def perform(record_type, record_id)
+    record = record_type.constantize.find_by(id: record_id)
+    return unless record && record.custom_domain.present?
 
-    result = check_hostname_status(portal)
+    result = check_hostname_status(record)
 
-    create_hostname(portal) if result[:errors].present?
+    create_hostname(record) if result[:errors].present?
   end
 
   private
 
-  def create_hostname(portal)
-    Cloudflare::CreateCustomHostnameService.new(portal: portal).perform
+  def create_hostname(record)
+    Cloudflare::CreateCustomHostnameService.new(record: record).perform
   end
 
-  def check_hostname_status(portal)
-    Cloudflare::CheckCustomHostnameService.new(portal: portal).perform
+  def check_hostname_status(record)
+    Cloudflare::CheckCustomHostnameService.new(record: record).perform
   end
 end

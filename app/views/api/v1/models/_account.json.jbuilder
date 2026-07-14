@@ -23,6 +23,7 @@ if resource.custom_attributes.present?
 end
 json.domain @account.domain
 json.custom_domain @account.custom_domain
+json.ssl_settings @account.ssl_settings
 json.logo_url @account.logo_url
 json.dark_logo_url @account.dark_logo_url
 json.favicon_url @account.favicon_url

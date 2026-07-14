@@ -9,6 +9,6 @@ module Enterprise::Concerns::Portal
     return if custom_domain.blank?
     return unless ChatwootApp.chatwoot_cloud?
 
-    Enterprise::CloudflareVerificationJob.perform_later(id)
+    Enterprise::CloudflareVerificationJob.perform_later('Portal', id)
   end
 end

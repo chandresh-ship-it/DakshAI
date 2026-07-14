@@ -25,7 +25,6 @@ const uiFlags = useMapGetter('accounts/getUIFlags');
 const isUpdating = computed(() => uiFlags.value.isUpdating);
 
 const customDomain = ref('');
-const isVerified = ref(false);
 const brandName = ref('');
 const primaryColor = ref('#1F93FF');
 const textColor = ref('#FFFFFF');
@@ -58,6 +57,26 @@ const faviconPreview = computed(() => {
 
 const activeAccount = computed(() => getAccount.value(accountId.value));
 
+const domainStatus = computed(() => {
+  return activeAccount.value?.ssl_settings?.cf_status || 'not_configured';
+});
+
+const isVerified = computed(() => domainStatus.value === 'active');
+const isPending = computed(() =>
+  ['pending_validation', 'pending_issuance', 'pending_deployment'].includes(
+    domainStatus.value
+  )
+);
+const cnameTarget = computed(() => {
+  const hostURL =
+    window.chatwootConfig?.hostURL || 'https://domains.chatwoot.com';
+  try {
+    return new URL(hostURL).hostname;
+  } catch (e) {
+    return hostURL.replace(/^(https?:\/\/)/, '').replace(/\/$/, '');
+  }
+});
+
 const initFromAccount = () => {
   if (!activeAccount.value) return;
   customDomain.value = activeAccount.value.custom_domain || '';
@@ -71,10 +90,6 @@ const initFromAccount = () => {
 };
 
 watch(activeAccount, initFromAccount, { immediate: true });
-
-const handleVerify = () => {
-  isVerified.value = !isVerified.value;
-};
 
 const handleCancel = () => {
   initFromAccount();
@@ -118,6 +133,10 @@ const handleSave = async () => {
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
     useAlert(t('BRANDING_SETTINGS.SAVE_ERROR'));
   }
+};
+
+const handleVerify = () => {
+  handleSave();
 };
 
 const onLightLogoChange = event => {
@@ -176,7 +195,7 @@ const onFaviconChange = event => {
                 {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VERIFIED') }}
               </span>
               <span
-                v-else-if="customDomain"
+                v-else-if="customDomain && isPending"
                 class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-n-alpha-amber text-amber-500"
               >
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500" />
@@ -184,7 +203,33 @@ const onFaviconChange = event => {
               </span>
             </div>
 
-            <p class="text-xs text-n-slate-11 mt-2">
+            <div
+              v-if="customDomain && isPending"
+              class="mt-3 p-3 bg-n-surface-2 border border-n-strong rounded-lg"
+            >
+              <p class="text-xs font-medium text-n-slate-12 mb-1">
+                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
+              </p>
+              <div class="flex items-center gap-2 mt-2">
+                <code
+                  class="px-2 py-1 bg-n-surface-1 text-n-slate-11 rounded text-xs select-all"
+                >
+                  {{ 'CNAME' }}
+                </code>
+                <code
+                  class="px-2 py-1 bg-n-surface-1 text-n-slate-11 rounded text-xs select-all"
+                >
+                  {{ customDomain }}
+                </code>
+                <span class="text-xs text-n-slate-11">{{ '→' }}</span>
+                <code
+                  class="px-2 py-1 bg-n-surface-1 text-n-slate-11 rounded text-xs select-all font-mono"
+                >
+                  {{ cnameTarget }}
+                </code>
+              </div>
+            </div>
+            <p v-else class="text-xs text-n-slate-11 mt-2">
               {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
             </p>
           </WithLabel>
