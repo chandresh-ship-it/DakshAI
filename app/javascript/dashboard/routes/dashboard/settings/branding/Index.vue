@@ -210,20 +210,20 @@ const onFaviconChange = event => {
               <p class="text-xs font-medium text-n-slate-12 mb-1">
                 {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
               </p>
-              <div class="flex items-center gap-2 mt-2">
+              <div class="flex flex-wrap items-center gap-2 mt-2">
                 <code
-                  class="px-2 py-1 bg-n-surface-1 text-n-slate-11 rounded text-xs select-all"
+                  class="px-2 py-1 bg-n-surface-1 text-n-slate-11 rounded text-xs select-all shrink-0"
                 >
                   {{ 'CNAME' }}
                 </code>
                 <code
-                  class="px-2 py-1 bg-n-surface-1 text-n-slate-11 rounded text-xs select-all"
+                  class="px-2 py-1 bg-n-surface-1 text-n-slate-11 rounded text-xs select-all break-all min-w-0"
                 >
                   {{ customDomain }}
                 </code>
-                <span class="text-xs text-n-slate-11">{{ '→' }}</span>
+                <span class="text-xs text-n-slate-11 shrink-0">{{ '→' }}</span>
                 <code
-                  class="px-2 py-1 bg-n-surface-1 text-n-slate-11 rounded text-xs select-all font-mono"
+                  class="px-2 py-1 bg-n-surface-1 text-n-slate-11 rounded text-xs select-all font-mono break-all min-w-0"
                 >
                   {{ cnameTarget }}
                 </code>
