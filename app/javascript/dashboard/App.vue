@@ -15,6 +15,7 @@ import {
   hexToRgbSpace,
   generateThemeVariables,
   generatePrimaryColorVariables,
+  clearCustomThemeVariables,
 } from './helper/colorHelper';
 import { isOnOnboardingView } from 'v3/helpers/RouteHelper';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -132,6 +133,20 @@ export default {
       mql.onchange = e => setColorTheme(e.matches, this.accountBrandColors);
     },
     applyBrandColors(colors) {
+      const selectedColorScheme =
+        window.localStorage.getItem('color_scheme') || 'auto';
+      const hasDomainBranding =
+        window.globalConfig && window.globalConfig.BRAND_COLORS;
+
+      if (
+        selectedColorScheme !== 'custom' &&
+        !hasDomainBranding &&
+        this.currentAccountId
+      ) {
+        clearCustomThemeVariables();
+        return;
+      }
+
       if (!colors) return;
       const { primary, text, background } = colors;
 
@@ -144,34 +159,19 @@ export default {
         }
       }
 
-      // Apply background + text for:
-      // - custom domain branding (BRAND_COLORS from globalConfig — always applies)
-      // - user-selected 'custom' color scheme
-      // - login page (no currentAccountId)
-      const selectedColorScheme =
-        window.localStorage.getItem('color_scheme') || 'auto';
-      const hasDomainBranding =
-        window.globalConfig && window.globalConfig.BRAND_COLORS;
-
-      if (
-        hasDomainBranding ||
-        selectedColorScheme === 'custom' ||
-        !this.currentAccountId
-      ) {
-        if (text) {
-          const textRgb = hexToRgbSpace(text);
-          if (textRgb) {
-            document.documentElement.style.setProperty('--slate-12', textRgb);
-          }
+      if (text) {
+        const textRgb = hexToRgbSpace(text);
+        if (textRgb) {
+          document.documentElement.style.setProperty('--slate-12', textRgb);
         }
+      }
 
-        if (background) {
-          const themeVars = generateThemeVariables(background);
-          if (themeVars) {
-            Object.entries(themeVars).forEach(([key, value]) => {
-              if (value) document.documentElement.style.setProperty(key, value);
-            });
-          }
+      if (background) {
+        const themeVars = generateThemeVariables(background);
+        if (themeVars) {
+          Object.entries(themeVars).forEach(([key, value]) => {
+            if (value) document.documentElement.style.setProperty(key, value);
+          });
         }
       }
     },
