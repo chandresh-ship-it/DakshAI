@@ -11,7 +11,11 @@ import { useRouter } from 'vue-router';
 import { useStore } from 'dashboard/composables/store';
 import WootSnackbarBox from './components/SnackbarContainer.vue';
 import { setColorTheme } from './helper/themeHelper';
-import { hexToRgbSpace, generateThemeVariables } from './helper/colorHelper';
+import {
+  hexToRgbSpace,
+  generateThemeVariables,
+  generatePrimaryColorVariables,
+} from './helper/colorHelper';
 import { isOnOnboardingView } from 'v3/helpers/RouteHelper';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useFontSize } from 'dashboard/composables/useFontSize';
@@ -132,12 +136,11 @@ export default {
       const { primary, text, background } = colors;
 
       if (primary) {
-        const primaryRgb = hexToRgbSpace(primary);
-        if (primaryRgb) {
-          document.documentElement.style.setProperty(
-            '--woot-brand',
-            primaryRgb
-          );
+        const primaryVars = generatePrimaryColorVariables(primary);
+        if (primaryVars) {
+          Object.entries(primaryVars).forEach(([key, value]) => {
+            if (value) document.documentElement.style.setProperty(key, value);
+          });
         }
       }
 

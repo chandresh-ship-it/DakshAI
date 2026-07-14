@@ -9,6 +9,11 @@ import AccountAPI from 'dashboard/api/account';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { setColorTheme } from 'dashboard/helper/themeHelper';
+import {
+  generatePrimaryColorVariables,
+  generateThemeVariables,
+  hexToRgbSpace,
+} from 'dashboard/helper/colorHelper';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SectionLayout from '../account/components/SectionLayout.vue';
 import WithLabel from 'v3/components/Form/WithLabel.vue';
@@ -131,6 +136,12 @@ const handleSave = async () => {
     }
 
     useAlert(t('BRANDING_SETTINGS.SAVE_SUCCESS'));
+
+    // Reload the page after a brief delay to ensure all caches clear and the new brand colors
+    // are fully applied across all components
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   } catch {
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
     useAlert(t('BRANDING_SETTINGS.SAVE_ERROR'));
@@ -150,6 +161,41 @@ const onFaviconChange = event => {
   const [file] = event.target.files;
   if (file) faviconFile.value = file;
 };
+
+const applyLivePreview = () => {
+  if (primaryColor.value) {
+    const primaryVars = generatePrimaryColorVariables(primaryColor.value);
+    if (primaryVars) {
+      Object.entries(primaryVars).forEach(([key, value]) => {
+        if (value) document.documentElement.style.setProperty(key, value);
+      });
+    }
+  }
+
+  if (textColor.value) {
+    const textRgb = hexToRgbSpace(textColor.value);
+    if (textRgb) {
+      document.documentElement.style.setProperty('--slate-12', textRgb);
+    }
+  }
+
+  if (backgroundColor.value) {
+    const themeVars = generateThemeVariables(backgroundColor.value);
+    if (themeVars) {
+      Object.entries(themeVars).forEach(([key, value]) => {
+        if (value) document.documentElement.style.setProperty(key, value);
+      });
+    }
+  }
+};
+
+watch(
+  [primaryColor, textColor, backgroundColor],
+  () => {
+    applyLivePreview();
+  },
+  { deep: true }
+);
 
 const handleMagicPaletteApplied = palette => {
   if (palette.primary) primaryColor.value = palette.primary;

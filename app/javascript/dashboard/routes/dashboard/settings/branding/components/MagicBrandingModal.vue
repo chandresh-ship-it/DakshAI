@@ -63,18 +63,51 @@ const handleClose = () => {
   }, 300);
 };
 
-const onImageChange = event => {
+const resizeImage = file => {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 512;
+        const MAX_HEIGHT = 512;
+        let { width, height } = img;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+        } else if (height > MAX_HEIGHT) {
+          width = Math.round((width * MAX_HEIGHT) / height);
+          height = MAX_HEIGHT;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL(file.type || 'image/jpeg', 0.8));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+const onImageChange = async event => {
   const [file] = event.target.files;
   if (!file) return;
 
   imageInput.value = file;
   imagePreview.value = URL.createObjectURL(file);
 
-  const reader = new FileReader();
-  reader.onloadend = () => {
-    imageBase64.value = reader.result;
-  };
-  reader.readAsDataURL(file);
+  try {
+    imageBase64.value = await resizeImage(file);
+  } catch (error) {
+    useAlert(t('BRANDING_SETTINGS.MAGIC_AI.ERROR'));
+  }
 };
 
 const generatePalettes = async () => {
@@ -130,7 +163,9 @@ watch(
     width="md"
     @close="handleClose"
   >
-    <div class="flex flex-col gap-5 mt-4">
+    <div
+      class="flex flex-col gap-5 mt-4 overflow-y-auto max-h-[65vh] pr-2 -mr-2"
+    >
       <div class="flex items-center gap-1 p-1 bg-n-surface-2 rounded-lg">
         <button
           v-for="tab in tabs"
