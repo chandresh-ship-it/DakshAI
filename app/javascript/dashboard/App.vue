@@ -139,9 +139,11 @@ export default {
         window.globalConfig && window.globalConfig.BRAND_COLORS;
 
       if (
-        selectedColorScheme !== 'custom' &&
-        !hasDomainBranding &&
-        this.currentAccountId
+        selectedColorScheme === 'light' ||
+        selectedColorScheme === 'dark' ||
+        (selectedColorScheme !== 'custom' &&
+          !hasDomainBranding &&
+          this.currentAccountId)
       ) {
         clearCustomThemeVariables();
         return;

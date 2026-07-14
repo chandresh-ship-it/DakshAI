@@ -15,7 +15,11 @@ export const setColorTheme = (isOSOnDarkMode, brandColors) => {
     brandColors ||
     (hasDomainBranding ? window.globalConfig.BRAND_COLORS : null);
 
-  if (selectedColorScheme !== 'custom' && !hasDomainBranding) {
+  if (
+    selectedColorScheme === 'light' ||
+    selectedColorScheme === 'dark' ||
+    (selectedColorScheme !== 'custom' && !hasDomainBranding)
+  ) {
     clearCustomThemeVariables();
   }
 
