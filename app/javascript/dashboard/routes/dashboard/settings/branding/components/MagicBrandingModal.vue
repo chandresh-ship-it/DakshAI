@@ -1,14 +1,14 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import NextModal from 'dashboard/components-next/modal/Modal.vue';
+import NextModal from 'dashboard/components-next/dialog/Dialog.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import NextInput from 'dashboard/components-next/input/Input.vue';
 import AccountAPI from 'dashboard/api/account';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useAlert } from 'dashboard/composables';
 
-defineProps({
+const props = defineProps({
   show: { type: Boolean, default: false },
 });
 
@@ -16,6 +16,7 @@ const emit = defineEmits(['close', 'apply']);
 const { t } = useI18n();
 const { accountId } = useAccount();
 
+const dialogRef = ref(null);
 const activeTab = ref('url'); // 'url', 'prompt', 'image'
 const urlInput = ref('');
 const promptInput = ref('');
@@ -108,12 +109,26 @@ const applyPalette = () => {
     handleClose();
   }
 };
+
+watch(
+  () => props.show,
+  newVal => {
+    if (newVal) {
+      dialogRef.value?.open();
+    } else {
+      dialogRef.value?.close();
+    }
+  }
+);
 </script>
 
 <template>
   <NextModal
-    :show="show"
+    ref="dialogRef"
     :title="t('BRANDING_SETTINGS.MAGIC_AI.TITLE')"
+    :show-cancel-button="false"
+    :show-confirm-button="false"
+    width="md"
     @close="handleClose"
   >
     <div class="flex flex-col gap-5 mt-4">
