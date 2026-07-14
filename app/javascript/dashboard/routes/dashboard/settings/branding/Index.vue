@@ -138,11 +138,9 @@ const handleSave = async (shouldReload = true) => {
     useAlert(t('BRANDING_SETTINGS.SAVE_SUCCESS'));
 
     if (shouldReload) {
-      // Reload the page after a brief delay to ensure all caches clear and the new brand colors
-      // are fully applied across all components
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // The better/standard approach for SPAs: notify App.vue that the theme has changed
+      // so it re-runs `applyBrandColors` globally without a full page reload!
+      window.dispatchEvent(new CustomEvent('theme-changed'));
     }
   } catch {
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
