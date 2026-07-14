@@ -994,28 +994,6 @@
       "REMOVE": "Remove",
       "UPLOAD": "Upload"
     },
-    "LAYOUT_SETTINGS": {
-      "TITLE": "Workspace Layout Settings",
-      "DESCRIPTION": "Configure the dashboard layout for all agents in your workspace.",
-      "CLASSIC": {
-        "TITLE": "Classic Layout",
-        "DESCRIPTION": "Standard docked navigation layout on the left."
-      },
-      "SIDEBAR": {
-        "TITLE": "Modern Layout",
-        "DESCRIPTION": "Sleek floating navigation layout on the right."
-      }
-    },
-    "COLOR_SETTINGS": {
-      "TITLE": "Color Customization",
-      "DESCRIPTION": "Brand your customer-facing widgets and portals.",
-      "PRIMARY": "Primary Color",
-      "TEXT": "Text Color",
-      "BACKGROUND": "Background Color",
-      "SUCCESS": "Success Accent",
-      "WARNING": "Warning Color",
-      "SELECT_COLOR": "Select Color"
-    },
     "DESCRIPTION": "Configure your workspace branding including custom domain, logos, and color scheme.",
     "CANCEL": "Cancel",
     "SAVE": "Save changes",

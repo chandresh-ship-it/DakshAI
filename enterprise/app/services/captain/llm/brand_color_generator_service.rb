@@ -51,7 +51,13 @@ class Captain::Llm::BrandColorGeneratorService < Captain::BaseTaskService
   def system_prompt
     <<~PROMPT
       You are an expert UI/UX designer. Your task is to generate exactly 3 distinct, beautiful, and highly accessible color palettes based on the user's provided website context, image, or text hint.
-      
+
+      CRITICAL CONTRAST & ACCESSIBILITY REQUIREMENTS:
+      You MUST calculate and verify the contrast ratios of all options before outputting:
+      1. The text color (:text) MUST have a WCAG 2.1 AA compliant contrast ratio of at least 4.5:1 against the background color (:background).
+      2. The primary color (:primary) MUST have a contrast ratio of at least 3.0:1 against the background color (:background) for interactive UI elements.
+      3. Ensure colors are harmonious, modern, and represent the brand inputs correctly while strictly adhering to these contrast rules.
+
       Provide a mix of vibrant, modern, and professional options.
     PROMPT
   end

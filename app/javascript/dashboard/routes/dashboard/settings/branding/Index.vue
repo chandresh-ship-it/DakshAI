@@ -202,9 +202,24 @@ const applyLivePreview = () => {
 
 const hasLowContrast = computed(() => {
   try {
-    return getContrast(textColor.value, backgroundColor.value) < 4.5;
+    const textBgContrast = getContrast(textColor.value, backgroundColor.value);
+    const primaryBgContrast = getContrast(
+      primaryColor.value,
+      backgroundColor.value
+    );
+    return textBgContrast < 4.5 || primaryBgContrast < 3.0;
   } catch {
     return false;
+  }
+});
+
+const buttonTextColor = computed(() => {
+  try {
+    const whiteContrast = getContrast(primaryColor.value, '#FFFFFF');
+    const blackContrast = getContrast(primaryColor.value, '#000000');
+    return blackContrast > whiteContrast ? '#000000' : '#FFFFFF';
+  } catch {
+    return '#FFFFFF';
   }
 });
 
@@ -291,7 +306,7 @@ const handleMagicPaletteApplied = palette => {
           </WithLabel>
 
           <div
-            v-if="customDomain && isPending"
+            v-if="customDomain && !isVerified"
             class="mt-3 flex flex-col gap-3 p-4 bg-n-surface-2 border border-n-strong rounded-xl"
           >
             <p class="text-xs text-n-slate-11">
@@ -604,7 +619,10 @@ const handleMagicPaletteApplied = palette => {
                 </p>
                 <button
                   class="px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition-all duration-300"
-                  :style="{ backgroundColor: primaryColor, color: textColor }"
+                  :style="{
+                    backgroundColor: primaryColor,
+                    color: buttonTextColor,
+                  }"
                 >
                   {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PREVIEW_BUTTON') }}
                 </button>
