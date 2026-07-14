@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import NextModal from 'dashboard/components-next/dialog/Dialog.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import NextInput from 'dashboard/components-next/input/Input.vue';
-import AccountAPI from 'dashboard/api/account';
+import axios from 'axios';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useAlert } from 'dashboard/composables';
 
@@ -89,7 +89,7 @@ const generatePalettes = async () => {
     else if (activeTab.value === 'prompt') payload.prompt = promptInput.value;
     else if (activeTab.value === 'image') payload.image = imageBase64.value;
 
-    const response = await AccountAPI.post(
+    const response = await axios.post(
       `/api/v1/accounts/${accountId.value}/captain/branding`,
       payload
     );
