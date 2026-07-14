@@ -932,7 +932,7 @@
       "VERIFY": "Verify",
       "VERIFIED": "Verified",
       "PENDING": "Pending",
-      "CNAME_INSTRUCTION": "Please configure your DNS provider to add a CNAME record pointing your domain to our server."
+      "CNAME_INSTRUCTION": "To connect your domain, please add the following CNAME record in your DNS provider's settings. It may take up to 24 hours to propagate."
     },
     "BRAND_NAME": {
       "TITLE": "Brand Name",
