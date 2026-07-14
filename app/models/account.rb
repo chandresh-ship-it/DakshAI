@@ -50,6 +50,7 @@ class Account < ApplicationRecord
   # (see `inbound_email_domain`). Do not repurpose it for a website or any
   # non-mail-related domain.
   validates :domain, length: { maximum: 100 }
+  validates :custom_domain, uniqueness: { allow_blank: true, case_sensitive: false }, length: { maximum: 255 }
   validates_with JsonSchemaValidator,
                  schema: SETTINGS_PARAMS_SCHEMA,
                  attribute_resolver: ->(record) { record.settings }

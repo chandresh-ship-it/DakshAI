@@ -104,7 +104,7 @@ const handleCancel = () => {
   faviconFile.value = null;
 };
 
-const handleSave = async () => {
+const handleSave = async (shouldReload = true) => {
   try {
     const formData = new FormData();
     if (customDomain.value)
@@ -137,11 +137,13 @@ const handleSave = async () => {
 
     useAlert(t('BRANDING_SETTINGS.SAVE_SUCCESS'));
 
-    // Reload the page after a brief delay to ensure all caches clear and the new brand colors
-    // are fully applied across all components
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
+    if (shouldReload) {
+      // Reload the page after a brief delay to ensure all caches clear and the new brand colors
+      // are fully applied across all components
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
   } catch {
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
     useAlert(t('BRANDING_SETTINGS.SAVE_ERROR'));
@@ -149,7 +151,7 @@ const handleSave = async () => {
 };
 
 const handleVerify = () => {
-  handleSave();
+  handleSave(false);
 };
 
 const onLightLogoChange = event => {
