@@ -291,18 +291,9 @@ const handleMagicPaletteApplied = palette => {
               </span>
             </div>
 
-            <div class="flex items-center gap-2 mt-3 select-none">
-              <input
-                id="auto-connect"
-                type="checkbox"
-                checked
-                disabled
-                class="rounded border-n-strong text-n-brand focus:ring-n-brand"
-              />
-              <label for="auto-connect" class="text-xs text-n-slate-11">
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.AUTO_CONNECT_LABEL') }}
-              </label>
-            </div>
+            <p class="text-xs text-n-slate-11 mt-3">
+              {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.AUTO_CONNECT_LABEL') }}
+            </p>
           </WithLabel>
 
           <div
