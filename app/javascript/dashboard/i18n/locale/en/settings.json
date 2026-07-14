@@ -925,22 +925,26 @@
   "BRANDING_SETTINGS": {
     "TITLE": "Branding",
     "CUSTOM_DOMAIN": {
-      "TITLE": "Custom Domain",
+      "TITLE": "Custom domain",
       "DESCRIPTION": "Configure CNAME validation to map your custom domain to your workspace.",
       "LABEL": "Custom Domain",
       "PLACEHOLDER": "support.client.com",
       "VERIFY": "Verify",
       "VERIFIED": "Verified",
       "PENDING": "Pending",
-      "CNAME_INSTRUCTION": "To connect your domain, please add the following CNAME record in your DNS provider's settings. It may take up to 24 hours to propagate."
+      "AUTO_CONNECT_LABEL": "Domain connects automatically once verified — no separate save needed.",
+      "CNAME_INSTRUCTION": "Add this record with your DNS provider. It may take up to 24 hours to propagate.",
+      "TYPE": "Type",
+      "NAME": "Name",
+      "TARGET": "Target"
     },
     "BRAND_NAME": {
-      "TITLE": "Brand Name",
+      "TITLE": "Brand name",
       "DESCRIPTION": "Customize the brand name displayed across the system to replace newrelay.",
       "PLACEHOLDER": "Enter brand name (e.g. MyBrand)"
     },
     "MAGIC_AI": {
-      "BUTTON": "Magic AI Generation",
+      "BUTTON": "Magic AI generation",
       "TITLE": "Generate Magic Branding",
       "TABS": {
         "URL": "From URL",
@@ -956,22 +960,34 @@
       "APPLY": "Apply Palette",
       "ERROR": "Failed to generate palettes. Please try again."
     },
+    "COLOR_SETTINGS": {
+      "TITLE": "Color customization",
+      "DESCRIPTION": "Brand your customer-facing widgets and portals.",
+      "PRIMARY": "Primary color",
+      "TEXT": "Text color",
+      "BACKGROUND": "Background color",
+      "LOW_CONTRAST_WARNING": "Low contrast between text and background colors — text may be hard to read.",
+      "LIVE_PREVIEW": "Live Preview",
+      "PREVIEW_TEXT": "Hi, how can we help?",
+      "PREVIEW_BUTTON": "Start chat",
+      "PREVIEW_NOTE": "Updates instantly as you edit colors"
+    },
     "LOGO_SETTINGS": {
-      "TITLE": "Upload Logos",
-      "DESCRIPTION": "Upload your brand logos used across the dashboard and portal.",
+      "TITLE": "Upload logos",
+      "DESCRIPTION": "Upload logos for light and dark surfaces, plus a favicon for the browser tab.",
       "LIGHT_LOGO": {
-        "TITLE": "Primary Logo",
+        "TITLE": "Light logo",
         "NOTE": "For light backgrounds",
         "LIMIT": "max 500kb"
       },
       "DARK_LOGO": {
-        "TITLE": "Dark Mode Logo",
+        "TITLE": "Dark logo",
         "NOTE": "For dark backgrounds",
         "LIMIT": "max 500kb"
       },
       "FAVICON": {
         "TITLE": "Favicon",
-        "NOTE": "Drag-and-drop for browser tab icon",
+        "NOTE": "Browser tab icon",
         "LIMIT": "16x16 or 32x32px"
       },
       "CHOOSE_FILE": "Choose file",
