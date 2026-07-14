@@ -202,50 +202,50 @@ const onFaviconChange = event => {
                 {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PENDING') }}
               </span>
             </div>
-
-            <div
-              v-if="customDomain && isPending"
-              class="mt-3 flex flex-col gap-3 p-4 bg-n-surface-2 border border-n-strong rounded-xl"
-            >
-              <div class="flex gap-2.5 items-start text-xs text-n-slate-11">
-                <span
-                  class="i-lucide-info mt-0.5 size-4 text-n-slate-10 shrink-0"
-                />
-                <p class="leading-relaxed">
-                  {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
-                </p>
-              </div>
-              <div
-                class="grid grid-cols-[auto,1fr] gap-x-4 gap-y-3 text-xs bg-n-surface-1 p-3 rounded-lg border border-n-strong"
-              >
-                <span class="text-n-slate-10 font-medium">{{ 'Type' }}</span>
-                <code class="font-mono text-n-slate-12 font-medium">{{
-                  'CNAME'
-                }}</code>
-
-                <span class="text-n-slate-10 font-medium pt-0.5">{{
-                  'Name'
-                }}</span>
-                <code
-                  class="px-2 py-1 bg-n-surface-2 text-n-slate-11 rounded text-xs select-all break-all min-w-0 font-mono"
-                >
-                  {{ customDomain }}
-                </code>
-
-                <span class="text-n-slate-10 font-medium pt-0.5">{{
-                  'Target'
-                }}</span>
-                <code
-                  class="px-2 py-1 bg-n-surface-2 text-n-slate-11 rounded text-xs select-all break-all min-w-0 font-mono"
-                >
-                  {{ cnameTarget }}
-                </code>
-              </div>
-            </div>
-            <p v-else class="text-xs text-n-slate-11 mt-2">
-              {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
-            </p>
           </WithLabel>
+
+          <div
+            v-if="customDomain && isPending"
+            class="mt-3 flex flex-col gap-3 p-4 bg-n-surface-2 border border-n-strong rounded-xl"
+          >
+            <div class="flex gap-2.5 items-start text-xs text-n-slate-11">
+              <span
+                class="i-lucide-info mt-0.5 size-4 text-n-slate-10 shrink-0"
+              />
+              <p class="leading-relaxed">
+                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
+              </p>
+            </div>
+            <div
+              class="grid grid-cols-[auto,1fr] gap-x-4 gap-y-3 text-xs bg-n-surface-1 p-3 rounded-lg border border-n-strong"
+            >
+              <span class="text-n-slate-10 font-medium">{{ 'Type' }}</span>
+              <code class="font-mono text-n-slate-12 font-medium">{{
+                'CNAME'
+              }}</code>
+
+              <span class="text-n-slate-10 font-medium pt-0.5">{{
+                'Name'
+              }}</span>
+              <code
+                class="px-2 py-1 bg-n-surface-2 text-n-slate-11 rounded text-xs select-all break-all min-w-0 font-mono"
+              >
+                {{ customDomain }}
+              </code>
+
+              <span class="text-n-slate-10 font-medium pt-0.5">{{
+                'Target'
+              }}</span>
+              <code
+                class="px-2 py-1 bg-n-surface-2 text-n-slate-11 rounded text-xs select-all break-all min-w-0 font-mono"
+              >
+                {{ cnameTarget }}
+              </code>
+            </div>
+          </div>
+          <p v-else class="text-xs text-n-slate-11 mt-2">
+            {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
+          </p>
         </SectionLayout>
 
         <!-- Brand Name -->
