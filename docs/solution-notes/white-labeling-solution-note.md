@@ -194,5 +194,26 @@ To prevent multi-level nesting (sub-accounts of sub-accounts) and keep the switc
 
 ## 9. Conclusion
 
-By shifting custom domain lookup to both **Portals** and **Accounts** and utilizing **On-Demand TLS (Caddy)**, we achieve a highly scalable, multi-tenant SaaS model. Clients can fully rebrand the system, map custom subdomains, and serve their agents/visitors with zero manual setup by the core engineering team.
+By shifting custom domain lookup to both **Portals** and **Accounts** and utilizing **On-Demand TLS (Caddy/Cloudflare)**, we achieve a highly scalable, multi-tenant SaaS model. Clients can fully rebrand the system, map custom subdomains, and serve their agents/visitors with zero manual setup by the core engineering team.
 
+---
+
+## 10. Cloudflare SSL for SaaS Configuration
+
+Chatwoot utilizes Cloudflare's **SSL for SaaS** feature to provision TLS certificates for custom domains. The following setup is required on the core infrastructure Cloudflare account.
+
+### 10.1 Required Cloudflare Credentials
+The Chatwoot `.env` requires the following credentials to authenticate with the Cloudflare API:
+
+* `CLOUDFLARE_API_TOKEN`: Must be a **Custom API Token** (Global API Keys will fail with Auth Error 10000). The token requires the following permissions:
+  * `Zone` -> `Zone` -> `Read`
+  * `Zone` -> `Custom Hostnames` -> `Edit`
+  * **Zone Resources**: Must include `Specific zone` -> `<Your SaaS Domain>`.
+* `CLOUDFLARE_ZONE_ID`: The unique Zone ID found on the Cloudflare Dashboard overview page for your root SaaS domain.
+
+### 10.2 Fallback Origin Configuration
+Before Cloudflare will successfully issue certificates for custom hostnames, a **Fallback Origin** must be configured and active.
+
+1. **DNS Setup**: In Cloudflare DNS, create an `A` or `CNAME` record for a subdomain (e.g. `proxy-fallback.yourdomain.com`) pointing to your Chatwoot server IP. Ensure the record is **Proxied (Orange Cloud ON)**.
+2. **Fallback Origin Assignment**: Go to **SSL/TLS -> Custom Hostnames**. Enter `proxy-fallback.yourdomain.com` as the Fallback Origin and click **Add**.
+3. **Verification**: Wait for the Fallback Origin Status to change to **Active**. If it remains in "Pending Deployment (Error)", it means the DNS record is either missing or not proxied. Custom hostnames added by users will throw the error `"fallback origin is not active yet"` until this is resolved.

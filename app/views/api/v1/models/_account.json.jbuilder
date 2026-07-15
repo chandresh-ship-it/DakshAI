@@ -24,6 +24,7 @@ end
 json.domain @account.domain
 json.custom_domain @account.custom_domain
 json.ssl_settings @account.ssl_settings
+json.server_ip ENV.fetch('SERVER_IP', nil)
 json.logo_url @account.logo_url
 json.dark_logo_url @account.dark_logo_url
 json.favicon_url @account.favicon_url

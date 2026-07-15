@@ -97,6 +97,15 @@ const txtVerificationName = computed(() => {
   return `_cf-custom-hostname.${customDomain.value}`;
 });
 
+const serverIp = computed(() => {
+  return activeAccount.value?.server_ip || '';
+});
+
+const routingRecordType = computed(() => {
+  if (!serverIp.value) return 'A';
+  return serverIp.value.includes(':') ? 'AAAA' : 'A';
+});
+
 let isWatcherEnabled = false;
 
 function applyLivePreview() {
@@ -407,7 +416,7 @@ const handleMagicPaletteApplied = palette => {
 
             <hr v-if="txtVerificationRecord" class="border-n-strong" />
 
-            <!-- Option 2: TXT -->
+            <!-- Option 2: TXT & A/AAAA -->
             <div v-if="txtVerificationRecord" class="flex flex-col gap-3">
               <p class="text-xs text-n-slate-12 font-semibold">
                 {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_2_TITLE') }}
@@ -416,30 +425,64 @@ const handleMagicPaletteApplied = palette => {
                 {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TXT_INSTRUCTION') }}
               </p>
               <div
-                class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 text-xs p-3 bg-n-surface-1 rounded-lg border border-n-strong"
+                class="flex flex-col gap-3 p-3 bg-n-surface-1 rounded-lg border border-n-strong"
               >
-                <span class="text-n-slate-10">{{
-                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
-                }}</span>
-                <span class="font-mono text-n-slate-12 font-semibold">{{
-                  'TXT'
-                }}</span>
-
-                <span class="text-n-slate-10">{{
-                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.NAME')
-                }}</span>
-                <code
-                  class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
-                  >{{ txtVerificationName }}</code
+                <!-- TXT Record -->
+                <div
+                  class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 text-xs pb-3 border-b border-n-strong"
                 >
+                  <span class="text-n-slate-10">{{
+                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
+                  }}</span>
+                  <span class="font-mono text-n-slate-12 font-semibold">{{
+                    'TXT'
+                  }}</span>
 
-                <span class="text-n-slate-10">{{
-                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VALUE')
-                }}</span>
-                <code
-                  class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
-                  >{{ txtVerificationRecord }}</code
+                  <span class="text-n-slate-10">{{
+                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.NAME')
+                  }}</span>
+                  <code
+                    class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
+                    >{{ txtVerificationName }}</code
+                  >
+
+                  <span class="text-n-slate-10">{{
+                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VALUE')
+                  }}</span>
+                  <code
+                    class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
+                    >{{ txtVerificationRecord }}</code
+                  >
+                </div>
+
+                <!-- A / AAAA Routing Record (only if serverIp is set) -->
+                <div
+                  v-if="serverIp"
+                  class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 text-xs pt-1"
                 >
+                  <span class="text-n-slate-10">{{
+                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
+                  }}</span>
+                  <span class="font-mono text-n-slate-12 font-semibold">{{
+                    routingRecordType
+                  }}</span>
+
+                  <span class="text-n-slate-10">{{
+                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.NAME')
+                  }}</span>
+                  <code
+                    class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
+                    >{{ '@' }}</code
+                  >
+
+                  <span class="text-n-slate-10">{{
+                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VALUE')
+                  }}</span>
+                  <code
+                    class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
+                    >{{ serverIp }}</code
+                  >
+                </div>
               </div>
             </div>
           </div>
