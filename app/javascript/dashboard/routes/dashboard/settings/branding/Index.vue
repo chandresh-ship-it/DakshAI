@@ -139,7 +139,11 @@ const setTheme = theme => {
   const isOSOnDarkMode = window.matchMedia(
     '(prefers-color-scheme: dark)'
   ).matches;
-  setColorTheme(isOSOnDarkMode);
+  setColorTheme(isOSOnDarkMode, {
+    primary: primaryColor.value,
+    text: textColor.value,
+    background: backgroundColor.value,
+  });
   window.dispatchEvent(new CustomEvent('theme-changed'));
 };
 
@@ -177,11 +181,12 @@ const handleCancel = () => {
   faviconFile.value = null;
 };
 
-const handleSave = async (shouldReload = true) => {
+const handleSave = async (shouldReload = true, isVerifyAction = false) => {
   try {
     const formData = new FormData();
     if (customDomain.value)
       formData.append('custom_domain', customDomain.value);
+    if (isVerifyAction) formData.append('force_verify', 'true');
     if (lightLogoFile.value) formData.append('logo', lightLogoFile.value);
     if (darkLogoFile.value) formData.append('dark_logo', darkLogoFile.value);
     if (faviconFile.value) formData.append('favicon', faviconFile.value);
@@ -201,24 +206,36 @@ const handleSave = async (shouldReload = true) => {
 
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: true });
     const response = await AccountAPI.update(formData);
+
+    // Set localStorage BEFORE committing to Vuex, so that when
+    // App.vue's accountBrandColors watcher fires synchronously,
+    // it reads the correct color_scheme from localStorage.
+    LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, activeTheme.value);
+
     store.commit('accounts/EDIT_ACCOUNT', response.data);
     lightLogoFile.value = null;
     darkLogoFile.value = null;
     faviconFile.value = null;
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
 
-    // Save current active theme to localStorage on save
-    LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, activeTheme.value);
+    // Re-apply colors after the store commit to ensure CSS vars survive
+    // any watcher cascade that may have cleared them.
     const isOSOnDarkMode = window.matchMedia(
       '(prefers-color-scheme: dark)'
     ).matches;
-    setColorTheme(isOSOnDarkMode);
+    const savedColors = {
+      primary: primaryColor.value,
+      text: textColor.value,
+      background: backgroundColor.value,
+    };
+    if (activeTheme.value === 'custom') {
+      applyLivePreview();
+    }
+    setColorTheme(isOSOnDarkMode, savedColors);
 
     useAlert(t('BRANDING_SETTINGS.SAVE_SUCCESS'));
 
     if (shouldReload) {
-      // The better/standard approach for SPAs: notify App.vue that the theme has changed
-      // so it re-runs `applyBrandColors` globally without a full page reload!
       window.dispatchEvent(new CustomEvent('theme-changed'));
     }
   } catch {
@@ -228,7 +245,7 @@ const handleSave = async (shouldReload = true) => {
 };
 
 const handleVerify = () => {
-  handleSave(false);
+  handleSave(false, true);
 };
 
 const onLightLogoChange = event => {

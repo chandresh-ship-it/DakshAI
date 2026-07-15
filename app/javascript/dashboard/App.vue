@@ -90,10 +90,8 @@ export default {
     accountBrandColors: {
       deep: true,
       handler(newColors) {
-        if (newColors) {
-          this.applyBrandColors(newColors);
-          this.initializeColorTheme();
-        }
+        this.applyBrandColors(newColors);
+        this.initializeColorTheme();
       },
     },
   },
@@ -121,6 +119,7 @@ export default {
       if (this.accountBrandColors) {
         this.applyBrandColors(this.accountBrandColors);
       }
+      this.initializeColorTheme();
     },
     initializeColorTheme() {
       setColorTheme(
@@ -137,19 +136,23 @@ export default {
         window.localStorage.getItem('color_scheme') || 'auto';
       const hasDomainBranding =
         window.globalConfig && window.globalConfig.BRAND_COLORS;
+      const hasAccountColors =
+        colors && (colors.primary || colors.text || colors.background);
 
+      // If colors is explicitly null (deleted), or we are explicitly on light/dark
+      // without domain branding forcing custom colors, we should clear.
       if (
-        selectedColorScheme === 'light' ||
-        selectedColorScheme === 'dark' ||
-        (selectedColorScheme !== 'custom' &&
+        !hasAccountColors ||
+        ((selectedColorScheme === 'light' || selectedColorScheme === 'dark') &&
+          !hasDomainBranding) ||
+        (selectedColorScheme === 'auto' &&
           !hasDomainBranding &&
-          this.currentAccountId)
+          !hasAccountColors)
       ) {
         clearCustomThemeVariables();
         return;
       }
 
-      if (!colors) return;
       const { primary, text, background } = colors;
 
       if (primary) {

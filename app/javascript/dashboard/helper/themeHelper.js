@@ -15,10 +15,23 @@ export const setColorTheme = (isOSOnDarkMode, brandColors) => {
     brandColors ||
     (hasDomainBranding ? window.globalConfig.BRAND_COLORS : null);
 
+  const hasActiveColors =
+    activeBrandColors &&
+    (activeBrandColors.primary ||
+      activeBrandColors.text ||
+      activeBrandColors.background);
+
+  // Only clear custom variables if explicitly on light/dark without branding,
+  // or if on 'auto' with no brand colors at all.
   if (
-    selectedColorScheme === 'light' ||
-    selectedColorScheme === 'dark' ||
-    (selectedColorScheme !== 'custom' && !hasDomainBranding)
+    (selectedColorScheme === 'light' || selectedColorScheme === 'dark') &&
+    !hasDomainBranding
+  ) {
+    clearCustomThemeVariables();
+  } else if (
+    selectedColorScheme !== 'custom' &&
+    !hasDomainBranding &&
+    !hasActiveColors
   ) {
     clearCustomThemeVariables();
   }
@@ -34,7 +47,7 @@ export const setColorTheme = (isOSOnDarkMode, brandColors) => {
 
   if (
     selectedColorScheme === 'custom' ||
-    (hasDomainBranding && selectedColorScheme === 'auto')
+    ((hasDomainBranding || hasActiveColors) && selectedColorScheme === 'auto')
   ) {
     isDark = !!isBrandDark;
   }

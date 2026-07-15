@@ -57,7 +57,16 @@ class Api::V1::AccountsController < Api::BaseController
     @account.custom_attributes = merged_attributes
     @account.settings = @account.settings.merge(settings_params.to_h)
     @account.custom_attributes['onboarding_step'] = 'invite_team' if @account.custom_attributes['onboarding_step'] == 'account_update'
+    
+    # Store whether domain was changed before saving
+    domain_changed = @account.custom_domain_changed?
+    
     @account.save!
+
+    # Force verification if explicitly requested (e.g., clicking Verify button)
+    if params[:force_verify] == 'true' && !domain_changed
+      @account.enqueue_cloudflare_verification
+    end
   end
 
   def update_active_at

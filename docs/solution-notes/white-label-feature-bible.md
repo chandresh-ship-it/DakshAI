@@ -101,7 +101,36 @@
 
 ---
 
-## 8. DATA MODEL
+## 8. CLOUDFLARE SETUP & CONFIGURATION (Zone ID & API Key)
+
+To integrate custom domains using Cloudflare's Custom Hostnames (SSL for SaaS), the server requires access to a target Cloudflare Zone. Follow these steps to retrieve the necessary configuration values:
+
+### 8.1. Retrieve the Zone ID (`CLOUDFLARE_ZONE_ID`)
+The **Zone ID** represents the specific domain name (or website) in Cloudflare that will act as the CNAME target wrapper for client domains.
+1. Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com/).
+2. On the home page, select the domain/website you wish to use as the base routing target (e.g., `yourdomain.com`).
+3. Under the **Overview** tab (the default landing page for the site), scroll down to the right-hand sidebar.
+4. Locate the **API** section.
+5. Copy the **Zone ID** (a 32-character hexadecimal string).
+
+### 8.2. Generate the API Token (`CLOUDFLARE_API_KEY`)
+The application needs an authorized API token to create, check, and edit custom hostnames dynamically under your zone.
+1. In the top right corner of the Cloudflare Dashboard, click your profile icon and select **My Profile**.
+2. Select **API Tokens** from the left-hand sidebar.
+3. Click the **Create Token** button.
+4. Click **Create Custom Token** (at the bottom of the templates list).
+5. Name your token (e.g., `Newrelay Custom Hostnames Manager`).
+6. Under **Permissions**, add the following:
+   - **Zone** -> **Zone** -> **Read**
+   - **Zone** -> **Custom Hostnames** -> **Edit**
+7. Under **Zone Resources**, filter by your specific zone:
+   - **Include** -> **Specific zone** -> select your domain.
+8. Click **Continue to summary**, verify the configurations, and click **Create Token**.
+9. Copy the generated token immediately (this will be used as `CLOUDFLARE_API_KEY` in your `.env` or application config).
+
+---
+
+## 9. DATA MODEL
 
 **New/modified tables:**
 ```
@@ -126,7 +155,7 @@ white_label_settings
 
 ---
 
-## 9. BACKEND / API
+## 10. BACKEND / API
 
 **Endpoints:**
 | Method | Route | Purpose | Auth |
@@ -144,7 +173,7 @@ white_label_settings
 
 ---
 
-## 10. FRONTEND / UI
+## 11. FRONTEND / UI
 
 **Screens/components touched:** New "White Label" settings page, logo/favicon upload widgets, color pickers, domain input with live verification status indicator.
 
@@ -154,7 +183,7 @@ white_label_settings
 
 ---
 
-## 11. FLOW — Step by Step
+## 12. FLOW — Step by Step
 
 1. Agency admin goes to Settings → White Label
 2. Uploads logo + favicon, picks brand colors → saved immediately, applied to their own dashboard view
@@ -170,7 +199,7 @@ white_label_settings
 
 ---
 
-## 12. EDGE CASES & FAILURE MODES
+## 13. EDGE CASES & FAILURE MODES
 
 | Scenario | Expected behavior |
 |---|---|
@@ -183,7 +212,7 @@ white_label_settings
 
 ---
 
-## 13. NON-FUNCTIONAL REQUIREMENTS
+## 14. NON-FUNCTIONAL REQUIREMENTS
 
 - **Performance:** Domain verification polling shouldn't hammer DNS — reasonable interval (e.g., every 2-5 min, capped retries).
 - **Security:** Validate domain ownership before activating routing; sanitize uploaded logo/favicon files (prevent malicious SVG/script injection); enforce HTTPS only.
@@ -192,7 +221,7 @@ white_label_settings
 
 ---
 
-## 14. AI IMPLEMENTATION INSTRUCTIONS
+## 15. AI IMPLEMENTATION INSTRUCTIONS
 
 **Tech stack constraints:** Rails + Vue (Chatwoot base), Sidekiq for background jobs, multi-tenant routing needs to integrate with existing tenant resolution logic.
 
@@ -212,7 +241,7 @@ white_label_settings
 
 ---
 
-## 15. DESIGN FLOW (Visual)
+## 16. DESIGN FLOW (Visual)
 
 ```mermaid
 flowchart TD
@@ -238,7 +267,7 @@ flowchart TD
 
 ---
 
-## 16. JIRA TASK BREAKDOWN
+## 17. JIRA TASK BREAKDOWN
 
 **Epic:** White Label / Custom Branding
 
@@ -260,7 +289,7 @@ flowchart TD
 
 ---
 
-## 17. ROLLOUT PLAN
+## 18. ROLLOUT PLAN
 
 - **Feature flag:** Yes — recommended, given infra risk of multi-tenant domain routing.
 - **Rollout order:** Internal test domain → 1-2 friendly agency beta users → all Agency-tier accounts.
@@ -268,7 +297,7 @@ flowchart TD
 
 ---
 
-## 18. OPEN QUESTIONS
+## 19. OPEN QUESTIONS
 
 - [ ] Which plan tier unlocks white-label — Agency tier only, or paid add-on for any tier?
 - [ ] What's the multi-tenant SSL/routing architecture — Cloudflare for SaaS, AWS ACM + ALB, or something else already in your infra?
