@@ -64,8 +64,8 @@ class Api::V1::AccountsController < Api::BaseController
     @account.save!
 
     # Force verification if explicitly requested (e.g., clicking Verify button)
-    if params[:force_verify] == 'true' && !domain_changed
-      @account.enqueue_cloudflare_verification
+    if params[:force_verify] == 'true' && !domain_changed && @account.custom_domain.present?
+      Enterprise::CloudflareVerificationJob.perform_later('Account', @account.id)
     end
   end
 
