@@ -88,6 +88,15 @@ const cnameTarget = computed(() => {
   }
 });
 
+const txtVerificationRecord = computed(() => {
+  return activeAccount.value?.ssl_settings?.cf_verification_body || '';
+});
+
+const txtVerificationName = computed(() => {
+  if (!customDomain.value) return '';
+  return `_cf-custom-hostname.${customDomain.value}`;
+});
+
 let isWatcherEnabled = false;
 
 function applyLivePreview() {
@@ -358,34 +367,80 @@ const handleMagicPaletteApplied = palette => {
 
           <div
             v-if="customDomain && !isVerified"
-            class="mt-3 flex flex-col gap-3 p-4 bg-n-surface-2 border border-n-strong rounded-xl"
+            class="mt-3 flex flex-col gap-5 p-4 bg-n-surface-2 border border-n-strong rounded-xl"
           >
-            <p class="text-xs text-n-slate-11">
-              {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
-            </p>
-            <div class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 text-xs">
-              <span class="text-n-slate-10">{{
-                $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
-              }}</span>
-              <span class="font-mono text-n-slate-12 font-semibold">{{
-                'CNAME'
-              }}</span>
-
-              <span class="text-n-slate-10">{{
-                $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.NAME')
-              }}</span>
-              <code
-                class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
-                >{{ customDomain }}</code
+            <!-- Option 1: CNAME -->
+            <div class="flex flex-col gap-3">
+              <p class="text-xs text-n-slate-12 font-semibold">
+                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_1_TITLE') }}
+              </p>
+              <p class="text-xs text-n-slate-11">
+                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
+              </p>
+              <div
+                class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 text-xs p-3 bg-n-surface-1 rounded-lg border border-n-strong"
               >
+                <span class="text-n-slate-10">{{
+                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
+                }}</span>
+                <span class="font-mono text-n-slate-12 font-semibold">{{
+                  'CNAME'
+                }}</span>
 
-              <span class="text-n-slate-10">{{
-                $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TARGET')
-              }}</span>
-              <code
-                class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
-                >{{ cnameTarget }}</code
+                <span class="text-n-slate-10">{{
+                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.NAME')
+                }}</span>
+                <code
+                  class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
+                  >{{ customDomain }}</code
+                >
+
+                <span class="text-n-slate-10">{{
+                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TARGET')
+                }}</span>
+                <code
+                  class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
+                  >{{ cnameTarget }}</code
+                >
+              </div>
+            </div>
+
+            <hr v-if="txtVerificationRecord" class="border-n-strong" />
+
+            <!-- Option 2: TXT -->
+            <div v-if="txtVerificationRecord" class="flex flex-col gap-3">
+              <p class="text-xs text-n-slate-12 font-semibold">
+                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_2_TITLE') }}
+              </p>
+              <p class="text-xs text-n-slate-11">
+                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TXT_INSTRUCTION') }}
+              </p>
+              <div
+                class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 text-xs p-3 bg-n-surface-1 rounded-lg border border-n-strong"
               >
+                <span class="text-n-slate-10">{{
+                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
+                }}</span>
+                <span class="font-mono text-n-slate-12 font-semibold">{{
+                  'TXT'
+                }}</span>
+
+                <span class="text-n-slate-10">{{
+                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.NAME')
+                }}</span>
+                <code
+                  class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
+                  >{{ txtVerificationName }}</code
+                >
+
+                <span class="text-n-slate-10">{{
+                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VALUE')
+                }}</span>
+                <code
+                  class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
+                  >{{ txtVerificationRecord }}</code
+                >
+              </div>
             </div>
           </div>
         </SectionLayout>

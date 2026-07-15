@@ -926,17 +926,21 @@
     "TITLE": "Branding",
     "CUSTOM_DOMAIN": {
       "TITLE": "Custom domain",
-      "DESCRIPTION": "Configure CNAME validation to map your custom domain to your workspace.",
+      "DESCRIPTION": "Configure CNAME or TXT validation to map your custom domain to your workspace.",
       "LABEL": "Custom Domain",
       "PLACEHOLDER": "support.client.com",
       "VERIFY": "Verify",
       "VERIFIED": "Verified",
       "PENDING": "Pending",
       "AUTO_CONNECT_LABEL": "Domain connects automatically once verified — no separate save needed.",
+      "OPTION_1_TITLE": "Option 1: CNAME (Recommended for subdomains)",
       "CNAME_INSTRUCTION": "Add this record with your DNS provider. It may take up to 24 hours to propagate.",
+      "OPTION_2_TITLE": "Option 2: TXT Record (Required for root domains)",
+      "TXT_INSTRUCTION": "If your DNS provider blocks CNAME records on root domains (like yoursite.com), add this TXT record instead, along with an A record pointing to our server IP.",
       "TYPE": "Type",
       "NAME": "Name",
-      "TARGET": "Target"
+      "TARGET": "Target",
+      "VALUE": "Value"
     },
     "BRAND_NAME": {
       "TITLE": "Brand name",
