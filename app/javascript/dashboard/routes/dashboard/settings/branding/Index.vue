@@ -90,6 +90,38 @@ const cnameTarget = computed(() => {
 
 let isWatcherEnabled = false;
 
+function applyLivePreview() {
+  const styleNode = document.getElementById('brand-colors');
+  if (styleNode) {
+    styleNode.remove();
+  }
+
+  if (primaryColor.value) {
+    const primaryVars = generatePrimaryColorVariables(primaryColor.value);
+    if (primaryVars) {
+      Object.entries(primaryVars).forEach(([key, value]) => {
+        if (value) document.documentElement.style.setProperty(key, value);
+      });
+    }
+  }
+
+  if (textColor.value) {
+    const textRgb = hexToRgbSpace(textColor.value);
+    if (textRgb) {
+      document.documentElement.style.setProperty('--slate-12', textRgb);
+    }
+  }
+
+  if (backgroundColor.value) {
+    const themeVars = generateThemeVariables(backgroundColor.value);
+    if (themeVars) {
+      Object.entries(themeVars).forEach(([key, value]) => {
+        if (value) document.documentElement.style.setProperty(key, value);
+      });
+    }
+  }
+}
+
 const activeTheme = ref(
   LocalStorage.get(LOCAL_STORAGE_KEYS.COLOR_SCHEME) || 'light'
 );
@@ -100,6 +132,8 @@ const setTheme = theme => {
 
   if (theme !== 'custom') {
     clearCustomThemeVariables();
+  } else {
+    applyLivePreview();
   }
 
   const isOSOnDarkMode = window.matchMedia(
@@ -120,6 +154,14 @@ const initFromAccount = () => {
   backgroundColor.value = colors.background || '#1A1E29';
   activeLayout.value = colors.layout || 'classic';
   brandName.value = colors.brand_name || '';
+
+  if (colors.primary || colors.text || colors.background) {
+    activeTheme.value = 'custom';
+  } else {
+    const storedTheme =
+      LocalStorage.get(LOCAL_STORAGE_KEYS.COLOR_SCHEME) || 'light';
+    activeTheme.value = storedTheme === 'custom' ? 'light' : storedTheme;
+  }
 
   nextTick(() => {
     isWatcherEnabled = true;
@@ -145,9 +187,15 @@ const handleSave = async (shouldReload = true) => {
     if (faviconFile.value) formData.append('favicon', faviconFile.value);
 
     // Send brand colors as nested hash
-    formData.append('brand_colors[primary]', primaryColor.value);
-    formData.append('brand_colors[text]', textColor.value);
-    formData.append('brand_colors[background]', backgroundColor.value);
+    if (activeTheme.value === 'custom') {
+      formData.append('brand_colors[primary]', primaryColor.value);
+      formData.append('brand_colors[text]', textColor.value);
+      formData.append('brand_colors[background]', backgroundColor.value);
+    } else {
+      formData.append('brand_colors[primary]', '');
+      formData.append('brand_colors[text]', '');
+      formData.append('brand_colors[background]', '');
+    }
     formData.append('brand_colors[layout]', activeLayout.value);
     formData.append('brand_colors[brand_name]', brandName.value);
 
@@ -196,33 +244,6 @@ const onDarkLogoChange = event => {
 const onFaviconChange = event => {
   const [file] = event.target.files;
   if (file) faviconFile.value = file;
-};
-
-const applyLivePreview = () => {
-  if (primaryColor.value) {
-    const primaryVars = generatePrimaryColorVariables(primaryColor.value);
-    if (primaryVars) {
-      Object.entries(primaryVars).forEach(([key, value]) => {
-        if (value) document.documentElement.style.setProperty(key, value);
-      });
-    }
-  }
-
-  if (textColor.value) {
-    const textRgb = hexToRgbSpace(textColor.value);
-    if (textRgb) {
-      document.documentElement.style.setProperty('--slate-12', textRgb);
-    }
-  }
-
-  if (backgroundColor.value) {
-    const themeVars = generateThemeVariables(backgroundColor.value);
-    if (themeVars) {
-      Object.entries(themeVars).forEach(([key, value]) => {
-        if (value) document.documentElement.style.setProperty(key, value);
-      });
-    }
-  }
 };
 
 const hasLowContrast = computed(() => {

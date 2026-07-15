@@ -11,11 +11,11 @@ class Cloudflare::BaseCloudflareZoneService
   end
 
   def api_token
-    InstallationConfig.find_by(name: 'CLOUDFLARE_API_KEY')&.value
+    GlobalConfigService.load('CLOUDFLARE_API_KEY', nil)
   end
 
   def zone_id
-    InstallationConfig.find_by(name: 'CLOUDFLARE_ZONE_ID')&.value
+    GlobalConfigService.load('CLOUDFLARE_ZONE_ID', nil)
   end
 
   def update_ssl_settings(record, data)

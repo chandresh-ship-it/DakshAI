@@ -45,7 +45,16 @@ class Api::V1::AccountsController < Api::BaseController
 
   def update
     @account.assign_attributes(account_params.slice(:name, :locale, :domain, :support_email, :custom_domain, :logo, :dark_logo, :favicon))
-    @account.custom_attributes = @account.custom_attributes.merge(custom_attributes_params.to_h)
+    
+    merged_attributes = @account.custom_attributes.merge(custom_attributes_params.to_h)
+    if merged_attributes['brand_colors'].is_a?(Hash)
+      ['primary', 'text', 'background'].each do |key|
+        merged_attributes['brand_colors'].delete(key) if merged_attributes['brand_colors'][key].blank?
+      end
+      merged_attributes.delete('brand_colors') if merged_attributes['brand_colors'].blank?
+    end
+
+    @account.custom_attributes = merged_attributes
     @account.settings = @account.settings.merge(settings_params.to_h)
     @account.custom_attributes['onboarding_step'] = 'invite_team' if @account.custom_attributes['onboarding_step'] == 'account_update'
     @account.save!

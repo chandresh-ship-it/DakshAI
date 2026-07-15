@@ -102,6 +102,11 @@ export const clearCustomThemeVariables = () => {
     ...Array.from({ length: 12 }, (_, i) => `--blue-${i + 1}`),
   ];
   keys.forEach(key => document.documentElement.style.removeProperty(key));
+
+  const styleNode = document.getElementById('brand-colors');
+  if (styleNode) {
+    styleNode.remove();
+  }
 };
 
 export const isDarkBackground = backgroundHex => {

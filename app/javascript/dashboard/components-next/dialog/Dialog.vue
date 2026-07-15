@@ -118,7 +118,7 @@ defineExpose({ open, close });
   <TeleportWithDirection to="body">
     <dialog
       ref="dialogRef"
-      class="w-full transition-all duration-300 ease-in-out shadow-xl rounded-xl"
+      class="w-full transition-all duration-300 ease-in-out shadow-xl rounded-xl bg-transparent border-0 p-0 outline-none"
       :class="[
         maxWidthClass,
         positionClass,
