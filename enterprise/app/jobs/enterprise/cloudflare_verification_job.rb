@@ -7,7 +7,14 @@ class Enterprise::CloudflareVerificationJob < ApplicationJob
 
     result = check_hostname_status(record)
 
-    create_hostname(record) if result[:errors].present?
+    if result[:errors].present?
+      Rails.logger.error("Cloudflare Check Error for Account #{record_id}: #{result[:errors].join(', ')}")
+      
+      create_result = create_hostname(record)
+      if create_result && create_result[:errors].present?
+        Rails.logger.error("Cloudflare Create Error for Account #{record_id}: #{create_result[:errors].join(', ')}")
+      end
+    end
   end
 
   private
