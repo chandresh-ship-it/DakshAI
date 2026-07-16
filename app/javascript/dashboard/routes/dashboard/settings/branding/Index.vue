@@ -184,8 +184,12 @@ const setTheme = theme => {
   }
   window.dispatchEvent(new CustomEvent('theme-changed'));
 };
-
+let skipNextAccountSync = false;
 const initFromAccount = () => {
+  if (skipNextAccountSync) {
+    skipNextAccountSync = false;
+    return;
+  } 
   if (!activeAccount.value) return;
   isWatcherEnabled = false;
   customDomain.value = activeAccount.value.custom_domain || '';
@@ -249,7 +253,8 @@ const handleSave = async (shouldReload = true, isVerifyAction = false) => {
     // App.vue's accountBrandColors watcher fires synchronously,
     // it reads the correct color_scheme from localStorage.
     LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, activeTheme.value);
-
+ console.log(LOCAL_STORAGE_KEYS.COLOR_SCHEME);
+    skipNextAccountSync = true;
     store.commit('accounts/EDIT_ACCOUNT', response.data);
     lightLogoFile.value = null;
     darkLogoFile.value = null;
