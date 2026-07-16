@@ -697,6 +697,7 @@ Rails.application.routes.draw do
   get '.well-known/apple-app-site-association' => 'apple_app#site_association'
   get '.well-known/microsoft-identity-association.json' => 'microsoft#identity_association'
   get '.well-known/cf-custom-hostname-challenge/:id', to: 'custom_domains#verify'
+  get '.well-known/acme-challenge/:id', to: 'custom_domains#acme_challenge'
 
   # ----------------------------------------------------------------------
   # Internal Monitoring Routes

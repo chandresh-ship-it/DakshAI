@@ -32,6 +32,13 @@ class Cloudflare::BaseCloudflareZoneService
       ssl_settings['cf_verification_body'] = verification_record['http_body']
     end
 
+    # Also save ACME SSL verification fields if they exist (for HTTP SSL validation)
+    if ssl_record.present? && ssl_record['validation_records'].present?
+      ssl_validation = ssl_record['validation_records'].first
+      ssl_settings['cf_ssl_verification_id'] = ssl_validation['http_url'].split('/').last
+      ssl_settings['cf_ssl_verification_body'] = ssl_validation['http_body']
+    end
+
     # Always update SSL status and errors from current response
     ssl_settings['cf_status'] = ssl_record&.dig('status')
     ssl_settings['cf_verification_errors'] = verification_errors
