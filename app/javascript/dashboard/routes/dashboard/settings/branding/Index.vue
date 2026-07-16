@@ -72,11 +72,19 @@ const domainStatus = computed(() => {
   return activeAccount.value?.ssl_settings?.cf_status || 'not_configured';
 });
 
-const isVerified = computed(() => domainStatus.value === 'active');
-const isPending = computed(() =>
-  ['pending_validation', 'pending_issuance', 'pending_deployment'].includes(
-    domainStatus.value
-  )
+const isDomainUnchanged = computed(() => {
+  return customDomain.value === activeAccount.value?.custom_domain;
+});
+
+const isVerified = computed(
+  () => isDomainUnchanged.value && domainStatus.value === 'active'
+);
+const isPending = computed(
+  () =>
+    isDomainUnchanged.value &&
+    ['pending_validation', 'pending_issuance', 'pending_deployment'].includes(
+      domainStatus.value
+    )
 );
 const cnameTarget = computed(() => {
   const hostURL =
@@ -358,6 +366,7 @@ const handleMagicPaletteApplied = palette => {
                 :placeholder="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PLACEHOLDER')"
               />
               <NextButton
+                v-if="!isVerified"
                 type="button"
                 class="shrink-0"
                 blue
