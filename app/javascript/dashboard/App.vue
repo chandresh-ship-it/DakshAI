@@ -139,9 +139,13 @@ export default {
       const hasAccountColors =
         colors && (colors.primary || colors.text || colors.background);
 
-      // If the account has no brand colors at all, clear custom vars and exit.
-      // Admin-set brand colors always take priority over the user's Light/Dark preference.
-      if (!hasAccountColors && !hasDomainBranding) {
+      // If the account has no brand colors at all, or if the user explicitly
+      // selected standard Light or Dark mode, clear custom vars and exit.
+      if (
+        (!hasAccountColors && !hasDomainBranding) ||
+        selectedColorScheme === 'light' ||
+        selectedColorScheme === 'dark'
+      ) {
         clearCustomThemeVariables();
         return;
       }

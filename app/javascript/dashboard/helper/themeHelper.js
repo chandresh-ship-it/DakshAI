@@ -21,8 +21,13 @@ export const setColorTheme = (isOSOnDarkMode, brandColors) => {
       activeBrandColors.text ||
       activeBrandColors.background);
 
-  // Only clear custom variables when there is no brand coloring at all.
-  if (!hasDomainBranding && !hasActiveColors) {
+  // Clear custom variables if the user explicitly selected standard Light or Dark mode,
+  // or if there is no brand coloring configured at all.
+  if (
+    selectedColorScheme === 'light' ||
+    selectedColorScheme === 'dark' ||
+    (!hasDomainBranding && !hasActiveColors)
+  ) {
     clearCustomThemeVariables();
   }
 
@@ -35,9 +40,10 @@ export const setColorTheme = (isOSOnDarkMode, brandColors) => {
     (selectedColorScheme === 'auto' && isOSOnDarkMode) ||
     selectedColorScheme === 'dark';
 
-  // Admin-set brand colors always take priority over the user's Light/Dark preference.
-  // The dark/light mode is derived from the background color luminance.
-  if (hasDomainBranding || hasActiveColors) {
+  // For custom theme or auto-theme with active branding, derive dark/light from the brand colors.
+  if (selectedColorScheme === 'custom') {
+    isDark = !!isBrandDark;
+  } else if (selectedColorScheme === 'auto' && (hasDomainBranding || hasActiveColors)) {
     isDark = !!isBrandDark;
   }
 
