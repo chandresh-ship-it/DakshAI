@@ -9,6 +9,7 @@ import AccountAPI from 'dashboard/api/account';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { setColorTheme } from 'dashboard/helper/themeHelper';
+import ColorPicker from 'dashboard/components-next/colorpicker/ColorPicker.vue';
 import { getContrast } from 'color2k';
 import {
   generatePrimaryColorVariables,
@@ -330,6 +331,15 @@ watch(
       setTheme('custom');
     }
     applyLivePreview();
+
+    const isOSOnDarkMode = window.matchMedia(
+      '(prefers-color-scheme: dark)'
+    ).matches;
+    setColorTheme(isOSOnDarkMode, {
+      primary: primaryColor.value,
+      text: textColor.value,
+      background: backgroundColor.value,
+    });
   },
   { deep: true }
 );
@@ -390,7 +400,7 @@ const handleMagicPaletteApplied = palette => {
               </span>
             </div>
 
-            <p class="text-xs text-n-slate-11 mt-3">
+            <p v-if="!isVerified" class="text-xs text-n-slate-11 mt-3">
               {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.AUTO_CONNECT_LABEL') }}
             </p>
           </WithLabel>
@@ -792,18 +802,7 @@ const handleMagicPaletteApplied = palette => {
                 <span class="text-sm font-semibold text-n-slate-12">
                   {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PRIMARY') }}
                 </span>
-                <div class="flex items-center gap-2">
-                  <input
-                    v-model="primaryColor"
-                    type="color"
-                    class="w-8 h-8 rounded cursor-pointer border border-n-strong bg-transparent"
-                  />
-                  <span
-                    class="text-xs font-mono text-n-slate-11 select-all uppercase"
-                  >
-                    {{ primaryColor }}
-                  </span>
-                </div>
+                <ColorPicker v-model="primaryColor" />
               </div>
 
               <div
@@ -812,18 +811,7 @@ const handleMagicPaletteApplied = palette => {
                 <span class="text-sm font-semibold text-n-slate-12">
                   {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.TEXT') }}
                 </span>
-                <div class="flex items-center gap-2">
-                  <input
-                    v-model="textColor"
-                    type="color"
-                    class="w-8 h-8 rounded cursor-pointer border border-n-strong bg-transparent"
-                  />
-                  <span
-                    class="text-xs font-mono text-n-slate-11 select-all uppercase"
-                  >
-                    {{ textColor }}
-                  </span>
-                </div>
+                <ColorPicker v-model="textColor" />
               </div>
 
               <div
@@ -832,18 +820,7 @@ const handleMagicPaletteApplied = palette => {
                 <span class="text-sm font-semibold text-n-slate-12">
                   {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.BACKGROUND') }}
                 </span>
-                <div class="flex items-center gap-2">
-                  <input
-                    v-model="backgroundColor"
-                    type="color"
-                    class="w-8 h-8 rounded cursor-pointer border border-n-strong bg-transparent"
-                  />
-                  <span
-                    class="text-xs font-mono text-n-slate-11 select-all uppercase"
-                  >
-                    {{ backgroundColor }}
-                  </span>
-                </div>
+                <ColorPicker v-model="backgroundColor" />
               </div>
             </div>
 
