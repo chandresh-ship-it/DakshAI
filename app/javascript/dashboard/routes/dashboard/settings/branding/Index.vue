@@ -361,6 +361,8 @@ const handleMagicPaletteApplied = palette => {
                 type="button"
                 class="shrink-0"
                 blue
+                :is-loading="isUpdating"
+                :disabled="isUpdating"
                 @click="handleVerify"
               >
                 {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VERIFY') }}
