@@ -90,6 +90,10 @@ export default {
     accountBrandColors: {
       deep: true,
       handler(newColors) {
+        if (this.$route.name === 'branding_settings_index') {
+          this.initializeColorTheme();
+          return;
+        }
         this.applyBrandColors(newColors);
         this.initializeColorTheme();
       },
@@ -116,6 +120,10 @@ export default {
   },
   methods: {
     handleThemeChange() {
+      if (this.$route.name === 'branding_settings_index') {
+        this.initializeColorTheme();
+        return;
+      }
       if (this.accountBrandColors) {
         this.applyBrandColors(this.accountBrandColors);
       }
