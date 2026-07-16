@@ -98,6 +98,16 @@ export default {
         this.initializeColorTheme();
       },
     },
+    $route(to, from) {
+      // If we are navigating away from the branding settings page,
+      // apply the saved brand colors so they are visible on the rest of the dashboard!
+      if (from && from.name === 'branding_settings_index' && to.name !== 'branding_settings_index') {
+        if (this.accountBrandColors) {
+          this.applyBrandColors(this.accountBrandColors);
+        }
+        this.initializeColorTheme();
+      }
+    },
   },
   mounted() {
     this.initializeColorTheme();
