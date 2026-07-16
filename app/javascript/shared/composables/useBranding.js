@@ -26,7 +26,7 @@ export function useBranding() {
       customBrandName || globalConfig.value?.installationName;
     if (!installationName) return text;
 
-    return text.replace(/Chatwoot|DakshAI/g, installationName);
+    return text.replace(/Chatwoot|DakshAI|Newrelay/g, installationName);
   };
 
   return {
