@@ -116,6 +116,25 @@ export default {
   },
   methods: {
     handleThemeChange() {
+      const selectedColorScheme =
+        window.localStorage.getItem('color_scheme') || 'auto';
+
+      if (selectedColorScheme === 'light' || selectedColorScheme === 'dark') {
+        this.initializeColorTheme();
+        return;
+      }
+
+      if (selectedColorScheme === 'custom') {
+        const colors = this.accountBrandColors;
+        const hasAccountColors =
+          colors && (colors.primary || colors.text || colors.background);
+        if (hasAccountColors) {
+          this.applyBrandColors(colors);
+          this.initializeColorTheme();
+        }
+        return;
+      }
+
       if (this.accountBrandColors) {
         this.applyBrandColors(this.accountBrandColors);
       }
@@ -139,15 +158,24 @@ export default {
       const hasAccountColors =
         colors && (colors.primary || colors.text || colors.background);
 
-      // If the account has no brand colors at all, clear custom vars and exit.
-      // Admin-set brand colors always take priority over the user's Light/Dark preference.
-      if (!hasAccountColors && !hasDomainBranding) {
+      // If colors is explicitly null (deleted), or we are explicitly on light/dark
+      // without domain branding forcing custom colors, we should clear.
+      if (
+        !hasAccountColors ||
+        ((selectedColorScheme === 'light' || selectedColorScheme === 'dark') &&
+          !hasDomainBranding) ||
+        (selectedColorScheme === 'auto' &&
+          !hasDomainBranding &&
+          !hasAccountColors)
+      ) {
         clearCustomThemeVariables();
         return;
       }
 
       // Use domain branding colors as fallback when account colors are not passed in
-      const resolvedColors = colors || (hasDomainBranding ? window.globalConfig.BRAND_COLORS : null);
+      const resolvedColors =
+        colors ||
+        (hasDomainBranding ? window.globalConfig.BRAND_COLORS : null);
       if (!resolvedColors) return;
 
       const { primary, text, background } = resolvedColors;
