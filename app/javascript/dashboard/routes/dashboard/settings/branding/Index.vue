@@ -106,6 +106,16 @@ const routingRecordType = computed(() => {
   return serverIp.value.includes(':') ? 'AAAA' : 'A';
 });
 
+const isRootDomain = computed(() => {
+  if (!customDomain.value) return false;
+  const parts = customDomain.value.split('.');
+  return (
+    parts.length <= 2 ||
+    (parts.length === 3 &&
+      ['co', 'com', 'org', 'net', 'edu', 'gov'].includes(parts[1]))
+  );
+});
+
 let isWatcherEnabled = false;
 
 function applyLivePreview() {
@@ -378,8 +388,8 @@ const handleMagicPaletteApplied = palette => {
             v-if="customDomain && !isVerified"
             class="mt-3 flex flex-col gap-5 p-4 bg-n-surface-2 border border-n-strong rounded-xl"
           >
-            <!-- Option 1: CNAME -->
-            <div class="flex flex-col gap-3">
+            <!-- Option 1: CNAME (Only shown for subdomains) -->
+            <div v-if="!isRootDomain" class="flex flex-col gap-3">
               <p class="text-xs text-n-slate-12 font-semibold">
                 {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_1_TITLE') }}
               </p>
@@ -414,12 +424,19 @@ const handleMagicPaletteApplied = palette => {
               </div>
             </div>
 
-            <hr v-if="txtVerificationRecord" class="border-n-strong" />
+            <hr
+              v-if="txtVerificationRecord && !isRootDomain"
+              class="border-n-strong"
+            />
 
             <!-- Option 2: TXT & A/AAAA -->
             <div v-if="txtVerificationRecord" class="flex flex-col gap-3">
               <p class="text-xs text-n-slate-12 font-semibold">
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_2_TITLE') }}
+                {{
+                  isRootDomain
+                    ? 'TXT & A/AAAA Records (Required for root domains)'
+                    : $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_2_TITLE')
+                }}
               </p>
               <p class="text-xs text-n-slate-11">
                 {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TXT_INSTRUCTION') }}
