@@ -167,20 +167,21 @@ const setTheme = theme => {
   activeTheme.value = theme;
   LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, theme);
 
-  if (theme !== 'custom') {
-    clearCustomThemeVariables();
-  } else {
-    applyLivePreview();
-  }
-
   const isOSOnDarkMode = window.matchMedia(
     '(prefers-color-scheme: dark)'
   ).matches;
-  setColorTheme(isOSOnDarkMode, {
-    primary: primaryColor.value,
-    text: textColor.value,
-    background: backgroundColor.value,
-  });
+
+  if (theme !== 'custom') {
+    clearCustomThemeVariables();
+    setColorTheme(theme === 'dark', null);
+  } else {
+    applyLivePreview();
+    setColorTheme(isOSOnDarkMode, {
+      primary: primaryColor.value,
+      text: textColor.value,
+      background: backgroundColor.value,
+    });
+  }
   window.dispatchEvent(new CustomEvent('theme-changed'));
 };
 
@@ -260,15 +261,18 @@ const handleSave = async (shouldReload = true, isVerifyAction = false) => {
     const isOSOnDarkMode = window.matchMedia(
       '(prefers-color-scheme: dark)'
     ).matches;
-    const savedColors = {
-      primary: primaryColor.value,
-      text: textColor.value,
-      background: backgroundColor.value,
-    };
+    
     if (activeTheme.value === 'custom') {
       applyLivePreview();
+      setColorTheme(isOSOnDarkMode, {
+        primary: primaryColor.value,
+        text: textColor.value,
+        background: backgroundColor.value,
+      });
+    } else {
+      clearCustomThemeVariables();
+      setColorTheme(activeTheme.value === 'dark', null);
     }
-    setColorTheme(isOSOnDarkMode, savedColors);
 
     useAlert(t('BRANDING_SETTINGS.SAVE_SUCCESS'));
 
@@ -300,18 +304,7 @@ const onFaviconChange = event => {
   if (file) faviconFile.value = file;
 };
 
-const hasLowContrast = computed(() => {
-  try {
-    const textBgContrast = getContrast(textColor.value, backgroundColor.value);
-    const primaryBgContrast = getContrast(
-      primaryColor.value,
-      backgroundColor.value
-    );
-    return textBgContrast < 4.5 || primaryBgContrast < 3.0;
-  } catch {
-    return false;
-  }
-});
+
 
 const buttonTextColor = computed(() => {
   try {
@@ -784,15 +777,7 @@ const handleMagicPaletteApplied = palette => {
             </NextButton>
           </template>
 
-          <div
-            v-if="hasLowContrast"
-            class="flex gap-2.5 items-start p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-500 text-xs mb-4"
-          >
-            <span class="i-lucide-alert-triangle size-4 shrink-0 mt-0.5" />
-            <p class="leading-relaxed">
-              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.LOW_CONTRAST_WARNING') }}
-            </p>
-          </div>
+
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div class="flex flex-col gap-4">

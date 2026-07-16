@@ -34,6 +34,7 @@ export function useAccount() {
   };
 
   const isCloudFeatureEnabled = feature => {
+    if (!currentAccount.value?.id) return false;
     return isFeatureEnabledonAccount.value(currentAccount.value.id, feature);
   };
 

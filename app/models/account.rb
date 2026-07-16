@@ -295,6 +295,10 @@ class Account < ApplicationRecord
   end
 
   def enqueue_cloudflare_verification
+    if saved_change_to_custom_domain? && custom_domain_before_last_save.present?
+      Enterprise::CloudflareDeletionJob.perform_later(custom_domain_before_last_save)
+    end
+
     return if custom_domain.blank?
 
     Enterprise::CloudflareVerificationJob.perform_later('Account', id)
