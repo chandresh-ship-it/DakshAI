@@ -282,7 +282,9 @@ const handleSave = async (shouldReload = true, isVerifyAction = false) => {
     useAlert(t('BRANDING_SETTINGS.SAVE_SUCCESS'));
 
     if (shouldReload) {
-      window.dispatchEvent(new CustomEvent('theme-changed'));
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     }
   } catch {
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
