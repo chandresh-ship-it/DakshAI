@@ -51,6 +51,8 @@ class GlobalConfig
     end
 
     def db_fallback(config_key)
+      return ENV.fetch('DEPLOYMENT_ENV', nil) if config_key == 'DEPLOYMENT_ENV' && ENV['DEPLOYMENT_ENV'].present?
+
       InstallationConfig.find_by(name: config_key)&.value
     end
   end
