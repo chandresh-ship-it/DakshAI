@@ -20,6 +20,7 @@ class Cloudflare::BaseCloudflareZoneService
 
   def update_ssl_settings(record, data)
     verification_record = data['ownership_verification_http']
+    txt_verification = data['ownership_verification']
     ssl_record = data['ssl']
     verification_errors = data['verification_errors']&.first || ''
 
@@ -30,13 +31,21 @@ class Cloudflare::BaseCloudflareZoneService
     if verification_record.present?
       ssl_settings['cf_verification_id'] = verification_record['http_url'].split('/').last
       ssl_settings['cf_verification_body'] = verification_record['http_body']
+    elsif txt_verification.present? && txt_verification['type'] == 'txt'
+      ssl_settings['cf_verification_body'] = txt_verification['value']
     end
 
     # Also save ACME SSL verification fields if they exist (for HTTP SSL validation)
     if ssl_record.present? && ssl_record['validation_records'].present?
       ssl_validation = ssl_record['validation_records'].first
-      ssl_settings['cf_ssl_verification_id'] = ssl_validation['http_url'].split('/').last
-      ssl_settings['cf_ssl_verification_body'] = ssl_validation['http_body']
+      if ssl_validation['http_url'].present?
+        ssl_settings['cf_ssl_verification_id'] = ssl_validation['http_url'].split('/').last
+        ssl_settings['cf_ssl_verification_body'] = ssl_validation['http_body']
+      elsif ssl_validation['txt_name'].present?
+        # TXT SSL validation challenge
+        ssl_settings['cf_ssl_verification_id'] = ssl_validation['txt_name']
+        ssl_settings['cf_ssl_verification_body'] = ssl_validation['txt_value']
+      end
     end
 
     # Always update SSL status and errors from current response
