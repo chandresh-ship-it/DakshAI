@@ -1,42 +1,47 @@
-<div class="p-6">
-  <div class="mb-6">
-    <h1 class="text-2xl font-semibold text-slate-900">Account Hierarchy</h1>
-    <p class="mt-1 text-sm text-slate-600">Read-only reseller accounts and their child accounts.</p>
-  </div>
+<% content_for(:title) do %>
+  Account Hierarchy
+<% end %>
 
+<header class="main-content__header" role="banner">
+  <h1 class="main-content__page-title">
+    <%= content_for(:title) %>
+  </h1>
+</header>
+
+<section class="main-content__body">
   <% if @resellers.empty? %>
     <div class="rounded-lg border border-slate-100 bg-white p-6 text-sm text-slate-600">
       No reseller accounts found.
     </div>
   <% else %>
-    <div class="space-y-3">
+    <div class="space-y-4">
       <% @resellers.each do |reseller| %>
-        <details class="rounded-lg border border-slate-100 bg-white p-4">
-          <summary class="flex cursor-pointer items-center justify-between text-sm font-medium text-slate-900">
+        <details class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <summary class="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900">
             <span><%= reseller.name %></span>
-            <span class="text-xs font-normal text-slate-500"><%= pluralize(reseller.children.size, 'child account') %></span>
+            <span class="text-xs font-normal text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full"><%= pluralize(reseller.children.size, 'child account') %></span>
           </summary>
 
           <% if reseller.children.empty? %>
             <p class="mt-4 text-sm text-slate-500">No child accounts linked.</p>
           <% else %>
-            <div class="mt-4 overflow-hidden rounded-lg border border-slate-100">
-              <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-25 text-left text-xs font-medium uppercase text-slate-500">
+            <div class="mt-4 overflow-x-auto">
+              <table>
+                <thead>
                   <tr>
-                    <th class="px-4 py-3">ID</th>
-                    <th class="px-4 py-3">Name</th>
-                    <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3">Created</th>
+                    <th class="cell-label" scope="col">ID</th>
+                    <th class="cell-label" scope="col">Name</th>
+                    <th class="cell-label" scope="col">Status</th>
+                    <th class="cell-label" scope="col">Created</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
+                <tbody>
                   <% reseller.children.sort_by(&:name).each do |child| %>
-                    <tr>
-                      <td class="px-4 py-3">#<%= child.id %></td>
-                      <td class="px-4 py-3"><%= child.name %></td>
-                      <td class="px-4 py-3"><%= child.status.titleize %></td>
-                      <td class="px-4 py-3"><%= l(child.created_at.to_date, format: :long) %></td>
+                    <tr class="js-table-row">
+                      <td class="cell-data">#<%= child.id %></td>
+                      <td class="cell-data font-semibold text-slate-800"><%= child.name %></td>
+                      <td class="cell-data"><%= child.status.titleize %></td>
+                      <td class="cell-data"><%= l(child.created_at.to_date, format: :long) %></td>
                     </tr>
                   <% end %>
                 </tbody>
@@ -47,4 +52,4 @@
       <% end %>
     </div>
   <% end %>
-</div>
+</section>
