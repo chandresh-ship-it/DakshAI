@@ -8,15 +8,59 @@ module Featurable
 
   FEATURE_LIST = YAML.safe_load(Rails.root.join('config/features.yml').read).freeze
 
-  FEATURES = FEATURE_LIST.each_with_object({}) do |feature, result|
+  # Only features up to index 63 can be stored in the bigint column due to 64-bit integer limits
+  DB_FEATURES = FEATURE_LIST.first(63).each_with_object({}) do |feature, result|
     result[result.keys.size + 1] = "feature_#{feature['name']}".to_sym
   end
 
+  VIRTUAL_FEATURES = FEATURE_LIST.drop(63).map { |f| f['name'] }.freeze
+
   included do
     include FlagShihTzu
-    has_flags FEATURES.merge(column: 'feature_flags').merge(QUERY_MODE)
+    has_flags DB_FEATURES.merge(column: 'feature_flags').merge(QUERY_MODE)
 
     before_create :enable_default_features
+
+    # Define dynamic getters/setters for virtual features
+    VIRTUAL_FEATURES.each do |feature_name|
+      define_method("feature_#{feature_name}?") do
+        settings.dig('virtual_features', feature_name.to_s) || false
+      end
+
+      define_method("feature_#{feature_name}") do
+        send("feature_#{feature_name}?")
+      end
+
+      define_method("feature_#{feature_name}=") do |val|
+        self.settings ||= {}
+        self.settings['virtual_features'] ||= {}
+        self.settings['virtual_features'][feature_name.to_s] = ActiveModel::Type::Boolean.new.cast(val)
+      end
+    end
+  end
+
+  # Override selected_feature_flags to return both DB and Virtual features
+  def selected_feature_flags
+    flags = DB_FEATURES.values.select { |f| send("#{f}?") }
+    flags += VIRTUAL_FEATURES.select { |f| send("feature_#{f}?") }.map { |f| "feature_#{f}".to_sym }
+    flags
+  end
+
+  # Override selected_feature_flags= to assign both DB and Virtual features
+  def selected_feature_flags=(features)
+    features = Array(features).map(&:to_sym)
+
+    # Update DB features
+    DB_FEATURES.values.each do |f|
+      send("#{f}=", features.include?(f))
+    end
+
+    # Update Virtual features
+    self.settings ||= {}
+    self.settings['virtual_features'] ||= {}
+    VIRTUAL_FEATURES.each do |f|
+      self.settings['virtual_features'][f.to_s] = features.include?("feature_#{f}".to_sym)
+    end
   end
 
   def enable_features(*names)

@@ -389,7 +389,7 @@ RSpec.describe Account do
   end
 
   describe 'parent-child relationships' do
-    let(:parent_account) { create(:account, status: :active) }
+    let(:parent_account) { create(:account, is_reseller: true, status: :active) }
     let(:child_account) { create(:account, parent: parent_account, status: :active) }
 
     it 'defines relationships' do
@@ -397,19 +397,16 @@ RSpec.describe Account do
       expect(parent_account.sub_accounts).to include(child_account)
     end
 
-    it 'propagates status suspension' do
+    it 'rescues child accounts when reseller parent is suspended' do
       child_account
-      parent_account.reload.update!(status: :suspended)
-      expect(child_account.reload.status).to eq('suspended')
-    end
+      Subscription.create!(account: child_account, relationship_type: 'marketplace')
 
-    it 'propagates status activation' do
-      child_account
       parent_account.reload.update!(status: :suspended)
-      expect(child_account.reload.status).to eq('suspended')
 
-      parent_account.update!(status: :active)
-      expect(child_account.reload.status).to eq('active')
+      child_account.reload
+      expect(child_account.parent_id).to be_nil
+      expect(child_account.status).to eq('active')
+      expect(child_account.subscription.relationship_type).to eq('platform')
     end
 
     it 'inherits limits and custom attributes' do
