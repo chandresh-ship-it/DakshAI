@@ -729,6 +729,7 @@ Rails.application.routes.draw do
       end
       resources :subscriptions, only: [:index, :show]
       resources :marketplace_plan_prices, only: [:index, :show]
+      resource :plan_management, only: [:show, :update], controller: :plan_management
       resources :users, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         delete :avatar, on: :member, action: :destroy_avatar
       end
