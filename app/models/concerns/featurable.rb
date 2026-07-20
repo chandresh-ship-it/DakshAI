@@ -15,9 +15,37 @@ module Featurable
 
   VIRTUAL_FEATURES = FEATURE_LIST.drop(63).map { |f| f['name'] }.freeze
 
+  module Overrides
+    # Override selected_feature_flags to return both DB and Virtual features
+    def selected_feature_flags
+      flags = DB_FEATURES.values.select { |f| send("#{f}?") }
+      flags += VIRTUAL_FEATURES.select { |f| send("feature_#{f}?") }.map { |f| "feature_#{f}".to_sym }
+      flags
+    end
+
+    # Override selected_feature_flags= to assign both DB and Virtual features
+    def selected_feature_flags=(features)
+      features = Array(features).map(&:to_sym)
+
+      # Update DB features
+      DB_FEATURES.values.each do |f|
+        send("#{f}=", features.include?(f))
+      end
+
+      # Update Virtual features
+      self.settings ||= {}
+      self.settings['virtual_features'] ||= {}
+      VIRTUAL_FEATURES.each do |f|
+        self.settings['virtual_features'][f.to_s] = features.include?("feature_#{f}".to_sym)
+      end
+    end
+  end
+
   included do
     include FlagShihTzu
     has_flags DB_FEATURES.merge(column: 'feature_flags').merge(QUERY_MODE)
+
+    prepend Overrides
 
     before_create :enable_default_features
 
@@ -36,30 +64,6 @@ module Featurable
         self.settings['virtual_features'] ||= {}
         self.settings['virtual_features'][feature_name.to_s] = ActiveModel::Type::Boolean.new.cast(val)
       end
-    end
-  end
-
-  # Override selected_feature_flags to return both DB and Virtual features
-  def selected_feature_flags
-    flags = DB_FEATURES.values.select { |f| send("#{f}?") }
-    flags += VIRTUAL_FEATURES.select { |f| send("feature_#{f}?") }.map { |f| "feature_#{f}".to_sym }
-    flags
-  end
-
-  # Override selected_feature_flags= to assign both DB and Virtual features
-  def selected_feature_flags=(features)
-    features = Array(features).map(&:to_sym)
-
-    # Update DB features
-    DB_FEATURES.values.each do |f|
-      send("#{f}=", features.include?(f))
-    end
-
-    # Update Virtual features
-    self.settings ||= {}
-    self.settings['virtual_features'] ||= {}
-    VIRTUAL_FEATURES.each do |f|
-      self.settings['virtual_features'][f.to_s] = features.include?("feature_#{f}".to_sym)
     end
   end
 
