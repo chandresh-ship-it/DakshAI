@@ -486,6 +486,29 @@
         "GO_BACK": "Go Back",
         "CONFIRM_PURCHASE": "Confirm Purchase"
       }
+    },
+    "RESELLER": {
+      "TITLE": "Reseller Pricing Panel",
+      "DESCRIPTION": "Configure custom pricing for your marketplace clients. The platform commission will be added on top of your set price.",
+      "CONNECT_STRIPE": "Connect with Stripe",
+      "CONNECT_DESC": "Complete your Stripe Connect onboarding to start publishing pricing and accepting client payments.",
+      "STATUS_ONBOARDED": "Connected",
+      "STATUS_NOT_ONBOARDED": "Not Connected",
+      "SET_PRICE": "Set Client Monthly Price",
+      "CURRENCY": "Currency",
+      "AGENCY_PRICE": "Your Price (You keep)",
+      "COMMISSION": "Platform Commission ({percent}%)",
+      "TOTAL_PRICE": "Total Price Charged to Client",
+      "SAVE_PRICING": "Save & Publish Pricing",
+      "SAVE_SUCCESS": "Marketplace pricing saved and published successfully",
+      "SAVE_ERROR": "Failed to save pricing: {error}"
+    },
+    "CLIENT": {
+      "TITLE": "Workspace Subscription",
+      "DESCRIPTION": "Subscribe to the custom workspace pricing set by your reseller parent.",
+      "NO_ACTIVE_PRICE": "Your reseller has not published pricing for this currency yet. Please contact support.",
+      "SUBSCRIBE_BTN": "Subscribe & Upgrade Now",
+      "REDIRECTING": "Redirecting to secure checkout..."
     }
   },
   "SECURITY_SETTINGS": {

@@ -14,6 +14,8 @@ class Enterprise::Billing::HandleStripeEventService
       process_subscription_updated
     when 'customer.subscription.deleted'
       process_subscription_deleted
+    when 'invoice.payment_succeeded'
+      process_invoice_payment_succeeded
     else
       Rails.logger.debug { "Unhandled event type: #{event.type}" }
     end
@@ -22,13 +24,71 @@ class Enterprise::Billing::HandleStripeEventService
   private
 
   def process_subscription_updated
-    plan = find_plan(subscription['plan']['product']) if subscription['plan'].present?
+    if marketplace_subscription?
+      process_marketplace_subscription_updated
+    else
+      process_platform_subscription_updated
+    end
+  end
 
-    # skipping self hosted plan events
+  def process_marketplace_subscription_updated
+    client_account_id = subscription.metadata['client_account_id']
+    client_account = Account.find_by(id: client_account_id)
+    return if client_account.blank?
+
+    plan_price_id = subscription.metadata['marketplace_plan_price_id']
+    plan_price = MarketplacePlanPrice.find_by(id: plan_price_id)
+    return if plan_price.blank?
+
+    sub_record = Subscription.find_or_initialize_by(account: client_account)
+    sub_record.update!(
+      stripe_customer_id: subscription.customer,
+      stripe_subscription_id: subscription.id,
+      status: subscription.status,
+      relationship_type: 'marketplace',
+      connected_account_id: subscription.metadata['connected_account_id'],
+      application_fee_amount: plan_price.platform_fee_amount,
+      stripe_price_id: subscription['plan']['id'],
+      stripe_product_id: subscription['plan']['product'],
+      plan_name: 'Workspace Subscription',
+      subscribed_quantity: subscription['quantity'],
+      current_period_start: Time.zone.at(subscription['current_period_start']),
+      current_period_end: Time.zone.at(subscription['current_period_end'])
+    )
+
+    client_account.update(
+      custom_attributes: (client_account.custom_attributes || {}).merge(
+        'stripe_customer_id' => subscription.customer,
+        'stripe_subscription_id' => subscription.id,
+        'subscription_status' => subscription.status,
+        'plan_name' => 'Marketplace Plan',
+        'subscribed_quantity' => subscription['quantity'],
+        'subscription_ends_on' => Time.zone.at(subscription['current_period_end'])
+      )
+    )
+  end
+
+  def process_platform_subscription_updated
+    plan = find_plan(subscription['plan']['product']) if subscription['plan'].present?
     return if plan.blank? || account.blank?
 
     previous_usage = capture_previous_usage
     update_account_attributes(subscription, plan)
+
+    sub_record = Subscription.find_or_initialize_by(account: account)
+    sub_record.update!(
+      stripe_customer_id: subscription.customer,
+      stripe_subscription_id: subscription.id,
+      status: subscription.status,
+      relationship_type: 'platform',
+      stripe_price_id: subscription['plan']['id'],
+      stripe_product_id: subscription['plan']['product'],
+      plan_name: plan['name'],
+      subscribed_quantity: subscription['quantity'],
+      current_period_start: Time.zone.at(subscription['current_period_start']),
+      current_period_end: Time.zone.at(subscription['current_period_end'])
+    )
+
     Enterprise::Billing::ReconcilePlanFeaturesService.new(account: account).perform
 
     if billing_period_renewed?
@@ -39,6 +99,76 @@ class Enterprise::Billing::HandleStripeEventService
     elsif plan_changed?
       handle_plan_change_credits(plan, previous_usage)
     end
+  end
+
+  def process_subscription_deleted
+    if marketplace_subscription?
+      process_marketplace_subscription_deleted
+    else
+      process_platform_subscription_deleted
+    end
+  end
+
+  def process_marketplace_subscription_deleted
+    client_account_id = subscription.metadata['client_account_id']
+    client_account = Account.find_by(id: client_account_id)
+    return if client_account.blank?
+
+    sub_record = Subscription.find_by(stripe_subscription_id: subscription.id)
+    sub_record&.update!(status: 'canceled')
+
+    client_account.update(
+      custom_attributes: (client_account.custom_attributes || {}).merge(
+        'subscription_status' => 'canceled'
+      )
+    )
+  end
+
+  def process_platform_subscription_deleted
+    return if account.blank?
+
+    previous_monthly_credits = current_plan_credits[:responses]
+    return unless Enterprise::Billing::CreateStripeCustomerService.new(account: account).perform
+
+    sub_record = Subscription.find_by(stripe_subscription_id: subscription.id)
+    sub_record&.update!(status: 'canceled')
+
+    account.with_lock do
+      previous_usage = { responses: account.custom_attributes['captain_responses_usage'].to_i, monthly: previous_monthly_credits }
+      adjust_captain_credits(previous_usage, new_plan_credits: 0)
+      account.reset_response_usage
+    end
+  end
+
+  def process_invoice_payment_succeeded
+    invoice = @event.data.object
+    return if invoice.subscription.blank?
+
+    stripe_subscription = Stripe::Subscription.retrieve(invoice.subscription)
+    return if stripe_subscription.blank?
+    return unless stripe_subscription.metadata['relationship_type'] == 'marketplace'
+
+    connected_account_id = stripe_subscription.metadata['connected_account_id']
+    connected_account = ConnectedAccount.find_by(id: connected_account_id)
+    return if connected_account.blank?
+    return unless connected_account.charge_routing == 'separate_charge_transfer'
+    return if invoice.charge.blank?
+
+    agency_price = stripe_subscription.metadata['agency_price'].to_f
+    currency = invoice.currency
+
+    transfers = Stripe::Transfer.list(source_transaction: invoice.charge)
+    return if transfers.data.present?
+
+    Stripe::Transfer.create({
+      amount: (agency_price * 100).to_i,
+      currency: currency.downcase,
+      destination: connected_account.stripe_account_id,
+      source_transaction: invoice.charge,
+      description: "Transfer to reseller for client invoice #{invoice.id}"
+    })
+  rescue Stripe::StripeError => e
+    Rails.logger.error("Failed to transfer funds to reseller for invoice #{invoice.id}: #{e.message}")
   end
 
   def capture_previous_usage
@@ -52,7 +182,6 @@ class Enterprise::Billing::HandleStripeEventService
   end
 
   def update_account_attributes(subscription, plan)
-    # https://stripe.com/docs/api/subscriptions/object
     account.update(
       custom_attributes: account.custom_attributes.merge(
         'stripe_customer_id' => subscription.customer,
@@ -64,20 +193,6 @@ class Enterprise::Billing::HandleStripeEventService
         'subscription_ends_on' => Time.zone.at(subscription['current_period_end'])
       )
     )
-  end
-
-  def process_subscription_deleted
-    # skipping self hosted plan events
-    return if account.blank?
-
-    previous_monthly_credits = current_plan_credits[:responses]
-    return unless Enterprise::Billing::CreateStripeCustomerService.new(account: account).perform
-
-    account.with_lock do
-      previous_usage = { responses: account.custom_attributes['captain_responses_usage'].to_i, monthly: previous_monthly_credits }
-      adjust_captain_credits(previous_usage, new_plan_credits: 0)
-      account.reset_response_usage
-    end
   end
 
   def handle_subscription_credits(plan, previous_usage)
@@ -138,6 +253,10 @@ class Enterprise::Billing::HandleStripeEventService
 
   def account
     @account ||= Account.where("custom_attributes->>'stripe_customer_id' = ?", subscription.customer).first
+  end
+
+  def marketplace_subscription?
+    subscription.metadata['relationship_type'] == 'marketplace'
   end
 
   def find_plan(plan_id)

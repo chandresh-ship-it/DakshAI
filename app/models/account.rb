@@ -84,6 +84,8 @@ class Account < ApplicationRecord
   has_many :children, class_name: 'Account', foreign_key: :parent_id, dependent: :nullify, inverse_of: :parent
   has_many :sub_accounts, class_name: 'Account', foreign_key: :parent_id, dependent: :nullify, inverse_of: :parent
   has_one :connected_account, dependent: :destroy
+  has_many :marketplace_plan_prices, dependent: :destroy
+  has_one :subscription, dependent: :destroy
 
   has_many :account_users, dependent: :destroy_async
   has_many :agent_bot_inboxes, dependent: :destroy_async

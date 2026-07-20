@@ -562,6 +562,9 @@ Rails.application.routes.draw do
             resource :connected_account, only: [:create], controller: :connected_accounts do
               get :status
             end
+
+            resources :marketplace_pricing, only: [:index, :create], controller: :pricing_panel
+            resource :marketplace_checkout, only: [:create], controller: :marketplace_checkout
           end
         end
       end

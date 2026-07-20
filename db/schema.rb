@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_20_000003) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_20_000006) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -630,6 +630,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000003) do
     t.index ["phone_number"], name: "index_channel_whatsapp_on_phone_number", unique: true
   end
 
+  create_table "commission_rules", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.decimal "commission_percent", precision: 5, scale: 2, default: "30.0", null: false
+    t.datetime "effective_from", null: false
+    t.bigint "created_by_user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_commission_rules_on_account_id"
+    t.index ["created_by_user_id"], name: "index_commission_rules_on_created_by_user_id"
+  end
+
   create_table "companies", force: :cascade do |t|
     t.string "name", null: false
     t.string "domain"
@@ -1018,6 +1029,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000003) do
     t.index ["account_id"], name: "index_macros_on_account_id"
   end
 
+  create_table "marketplace_plan_prices", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "currency", default: "usd", null: false
+    t.decimal "agency_price", precision: 10, scale: 2, null: false
+    t.decimal "commission_percent", precision: 5, scale: 2, null: false
+    t.decimal "platform_fee_amount", precision: 10, scale: 2, null: false
+    t.decimal "total_amount", precision: 10, scale: 2, null: false
+    t.string "stripe_price_id"
+    t.string "stripe_product_id"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_marketplace_plan_prices_on_account_id"
+  end
+
   create_table "mentions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "conversation_id", null: false
@@ -1364,6 +1390,27 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000003) do
     t.index ["account_id"], name: "index_sla_policies_on_account_id"
   end
 
+  create_table "subscriptions", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "stripe_customer_id"
+    t.string "stripe_subscription_id"
+    t.string "status", default: "trialing"
+    t.string "relationship_type", null: false
+    t.bigint "connected_account_id"
+    t.decimal "application_fee_amount", precision: 10, scale: 2
+    t.string "stripe_price_id"
+    t.string "stripe_product_id"
+    t.string "plan_name"
+    t.integer "subscribed_quantity"
+    t.datetime "current_period_start"
+    t.datetime "current_period_end"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_subscriptions_on_account_id", unique: true
+    t.index ["connected_account_id"], name: "index_subscriptions_on_connected_account_id"
+    t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
+  end
+
   create_table "taggings", id: :serial, force: :cascade do |t|
     t.integer "tag_id"
     t.string "taggable_type"
@@ -1496,9 +1543,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000003) do
   add_foreign_key "accounts", "accounts", column: "parent_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "commission_rules", "accounts"
+  add_foreign_key "commission_rules", "users", column: "created_by_user_id"
   add_foreign_key "connected_accounts", "accounts"
   add_foreign_key "inboxes", "portals"
+  add_foreign_key "marketplace_plan_prices", "accounts"
   add_foreign_key "reputation_video_testimonials", "accounts"
+  add_foreign_key "subscriptions", "accounts"
+  add_foreign_key "subscriptions", "connected_accounts"
   create_trigger("accounts_after_insert_row_tr", :generated => true, :compatibility => 1).
       on("accounts").
       after(:insert).
