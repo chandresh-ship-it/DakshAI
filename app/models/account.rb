@@ -4,6 +4,10 @@
 #
 #  id                    :integer          not null, primary key
 #  auto_resolve_duration :integer
+#  brand_logo_url        :string
+#  brand_name            :string
+#  brand_primary_color   :string
+#  brand_secondary_color :string
 #  custom_attributes     :jsonb
 #  custom_domain         :string
 #  domain                :string(100)
@@ -23,8 +27,9 @@
 #
 # Indexes
 #
-#  index_accounts_on_parent_id  (parent_id)
-#  index_accounts_on_status     (status)
+#  index_accounts_on_lower_custom_domain  (lower((custom_domain)::text)) UNIQUE WHERE ((custom_domain IS NOT NULL) AND ((custom_domain)::text <> ''::text))
+#  index_accounts_on_parent_id            (parent_id)
+#  index_accounts_on_status               (status)
 #
 # Foreign Keys
 #
@@ -63,6 +68,9 @@ class Account < ApplicationRecord
   validate :no_self_parenting
   validate :only_two_levels_deep
 
+  before_validation -> { normalize_empty_string_to_nil(%i[custom_domain]) }
+  before_validation :sync_branding_fields_from_brand_colors
+
   store_accessor :settings, :auto_resolve_after, :auto_resolve_message, :auto_resolve_ignore_waiting
 
   store_accessor :settings, :audio_transcriptions, :auto_resolve_label
@@ -75,6 +83,7 @@ class Account < ApplicationRecord
   belongs_to :parent, class_name: 'Account', optional: true
   has_many :children, class_name: 'Account', foreign_key: :parent_id, dependent: :nullify, inverse_of: :parent
   has_many :sub_accounts, class_name: 'Account', foreign_key: :parent_id, dependent: :nullify, inverse_of: :parent
+  has_one :connected_account, dependent: :destroy
 
   has_many :account_users, dependent: :destroy_async
   has_many :agent_bot_inboxes, dependent: :destroy_async
@@ -213,6 +222,36 @@ class Account < ApplicationRecord
     feature_enabled?(capability_key)
   end
 
+  def white_labeling_enabled?
+    capability_enabled?(:white_labeling)
+  end
+
+  def effective_brand_name
+    return unless white_labeling_enabled?
+
+    brand_name.presence || custom_attributes.dig('brand_colors', 'brand_name')
+  end
+
+  def effective_brand_logo_url
+    return unless white_labeling_enabled?
+
+    brand_logo_url.presence || logo_url.presence
+  end
+
+  def effective_brand_colors
+    return {} unless white_labeling_enabled?
+
+    custom_attributes.fetch('brand_colors', {}).merge(
+      'brand_name' => brand_name.presence,
+      'primary' => brand_primary_color.presence,
+      'background' => brand_secondary_color.presence
+    ).compact
+  end
+
+  def connected_account_ready_for_marketplace?
+    connected_account&.charges_enabled?
+  end
+
   def locale_english_name
     # the locale can also be something like pt_BR, en_US, fr_FR, etc.
     # the format is `<locale_code>_<country_code>`
@@ -298,6 +337,15 @@ class Account < ApplicationRecord
     return if parent.blank?
 
     errors.add(:parent_id, 'cannot set a parent that itself has a parent (max 2 tiers)') if parent.parent_id.present?
+  end
+
+  def sync_branding_fields_from_brand_colors
+    brand_colors = custom_attributes['brand_colors']
+    return unless brand_colors.is_a?(Hash)
+
+    self.brand_name = brand_colors['brand_name'] if brand_name.blank? && brand_colors['brand_name'].present?
+    self.brand_primary_color = brand_colors['primary'] if brand_primary_color.blank? && brand_colors['primary'].present?
+    self.brand_secondary_color = brand_colors['background'] if brand_secondary_color.blank? && brand_colors['background'].present?
   end
 
   def remove_account_sequences

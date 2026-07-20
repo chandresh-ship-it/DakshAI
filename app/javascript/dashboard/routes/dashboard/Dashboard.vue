@@ -57,7 +57,11 @@ export default {
     const activeBrandName = computed(() => {
       if (!accountId.value) return '';
       const account = getAccount.value(accountId.value);
-      return account?.custom_attributes?.brand_colors?.brand_name || '';
+      return (
+        account?.brand_name ||
+        account?.custom_attributes?.brand_colors?.brand_name ||
+        ''
+      );
     });
 
     watch(

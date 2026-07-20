@@ -558,6 +558,10 @@ Rails.application.routes.draw do
               post :toggle_deletion
               post :topup_checkout
             end
+
+            resource :connected_account, only: [:create], controller: :connected_accounts do
+              get :status
+            end
           end
         end
       end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_20_000000) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_20_000003) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -77,6 +77,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000000) do
     t.bigint "parent_id"
     t.jsonb "ssl_settings", default: {}
     t.boolean "is_reseller", default: false, null: false
+    t.string "brand_name"
+    t.string "brand_logo_url"
+    t.string "brand_primary_color"
+    t.string "brand_secondary_color"
+    t.index "lower((custom_domain)::text)", name: "index_accounts_on_lower_custom_domain", unique: true, where: "((custom_domain IS NOT NULL) AND ((custom_domain)::text <> ''::text))"
     t.index ["parent_id"], name: "index_accounts_on_parent_id"
     t.index ["status"], name: "index_accounts_on_status"
   end
@@ -639,6 +644,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000000) do
     t.index ["account_id", "domain"], name: "index_companies_on_account_and_domain", unique: true, where: "(domain IS NOT NULL)"
     t.index ["account_id"], name: "index_companies_on_account_id"
     t.index ["name", "account_id"], name: "index_companies_on_name_and_account_id"
+  end
+
+  create_table "connected_accounts", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "stripe_account_id", null: false
+    t.string "country", null: false
+    t.string "charge_routing", null: false
+    t.string "onboarding_status", default: "onboarding_incomplete", null: false
+    t.boolean "charges_enabled", default: false
+    t.boolean "payouts_enabled", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_connected_accounts_on_account_id", unique: true
+    t.index ["stripe_account_id"], name: "index_connected_accounts_on_stripe_account_id", unique: true
   end
 
   create_table "contact_inboxes", force: :cascade do |t|
@@ -1477,6 +1496,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000000) do
   add_foreign_key "accounts", "accounts", column: "parent_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "connected_accounts", "accounts"
   add_foreign_key "inboxes", "portals"
   add_foreign_key "reputation_video_testimonials", "accounts"
   create_trigger("accounts_after_insert_row_tr", :generated => true, :compatibility => 1).

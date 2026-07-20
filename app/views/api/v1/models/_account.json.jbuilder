@@ -25,6 +25,10 @@ json.domain @account.domain
 json.custom_domain @account.custom_domain
 json.ssl_settings @account.ssl_settings
 json.server_ip ENV.fetch('SERVER_IP', nil)
+json.brand_name @account.brand_name
+json.brand_logo_url @account.brand_logo_url
+json.brand_primary_color @account.brand_primary_color
+json.brand_secondary_color @account.brand_secondary_color
 json.logo_url @account.logo_url
 json.dark_logo_url @account.dark_logo_url
 json.favicon_url @account.favicon_url
@@ -36,3 +40,4 @@ json.support_email @account.support_email
 json.status @account.status
 json.cache_keys @account.cache_keys
 json.parent_id @account.parent_id
+json.is_reseller @account.is_reseller

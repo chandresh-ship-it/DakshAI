@@ -44,11 +44,16 @@ class Api::V1::AccountsController < Api::BaseController
   end
 
   def update
-    @account.assign_attributes(account_params.slice(:name, :locale, :domain, :support_email, :custom_domain, :logo, :dark_logo, :favicon))
-    
+    @account.assign_attributes(
+      account_params.slice(
+        :name, :locale, :domain, :support_email, :custom_domain, :logo, :dark_logo, :favicon, :brand_name, :brand_logo_url,
+        :brand_primary_color, :brand_secondary_color
+      )
+    )
+
     merged_attributes = @account.custom_attributes.merge(custom_attributes_params.to_h)
     if merged_attributes['brand_colors'].is_a?(Hash)
-      ['primary', 'text', 'background'].each do |key|
+      %w[primary text background].each do |key|
         merged_attributes['brand_colors'].delete(key) if merged_attributes['brand_colors'][key].blank?
       end
       merged_attributes.delete('brand_colors') if merged_attributes['brand_colors'].blank?
@@ -57,16 +62,16 @@ class Api::V1::AccountsController < Api::BaseController
     @account.custom_attributes = merged_attributes
     @account.settings = @account.settings.merge(settings_params.to_h)
     @account.custom_attributes['onboarding_step'] = 'invite_team' if @account.custom_attributes['onboarding_step'] == 'account_update'
-    
+
     # Store whether domain was changed before saving
     domain_changed = @account.custom_domain_changed?
-    
+
     @account.save!
 
     # Force verification if explicitly requested (e.g., clicking Verify button)
-    if params[:force_verify] == 'true' && !domain_changed && @account.custom_domain.present?
-      Enterprise::CloudflareVerificationJob.perform_later('Account', @account.id)
-    end
+    return unless params[:force_verify] == 'true' && !domain_changed && @account.custom_domain.present?
+
+    Enterprise::CloudflareVerificationJob.perform_later('Account', @account.id)
   end
 
   def update_active_at
@@ -113,8 +118,10 @@ class Api::V1::AccountsController < Api::BaseController
   end
 
   def account_params
-    params.permit(:account_name, :email, :name, :password, :locale, :domain, :support_email, :user_full_name, :custom_domain, :logo, :dark_logo,
-                  :favicon, :parent_id)
+    params.permit(
+      :account_name, :email, :name, :password, :locale, :domain, :support_email, :user_full_name, :custom_domain, :logo, :dark_logo,
+      :favicon, :parent_id, :brand_name, :brand_logo_url, :brand_primary_color, :brand_secondary_color
+    )
   end
 
   def custom_attributes_params

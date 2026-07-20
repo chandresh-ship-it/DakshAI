@@ -55,19 +55,20 @@ class DashboardController < ActionController::Base
   end
 
   def apply_branding_overrides(account)
-    if account.logo_url.present?
-      @global_config['LOGO'] = account.logo_url
-      @global_config['LOGO_DARK'] = (account.dark_logo_url.presence || account.logo_url)
+    return unless account.white_labeling_enabled?
+
+    if account.effective_brand_logo_url.present?
+      @global_config['LOGO'] = account.effective_brand_logo_url
+      @global_config['LOGO_DARK'] = (account.dark_logo_url.presence || account.effective_brand_logo_url)
     end
     @global_config['LOGO_THUMBNAIL'] = account.favicon_url if account.favicon_url.present?
 
-    # For brand colors on login page
-    brand_colors = account.custom_attributes['brand_colors']
+    brand_colors = account.effective_brand_colors
     return if brand_colors.blank?
 
     @global_config['BRAND_COLORS'] = brand_colors
     @brand_colors = brand_colors
-    brand_name = brand_colors['brand_name']
+    brand_name = account.effective_brand_name
     return if brand_name.blank?
 
     @global_config['INSTALLATION_NAME'] = brand_name

@@ -20,7 +20,9 @@ export function useBranding() {
       currentAccountId?.value
     ) {
       const account = getAccount.value(currentAccountId.value);
-      customBrandName = account?.custom_attributes?.brand_colors?.brand_name;
+      customBrandName =
+        account?.brand_name ||
+        account?.custom_attributes?.brand_colors?.brand_name;
     }
     const installationName =
       customBrandName || globalConfig.value?.installationName;
