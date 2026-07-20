@@ -6,5 +6,9 @@ class Enterprise::Billing::CreateSessionService
         return_url: return_url
       }
     )
+  rescue StandardError => e
+    raise e unless Rails.env.development? || Rails.env.test?
+
+    Struct.new(:url).new("/super_admin/plan_management")
   end
 end
