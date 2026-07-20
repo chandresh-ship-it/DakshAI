@@ -9,15 +9,28 @@ class Enterprise::Billing::HandleStripeEventService
   def perform(event:)
     @event = event
 
-    case @event.type
-    when 'customer.subscription.updated'
-      process_subscription_updated
-    when 'customer.subscription.deleted'
-      process_subscription_deleted
-    when 'invoice.payment_succeeded'
-      process_invoice_payment_succeeded
-    else
-      Rails.logger.debug { "Unhandled event type: #{event.type}" }
+    ProcessedWebhookEvent.transaction do
+      if ProcessedWebhookEvent.exists?(stripe_event_id: @event.id)
+        Rails.logger.warn("Stripe event #{@event.id} already processed. Skipping.")
+        return true
+      end
+
+      ProcessedWebhookEvent.create!(
+        stripe_event_id: @event.id,
+        event_type: @event.type,
+        processed_at: Time.current
+      )
+
+      case @event.type
+      when 'customer.subscription.updated'
+        process_subscription_updated
+      when 'customer.subscription.deleted'
+        process_subscription_deleted
+      when 'invoice.payment_succeeded'
+        process_invoice_payment_succeeded
+      else
+        Rails.logger.debug { "Unhandled event type: #{@event.type}" }
+      end
     end
   end
 
@@ -88,6 +101,16 @@ class Enterprise::Billing::HandleStripeEventService
       current_period_start: Time.zone.at(subscription['current_period_start']),
       current_period_end: Time.zone.at(subscription['current_period_end'])
     )
+
+    if account.is_reseller?
+      if %w[past_due unpaid].include?(subscription.status)
+        sub_account_ids = account.sub_accounts.pluck(:id)
+        Subscription.where(account_id: sub_account_ids).update_all(grace_period_ends_at: 7.days.from_now)
+      elsif subscription.status == 'active'
+        sub_account_ids = account.sub_accounts.pluck(:id)
+        Subscription.where(account_id: sub_account_ids).update_all(grace_period_ends_at: nil)
+      end
+    end
 
     Enterprise::Billing::ReconcilePlanFeaturesService.new(account: account).perform
 

@@ -1,3 +1,28 @@
+# == Schema Information
+#
+# Table name: marketplace_plan_prices
+#
+#  id                  :bigint           not null, primary key
+#  active              :boolean          default(TRUE)
+#  agency_price        :decimal(10, 2)   not null
+#  commission_percent  :decimal(5, 2)    not null
+#  currency            :string           default("usd"), not null
+#  platform_fee_amount :decimal(10, 2)   not null
+#  total_amount        :decimal(10, 2)   not null
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  account_id          :bigint           not null
+#  stripe_price_id     :string
+#  stripe_product_id   :string
+#
+# Indexes
+#
+#  index_marketplace_plan_prices_on_account_id  (account_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (account_id => accounts.id)
+#
 class MarketplacePlanPrice < ApplicationRecord
   belongs_to :account
 

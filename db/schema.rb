@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_20_000006) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_20_000008) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1198,6 +1198,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000006) do
     t.index ["user_id"], name: "index_portals_members_on_user_id"
   end
 
+  create_table "processed_webhook_events", force: :cascade do |t|
+    t.string "stripe_event_id", null: false
+    t.string "event_type", null: false
+    t.datetime "processed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["stripe_event_id"], name: "index_processed_webhook_events_on_stripe_event_id", unique: true
+  end
+
   create_table "related_categories", force: :cascade do |t|
     t.bigint "category_id"
     t.bigint "related_category_id"
@@ -1406,6 +1415,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000006) do
     t.datetime "current_period_end"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "grace_period_ends_at"
     t.index ["account_id"], name: "index_subscriptions_on_account_id", unique: true
     t.index ["connected_account_id"], name: "index_subscriptions_on_connected_account_id"
     t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true

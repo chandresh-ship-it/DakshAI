@@ -151,6 +151,7 @@ class Account < ApplicationRecord
   after_create_commit :notify_creation
   after_update_commit :clear_unread_conversation_counts_cache, if: :saved_change_to_feature_conversation_unread_counts?
   before_save :set_pending_ssl_status, if: :will_save_change_to_custom_domain?
+  before_destroy :rescue_orphaned_tenants, if: :is_reseller?
   after_destroy :remove_account_sequences
   after_save :propagate_status_change, if: :saved_change_to_status?
   after_save :enqueue_cloudflare_verification, if: :saved_change_to_custom_domain?
@@ -357,9 +358,21 @@ class Account < ApplicationRecord
 
   def propagate_status_change
     if suspended?
-      sub_accounts.update_all(status: :suspended)
+      if is_reseller?
+        sub_accounts.find_each do |child|
+          Enterprise::Billing::TenantRescueService.new.call(child)
+        end
+      else
+        sub_accounts.update_all(status: :suspended)
+      end
     elsif active?
       sub_accounts.update_all(status: :active)
+    end
+  end
+
+  def rescue_orphaned_tenants
+    sub_accounts.find_each do |child|
+      Enterprise::Billing::TenantRescueService.new.call(child)
     end
   end
 

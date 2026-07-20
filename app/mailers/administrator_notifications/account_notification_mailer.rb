@@ -58,6 +58,18 @@ class AdministratorNotifications::AccountNotificationMailer < AdministratorNotif
     send_notification(subject, action_url: action_url, meta: meta)
   end
 
+  def tenant_rescued(account)
+    subject = 'Your Workspace Subscription Update'
+    emails = account.administrators.pluck(:email)
+    action_url = "#{ENV.fetch('FRONTEND_URL', nil)}/app/accounts/#{account.id}/settings/billing"
+    meta = {
+      'account_name' => account.name,
+      'notice' => 'Your reseller relationship has ended. Your account has been promoted to a direct platform subscription.'
+    }
+
+    send_notification(subject, to: emails, action_url: action_url, meta: meta)
+  end
+
   private
 
   def format_deletion_date(deletion_date_str)

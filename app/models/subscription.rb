@@ -1,3 +1,36 @@
+# == Schema Information
+#
+# Table name: subscriptions
+#
+#  id                     :bigint           not null, primary key
+#  application_fee_amount :decimal(10, 2)
+#  current_period_end     :datetime
+#  current_period_start   :datetime
+#  grace_period_ends_at   :datetime
+#  plan_name              :string
+#  relationship_type      :string           not null
+#  status                 :string           default("trialing")
+#  subscribed_quantity    :integer
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  account_id             :bigint           not null
+#  connected_account_id   :bigint
+#  stripe_customer_id     :string
+#  stripe_price_id        :string
+#  stripe_product_id      :string
+#  stripe_subscription_id :string
+#
+# Indexes
+#
+#  index_subscriptions_on_account_id              (account_id) UNIQUE
+#  index_subscriptions_on_connected_account_id    (connected_account_id)
+#  index_subscriptions_on_stripe_subscription_id  (stripe_subscription_id) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (account_id => accounts.id)
+#  fk_rails_...  (connected_account_id => connected_accounts.id)
+#
 class Subscription < ApplicationRecord
   belongs_to :account
   belongs_to :connected_account, optional: true
