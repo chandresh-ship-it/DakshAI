@@ -688,7 +688,7 @@ Rails.application.routes.draw do
   get 'reputation/widget/:token/reviews', to: 'reputation/public_widgets#reviews'
   get 'r/:token', to: 'reputation/public_widgets#redirect'
   post 'reputation/feedback', to: 'reputation/feedback#create'
-  
+
   get 'reputation/video/:account_id/new', to: 'reputation/public_video_testimonials#new', as: :new_reputation_video_testimonial
   post 'reputation/video/:account_id', to: 'reputation/public_video_testimonials#create', as: :reputation_video_testimonials
   # ----------------------------------------------------------------------
@@ -725,6 +725,7 @@ Rails.application.routes.draw do
       end
 
       resources :access_tokens, only: [:index, :show]
+      resource :account_hierarchy, only: [:show], controller: :account_hierarchy
       resources :installation_configs, only: [:index, :new, :create, :show, :edit, :update]
       resources :agent_bots, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         delete :avatar, on: :member, action: :destroy_avatar

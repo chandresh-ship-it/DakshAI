@@ -1,0 +1,50 @@
+<div class="p-6">
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-slate-900">Account Hierarchy</h1>
+    <p class="mt-1 text-sm text-slate-600">Read-only reseller accounts and their child accounts.</p>
+  </div>
+
+  <% if @resellers.empty? %>
+    <div class="rounded-lg border border-slate-100 bg-white p-6 text-sm text-slate-600">
+      No reseller accounts found.
+    </div>
+  <% else %>
+    <div class="space-y-3">
+      <% @resellers.each do |reseller| %>
+        <details class="rounded-lg border border-slate-100 bg-white p-4">
+          <summary class="flex cursor-pointer items-center justify-between text-sm font-medium text-slate-900">
+            <span><%= reseller.name %></span>
+            <span class="text-xs font-normal text-slate-500"><%= pluralize(reseller.children.size, 'child account') %></span>
+          </summary>
+
+          <% if reseller.children.empty? %>
+            <p class="mt-4 text-sm text-slate-500">No child accounts linked.</p>
+          <% else %>
+            <div class="mt-4 overflow-hidden rounded-lg border border-slate-100">
+              <table class="min-w-full divide-y divide-slate-100 text-sm">
+                <thead class="bg-slate-25 text-left text-xs font-medium uppercase text-slate-500">
+                  <tr>
+                    <th class="px-4 py-3">ID</th>
+                    <th class="px-4 py-3">Name</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3">Created</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
+                  <% reseller.children.sort_by(&:name).each do |child| %>
+                    <tr>
+                      <td class="px-4 py-3">#<%= child.id %></td>
+                      <td class="px-4 py-3"><%= child.name %></td>
+                      <td class="px-4 py-3"><%= child.status.titleize %></td>
+                      <td class="px-4 py-3"><%= l(child.created_at.to_date, format: :long) %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% end %>
+        </details>
+      <% end %>
+    </div>
+  <% end %>
+</div>

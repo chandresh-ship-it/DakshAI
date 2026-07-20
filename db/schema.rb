@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_14_061420) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_20_000000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -76,6 +76,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_14_061420) do
     t.string "custom_domain"
     t.bigint "parent_id"
     t.jsonb "ssl_settings", default: {}
+    t.boolean "is_reseller", default: false, null: false
     t.index ["parent_id"], name: "index_accounts_on_parent_id"
     t.index ["status"], name: "index_accounts_on_status"
   end

@@ -9,6 +9,7 @@
 #  domain                :string(100)
 #  feature_flags         :bigint           default(0), not null
 #  internal_attributes   :jsonb            not null
+#  is_reseller           :boolean          default(FALSE), not null
 #  limits                :jsonb
 #  locale                :integer          default("en")
 #  name                  :string           not null
@@ -31,6 +32,8 @@
 #
 
 class Account < ApplicationRecord
+  CAPABILITY_KEYS = %w[white_labeling custom_domain reseller_dashboard api_access].freeze
+
   # used for single column multi flags
   include FlagShihTzu
   include Reportable
@@ -56,6 +59,9 @@ class Account < ApplicationRecord
                  attribute_resolver: ->(record) { record.settings }
   validate :validate_reporting_timezone
   validate :validate_support_email_format, if: :will_save_change_to_support_email?
+  validate :parent_must_be_a_reseller
+  validate :no_self_parenting
+  validate :only_two_levels_deep
 
   store_accessor :settings, :auto_resolve_after, :auto_resolve_message, :auto_resolve_ignore_waiting
 
@@ -67,7 +73,8 @@ class Account < ApplicationRecord
   include AccountCaptainAutoResolve
 
   belongs_to :parent, class_name: 'Account', optional: true
-  has_many :sub_accounts, class_name: 'Account', foreign_key: 'parent_id', dependent: :destroy
+  has_many :children, class_name: 'Account', foreign_key: :parent_id, dependent: :nullify, inverse_of: :parent
+  has_many :sub_accounts, class_name: 'Account', foreign_key: :parent_id, dependent: :nullify, inverse_of: :parent
 
   has_many :account_users, dependent: :destroy_async
   has_many :agent_bot_inboxes, dependent: :destroy_async
@@ -132,9 +139,9 @@ class Account < ApplicationRecord
   before_validation :validate_limit_keys
   after_create_commit :notify_creation
   after_update_commit :clear_unread_conversation_counts_cache, if: :saved_change_to_feature_conversation_unread_counts?
+  before_save :set_pending_ssl_status, if: :will_save_change_to_custom_domain?
   after_destroy :remove_account_sequences
   after_save :propagate_status_change, if: :saved_change_to_status?
-  before_save :set_pending_ssl_status, if: :will_save_change_to_custom_domain?
   after_save :enqueue_cloudflare_verification, if: :saved_change_to_custom_domain?
 
   def agents
@@ -197,6 +204,13 @@ class Account < ApplicationRecord
       agents: ChatwootApp.max_limit.to_i,
       inboxes: ChatwootApp.max_limit.to_i
     }
+  end
+
+  def capability_enabled?(key)
+    capability_key = key.to_s
+    return false unless CAPABILITY_KEYS.include?(capability_key)
+
+    feature_enabled?(capability_key)
   end
 
   def locale_english_name
@@ -268,6 +282,22 @@ class Account < ApplicationRecord
     errors.add(:support_email, I18n.t('errors.account.support_email.invalid')) if parsed.blank?
   rescue Mail::Field::ParseError, Mail::Field::IncompleteParseError
     errors.add(:support_email, I18n.t('errors.account.support_email.invalid'))
+  end
+
+  def parent_must_be_a_reseller
+    return if parent.blank?
+
+    errors.add(:parent_id, 'must reference an account with is_reseller = true') unless parent.is_reseller?
+  end
+
+  def no_self_parenting
+    errors.add(:parent_id, 'cannot be its own parent') if parent_id.present? && parent_id == id
+  end
+
+  def only_two_levels_deep
+    return if parent.blank?
+
+    errors.add(:parent_id, 'cannot set a parent that itself has a parent (max 2 tiers)') if parent.parent_id.present?
   end
 
   def remove_account_sequences

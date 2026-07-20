@@ -220,6 +220,22 @@
   display_name: Quoted Email Reply
   enabled: true
   deprecated: true
+- name: white_labeling
+  display_name: White Labeling
+  enabled: false
+  premium: true
+- name: custom_domain
+  display_name: Custom Domain
+  enabled: false
+  premium: true
+- name: reseller_dashboard
+  display_name: Reseller Dashboard
+  enabled: false
+  premium: true
+- name: api_access
+  display_name: API Access
+  enabled: false
+  premium: true
 - name: companies
   display_name: Companies
   enabled: true
