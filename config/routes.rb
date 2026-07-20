@@ -727,6 +727,8 @@ Rails.application.routes.draw do
         post :seed, on: :member
         post :reset_cache, on: :member
       end
+      resources :subscriptions, only: [:index, :show]
+      resources :marketplace_plan_prices, only: [:index, :show]
       resources :users, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         delete :avatar, on: :member, action: :destroy_avatar
       end
