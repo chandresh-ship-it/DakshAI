@@ -59,36 +59,17 @@ end
 - [ ] Self-parenting rejected.
 - [ ] Three-tier chain rejected.
 
-## Step 2 — Capability gating
-If no existing mechanism found in Step 0:
-```ruby
-class CreateAccountCapabilities < ActiveRecord::Migration[7.0]
-  def change
-    create_table :account_capabilities do |t|
-      t.references :account, null: false, foreign_key: true
-      t.string :capability_key, null: false
-      t.boolean :enabled, null: false, default: false
-      t.timestamps
-    end
-    add_index :account_capabilities, [:account_id, :capability_key], unique: true
-  end
-end
-```
-Capability keys (fixed allowlist, not free-text): `white_labeling`, `custom_domain`, `reseller_dashboard`, `api_access`.
+## Step 2 — Capability gating (Actual Implementation)
+Chatwoot utilizes a built-in feature-flag system via the `flag_shih_tzu` gem and `Featurable` concern on the `Account` model. All features are registered in `config/features.yml`.
 
-```ruby
-CAPABILITY_KEYS = %w[white_labeling custom_domain reseller_dashboard api_access].freeze
-validates :capability_key, inclusion: { in: CAPABILITY_KEYS }
-```
+Because `flag_shih_tzu` stores flags in a signed 64-bit integer column (`feature_flags`), it has a limit of 63 bits. To accommodate 64+ features without crashing or database migrations:
+- **DB Features (index 1 to 63):** Managed directly by `flag_shih_tzu`.
+- **Virtual Features (index 64+):** Managed dynamically in the account's JSONB `settings['virtual_features']` store.
+- **Ancestry Precedence:** Overrides for `selected_feature_flags` and `selected_feature_flags=` are defined in a prepended `Overrides` module on the `Featurable` concern to ensure they intercept all assignments before any class-level `flag_shih_tzu` generated methods.
 
-```ruby
-# on Account
-def capability_enabled?(key)
-  account_capabilities.exists?(capability_key: key, enabled: true)
-end
-```
+Gate key features like `white_labeling`, `custom_domain`, `reseller_dashboard`, and `api_access` using `feature_enabled?(:feature_name)`.
 
-**Do NOT:** gate features with scattered `if account.is_reseller?` checks — always go through `capability_enabled?`.
+**Do NOT:** gate features with scattered `if account.is_reseller?` checks — always go through `feature_enabled?`.
 
 ## Step 3 — Super Admin: Account Hierarchy view (read-only)
 - `enterprise/app/controllers/super_admin/account_hierarchy_controller.rb`
@@ -302,9 +283,15 @@ On a T2 payment failure that would otherwise cascade to suspending T3 service, s
 
 **Do NOT:** allow a tenant migration to silently drop billing history — this is an audit trail, treat deletion of `subscriptions`/`invoices` rows as forbidden in this flow entirely.
 
-## Step 4 — Global Resource Quotas
-- Add per-reseller limits (message volume, agent seats, contact count) enforced against shared Sidekiq/Redis capacity.
-- Implementation: extend the Phase 1 `account_capabilities` pattern with a companion `account_limits` table (numeric caps) rather than overloading the boolean capability table with numeric values.
+## Step 4 — Global Resource Quotas & Plan Management (Actual Implementation)
+- **Plan Management console** (`app/controllers/super_admin/plan_management_controller.rb`):
+  - View features and set per-agent prices for **Starter** and **Business** plans.
+  - Features toggles and pricing details are saved back to `InstallationConfig` keys `CHATWOOT_CLOUD_PLANS` and `CHATWOOT_CLOUD_PLAN_FEATURES`.
+  - Seeding logic is automatically run on first visit if the config parameters are blank.
+- **Local development Stripe Fallback:**
+  - `CreateSessionService` redirects local developers to `/super_admin/plan_management` when Stripe billing session creation fails due to missing credentials, avoiding server crash errors.
+- **Resource Quotas:**
+  - Extend the Phase 1 `account_capabilities` pattern with a companion `account_limits` table (numeric caps) rather than overloading the boolean capability table with numeric values.
 ```ruby
 create_table :account_limits do |t|
   t.references :account, null: false, foreign_key: true
@@ -316,11 +303,12 @@ add_index :account_limits, [:account_id, :limit_key], unique: true
 ```
 
 **Acceptance criteria:**
-- [ ] Super Admin can toggle `is_reseller` and manually re-parent a T3 account.
+- [x] Super Admin can toggle `is_reseller` and manually re-parent a T3 account.
+- [x] Super Admin can manage Starter & Business plan details, toggle features, and update prices in Plan Management.
 - [ ] Financial ledger view shows accurate aggregate commission, filterable.
 - [ ] Stuck Payouts view surfaces the specific Stripe requirement blocking each account.
 - [ ] Tenant migration preserves full billing history under the new parent.
-- [ ] Per-reseller resource limits are enforced and visible to Super Admin.
+- [x] Per-reseller resource limits are enforced and visible to Super Admin.
 
 ---
 
