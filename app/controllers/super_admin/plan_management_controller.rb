@@ -1,17 +1,17 @@
 class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
   PLANS_CONFIG = 'CHATWOOT_CLOUD_PLANS'
-  PLAN_FEATURES_CONFIG = 'CHATWOOT_CLOUD_PLAN_FEATURES'
 
   def show
     load_plans
-    load_plan_features
     load_all_features
+    load_limits
+    load_plan_feature_limits
   end
 
   def update
     save_plans
-    save_plan_features
-    redirect_to super_admin_plan_management_path, notice: 'Plans updated successfully.'
+    save_plan_feature_limits
+    redirect_to super_admin_plan_management_path, notice: 'Plans and feature limits updated successfully.'
   end
 
   private
@@ -19,12 +19,9 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
   def load_plans
     config = InstallationConfig.find_by(name: PLANS_CONFIG)
     @plans = config&.value || []
-    seed_default_plans! if @plans.empty?
-  end
+    return unless @plans.empty? || @plans.size < 4
 
-  def load_plan_features
-    config = InstallationConfig.find_by(name: PLAN_FEATURES_CONFIG)
-    @plan_features = config&.value || {}
+    seed_default_plans!
   end
 
   def load_all_features
@@ -33,11 +30,41 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
                         .map { |f| { 'name' => f['name'], 'display_name' => f['display_name'] } }
   end
 
+  def load_limits
+    @limits = [
+      { 'name' => 'seats', 'display_name' => 'Seats (team members)' },
+      { 'name' => 'contacts', 'display_name' => 'Contacts' },
+      { 'name' => 'conversations', 'display_name' => 'Conversations/month' },
+      { 'name' => 't3_subaccounts', 'display_name' => 'T3 reseller sub-accounts' },
+      { 'name' => 'automations', 'display_name' => 'Automations/workflows' },
+      { 'name' => 'ai_credits', 'display_name' => 'AI credits/month' }
+    ]
+  end
+
+  def load_plan_feature_limits
+    seed_default_limits! if PlanFeatureLimit.count.zero?
+
+    @plan_feature_limits = {}
+    PlanFeatureLimit.all.each do |pfl|
+      @plan_feature_limits[[pfl.plan_key, pfl.feature_key]] = pfl
+    end
+  end
+
   def save_plans
     plans_param = params[:plans] || {}
-    config = InstallationConfig.find_or_create_by!(name: PLANS_CONFIG)
+    config = InstallationConfig.find_or_initialize_by(name: PLANS_CONFIG)
+    config.serialized_value = {}.with_indifferent_access if config.serialized_value.blank?
 
-    updated_plans = (config.value || []).map do |plan|
+    if config.value.blank?
+      config.value = [
+        { 'name' => 'Hobby', 'product_id' => [], 'price_ids' => [], 'price_per_agent' => 0, 'enabled' => true },
+        { 'name' => 'Standard', 'product_id' => [], 'price_ids' => [], 'price_per_agent' => 10, 'enabled' => true },
+        { 'name' => 'Business', 'product_id' => [], 'price_ids' => [], 'price_per_agent' => 49, 'enabled' => true },
+        { 'name' => 'Enterprise', 'product_id' => [], 'price_ids' => [], 'price_per_agent' => 0, 'enabled' => true }
+      ]
+    end
+
+    updated_plans = config.value.map do |plan|
       plan_data = plans_param[plan['name']]
       next plan unless plan_data
 
@@ -47,43 +74,97 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
       )
     end
 
-    config.update!(value: updated_plans)
+    config.value = updated_plans
+    config.save!
   end
 
-  def save_plan_features
+  def save_plan_feature_limits
     features_param = params[:plan_features] || {}
-    config = InstallationConfig.find_or_create_by!(name: PLAN_FEATURES_CONFIG)
+    limits_param = params[:plan_limits] || {}
 
-    updated_features = {}
-    features_param.each do |plan_name, feature_list|
-      updated_features[plan_name] = Array(feature_list).reject(&:blank?)
+    # Reset all plan feature limits
+    PlanFeatureLimit.update_all(enabled: false)
+
+    # 1. Update enabled boolean features
+    features_param.each do |plan_key, features|
+      features.each do |feature_key, enabled_val|
+        pfl = PlanFeatureLimit.find_or_initialize_by(plan_key: plan_key.downcase, feature_key: feature_key)
+        pfl.enabled = enabled_val == '1'
+        pfl.save!
+      end
     end
 
-    config.update!(value: updated_features)
+    # 2. Update numeric limit values
+    limits_param.each do |plan_key, limits|
+      limits.each do |limit_key, limit_val|
+        pfl = PlanFeatureLimit.find_or_initialize_by(plan_key: plan_key.downcase, feature_key: limit_key)
+        pfl.enabled = true
+        pfl.limit_value = limit_val.present? ? limit_val.to_i : nil
+        pfl.save!
+      end
+    end
   end
 
   def seed_default_plans!
+    plans = [
+      { 'name' => 'Hobby', 'product_id' => [], 'price_ids' => [], 'price_per_agent' => 0, 'enabled' => true },
+      { 'name' => 'Standard', 'product_id' => [], 'price_ids' => [], 'price_per_agent' => 10, 'enabled' => true },
+      { 'name' => 'Business', 'product_id' => [], 'price_ids' => [], 'price_per_agent' => 49, 'enabled' => true },
+      { 'name' => 'Enterprise', 'product_id' => [], 'price_ids' => [], 'price_per_agent' => 0, 'enabled' => true }
+    ]
+
+    config = InstallationConfig.find_or_initialize_by(name: PLANS_CONFIG)
+    config.serialized_value = {}.with_indifferent_access if config.serialized_value.blank?
+    config.value = plans
+    config.save!
+    @plans = plans
+  end
+
+  def seed_default_limits!
     all_feature_names = YAML.load_file(Rails.root.join('config/features.yml'))
                             .reject { |f| f['deprecated'] }
                             .map { |f| f['name'] }
 
-    starter_features = all_feature_names.reject { |f| f.in?(premium_only_features) }
+    plans_keys = %w[hobby standard business enterprise]
 
-    plans = [
-      { 'name' => 'Starter', 'product_id' => [], 'price_ids' => [], 'price_per_agent' => 0, 'enabled' => true },
-      { 'name' => 'Business', 'product_id' => [], 'price_ids' => [], 'price_per_agent' => 19, 'enabled' => true }
-    ]
+    plans_keys.each do |plan_key|
+      limits_matrix = {
+        'hobby' => { 'seats' => 1, 'contacts' => 500, 'conversations' => 200, 't3_subaccounts' => 0, 'automations' => 3, 'ai_credits' => 0 },
+        'standard' => { 'seats' => 5, 'contacts' => 5000, 'conversations' => 2000, 't3_subaccounts' => 3, 'automations' => 15, 'ai_credits' => 100 },
+        'business' => { 'seats' => 20, 'contacts' => 50_000, 'conversations' => 20_000, 't3_subaccounts' => 25, 'automations' => nil,
+                        'ai_credits' => 1000 },
+        'enterprise' => { 'seats' => nil, 'contacts' => nil, 'conversations' => nil, 't3_subaccounts' => nil, 'automations' => nil,
+                          'ai_credits' => nil }
+      }
 
-    plan_features = {
-      'Starter' => starter_features,
-      'Business' => all_feature_names
-    }
+      # Seed features
+      all_feature_names.each do |feature_name|
+        next if limits_matrix[plan_key].key?(feature_name)
 
-    InstallationConfig.find_or_create_by!(name: PLANS_CONFIG).update!(value: plans)
-    InstallationConfig.find_or_create_by!(name: PLAN_FEATURES_CONFIG).update!(value: plan_features)
+        enabled = true
+        enabled = !feature_name.in?(premium_only_features) if plan_key == 'hobby' || plan_key == 'standard'
 
-    @plans = plans
-    @plan_features = plan_features
+        PlanFeatureLimit.create!(
+          plan_key: plan_key,
+          feature_key: feature_name,
+          enabled: enabled,
+          limit_value: nil
+        )
+      end
+
+      # Seed resource limits
+      limits_matrix[plan_key].each do |limit_key, val|
+        enabled = true
+        enabled = !limit_key.in?(premium_only_features) if limit_key == 'automations' && (plan_key == 'hobby' || plan_key == 'standard')
+
+        PlanFeatureLimit.create!(
+          plan_key: plan_key,
+          feature_key: limit_key,
+          enabled: enabled,
+          limit_value: val
+        )
+      end
+    end
   end
 
   def premium_only_features

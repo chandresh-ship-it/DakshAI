@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_20_000008) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_21_000002) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -899,6 +899,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000008) do
     t.index ["name", "account_id"], name: "index_email_templates_on_name_and_account_id", unique: true
   end
 
+  create_table "enterprise_contracts", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.decimal "negotiated_price", precision: 10, scale: 2, null: false
+    t.string "currency", null: false
+    t.string "billing_interval", null: false
+    t.string "collection_method", default: "send_invoice", null: false
+    t.integer "payment_terms_days", default: 30
+    t.date "contract_start_date", null: false
+    t.date "contract_end_date", null: false
+    t.boolean "auto_renew", default: false
+    t.jsonb "negotiated_limit_overrides", default: {}
+    t.bigint "negotiated_by_user_id"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_enterprise_contracts_on_account_id"
+    t.index ["negotiated_by_user_id"], name: "index_enterprise_contracts_on_negotiated_by_user_id"
+  end
+
   create_table "folders", force: :cascade do |t|
     t.integer "account_id", null: false
     t.integer "category_id", null: false
@@ -1143,6 +1162,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000008) do
     t.index ["secondary_actor_type", "secondary_actor_id"], name: "uniq_secondary_actor_per_account_notifications"
     t.index ["user_id", "account_id", "snoozed_until", "read_at"], name: "idx_notifications_performance"
     t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
+  create_table "plan_feature_limits", force: :cascade do |t|
+    t.string "plan_key", null: false
+    t.string "feature_key", null: false
+    t.boolean "enabled", default: false, null: false
+    t.integer "limit_value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["plan_key", "feature_key"], name: "index_plan_feature_limits_on_plan_key_and_feature_key", unique: true
   end
 
   create_table "platform_app_permissibles", force: :cascade do |t|
@@ -1556,6 +1585,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000008) do
   add_foreign_key "commission_rules", "accounts"
   add_foreign_key "commission_rules", "users", column: "created_by_user_id"
   add_foreign_key "connected_accounts", "accounts"
+  add_foreign_key "enterprise_contracts", "accounts"
+  add_foreign_key "enterprise_contracts", "users", column: "negotiated_by_user_id"
   add_foreign_key "inboxes", "portals"
   add_foreign_key "marketplace_plan_prices", "accounts"
   add_foreign_key "reputation_video_testimonials", "accounts"

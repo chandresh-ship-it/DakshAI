@@ -67,6 +67,8 @@ class Account < ApplicationRecord
   validate :parent_must_be_a_reseller
   validate :no_self_parenting
   validate :only_two_levels_deep
+  validate :t3_subaccount_limit_enforced, if: -> { parent_id.present? }
+  validate :reseller_capability_allowed, if: -> { is_reseller? }
 
   before_validation -> { normalize_empty_string_to_nil(%i[custom_domain]) }
   before_validation :sync_branding_fields_from_brand_colors
@@ -340,6 +342,25 @@ class Account < ApplicationRecord
     return if parent.blank?
 
     errors.add(:parent_id, 'cannot set a parent that itself has a parent (max 2 tiers)') if parent.parent_id.present?
+  end
+
+  def t3_subaccount_limit_enforced
+    return if parent.blank?
+
+    limit = parent.limits['t3_subaccounts']
+    return if limit.nil? # unlimited
+
+    existing_count = parent.children.where.not(id: id).count
+    if existing_count >= limit.to_i
+      errors.add(:parent_id, "exceeds the reseller parent's sub-account limit of #{limit}")
+    end
+  end
+
+  def reseller_capability_allowed
+    limit = limits['t3_subaccounts']
+    if limit.present? && limit.to_i == 0
+      errors.add(:is_reseller, "is not allowed on this plan tier")
+    end
   end
 
   def sync_branding_fields_from_brand_colors

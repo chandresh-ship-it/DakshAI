@@ -9,9 +9,21 @@ module Enterprise::Concerns::Conversation
     has_many :captain_responses, class_name: 'Captain::AssistantResponse', dependent: :nullify, as: :documentable
     before_validation :validate_sla_policy, if: -> { sla_policy_id_changed? }
     around_save :ensure_applied_sla_is_created, if: -> { sla_policy_id_changed? }
+
+    validate :enforce_monthly_conversations_limit, on: :create
   end
 
   private
+
+  def enforce_monthly_conversations_limit
+    limit = account.limits['conversations']
+    return if limit.nil? # unlimited
+
+    current_count = account.conversations.where('created_at > ?', 30.days.ago).count
+    if current_count >= limit.to_i
+      errors.add(:base, "Monthly conversation limit of #{limit} has been reached for this account")
+    end
+  end
 
   def validate_sla_policy
     # TODO: remove these validations once we figure out how to deal with these cases

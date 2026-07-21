@@ -3,6 +3,8 @@ module Enterprise::Concerns::Contact
   included do
     belongs_to :company, optional: true, counter_cache: true
 
+    validate :enforce_contacts_limit, on: :create
+
     after_commit :associate_company_from_email,
                  on: [:create, :update],
                  if: :should_associate_company?
@@ -10,6 +12,16 @@ module Enterprise::Concerns::Contact
   end
 
   private
+
+  def enforce_contacts_limit
+    limit = account.limits['contacts']
+    return if limit.nil? # unlimited
+
+    current_count = account.contacts.count
+    if current_count >= limit.to_i
+      errors.add(:base, "Contact limit of #{limit} has been reached for this account")
+    end
+  end
 
   def should_associate_company?
     # Only trigger if:

@@ -3,10 +3,6 @@ require 'rails_helper'
 RSpec.describe 'Super Admin Plan Management', type: :request do
   let!(:super_admin) { create(:super_admin) }
 
-  before do
-    ConfigLoader.new.process(reconcile_only_new: false)
-  end
-
   describe 'GET /super_admin/plan_management' do
     context 'when unauthenticated' do
       it 'redirects to sign in' do
@@ -16,49 +12,62 @@ RSpec.describe 'Super Admin Plan Management', type: :request do
     end
 
     context 'when authenticated as super_admin' do
-      it 'renders plan management page with seeded plans' do
+      it 'renders plan management page with seeded 4-tier plans and limits' do
         sign_in(super_admin, scope: :super_admin)
         get '/super_admin/plan_management'
         expect(response).to have_http_status(:success)
         expect(response.body).to include('Plan Management')
-        expect(response.body).to include('Starter')
+        expect(response.body).to include('Hobby')
+        expect(response.body).to include('Standard')
         expect(response.body).to include('Business')
-        expect(response.body).to include('Price per agent')
+        expect(response.body).to include('Enterprise')
+        expect(response.body).to include('Seats (team members)')
+        expect(response.body).to include('T3 reseller sub-accounts')
       end
     end
   end
 
   describe 'PATCH /super_admin/plan_management' do
     context 'when authenticated as super_admin' do
-      it 'updates prices and feature lists for plans' do
+      it 'updates prices and resource limits for plans' do
         sign_in(super_admin, scope: :super_admin)
 
         patch '/super_admin/plan_management', params: {
           plans: {
-            'Starter' => { 'price_per_agent' => '5.50', 'enabled' => '1' },
-            'Business' => { 'price_per_agent' => '25.00', 'enabled' => '1' }
+            'Hobby' => { 'price_per_agent' => '0.00', 'enabled' => '1' },
+            'Standard' => { 'price_per_agent' => '15.00', 'enabled' => '1' },
+            'Business' => { 'price_per_agent' => '45.00', 'enabled' => '1' },
+            'Enterprise' => { 'price_per_agent' => '120.00', 'enabled' => '1' }
+          },
+          plan_limits: {
+            'Hobby' => { 'seats' => '2', 'contacts' => '1000' },
+            'Standard' => { 'seats' => '8', 'contacts' => '10000' }
           },
           plan_features: {
-            'Starter' => ['inbound_emails'],
-            'Business' => ['inbound_emails', 'disable_branding']
+            'Hobby' => { 'inbound_emails' => '1', 'white_labeling' => '0' },
+            'Standard' => { 'inbound_emails' => '1', 'white_labeling' => '1' }
           }
         }
 
         expect(response).to redirect_to(super_admin_plan_management_path)
-        expect(flash[:notice]).to eq('Plans updated successfully.')
+        expect(flash[:notice]).to eq('Plans and feature limits updated successfully.')
 
-        # Verify plans saved in database
+        # Verify plans pricing saved in database
         plans = InstallationConfig.find_by(name: 'CHATWOOT_CLOUD_PLANS').value
-        starter_plan = plans.find { |p| p['name'] == 'Starter' }
+        standard_plan = plans.find { |p| p['name'] == 'Standard' }
         business_plan = plans.find { |p| p['name'] == 'Business' }
 
-        expect(starter_plan['price_per_agent']).to eq(5.5)
-        expect(business_plan['price_per_agent']).to eq(25.0)
+        expect(standard_plan['price_per_agent']).to eq(15.0)
+        expect(business_plan['price_per_agent']).to eq(45.0)
 
-        # Verify plan features saved in database
-        plan_features = InstallationConfig.find_by(name: 'CHATWOOT_CLOUD_PLAN_FEATURES').value
-        expect(plan_features['Starter']).to eq(['inbound_emails'])
-        expect(plan_features['Business']).to eq(['inbound_emails', 'disable_branding'])
+        # Verify plan features & limits saved in database
+        expect(PlanFeatureLimit.find_by(plan_key: 'hobby', feature_key: 'seats').limit_value).to eq(2)
+        expect(PlanFeatureLimit.find_by(plan_key: 'hobby', feature_key: 'contacts').limit_value).to eq(1000)
+        expect(PlanFeatureLimit.find_by(plan_key: 'standard', feature_key: 'seats').limit_value).to eq(8)
+
+        expect(PlanFeatureLimit.find_by(plan_key: 'hobby', feature_key: 'inbound_emails').enabled).to be(true)
+        expect(PlanFeatureLimit.find_by(plan_key: 'hobby', feature_key: 'white_labeling').enabled).to be(false)
+        expect(PlanFeatureLimit.find_by(plan_key: 'standard', feature_key: 'white_labeling').enabled).to be(true)
       end
     end
   end

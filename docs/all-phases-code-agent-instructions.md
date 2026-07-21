@@ -312,6 +312,137 @@ add_index :account_limits, [:account_id, :limit_key], unique: true
 
 ---
 
+# PHASE 6 — Plan Tiers & Feature Limits (Hobby / Standard / Business / Enterprise)
+
+**Scope:** every feature gets an associated numeric limit (not just an on/off toggle), and the platform ships four named plans with an industry-standard limit matrix. Depends on Phase 1 (`account_capabilities`, `account_limits`) and Phase 5's existing `CHATWOOT_CLOUD_PLANS`/`CHATWOOT_CLOUD_PLAN_FEATURES` config.
+
+## Step 0 — Before writing any code
+1. Pull the current `CHATWOOT_CLOUD_PLANS` and `CHATWOOT_CLOUD_PLAN_FEATURES` `InstallationConfig` values from a running instance and paste them into context — Phase 5 already seeded Starter/Business, confirm exact current keys before renaming/restructuring to the new 4-plan set.
+2. Confirm whether `account_limits` (Phase 5) is currently populated per-account only, or also has a plan-level default — Phase 6 needs a **plan → default limits** mapping that gets copied onto `account_limits` at subscription time, then can be overridden per-account (e.g. a negotiated custom deal for one Enterprise client).
+
+## Step 1 — Every feature gets a limit, not just a flag
+
+Today (Phase 1/5) `account_capabilities` is boolean-only (on/off) and `account_limits` is a separate free-standing numeric table. Unify these so **every gated feature has both**: whether it's enabled, and how much of it the account gets.
+
+```ruby
+class CreatePlanFeatureLimits < ActiveRecord::Migration[7.0]
+  def change
+    create_table :plan_feature_limits do |t|
+      t.string :plan_key, null: false        # 'hobby' | 'standard' | 'business' | 'enterprise'
+      t.string :feature_key, null: false      # matches flag_shih_tzu / virtual_features keys
+      t.boolean :enabled, null: false, default: false
+      t.integer :limit_value                  # nullable = unlimited
+      t.timestamps
+    end
+    add_index :plan_feature_limits, [:plan_key, :feature_key], unique: true
+  end
+end
+```
+
+On subscription activation (or plan change), copy the matching `plan_feature_limits` rows into that account's `account_capabilities` (enabled) + `account_limits` (limit_value) — **do not** have runtime code read `plan_feature_limits` directly on every request; the account-level tables remain the source of truth for enforcement, `plan_feature_limits` is just the template.
+
+**Do NOT:** let a limit of `nil` be confused with `0` — `nil` means unlimited (Enterprise), `0` means the feature is fully unavailable. A truthy-check bug here (`if limit_value` treating `0` as falsy in some languages, though not in Ruby) is a classic source of "why do Enterprise accounts have zero contacts" bugs — be explicit: `limit_value.nil? ? :unlimited : limit_value`.
+
+## Step 2 — Industry-standard 4-plan limit matrix
+
+Seed data for `plan_feature_limits` (adjust exact numbers to your pricing, but keep this general shape — it mirrors how GoHighLevel/Chargebee-style multi-tenant CRM platforms structure their tiers, in particular tying **sub-account/reseller count to plan tier**, since that's the core of your 3-tier model):
+
+| Feature / Limit | Hobby | Standard | Business | Enterprise |
+|---|---|---|---|---|
+| Seats (team members) | 1 | 5 | 20 | Unlimited |
+| Contacts | 500 | 5,000 | 50,000 | Unlimited |
+| Conversations/month | 200 | 2,000 | 20,000 | Unlimited |
+| **T3 sub-accounts (reseller capacity)** | 0 (`is_reseller` cannot be enabled) | 3 | 25 | Unlimited |
+| White-labeling / custom branding | ❌ | ❌ | ✅ | ✅ |
+| Custom domain | ❌ | ❌ | ✅ | ✅ |
+| API access | ❌ | Read-only | Full | Full + higher rate limit |
+| Automations/workflows | 3 | 15 | Unlimited | Unlimited |
+| AI credits/month | 0 | 100 | 1,000 | Custom/negotiated |
+| Support | Community | Email | Priority email | Dedicated + SLA |
+
+**Do NOT:** hardcode "Hobby = 0 sub-accounts" as a special-case `if plan == 'hobby'` scattered in the reseller-onboarding controller — enforce it the same way as every other limit, by checking `account_limits` for `t3_subaccount_count` before allowing `is_reseller` to be set to `true` or before a new T3 signup under that T2. One enforcement path for all limits, no exceptions carved out per-feature.
+
+## Step 3 — Enforcement points
+
+Every action that consumes a limited resource must check before proceeding, not just display the limit in UI:
+- Creating a new T3 sub-account under a T2 → check `t3_subaccount_count` against current children count.
+- Adding a team member → check `seats` against current agent count.
+- Sending a message/conversation → check `conversations_per_month` against a rolling counter (reset monthly — decide whether this resets on calendar month or on subscription anniversary, and be explicit about it, don't leave it ambiguous).
+
+```ruby
+# concern, included wherever a limited action happens
+module EnforcesAccountLimit
+  def enforce_limit!(account, limit_key, current_count)
+    limit = account.account_limits.find_by(limit_key: limit_key)&.limit_value
+    return if limit.nil? # unlimited
+    raise Billing::LimitExceededError, limit_key if current_count >= limit
+  end
+end
+```
+
+**Do NOT:** enforce limits only at the UI layer (disabling a button) — always enforce server-side too, since API access exists as a plan feature itself and a limit that's only UI-enforced is trivially bypassed via direct API calls.
+
+## Step 4 — Plan comparison + usage UI
+
+- Super Admin: extend the existing Phase 5 `plan_management_controller` to manage all four plans' `plan_feature_limits` rows (not just Starter/Business pricing as it does today).
+- Front Admin (T2): a plan comparison view (reuse standard pricing-table UI patterns) plus a **usage dashboard** showing current consumption vs. limit for each metered feature (e.g. "18/25 sub-accounts used") — this is what drives natural upgrade prompts, so make the "you're near your limit" state visually distinct, not just a number.
+
+**Acceptance criteria:**
+- [ ] All four plans (`hobby`, `standard`, `business`, `enterprise`) exist in `plan_feature_limits` with a complete row per feature — no feature silently falls back to "unlimited" by omission.
+- [ ] Hobby accounts cannot enable `is_reseller`; Standard/Business are capped at their sub-account count; Enterprise is uncapped.
+- [ ] Every limited action is enforced server-side, independent of UI state.
+- [ ] Plan upgrade/downgrade correctly re-copies the new plan's `plan_feature_limits` onto the account (existing usage above a new, lower limit should be flagged, not silently truncated — e.g. a Business→Standard downgrade with 10 existing sub-accounts against a new cap of 3 needs a resolution decision, not silent data loss).
+- [ ] Usage dashboard accurately reflects current consumption vs. plan limit per feature.
+
+## Step 5 — Enterprise: custom pricing & contracts (industry-standard "Contact Sales" model)
+
+Enterprise is fundamentally different from the other three plans: pricing and specific limits are **negotiated per customer**, not fixed in a shared `plan_feature_limits` row. Do not try to force Enterprise into the same self-serve checkout flow as Hobby/Standard/Business.
+
+**Architecture:** the `enterprise` row in `plan_feature_limits` remains only a **baseline/floor** (mostly "unlimited" defaults). Actual negotiated terms live in a separate per-account contract table that overrides the baseline:
+
+```ruby
+class CreateEnterpriseContracts < ActiveRecord::Migration[7.0]
+  def change
+    create_table :enterprise_contracts do |t|
+      t.references :account, null: false, foreign_key: true
+      t.decimal :negotiated_price, null: false
+      t.string :currency, null: false
+      t.string :billing_interval, null: false        # 'monthly' | 'annual'
+      t.string :collection_method, null: false, default: 'send_invoice'  # vs 'charge_automatically'
+      t.integer :payment_terms_days, default: 30      # net-30 typical for enterprise invoicing
+      t.date :contract_start_date, null: false
+      t.date :contract_end_date, null: false
+      t.boolean :auto_renew, default: false
+      t.jsonb :negotiated_limit_overrides, default: {}  # e.g. { "ai_credits_per_month": 50000 }
+      t.references :negotiated_by_user                 # audit: which Super Admin/sales rep closed this
+      t.text :notes
+      t.timestamps
+    end
+  end
+end
+```
+
+**Onboarding flow (deliberately not self-serve):**
+1. Public pricing page shows Hobby/Standard/Business with self-serve checkout, but Enterprise shows a **"Contact Sales"** CTA — a lead-capture form, not a checkout button.
+2. Lead comes into Super Admin (or a CRM if one is wired up separately) for a sales conversation.
+3. Once terms are agreed, a Super Admin manually creates the `enterprise_contracts` row and activates the account's subscription — this is an internal action, not something the customer self-serves.
+4. Limit enforcement (Step 3 above) checks `negotiated_limit_overrides` first, falling back to the `enterprise` plan's baseline `plan_feature_limits` row for anything not explicitly negotiated.
+
+**Billing mechanism:** use Stripe's invoicing with `collection_method: 'send_invoice'` rather than automatic card charging — most enterprise deals are annual contracts paid via bank transfer/PO on net-30 terms, not recurring card charges. Do not force an enterprise customer through the same card-based Stripe Checkout as the self-serve plans.
+
+**Do NOT:**
+- Do not let an Enterprise account's limits be edited through the same UI/endpoint used for the shared `plan_feature_limits` template — a fat-fingered edit there would affect every Enterprise customer at once instead of just the one being negotiated.
+- Do not auto-renew a contract silently if `auto_renew` wasn't explicitly agreed — flag `contract_end_date` approaching for sales follow-up instead.
+- Do not skip the audit fields (`negotiated_by_user`, `notes`) — a negotiated deal without a record of who agreed to what and why is an unauditable liability the first time a customer disputes their invoice.
+
+**Acceptance criteria (Enterprise):**
+- [ ] Enterprise is not reachable via self-serve checkout; it routes to a sales lead-capture form instead.
+- [ ] A Super Admin can create an `enterprise_contracts` row with custom price and limit overrides, and it correctly takes precedence over the baseline `enterprise` plan row.
+- [ ] Enterprise invoices are sent (not auto-charged) per the contract's `collection_method` and `payment_terms_days`.
+- [ ] Every negotiated contract has a recorded `negotiated_by_user` and is queryable for audit.
+
+---
+
 ## Build order summary
 
 1. Phase 1 — hierarchy schema + capability gating + read-only Super Admin view
@@ -319,5 +450,6 @@ add_index :account_limits, [:account_id, :limit_key], unique: true
 3. Phase 3 — full billing engine (Case 1 + Case 2, commission formula, pricing panel)
 4. Phase 4 — webhook idempotency, orphaned tenant rescue, grace periods
 5. Phase 5 — mutation/audit tooling in Super Admin
+6. Phase 6 — four-tier plan matrix (Hobby/Standard/Business/Enterprise) with per-feature numeric limits, enforced server-side
 
-Each phase should ship with its own test coverage and be reviewed before starting the next — Phase 3 in particular touches real money and should not proceed until Phases 1–2's account/hierarchy model is stable.
+Each phase should ship with its own test coverage and be reviewed before starting the next — Phase 3 in particular touches real money and should not proceed until Phases 1–2's account/hierarchy model is stable. Phase 6 should land after Phase 3 (billing) is stable, since plan changes need to correctly interact with active `marketplace_plan_prices`/`subscriptions`.
