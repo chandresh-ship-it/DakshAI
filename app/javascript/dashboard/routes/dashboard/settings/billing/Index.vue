@@ -6,7 +6,6 @@ import { useAccount } from 'dashboard/composables/useAccount';
 import { useCaptain } from 'dashboard/composables/useCaptain';
 import { format } from 'date-fns';
 import sessionStorage from 'shared/helpers/sessionStorage';
-import axios from 'axios';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 
@@ -99,11 +98,49 @@ const hasABillingPlan = computed(() => {
   return !!planName.value;
 });
 
+const accountLimits = computed(() => currentAccount.value?.limits || {});
+
+const agentLimits = computed(() => {
+  const limits = accountLimits.value?.agents;
+  if (!limits) return null;
+  return { consumed: limits.consumed, totalCount: limits.allowed };
+});
+
+const inboxLimits = computed(() => {
+  const limits = accountLimits.value?.non_web_inboxes;
+  if (!limits) return null;
+  return { consumed: limits.consumed, totalCount: limits.allowed };
+});
+
+const conversationLimits = computed(() => {
+  const limits = accountLimits.value?.conversation;
+  if (!limits) return null;
+  return { consumed: limits.consumed, totalCount: limits.allowed };
+});
+
+const contactLimits = computed(() => {
+  const limits = accountLimits.value?.contacts;
+  if (!limits) return null;
+  return { consumed: limits.consumed, totalCount: limits.allowed };
+});
+
+const automationLimits = computed(() => {
+  const limits = accountLimits.value?.automations;
+  if (!limits) return null;
+  return { consumed: limits.consumed, totalCount: limits.allowed };
+});
+
+const t3SubaccountLimits = computed(() => {
+  const limits = accountLimits.value?.t3_subaccounts;
+  if (!limits) return null;
+  return { consumed: limits.consumed, totalCount: limits.allowed };
+});
+
 const fetchMarketplaceData = async () => {
   if (isReseller.value || hasResellerParent.value) {
     isFetchingMarketplace.value = true;
     try {
-      const response = await axios.get(`/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_pricing`);
+      const response = await window.axios.get(`/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_pricing`);
       marketplaceData.value = response.data;
       const usdPrice = response.data.prices?.find(p => p.currency === 'usd' && p.active);
       if (usdPrice) {
@@ -119,7 +156,7 @@ const fetchMarketplaceData = async () => {
 
 const handleConnectStripe = async () => {
   try {
-    const response = await axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/connected_account`, {
+    const response = await window.axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/connected_account`, {
       country: 'US',
       refresh_url: window.location.href,
       return_url: window.location.href
@@ -134,7 +171,7 @@ const handleConnectStripe = async () => {
 
 const handleSavePricing = async () => {
   try {
-    await axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_pricing`, {
+    await window.axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_pricing`, {
       marketplace_plan_price: {
         currency: selectedCurrency.value,
         agency_price: agencyPriceInput.value
@@ -149,7 +186,7 @@ const handleSavePricing = async () => {
 
 const handleSubscribe = async () => {
   try {
-    const response = await axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_checkout`, {
+    const response = await window.axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_checkout`, {
       currency: 'usd',
       success_url: window.location.href,
       cancel_url: window.location.href
@@ -159,6 +196,23 @@ const handleSubscribe = async () => {
     }
   } catch (error) {
     useAlert(error.response?.data?.error || 'Checkout initialization failed');
+  }
+};
+
+const isBypassingPlan = ref(false);
+const handleBypassPlan = async (planName) => {
+  isBypassingPlan.value = true;
+  try {
+    const response = await window.axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/bypass_plan`, {
+      plan_name: planName
+    });
+    useAlert(`Successfully switched to ${planName} plan!`);
+    await fetchAccountDetails();
+    window.location.reload();
+  } catch (error) {
+    useAlert(error.response?.data?.error || 'Failed to switch plan');
+  } finally {
+    isBypassingPlan.value = false;
   }
 };
 
@@ -238,146 +292,71 @@ onMounted(handleBillingPageLogic);
       />
     </template>
     <template #body>
-      <!-- Reseller (T2) Pricing Panel View -->
-      <section v-if="isReseller" class="grid gap-4">
-        <!-- Stripe Connect Onboarding -->
+      <!-- Direct Plan Selection Flow (Replaces Stripe Flows for Testing) -->
+      <section class="grid gap-4">
         <BillingCard
-          v-if="!marketplaceData.connected_account?.charges_enabled"
-          :title="$t('BILLING_SETTINGS.RESELLER.CONNECT_STRIPE')"
-          :description="$t('BILLING_SETTINGS.RESELLER.CONNECT_DESC')"
+          v-if="!planName"
+          title="Select a Plan"
+          description="Choose a plan to instantly upgrade your account (Bypassing Stripe for testing)."
         >
-          <template #action>
-            <ButtonV4 sm solid blue @click="handleConnectStripe">
-              {{ $t('BILLING_SETTINGS.RESELLER.CONNECT_STRIPE') }}
-            </ButtonV4>
-          </template>
-        </BillingCard>
-
-        <!-- Pricing Configuration -->
-        <BillingCard
-          v-else
-          :title="$t('BILLING_SETTINGS.RESELLER.TITLE')"
-          description="Manage the pricing plan offered to your clients."
-        >
-          <div class="max-w-md grid gap-4 p-2">
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-semibold">{{ $t('BILLING_SETTINGS.RESELLER.SET_PRICE') }}</label>
-              <div class="flex gap-2">
-                <input
-                  v-model="agencyPriceInput"
-                  type="number"
-                  min="1"
-                  class="flex-grow border border-n-weak rounded-xl px-4 py-2 bg-n-background focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Price in USD"
-                />
-                <ButtonV4 sm solid blue @click="handleSavePricing">
-                  {{ $t('BILLING_SETTINGS.RESELLER.SAVE_PRICING') }}
-                </ButtonV4>
-              </div>
-            </div>
-
-            <!-- Fee Breakdown Calculator -->
-            <div class="grid gap-2 border border-n-weak rounded-xl p-4 bg-n-slate-2">
-              <div class="flex justify-between text-sm">
-                <span>{{ $t('BILLING_SETTINGS.RESELLER.AGENCY_PRICE') }}</span>
-                <span class="font-semibold">${{ parseFloat(agencyPriceInput || 0).toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between text-sm text-n-slate-11">
-                <span>{{ $t('BILLING_SETTINGS.RESELLER.COMMISSION', { percent: commissionPercent }) }}</span>
-                <span>+${{ platformFeeAmount }}</span>
-              </div>
-              <hr class="border-n-weak my-1" />
-              <div class="flex justify-between font-bold text-base">
-                <span>{{ $t('BILLING_SETTINGS.RESELLER.TOTAL_PRICE') }}</span>
-                <span class="text-blue-600">${{ totalClientPrice }}</span>
-              </div>
-            </div>
-          </div>
-        </BillingCard>
-      </section>
-
-      <!-- Client (T3) Billing view -->
-      <section v-else-if="hasResellerParent" class="grid gap-4">
-        <BillingCard
-          v-if="hasABillingPlan"
-          :title="$t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.TITLE')"
-          :description="$t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.DESCRIPTION')"
-        >
-          <template #action>
-            <ButtonV4 sm solid blue @click="onClickBillingPortal">
-              {{ $t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.BUTTON_TXT') }}
-            </ButtonV4>
-          </template>
-          <div class="grid lg:grid-cols-4 sm:grid-cols-3 grid-cols-1 gap-2 divide-x divide-n-weak">
-            <DetailItem
-              :label="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
-              value="Workspace Subscription"
-            />
-            <DetailItem
-              v-if="subscribedQuantity"
-              :label="$t('BILLING_SETTINGS.CURRENT_PLAN.SEAT_COUNT')"
-              :value="subscribedQuantity"
-            />
-            <DetailItem
-              v-if="subscriptionRenewsOn"
-              :label="$t('BILLING_SETTINGS.CURRENT_PLAN.RENEWS_ON')"
-              :value="subscriptionRenewsOn"
-            />
-          </div>
-        </BillingCard>
-
-        <!-- No active subscription yet: Show plan configuration -->
-        <BillingCard
-          v-else
-          :title="$t('BILLING_SETTINGS.CLIENT.TITLE')"
-          :description="$t('BILLING_SETTINGS.CLIENT.DESCRIPTION')"
-        >
-          <div v-if="activePlanPrice" class="grid gap-4 max-w-sm p-2">
-            <div class="border border-n-weak rounded-2xl p-6 bg-n-background shadow-sm flex flex-col gap-4">
-              <div class="text-xl font-bold text-center">Standard Workspace Plan</div>
-              <div class="flex items-baseline justify-center gap-1">
-                <span class="text-4xl font-extrabold text-blue-600">${{ activePlanPrice.total_amount }}</span>
-                <span class="text-n-slate-11">/ month</span>
-              </div>
-              <ButtonV4 solid blue class="w-full justify-center" @click="handleSubscribe">
-                {{ $t('BILLING_SETTINGS.CLIENT.SUBSCRIBE_BTN') }}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+            <div v-for="plan in ['Hobby', 'Standard', 'Business', 'Enterprise']" :key="plan" class="border border-n-weak rounded-xl p-6 bg-n-background shadow-sm flex flex-col justify-between gap-4">
+              <div class="text-xl font-bold text-center text-slate-800">{{ plan }} Plan</div>
+              <ButtonV4 solid blue class="w-full justify-center" @click="handleBypassPlan(plan)" :is-loading="isBypassingPlan">
+                Select Plan
               </ButtonV4>
             </div>
           </div>
-          <div v-else class="text-n-slate-11 p-4 border border-n-weak rounded-xl">
-            {{ $t('BILLING_SETTINGS.CLIENT.NO_ACTIVE_PRICE') }}
-          </div>
         </BillingCard>
-      </section>
 
-      <!-- Standard direct platform billing (Case 1) -->
-      <section v-else class="grid gap-4">
         <BillingCard
-          :title="$t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.TITLE')"
-          :description="$t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.DESCRIPTION')"
+          v-if="planName"
+          :title="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
         >
-          <template #action>
-            <ButtonV4 sm solid blue @click="onClickBillingPortal">
-              {{ $t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.BUTTON_TXT') }}
-            </ButtonV4>
-          </template>
-          <div
-            v-if="planName || subscribedQuantity || subscriptionRenewsOn"
-            class="grid lg:grid-cols-4 sm:grid-cols-3 grid-cols-1 gap-2 divide-x divide-n-weak"
-          >
+          <div class="grid lg:grid-cols-4 sm:grid-cols-3 grid-cols-1 gap-2 divide-x divide-n-weak">
             <DetailItem
               :label="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
               :value="planName"
             />
-            <DetailItem
-              v-if="subscribedQuantity"
-              :label="$t('BILLING_SETTINGS.CURRENT_PLAN.SEAT_COUNT')"
-              :value="subscribedQuantity"
+          </div>
+        </BillingCard>
+
+        <!-- Resource Limits -->
+        <BillingCard
+          v-if="hasABillingPlan"
+          title="Resource Limits"
+          description="Usage and limits for your current billing cycle."
+        >
+          <div class="px-5 pb-5 grid gap-4">
+            <BillingMeter
+              v-if="agentLimits"
+              title="Seats (team members)"
+              v-bind="agentLimits"
             />
-            <DetailItem
-              v-if="subscriptionRenewsOn"
-              :label="$t('BILLING_SETTINGS.CURRENT_PLAN.RENEWS_ON')"
-              :value="subscriptionRenewsOn"
+            <BillingMeter
+              v-if="inboxLimits"
+              title="Inboxes"
+              v-bind="inboxLimits"
+            />
+            <BillingMeter
+              v-if="contactLimits"
+              title="Contacts"
+              v-bind="contactLimits"
+            />
+            <BillingMeter
+              v-if="conversationLimits"
+              title="Conversations/month"
+              v-bind="conversationLimits"
+            />
+            <BillingMeter
+              v-if="t3SubaccountLimits"
+              title="T3 Reseller Sub-accounts"
+              v-bind="t3SubaccountLimits"
+            />
+            <BillingMeter
+              v-if="automationLimits"
+              title="Automations/workflows"
+              v-bind="automationLimits"
             />
           </div>
         </BillingCard>

@@ -82,8 +82,8 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
     features_param = params[:plan_features] || {}
     limits_param = params[:plan_limits] || {}
 
-    # Reset all plan feature limits
-    PlanFeatureLimit.update_all(enabled: false)
+    # Reset all plan feature limits except Enterprise (which is custom per account)
+    PlanFeatureLimit.where.not(plan_key: 'enterprise').update_all(enabled: false)
 
     # 1. Update enabled boolean features
     features_param.each do |plan_key, features|

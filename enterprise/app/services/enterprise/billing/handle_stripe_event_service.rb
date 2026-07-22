@@ -2,9 +2,6 @@ class Enterprise::Billing::HandleStripeEventService
   CLOUD_PLANS_CONFIG = 'CHATWOOT_CLOUD_PLANS'.freeze
   CAPTAIN_CLOUD_PLAN_LIMITS = 'CAPTAIN_CLOUD_PLAN_LIMITS'.freeze
 
-  STARTUP_PLAN_FEATURES = Enterprise::Billing::ReconcilePlanFeaturesService::STARTUP_PLAN_FEATURES
-  BUSINESS_PLAN_FEATURES = Enterprise::Billing::ReconcilePlanFeaturesService::BUSINESS_PLAN_FEATURES
-  ENTERPRISE_PLAN_FEATURES = Enterprise::Billing::ReconcilePlanFeaturesService::ENTERPRISE_PLAN_FEATURES
 
   def perform(event:)
     @event = event

@@ -1,3 +1,34 @@
+# == Schema Information
+#
+# Table name: enterprise_contracts
+#
+#  id                         :bigint           not null, primary key
+#  auto_renew                 :boolean          default(FALSE)
+#  billing_interval           :string           not null
+#  collection_method          :string           default("send_invoice"), not null
+#  contract_end_date          :date             not null
+#  contract_start_date        :date             not null
+#  currency                   :string           not null
+#  negotiated_features        :jsonb
+#  negotiated_limit_overrides :jsonb
+#  negotiated_price           :decimal(10, 2)   not null
+#  notes                      :text
+#  payment_terms_days         :integer          default(30)
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  account_id                 :bigint           not null
+#  negotiated_by_user_id      :bigint
+#
+# Indexes
+#
+#  index_enterprise_contracts_on_account_id             (account_id)
+#  index_enterprise_contracts_on_negotiated_by_user_id  (negotiated_by_user_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (account_id => accounts.id)
+#  fk_rails_...  (negotiated_by_user_id => users.id)
+#
 class EnterpriseContract < ApplicationRecord
   belongs_to :account
   belongs_to :negotiated_by_user, class_name: 'User', optional: true
@@ -16,7 +47,18 @@ class EnterpriseContract < ApplicationRecord
 
   scope :active, ->(date = Time.zone.today) { where('contract_start_date <= ? AND contract_end_date >= ?', date, date) }
 
+  before_validation :set_defaults
+
   private
+
+  def set_defaults
+    self.currency ||= 'USD'
+    self.collection_method ||= 'charge_automatically'
+
+    if new_record? && negotiated_features.blank?
+      self.negotiated_features = PlanFeatureLimit.where(plan_key: 'enterprise', enabled: true).pluck(:feature_key)
+    end
+  end
 
   def end_date_must_be_after_start_date
     return if contract_start_date.blank? || contract_end_date.blank?

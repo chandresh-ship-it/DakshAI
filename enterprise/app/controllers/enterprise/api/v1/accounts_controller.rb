@@ -2,7 +2,7 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   include BillingHelper
   before_action :fetch_account
   before_action :check_authorization
-  before_action :check_cloud_env, only: [:limits, :toggle_deletion]
+  before_action :check_cloud_env, only: [:toggle_deletion]
 
   def subscription
     if stripe_customer_id.blank? && @account.custom_attributes['is_creating_customer'].blank?
@@ -71,6 +71,34 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     render_could_not_create_error(e.message)
   end
 
+  def bypass_plan
+    plan_name = params[:plan_name]
+    return render json: { error: 'Invalid plan name' }, status: :unprocessable_entity unless %w[Hobby Standard Business Enterprise].include?(plan_name)
+
+    @account.update_column(:custom_attributes, @account.custom_attributes.merge('plan_name' => plan_name))
+    @account.reload
+
+    # Ensure a subscription record exists so it shows up in Super Admin
+    subscription = @account.subscription || @account.build_subscription
+    subscription.assign_attributes(
+      plan_name: plan_name,
+      status: 'active',
+      relationship_type: 'platform',
+      subscribed_quantity: 1,
+      current_period_start: Time.current,
+      current_period_end: 10.years.from_now
+    )
+    subscription.save!
+
+    Enterprise::Billing::ReconcilePlanFeaturesService.new(account: @account).perform
+
+    render json: { 
+      message: "Plan updated to #{plan_name}",
+      limits: @account.limits,
+      custom_attributes: @account.custom_attributes
+    }, status: :ok
+  end
+
   private
 
   def check_cloud_env
@@ -79,11 +107,29 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
 
   def default_limits
     {
-      'conversation' => {},
-      'non_web_inboxes' => {},
+      'conversation' => {
+        'allowed' => @account.limits['conversations'] || 0,
+        'consumed' => conversations_this_month(@account)
+      },
+      'non_web_inboxes' => {
+        'allowed' => @account.usage_limits[:inboxes] || @account.usage_limits[:non_web_inboxes],
+        'consumed' => non_web_inboxes(@account)
+      },
       'agents' => {
         'allowed' => @account.usage_limits[:agents],
         'consumed' => agents(@account)
+      },
+      'contacts' => {
+        'allowed' => @account.limits['contacts'] || 0,
+        'consumed' => @account.contacts.count
+      },
+      'automations' => {
+        'allowed' => @account.limits['automations'] || 0,
+        'consumed' => @account.automation_rules.count
+      },
+      't3_subaccounts' => {
+        'allowed' => @account.limits['t3_subaccounts'] || 0,
+        'consumed' => @account.sub_accounts.count
       },
       'captain' => @account.usage_limits[:captain]
     }

@@ -31,6 +31,10 @@ class Enterprise::Billing::ReconcilePlanFeaturesService
         active_contract.negotiated_limit_overrides.each do |key, value|
           limits_hash[key] = value
         end
+
+        if active_contract.negotiated_features.present?
+          enabled_features = active_contract.negotiated_features
+        end
       end
     end
 

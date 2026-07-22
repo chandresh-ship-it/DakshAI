@@ -34,4 +34,8 @@ class AccountPolicy < ApplicationPolicy
   def topup_checkout?
     @account_user.administrator?
   end
+
+  def bypass_plan?
+    @account_user.administrator?
+  end
 end

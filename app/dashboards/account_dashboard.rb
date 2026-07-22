@@ -35,6 +35,7 @@ class AccountDashboard < Administrate::BaseDashboard
     status: Field::Select.with_options(collection: [%w[Active active], %w[Suspended suspended]]),
     account_users: Field::HasMany,
     subscription: Field::HasOne,
+    enterprise_contract: Field::HasOne,
     marketplace_plan_prices: Field::HasMany,
     custom_attributes: Field::String
   }.merge(enterprise_attribute_types).freeze
@@ -73,6 +74,7 @@ class AccountDashboard < Administrate::BaseDashboard
     conversations
     account_users
     subscription
+    enterprise_contract
     marketplace_plan_prices
   ] + enterprise_show_page_attributes).freeze
 
