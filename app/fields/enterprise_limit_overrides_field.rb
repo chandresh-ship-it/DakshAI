@@ -7,7 +7,8 @@ class EnterpriseLimitOverridesField < Administrate::Field::Base
     'conversations' => 'Conversations/month',
     't3_subaccounts' => 'T3 reseller sub-accounts',
     'automations' => 'Automations/workflows',
-    'ai_credits' => 'AI credits/month'
+    'captain_documents' => 'Captain AI documents',
+    'captain_responses' => 'Captain AI credits (responses)/month'
   }.freeze
 
   def self.permitted_attribute(attribute, _options = nil)

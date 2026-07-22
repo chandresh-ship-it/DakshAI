@@ -7,6 +7,10 @@ import { useAlert } from 'dashboard/composables';
 import { debounce } from '@chatwoot/utils';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import filterQueryGenerator from 'dashboard/helper/filterQueryGenerator';
+import {
+  DuplicateContactException,
+  ExceptionWithMessage,
+} from 'shared/helpers/CustomErrors';
 
 import ContactsListLayout from 'dashboard/components-next/Contacts/ContactsListLayout.vue';
 import ContactEmptyState from 'dashboard/components-next/Contacts/EmptyState/ContactEmptyState.vue';
@@ -445,7 +449,23 @@ const handleSort = async ({ sort, order }) => {
 };
 
 const createContact = async contact => {
-  await store.dispatch('contacts/create', contact);
+  const i18nPrefix = 'CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION';
+  try {
+    await store.dispatch('contacts/create', contact);
+    useAlert(t(`${i18nPrefix}.SUCCESS_MESSAGE`));
+  } catch (error) {
+    if (error instanceof DuplicateContactException) {
+      if (error.data.includes('email')) {
+        useAlert(t(`${i18nPrefix}.EMAIL_ADDRESS_DUPLICATE`));
+      } else if (error.data.includes('phone_number')) {
+        useAlert(t(`${i18nPrefix}.PHONE_NUMBER_DUPLICATE`));
+      }
+    } else if (error instanceof ExceptionWithMessage) {
+      useAlert(error.data);
+    } else {
+      useAlert(t(`${i18nPrefix}.ERROR_MESSAGE`));
+    }
+  }
 };
 
 watch(hasSelection, value => {

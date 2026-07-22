@@ -1,5 +1,6 @@
 <script setup>
 import { useAlert } from 'dashboard/composables';
+import { ExceptionWithMessage } from 'shared/helpers/CustomErrors';
 import AddAutomationRule from './AddAutomationRule.vue';
 import EditAutomationRule from './EditAutomationRule.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
@@ -128,6 +129,11 @@ const submitAutomation = async (payload, mode) => {
     hideAddPopup();
     hideEditPopup();
   } catch (error) {
+    if (error instanceof ExceptionWithMessage) {
+      useAlert(error.data);
+      return;
+    }
+
     const errorMessage =
       mode === 'edit'
         ? t('AUTOMATION.EDIT.API.ERROR_MESSAGE')

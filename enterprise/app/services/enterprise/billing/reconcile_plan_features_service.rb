@@ -54,7 +54,8 @@ class Enterprise::Billing::ReconcilePlanFeaturesService
       'conversations' => limits_hash['conversations'],
       't3_subaccounts' => limits_hash['t3_subaccounts'],
       'automations' => limits_hash['automations'],
-      'ai_credits' => limits_hash['ai_credits']
+      'captain_documents' => limits_hash['captain_documents'],
+      'captain_responses' => limits_hash['captain_responses']
     }.compact
 
     account.save!

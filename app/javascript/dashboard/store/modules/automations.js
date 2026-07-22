@@ -2,6 +2,18 @@ import * as MutationHelpers from 'shared/helpers/vuex/mutationHelpers';
 import types from '../mutation-types';
 import { uploadFile } from 'dashboard/helper/uploadHelper';
 import AutomationAPI from '../../api/automation';
+import {
+  ExceptionWithMessage,
+  extractResponseMessage,
+} from 'shared/helpers/CustomErrors';
+
+const throwWithResponseMessage = error => {
+  const responseMessage = extractResponseMessage(error);
+  if (responseMessage) {
+    throw new ExceptionWithMessage(responseMessage);
+  }
+  throw new Error(error);
+};
 
 export const state = {
   records: [],
@@ -40,7 +52,7 @@ export const actions = {
       const response = await AutomationAPI.create(automationObj);
       commit(types.ADD_AUTOMATION, response.data);
     } catch (error) {
-      throw new Error(error);
+      throwWithResponseMessage(error);
     } finally {
       commit(types.SET_AUTOMATION_UI_FLAG, { isCreating: false });
     }

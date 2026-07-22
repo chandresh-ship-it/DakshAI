@@ -1,6 +1,7 @@
 import {
   DuplicateContactException,
   ExceptionWithMessage,
+  extractResponseMessage,
 } from 'shared/helpers/CustomErrors';
 import types from '../../mutation-types';
 import ContactAPI from '../../../api/contacts';
@@ -35,14 +36,16 @@ const buildContactFormData = contactParams => {
 };
 
 export const handleContactOperationErrors = error => {
+  const responseMessage = extractResponseMessage(error);
+
   if (error.response?.status === 422) {
     const exception = new DuplicateContactException(
       error.response.data.attributes
     );
-    exception.message = error.response.data.message || exception.message;
+    exception.message = responseMessage || exception.message;
     throw exception;
-  } else if (error.response?.data?.message) {
-    throw new ExceptionWithMessage(error.response.data.message);
+  } else if (responseMessage) {
+    throw new ExceptionWithMessage(responseMessage);
   } else {
     throw new Error(error);
   }

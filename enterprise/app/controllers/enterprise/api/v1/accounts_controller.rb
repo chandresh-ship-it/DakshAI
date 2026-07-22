@@ -111,7 +111,7 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   def default_limits
     {
       'conversation' => {
-        'allowed' => @account.limits['conversations'] || 0,
+        'allowed' => plan_limit('conversations'),
         'consumed' => conversations_this_month(@account)
       },
       'non_web_inboxes' => {
@@ -123,19 +123,26 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
         'consumed' => agents(@account)
       },
       'contacts' => {
-        'allowed' => @account.limits['contacts'] || 0,
+        'allowed' => plan_limit('contacts'),
         'consumed' => @account.contacts.count
       },
       'automations' => {
-        'allowed' => @account.limits['automations'] || 0,
+        'allowed' => plan_limit('automations'),
         'consumed' => @account.automation_rules.count
       },
       't3_subaccounts' => {
-        'allowed' => @account.limits['t3_subaccounts'] || 0,
+        'allowed' => plan_limit('t3_subaccounts'),
         'consumed' => @account.sub_accounts.count
       },
       'captain' => @account.usage_limits[:captain]
     }
+  end
+
+  # A missing key in account.limits means the plan matrix left this resource
+  # unlimited (ReconcilePlanFeaturesService drops nil limit_value entries),
+  # so fall back to the "no limit" sentinel instead of 0.
+  def plan_limit(key)
+    @account.limits[key] || ChatwootApp.max_limit
   end
 
   def fetch_account

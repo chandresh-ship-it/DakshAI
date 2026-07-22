@@ -28,9 +28,22 @@ const { isAdmin } = useAdmin();
 
 const isOnChatwootCloud = useMapGetter('globalConfig/isOnChatwootCloud');
 
-const testLimit = ({ allowed, consumed }) => {
+const testLimit = limit => {
+  if (!limit) return false;
+  const { allowed, consumed } = limit;
   return consumed > allowed;
 };
+
+// Resource keys (from the /limits endpoint) checked in order of how
+// "blocking" they typically are for a workspace.
+const LIMIT_KEYS = [
+  'conversation',
+  'non_web_inboxes',
+  'agents',
+  'contacts',
+  'automations',
+  't3_subaccounts',
+];
 
 const isTrialAccount = computed(() => {
   // check if account is less than 15 days old
@@ -43,20 +56,14 @@ const isTrialAccount = computed(() => {
   return diffDays <= 15;
 });
 
-const isLimitExceeded = computed(() => {
-  const account = currentAccount.value;
-  if (!account?.limits) return false;
+const exceededLimitKey = computed(() => {
+  const limits = currentAccount.value?.limits;
+  if (!limits) return null;
 
-  const {
-    conversation,
-    non_web_inboxes: nonWebInboxes,
-    agents,
-  } = account.limits;
-
-  return (
-    testLimit(conversation) || testLimit(nonWebInboxes) || testLimit(agents)
-  );
+  return LIMIT_KEYS.find(key => testLimit(limits[key])) || null;
 });
+
+const isLimitExceeded = computed(() => !!exceededLimitKey.value);
 
 const hasNoPlan = computed(() => {
   if (!isEnterprise) return false;
@@ -94,28 +101,25 @@ const limitExceededMessage = computed(() => {
     return t('GENERAL_SETTINGS.LIMIT_MESSAGES.SUBSCRIPTION_INACTIVE');
   }
 
-  const account = currentAccount.value;
-  if (!account?.limits) return '';
-
-  const {
-    conversation,
-    non_web_inboxes: nonWebInboxes,
-    agents,
-  } = account.limits;
-
-  let message = '';
-
-  if (testLimit(conversation)) {
-    message = t('GENERAL_SETTINGS.LIMIT_MESSAGES.CONVERSATION');
-  } else if (testLimit(nonWebInboxes)) {
-    message = t('GENERAL_SETTINGS.LIMIT_MESSAGES.INBOXES');
-  } else if (testLimit(agents)) {
-    message = t('GENERAL_SETTINGS.LIMIT_MESSAGES.AGENTS', {
-      allowedAgents: agents.allowed,
-    });
+  const limits = currentAccount.value?.limits || {};
+  switch (exceededLimitKey.value) {
+    case 'conversation':
+      return t('GENERAL_SETTINGS.LIMIT_MESSAGES.CONVERSATION');
+    case 'non_web_inboxes':
+      return t('GENERAL_SETTINGS.LIMIT_MESSAGES.INBOXES');
+    case 'agents':
+      return t('GENERAL_SETTINGS.LIMIT_MESSAGES.AGENTS', {
+        allowedAgents: limits.agents.allowed,
+      });
+    case 'contacts':
+      return t('GENERAL_SETTINGS.LIMIT_MESSAGES.CONTACTS');
+    case 'automations':
+      return t('GENERAL_SETTINGS.LIMIT_MESSAGES.AUTOMATIONS');
+    case 't3_subaccounts':
+      return t('GENERAL_SETTINGS.LIMIT_MESSAGES.T3_SUBACCOUNTS');
+    default:
+      return '';
   }
-
-  return message;
 });
 
 const fetchLimits = () => {

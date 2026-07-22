@@ -37,7 +37,8 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
       { 'name' => 'conversations', 'display_name' => 'Conversations/month' },
       { 'name' => 't3_subaccounts', 'display_name' => 'T3 reseller sub-accounts' },
       { 'name' => 'automations', 'display_name' => 'Automations/workflows' },
-      { 'name' => 'ai_credits', 'display_name' => 'AI credits/month' }
+      { 'name' => 'captain_documents', 'display_name' => 'Captain AI documents' },
+      { 'name' => 'captain_responses', 'display_name' => 'Captain AI credits (responses)/month' }
     ]
   end
 
@@ -129,12 +130,14 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
 
     plans_keys.each do |plan_key|
       limits_matrix = {
-        'hobby' => { 'seats' => 1, 'contacts' => 500, 'conversations' => 200, 't3_subaccounts' => 0, 'automations' => 3, 'ai_credits' => 0 },
-        'standard' => { 'seats' => 5, 'contacts' => 5000, 'conversations' => 2000, 't3_subaccounts' => 3, 'automations' => 15, 'ai_credits' => 100 },
-        'business' => { 'seats' => 20, 'contacts' => 50_000, 'conversations' => 20_000, 't3_subaccounts' => 25, 'automations' => nil,
-                        'ai_credits' => 1000 },
+        'hobby' => { 'seats' => 1, 'contacts' => 500, 'conversations' => 200, 't3_subaccounts' => 0, 'automations' => 3,
+                     'captain_documents' => 0, 'captain_responses' => 0 },
+        'standard' => { 'seats' => 5, 'contacts' => 5000, 'conversations' => 2000, 't3_subaccounts' => 3, 'automations' => 15,
+                        'captain_documents' => 0, 'captain_responses' => 0 },
+        'business' => { 'seats' => 20, 'contacts' => 50_000, 'conversations' => 20_000, 't3_subaccounts' => 25, 'automations' => 100,
+                        'captain_documents' => 200, 'captain_responses' => 300 },
         'enterprise' => { 'seats' => nil, 'contacts' => nil, 'conversations' => nil, 't3_subaccounts' => nil, 'automations' => nil,
-                          'ai_credits' => nil }
+                          'captain_documents' => nil, 'captain_responses' => nil }
       }
 
       # Seed features

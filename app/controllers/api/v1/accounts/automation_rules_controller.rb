@@ -18,7 +18,7 @@ class Api::V1::Accounts::AutomationRulesController < Api::V1::Accounts::BaseCont
     @automation_rule.actions = actions
     @automation_rule.conditions = params[:conditions]
 
-    return render_could_not_create_error(@automation_rule.errors.messages) unless @automation_rule.valid?
+    return render_could_not_create_error(@automation_rule.errors.full_messages.join(', ')) unless @automation_rule.valid?
 
     @automation_rule.save!
     blobs.each { |blob| @automation_rule.files.attach(blob) }
@@ -36,7 +36,7 @@ class Api::V1::Accounts::AutomationRulesController < Api::V1::Accounts::BaseCont
       blobs.each { |blob| @automation_rule.files.attach(blob) }
     rescue StandardError => e
       Rails.logger.error e
-      render_could_not_create_error(@automation_rule.errors.messages)
+      render_could_not_create_error(@automation_rule.errors.full_messages.join(', '))
     end
   end
 

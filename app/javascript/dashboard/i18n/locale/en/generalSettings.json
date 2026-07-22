@@ -4,6 +4,9 @@
       "CONVERSATION": "You have exceeded the conversation limit. Hacker plan allows only 500 conversations.",
       "INBOXES": "You have exceeded the inbox limit. Hacker plan only supports website live-chat. Additional inboxes like email, WhatsApp etc. require a paid plan.",
       "AGENTS": "You have exceeded the agent limit. Your plan only allows {allowedAgents} agents.",
+      "CONTACTS": "You have exceeded the contact limit for your plan. Please upgrade your plan to add more contacts.",
+      "AUTOMATIONS": "You have exceeded the automation limit for your plan. Please upgrade your plan to create more automations.",
+      "T3_SUBACCOUNTS": "You have exceeded the sub-account limit for your plan. Please upgrade your plan to add more sub-accounts.",
       "NO_PLAN": "Please select a plan to continue using the system.",
       "SUBSCRIPTION_INACTIVE": "Your subscription is inactive or has expired. Please renew your plan to continue using the system.",
       "NON_ADMIN": "Please contact your administrator to upgrade the plan and continue using all features."

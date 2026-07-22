@@ -18,7 +18,7 @@ class PlanFeatureLimit < ApplicationRecord
   PLAN_KEYS = %w[hobby standard business enterprise].freeze
   # Keys stored in plan_feature_limits that represent numeric resource quotas
   # (mapped into account.limits) rather than boolean feature flags.
-  RESOURCE_LIMIT_KEYS = %w[seats contacts conversations t3_subaccounts automations ai_credits].freeze
+  RESOURCE_LIMIT_KEYS = %w[seats contacts conversations t3_subaccounts automations captain_documents captain_responses].freeze
 
   validates :plan_key, presence: true, inclusion: { in: PLAN_KEYS }
   validates :feature_key, presence: true, uniqueness: { scope: :plan_key }
