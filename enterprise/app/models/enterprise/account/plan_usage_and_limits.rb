@@ -39,10 +39,9 @@ module Enterprise::Account::PlanUsageAndLimits # rubocop:disable Metrics/ModuleL
   end
 
   def subscribed_features
-    plan_features = InstallationConfig.find_by(name: 'CHATWOOT_CLOUD_PLAN_FEATURES')&.value
-    return [] if plan_features.blank?
+    return [] if plan_name.blank?
 
-    plan_features[plan_name]
+    PlanFeatureLimit.feature_keys_for(plan_name.downcase, enabled_only: true)
   end
 
   def captain_monthly_limit

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed } from 'vue';
+import { onMounted, computed, watch } from 'vue';
 import { useStore } from 'dashboard/composables/store';
 import { useMapGetter } from 'dashboard/composables/store.js';
 import { useRouter } from 'vue-router';
@@ -43,7 +43,57 @@ const isTrialAccount = computed(() => {
   return diffDays <= 15;
 });
 
+const isLimitExceeded = computed(() => {
+  const account = currentAccount.value;
+  if (!account?.limits) return false;
+
+  const {
+    conversation,
+    non_web_inboxes: nonWebInboxes,
+    agents,
+  } = account.limits;
+
+  return (
+    testLimit(conversation) || testLimit(nonWebInboxes) || testLimit(agents)
+  );
+});
+
+const hasNoPlan = computed(() => {
+  if (!isEnterprise) return false;
+  const account = currentAccount.value;
+  if (!account) return false;
+  return !account.custom_attributes?.plan_name;
+});
+
+const isSubscriptionInactive = computed(() => {
+  if (!isEnterprise) return false;
+  const account = currentAccount.value;
+  if (!account) return false;
+
+  // If there's no subscription record, or it is not active, block access!
+  return !account.subscription || account.subscription.active === false;
+});
+
+const shouldShowUpgradePage = computed(() => {
+  // Skip upgrade page in Billing, Inbox, and Agent pages
+  if (props.bypassUpgradePage) return false;
+  if (hasNoPlan.value) return true;
+  if (isSubscriptionInactive.value) return true;
+
+  if (!isOnChatwootCloud.value) return false;
+  if (isTrialAccount.value) return false;
+  return isLimitExceeded.value;
+});
+
 const limitExceededMessage = computed(() => {
+  if (hasNoPlan.value) {
+    return t('GENERAL_SETTINGS.LIMIT_MESSAGES.NO_PLAN');
+  }
+
+  if (isSubscriptionInactive.value) {
+    return t('GENERAL_SETTINGS.LIMIT_MESSAGES.SUBSCRIPTION_INACTIVE');
+  }
+
   const account = currentAccount.value;
   if (!account?.limits) return '';
 
@@ -68,29 +118,6 @@ const limitExceededMessage = computed(() => {
   return message;
 });
 
-const isLimitExceeded = computed(() => {
-  const account = currentAccount.value;
-  if (!account?.limits) return false;
-
-  const {
-    conversation,
-    non_web_inboxes: nonWebInboxes,
-    agents,
-  } = account.limits;
-
-  return (
-    testLimit(conversation) || testLimit(nonWebInboxes) || testLimit(agents)
-  );
-});
-
-const shouldShowUpgradePage = computed(() => {
-  // Skip upgrade page in Billing, Inbox, and Agent pages
-  if (props.bypassUpgradePage) return false;
-  if (!isOnChatwootCloud.value) return false;
-  if (isTrialAccount.value) return false;
-  return isLimitExceeded.value;
-});
-
 const fetchLimits = () => {
   store.dispatch('accounts/limits');
 };
@@ -101,6 +128,28 @@ const routeToBilling = () => {
     params: { accountId: accountId.value },
   });
 };
+
+// When an admin has no plan (or an inactive subscription), send them straight
+// to billing to pick a plan instead of showing a blocked dashboard. Gated on
+// Chatwoot Cloud since the billing page bounces back to home off-cloud.
+const shouldRedirectToBilling = computed(() => {
+  if (props.bypassUpgradePage) return false;
+  if (!isAdmin.value) return false;
+  if (!isOnChatwootCloud.value) return false;
+  return hasNoPlan.value || isSubscriptionInactive.value;
+});
+
+watch(
+  shouldRedirectToBilling,
+  value => {
+    if (!value) return;
+    router.replace({
+      name: 'billing_settings_index',
+      params: { accountId: accountId.value },
+    });
+  },
+  { immediate: true }
+);
 
 onMounted(() => {
   if (isEnterprise) {

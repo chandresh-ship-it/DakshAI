@@ -5,7 +5,6 @@ import { useMapGetter, useStore } from 'dashboard/composables/store.js';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useCaptain } from 'dashboard/composables/useCaptain';
 import { format } from 'date-fns';
-import sessionStorage from 'shared/helpers/sessionStorage';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 
@@ -33,10 +32,6 @@ const {
 const uiFlags = useMapGetter('accounts/getUIFlags');
 const store = useStore();
 
-const BILLING_REFRESH_ATTEMPTED = 'billing_refresh_attempted';
-
-// State for handling refresh attempts and loading
-const isWaitingForBilling = ref(false);
 const purchaseCreditsModalRef = ref(null);
 
 // Reseller & Client Billing States
@@ -217,9 +212,6 @@ const handleBypassPlan = async (planName) => {
 };
 
 const fetchAccountDetails = async () => {
-  if (!isReseller.value && !hasResellerParent.value && !hasABillingPlan.value) {
-    await store.dispatch('accounts/subscription');
-  }
   fetchLimits();
 };
 
@@ -235,22 +227,7 @@ const handleBillingPageLogic = async () => {
     await fetchMarketplaceData();
   }
 
-  const billingRefreshAttempted = sessionStorage.get(BILLING_REFRESH_ATTEMPTED);
   await fetchAccountDetails();
-
-  if (!isReseller.value && !hasResellerParent.value && !hasABillingPlan.value) {
-    if (!billingRefreshAttempted) {
-      isWaitingForBilling.value = true;
-      sessionStorage.set(BILLING_REFRESH_ATTEMPTED, true);
-      setTimeout(() => {
-        window.location.reload();
-      }, 5000);
-    } else {
-      sessionStorage.remove(BILLING_REFRESH_ATTEMPTED);
-    }
-  } else {
-    sessionStorage.remove(BILLING_REFRESH_ATTEMPTED);
-  }
 };
 
 const onClickBillingPortal = () => {
@@ -276,12 +253,8 @@ onMounted(handleBillingPageLogic);
 
 <template>
   <SettingsLayout
-    :is-loading="uiFlags.isFetchingItem || isWaitingForBilling || isFetchingMarketplace"
-    :loading-message="
-      isWaitingForBilling
-        ? $t('BILLING_SETTINGS.NO_BILLING_USER')
-        : $t('ATTRIBUTES_MGMT.LOADING')
-    "
+    :is-loading="uiFlags.isFetchingItem || isFetchingMarketplace"
+    :loading-message="$t('ATTRIBUTES_MGMT.LOADING')"
   >
     <template #header>
       <BaseSettingsHeader
@@ -296,14 +269,26 @@ onMounted(handleBillingPageLogic);
       <section class="grid gap-4">
         <BillingCard
           v-if="!planName"
-          title="Select a Plan"
-          description="Choose a plan to instantly upgrade your account (Bypassing Stripe for testing)."
+          :title="$t('BILLING_SETTINGS.SELECT_PLAN.TITLE')"
+          :description="$t('BILLING_SETTINGS.SELECT_PLAN.DESCRIPTION')"
         >
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
-            <div v-for="plan in ['Hobby', 'Standard', 'Business', 'Enterprise']" :key="plan" class="border border-n-weak rounded-xl p-6 bg-n-background shadow-sm flex flex-col justify-between gap-4">
-              <div class="text-xl font-bold text-center text-slate-800">{{ plan }} Plan</div>
-              <ButtonV4 solid blue class="w-full justify-center" @click="handleBypassPlan(plan)" :is-loading="isBypassingPlan">
-                Select Plan
+            <div
+              v-for="plan in ['Hobby', 'Standard', 'Business', 'Enterprise']"
+              :key="plan"
+              class="border border-n-weak rounded-xl p-6 bg-n-background shadow-sm flex flex-col justify-between gap-4"
+            >
+              <div class="text-xl font-bold text-center text-n-slate-12">
+                {{ $t('BILLING_SETTINGS.SELECT_PLAN.PLAN_LABEL', { plan }) }}
+              </div>
+              <ButtonV4
+                solid
+                blue
+                class="w-full justify-center"
+                :is-loading="isBypassingPlan"
+                @click="handleBypassPlan(plan)"
+              >
+                {{ $t('BILLING_SETTINGS.SELECT_PLAN.SELECT_BUTTON') }}
               </ButtonV4>
             </div>
           </div>

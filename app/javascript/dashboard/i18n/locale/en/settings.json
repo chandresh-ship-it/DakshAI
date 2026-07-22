@@ -443,6 +443,12 @@
       "SEAT_COUNT": "Number of seats",
       "RENEWS_ON": "Renews on"
     },
+    "SELECT_PLAN": {
+      "TITLE": "Select a plan to continue",
+      "DESCRIPTION": "You do not have an active plan yet. Please choose a plan below to unlock your dashboard and start using all features.",
+      "PLAN_LABEL": "{plan} Plan",
+      "SELECT_BUTTON": "Select plan"
+    },
     "VIEW_PRICING": "View Pricing",
     "MANAGE_SUBSCRIPTION": {
       "TITLE": "Manage your subscription",

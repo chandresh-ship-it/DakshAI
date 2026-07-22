@@ -48,8 +48,15 @@ class EnterpriseContract < ApplicationRecord
   scope :active, ->(date = Time.zone.today) { where('contract_start_date <= ? AND contract_end_date >= ?', date, date) }
 
   before_validation :set_defaults
+  after_commit :reconcile_account_features, on: %i[create update]
 
   private
+
+  def reconcile_account_features
+    return unless defined?(Enterprise::Billing::ReconcilePlanFeaturesService)
+
+    Enterprise::Billing::ReconcilePlanFeaturesService.new(account: account).perform
+  end
 
   def set_defaults
     self.currency ||= 'USD'

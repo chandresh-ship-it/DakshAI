@@ -76,6 +76,8 @@ class Enterprise::Billing::HandleStripeEventService
         'subscription_ends_on' => Time.zone.at(subscription['current_period_end'])
       )
     )
+
+    Enterprise::Billing::ReconcilePlanFeaturesService.new(account: client_account).perform
   end
 
   def process_platform_subscription_updated

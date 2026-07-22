@@ -12,27 +12,26 @@ module CheckAccountLimits
     limit_key = case controller_name
                 when 'agents', 'account_users'
                   'agents'
-                when 'inboxes'
-                  'inboxes'
                 when 'contacts'
                   'contacts'
                 when 'conversations'
                   'conversations'
                 when 'automation_rules'
                   'automations'
-                else
-                  nil
                 end
 
     return unless limit_key
 
+    account_context = Current.account || @account
+    return unless account_context
+
     # Retrieve the configured limit for this account (nil means unlimited)
-    limit_value = Current.account.limits[limit_key]
+    limit_value = account_context.limits[limit_key]
     return if limit_value.blank?
 
     # Count the current usage of the resource
-    current_count = current_resource_count_for_limit(limit_key)
-    
+    current_count = current_resource_count_for_limit(limit_key, account_context)
+
     # If this is a bulk create action, add the incoming count
     incoming_count = 1
     incoming_count = params[:emails].length if action_name == 'bulk_create' && params[:emails].is_a?(Array)
@@ -42,18 +41,16 @@ module CheckAccountLimits
     end
   end
 
-  def current_resource_count_for_limit(limit_key)
+  def current_resource_count_for_limit(limit_key, account_context)
     case limit_key
     when 'agents'
-      Current.account.agents.count
-    when 'inboxes'
-      Current.account.inboxes.count
+      account_context.agents.count
     when 'contacts'
-      Current.account.contacts.count
+      account_context.contacts.count
     when 'conversations'
-      Current.account.conversations.count
+      account_context.conversations.count
     when 'automations'
-      Current.account.automation_rules.count
+      account_context.automation_rules.count
     else
       0
     end

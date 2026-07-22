@@ -15,7 +15,9 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   def limits
     limits = default_limits
 
-    if default_plan?(@account)
+    # Only fall back to Chatwoot's hardcoded free-tier caps when the custom plan
+    # matrix has not written any limits for this account yet.
+    if default_plan?(@account) && @account.limits.blank?
       limits.merge!(
         'conversation' => {
           'allowed' => 500,

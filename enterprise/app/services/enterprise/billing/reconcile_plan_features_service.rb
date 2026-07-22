@@ -6,21 +6,22 @@ class Enterprise::Billing::ReconcilePlanFeaturesService
     plan_key = plan_name.downcase
 
     # Fetch baseline features and limits from DB templates
-    limits_and_features = PlanFeatureLimit.where(plan_key: plan_key)
+    plan_limits = PlanFeatureLimit.where(plan_key: plan_key).to_a
+
+    # Unknown plans (e.g. the reseller 'Marketplace Plan') have no matrix rows.
+    # Skip reconciliation so we don't wipe an account's features and limits.
+    return if plan_limits.empty?
 
     enabled_features = []
-    disabled_features = []
     limits_hash = {}
 
-    limits_and_features.each do |pfl|
-      if %w[seats contacts conversations t3_subaccounts automations ai_credits].include?(pfl.feature_key)
+    plan_limits.each do |pfl|
+      if PlanFeatureLimit::RESOURCE_LIMIT_KEYS.include?(pfl.feature_key)
         # It's a resource limit
         limits_hash[pfl.feature_key] = pfl.limit_value
       elsif pfl.enabled
         # It's a boolean feature flag
         enabled_features << pfl.feature_key
-      else
-        disabled_features << pfl.feature_key
       end
     end
 
@@ -39,8 +40,7 @@ class Enterprise::Billing::ReconcilePlanFeaturesService
     end
 
     # Disable all known premium features first to clean slate
-    all_known_features = PlanFeatureLimit.where(plan_key: 'enterprise').pluck(:feature_key) - %w[seats contacts conversations t3_subaccounts
-                                                                                                 automations ai_credits]
+    all_known_features = PlanFeatureLimit.feature_keys_for('enterprise')
     account.disable_features(*all_known_features)
 
     # Enable features for current plan
