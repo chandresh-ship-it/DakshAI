@@ -13,24 +13,24 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   end
 
   def limits
-    limits = if default_plan?(@account)
-               {
-                 'conversation' => {
-                   'allowed' => 500,
-                   'consumed' => conversations_this_month(@account)
-                 },
-                 'non_web_inboxes' => {
-                   'allowed' => 0,
-                   'consumed' => non_web_inboxes(@account)
-                 },
-                 'agents' => {
-                   'allowed' => 2,
-                   'consumed' => agents(@account)
-                 }
-               }
-             else
-               default_limits
-             end
+    limits = default_limits
+
+    if default_plan?(@account)
+      limits.merge!(
+        'conversation' => {
+          'allowed' => 500,
+          'consumed' => conversations_this_month(@account)
+        },
+        'non_web_inboxes' => {
+          'allowed' => 0,
+          'consumed' => non_web_inboxes(@account)
+        },
+        'agents' => {
+          'allowed' => 2,
+          'consumed' => agents(@account)
+        }
+      )
+    end
 
     # include id in response to ensure that the store can be updated on the frontend
     render json: { id: @account.id, limits: limits }, status: :ok
@@ -73,7 +73,8 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
 
   def bypass_plan
     plan_name = params[:plan_name]
-    return render json: { error: 'Invalid plan name' }, status: :unprocessable_entity unless %w[Hobby Standard Business Enterprise].include?(plan_name)
+    return render json: { error: 'Invalid plan name' }, status: :unprocessable_entity unless %w[Hobby Standard Business
+                                                                                                Enterprise].include?(plan_name)
 
     @account.update_column(:custom_attributes, @account.custom_attributes.merge('plan_name' => plan_name))
     @account.reload
@@ -92,7 +93,7 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
 
     Enterprise::Billing::ReconcilePlanFeaturesService.new(account: @account).perform
 
-    render json: { 
+    render json: {
       message: "Plan updated to #{plan_name}",
       limits: @account.limits,
       custom_attributes: @account.custom_attributes
