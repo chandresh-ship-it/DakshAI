@@ -17,6 +17,11 @@ unless Rails.env.production?
   installation_config.save!
   GlobalConfig.clear_cache
 
+  # Pushes STRIPE_HOBBY_PRICE_ID / STRIPE_STANDARD_PRICE_ID / STRIPE_BUSINESS_PRICE_ID
+  # (if set in .env) into CHATWOOT_CLOUD_PLANS, so plan checkout works out of the box
+  # after a fresh db:seed without manually re-entering them in Super Admin.
+  Seeders::StripePlanPriceSeeder.new.perform!
+
   account = Account.create!(
     name: 'Acme Inc'
   )

@@ -1,4 +1,15 @@
 class SuperAdmin::EnterpriseContractsController < SuperAdmin::ApplicationController
+  # Lets "Set Plan" links from the Enterprise Inquiries page pre-fill the account
+  # and sensible contract defaults, e.g. /super_admin/enterprise_contracts/new?account_id=61
+  def new_resource
+    resource_class.new(
+      account_id: params[:account_id],
+      billing_interval: 'monthly',
+      contract_start_date: Time.zone.today,
+      contract_end_date: 1.year.from_now.to_date
+    )
+  end
+
   def resource_params
     params = super
     if params[:negotiated_limit_overrides].is_a?(ActionController::Parameters) || params[:negotiated_limit_overrides].is_a?(Hash)

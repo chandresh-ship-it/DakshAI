@@ -1,4 +1,4 @@
-require "administrate/field/base"
+require 'administrate/field/base'
 
 class EnterpriseLimitOverridesField < Administrate::Field::Base
   AVAILABLE_LIMITS = {
@@ -8,7 +8,8 @@ class EnterpriseLimitOverridesField < Administrate::Field::Base
     't3_subaccounts' => 'T3 reseller sub-accounts',
     'automations' => 'Automations/workflows',
     'captain_documents' => 'Captain AI documents',
-    'captain_responses' => 'Captain AI credits (responses)/month'
+    'captain_responses' => 'Captain AI credits (responses)/month',
+    'data_retention_months' => 'Data retention (months)'
   }.freeze
 
   def self.permitted_attribute(attribute, _options = nil)

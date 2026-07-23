@@ -2,7 +2,6 @@ class Enterprise::Billing::HandleStripeEventService
   CLOUD_PLANS_CONFIG = 'CHATWOOT_CLOUD_PLANS'.freeze
   CAPTAIN_CLOUD_PLAN_LIMITS = 'CAPTAIN_CLOUD_PLAN_LIMITS'.freeze
 
-
   def perform(event:)
     @event = event
 
@@ -19,7 +18,7 @@ class Enterprise::Billing::HandleStripeEventService
       )
 
       case @event.type
-      when 'customer.subscription.updated'
+      when 'customer.subscription.created', 'customer.subscription.updated'
         process_subscription_updated
       when 'customer.subscription.deleted'
         process_subscription_deleted
@@ -81,7 +80,7 @@ class Enterprise::Billing::HandleStripeEventService
   end
 
   def process_platform_subscription_updated
-    plan = find_plan(subscription['plan']['product']) if subscription['plan'].present?
+    plan = resolve_plan
     return if plan.blank? || account.blank?
 
     previous_usage = capture_previous_usage
@@ -183,12 +182,12 @@ class Enterprise::Billing::HandleStripeEventService
     return if transfers.data.present?
 
     Stripe::Transfer.create({
-      amount: (agency_price * 100).to_i,
-      currency: currency.downcase,
-      destination: connected_account.stripe_account_id,
-      source_transaction: invoice.charge,
-      description: "Transfer to reseller for client invoice #{invoice.id}"
-    })
+                              amount: (agency_price * 100).to_i,
+                              currency: currency.downcase,
+                              destination: connected_account.stripe_account_id,
+                              source_transaction: invoice.charge,
+                              description: "Transfer to reseller for client invoice #{invoice.id}"
+                            })
   rescue Stripe::StripeError => e
     Rails.logger.error("Failed to transfer funds to reseller for invoice #{invoice.id}: #{e.message}")
   end
@@ -281,8 +280,20 @@ class Enterprise::Billing::HandleStripeEventService
     subscription.metadata['relationship_type'] == 'marketplace'
   end
 
-  def find_plan(plan_id)
+  # Checkout sessions created by PlanCheckoutService/EnterprisePaymentLinkService always
+  # stamp `plan_name` on the subscription metadata, so we trust that first - it works even
+  # for ad-hoc (price_data) Enterprise sessions that have no pre-configured Price/Product ID.
+  # Falls back to matching CHATWOOT_CLOUD_PLANS by product/price ID for the older
+  # CreateStripeCustomerService auto-subscribe flow, which sets no metadata.
+  def resolve_plan
+    plan_name = subscription.metadata['plan_name']
+    return { 'name' => plan_name } if plan_name.present?
+
+    find_plan(subscription['plan']['product'], subscription['plan']['id']) if subscription['plan'].present?
+  end
+
+  def find_plan(product_id, price_id)
     cloud_plans = InstallationConfig.find_by(name: CLOUD_PLANS_CONFIG)&.value || []
-    cloud_plans.find { |config| config['product_id'].include?(plan_id) }
+    cloud_plans.find { |config| config['product_id'].include?(product_id) || config['price_ids'].include?(price_id) }
   end
 end

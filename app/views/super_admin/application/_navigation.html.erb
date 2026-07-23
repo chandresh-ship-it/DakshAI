@@ -35,7 +35,7 @@ as defined by the routes in the `admin/` namespace
     <ul class="my-4">
       <%= render partial: "nav_item", locals: { icon: 'icon-grid-line', url: super_admin_root_url, label: 'Dashboard' } %>
       <% Administrate::Namespace.new(namespace).resources.each do |resource| %>
-        <% next if ["account_users", "access_tokens", "installation_configs", "dashboard", "devise/sessions", "app_configs", "instance_statuses", "settings", "push_diagnostics", "account_hierarchy", "plan_management"].include?  resource.resource %>
+        <% next if ["account_users", "access_tokens", "installation_configs", "dashboard", "devise/sessions", "app_configs", "instance_statuses", "settings", "push_diagnostics", "account_hierarchy", "plan_management", "enterprise_inquiries"].include?  resource.resource %>
         <% next if resource.resource == "platform_banners" && !ChatwootApp.chatwoot_cloud? %>
         <%= render partial: "nav_item", locals: {
             icon: sidebar_icons[resource.resource.to_sym],
@@ -47,6 +47,7 @@ as defined by the routes in the `admin/` namespace
       <% end %>
       <%= render partial: "nav_item", locals: { icon: 'icon-building-4-line', url: super_admin_account_hierarchy_url, label: 'Account Hierarchy' } %>
       <%= render partial: "nav_item", locals: { icon: 'icon-settings-line', url: super_admin_plan_management_url, label: 'Plan Management' } %>
+      <%= render partial: "nav_item", locals: { icon: 'icon-message-line', url: super_admin_enterprise_inquiries_url, label: 'Enterprise Inquiries' } %>
       <%= render 'settings_menu', open: settings_open? %>
     </ul>
   </div>

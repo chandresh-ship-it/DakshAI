@@ -161,7 +161,8 @@ module Enterprise::Account::PlanUsageAndLimits # rubocop:disable Metrics/ModuleL
         'conversations' => { 'type': 'number' },
         't3_subaccounts' => { 'type': 'number' },
         'automations' => { 'type': 'number' },
-        'ai_credits' => { 'type': 'number' }
+        'ai_credits' => { 'type': 'number' },
+        'data_retention_months' => { 'type': 'number' }
       },
       'required' => [],
       'additionalProperties' => false

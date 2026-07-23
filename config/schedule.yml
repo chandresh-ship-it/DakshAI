@@ -74,3 +74,11 @@ remove_orphan_conversations_job:
   cron: '0 */12 * * *'
   class: 'Internal::RemoveOrphanConversationsJob'
   queue: housekeeping
+
+# executed daily at 0300 UTC
+# permanently purges conversations/messages/attachments past the account's
+# plan data retention window
+purge_expired_conversations_job:
+  cron: '0 3 * * *'
+  class: 'Internal::PurgeExpiredConversationsSchedulerJob'
+  queue: housekeeping

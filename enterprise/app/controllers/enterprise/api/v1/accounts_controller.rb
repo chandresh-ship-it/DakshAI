@@ -73,6 +73,26 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     render_could_not_create_error(e.message)
   end
 
+  def plan_checkout
+    return render json: { error: 'Invalid plan name' }, status: :unprocessable_entity unless %w[Hobby Standard
+                                                                                                Business].include?(params[:plan_name])
+
+    result = Enterprise::Billing::PlanCheckoutService.new(
+      account: @account,
+      plan_name: params[:plan_name],
+      success_url: params[:success_url].presence || frontend_billing_url,
+      cancel_url: params[:cancel_url].presence || frontend_billing_url
+    ).perform
+
+    render json: result
+  rescue Enterprise::Billing::PlanCheckoutService::Error, Stripe::StripeError => e
+    Rails.logger.error("[plan_checkout] account=#{@account.id} plan=#{params[:plan_name]} #{e.class}: #{e.message}")
+    render_could_not_create_error(e.message)
+  rescue StandardError => e
+    Rails.logger.error("[plan_checkout] account=#{@account.id} plan=#{params[:plan_name]} UNEXPECTED #{e.class}: #{e.message}\n#{e.backtrace&.first(10)&.join("\n")}")
+    render_could_not_create_error("Checkout failed: #{e.message}")
+  end
+
   def bypass_plan
     plan_name = params[:plan_name]
     return render json: { error: 'Invalid plan name' }, status: :unprocessable_entity unless %w[Hobby Standard Business
@@ -102,7 +122,31 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     }, status: :ok
   end
 
+  def enterprise_inquiry
+    inquiry = enterprise_inquiry_params
+
+    @account.update_column(
+      :custom_attributes,
+      @account.custom_attributes.merge(
+        'enterprise_inquiry' => inquiry.merge(
+          'requested_at' => Time.current.iso8601,
+          'requested_by' => current_user.email
+        )
+      )
+    )
+
+    AdministratorNotifications::EnterpriseInquiryMailer.with(account: @account)
+                                                       .submitted(account: @account, user: current_user, inquiry: inquiry)
+                                                       .deliver_later
+
+    render json: { message: 'Thanks! Our team will reach out to discuss your Enterprise plan shortly.' }, status: :ok
+  end
+
   private
+
+  def enterprise_inquiry_params
+    params.permit(:company_size, :team_size, :message, desired_features: []).to_h
+  end
 
   def check_cloud_env
     render json: { error: 'Not found' }, status: :not_found unless ChatwootApp.chatwoot_cloud?
@@ -134,7 +178,9 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
         'allowed' => plan_limit('t3_subaccounts'),
         'consumed' => @account.sub_accounts.count
       },
-      'captain' => @account.usage_limits[:captain]
+      'captain' => @account.usage_limits[:captain],
+      # nil means unlimited retention (Enterprise or no plan matrix entry for this account's plan).
+      'data_retention_months' => @account.limits['data_retention_months']
     }
   end
 
@@ -152,6 +198,10 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
 
   def stripe_customer_id
     @account.custom_attributes['stripe_customer_id']
+  end
+
+  def frontend_billing_url
+    "#{ENV.fetch('FRONTEND_URL', request.base_url)}/app/accounts/#{@account.id}/settings/billing"
   end
 
   def mark_for_deletion

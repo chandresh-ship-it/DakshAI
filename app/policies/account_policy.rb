@@ -38,4 +38,12 @@ class AccountPolicy < ApplicationPolicy
   def bypass_plan?
     @account_user.administrator?
   end
+
+  def plan_checkout?
+    @account_user.administrator?
+  end
+
+  def enterprise_inquiry?
+    @account_user.administrator?
+  end
 end

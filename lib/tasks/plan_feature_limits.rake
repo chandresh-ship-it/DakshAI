@@ -30,4 +30,12 @@ namespace :plan_feature_limits do
 
     puts "Reconciled #{updated} account(s). Skipped #{skipped} (no plan / unknown plan_key). Failed #{failed}."
   end
+
+  desc 'Push STRIPE_HOBBY_PRICE_ID / STRIPE_STANDARD_PRICE_ID / STRIPE_BUSINESS_PRICE_ID from .env into CHATWOOT_CLOUD_PLANS'
+  task seed_stripe_prices: :environment do
+    Seeders::StripePlanPriceSeeder.new.perform!
+
+    plans = InstallationConfig.find_by(name: 'CHATWOOT_CLOUD_PLANS')&.value || []
+    plans.each { |plan| puts "#{plan['name']}: price_ids=#{plan['price_ids']}" }
+  end
 end

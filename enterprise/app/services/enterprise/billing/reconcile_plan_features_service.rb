@@ -33,9 +33,7 @@ class Enterprise::Billing::ReconcilePlanFeaturesService
           limits_hash[key] = value
         end
 
-        if active_contract.negotiated_features.present?
-          enabled_features = active_contract.negotiated_features
-        end
+        enabled_features = active_contract.negotiated_features if active_contract.negotiated_features.present?
       end
     end
 
@@ -55,7 +53,8 @@ class Enterprise::Billing::ReconcilePlanFeaturesService
       't3_subaccounts' => limits_hash['t3_subaccounts'],
       'automations' => limits_hash['automations'],
       'captain_documents' => limits_hash['captain_documents'],
-      'captain_responses' => limits_hash['captain_responses']
+      'captain_responses' => limits_hash['captain_responses'],
+      'data_retention_months' => limits_hash['data_retention_months']
     }.compact
 
     account.save!

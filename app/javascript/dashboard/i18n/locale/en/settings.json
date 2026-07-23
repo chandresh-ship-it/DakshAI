@@ -441,13 +441,50 @@
       "TITLE": "Current Plan",
       "PLAN_NOTE": "You are currently subscribed to the **{plan}** plan with **{quantity}** licenses",
       "SEAT_COUNT": "Number of seats",
-      "RENEWS_ON": "Renews on"
+      "RENEWS_ON": "Renews on",
+      "CHANGE_PLAN_BUTTON": "Change plan",
+      "DATA_RETENTION_LABEL": "Data retention",
+      "RETENTION_MONTHS": "{months} month(s)",
+      "RETENTION_UNLIMITED": "Unlimited"
     },
     "SELECT_PLAN": {
       "TITLE": "Select a plan to continue",
       "DESCRIPTION": "You do not have an active plan yet. Please choose a plan below to unlock your dashboard and start using all features.",
       "PLAN_LABEL": "{plan} Plan",
-      "SELECT_BUTTON": "Select plan"
+      "SELECT_BUTTON": "Select plan",
+      "CONTACT_SALES_BUTTON": "Contact sales",
+      "CANCEL_BUTTON": "Cancel"
+    },
+    "DOWNGRADE_WARNING": {
+      "TITLE": "Downgrade to {plan}?",
+      "DESCRIPTION_WITH_LIMIT": "This plan only keeps conversation data for {months} month(s). Any conversations, messages, and attachments older than that will be permanently deleted and cannot be recovered.",
+      "DESCRIPTION_UNLIMITED": "Downgrading will change your data retention window. Older conversations, messages, and attachments may be permanently deleted and cannot be recovered.",
+      "CONFIRM": "Yes, downgrade",
+      "CANCEL": "Keep current plan"
+    },
+    "ENTERPRISE_INQUIRY": {
+      "TITLE": "Tell us about your business",
+      "DESCRIPTION": "Enterprise plans are tailored to your needs. Share a few details and our team will reach out with a custom quote.",
+      "COMPANY_SIZE": {
+        "LABEL": "Company size",
+        "PLACEHOLDER": "Select company size"
+      },
+      "TEAM_SIZE": {
+        "LABEL": "Seats needed",
+        "PLACEHOLDER": "e.g. 50"
+      },
+      "FEATURES": {
+        "LABEL": "Features you're interested in",
+        "PLACEHOLDER": "Select features"
+      },
+      "MESSAGE": {
+        "LABEL": "Anything else we should know?",
+        "PLACEHOLDER": "Tell us more about your requirements"
+      },
+      "CANCEL": "Cancel",
+      "SUBMIT": "Submit request",
+      "SUCCESS": "Thanks! Our team will reach out to discuss your Enterprise plan shortly.",
+      "ERROR": "Failed to submit your request. Please try again."
     },
     "VIEW_PRICING": "View Pricing",
     "MANAGE_SUBSCRIPTION": {
@@ -1050,4 +1087,3 @@
     "SAVE_ERROR": "Failed to save branding settings. Please try again."
   }
 }
-

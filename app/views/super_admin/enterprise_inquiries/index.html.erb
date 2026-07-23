@@ -1,0 +1,103 @@
+<% content_for(:title) do %>
+  Enterprise Inquiries
+<% end %>
+
+<header class="main-content__header" role="banner">
+  <h1 class="main-content__page-title">
+    <%= content_for(:title) %>
+  </h1>
+</header>
+
+<section class="main-content__body">
+  <% if notice.present? %>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+      <%= notice %>
+    </div>
+  <% end %>
+  <% if alert.present? %>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      <%= alert %>
+    </div>
+  <% end %>
+
+  <% if @accounts.empty? %>
+    <p class="text-slate-500">No Enterprise plan inquiries have been submitted yet.</p>
+  <% else %>
+    <div class="overflow-x-auto">
+      <table>
+        <thead>
+          <tr>
+            <th class="cell-label" scope="col">Account</th>
+            <th class="cell-label" scope="col">Requested by</th>
+            <th class="cell-label" scope="col">Company size</th>
+            <th class="cell-label" scope="col">Seats needed</th>
+            <th class="cell-label" scope="col">Features of interest</th>
+            <th class="cell-label" scope="col">Message</th>
+            <th class="cell-label" scope="col">Requested at</th>
+            <th class="cell-label" scope="col">Status</th>
+            <th class="cell-label" scope="col">Plan</th>
+            <th class="cell-label" scope="col">Payment link</th>
+            <th class="cell-label" scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @accounts.each do |account| %>
+            <% inquiry = account.custom_attributes['enterprise_inquiry'] || {} %>
+            <tr class="js-table-row">
+              <td class="cell-data font-medium text-slate-800">
+                <%= link_to "##{account.id} #{account.name}", [namespace, account] %>
+              </td>
+              <td class="cell-data"><%= inquiry['requested_by'] %></td>
+              <td class="cell-data"><%= inquiry['company_size'].presence || '—' %></td>
+              <td class="cell-data"><%= inquiry['team_size'].presence || '—' %></td>
+              <td class="cell-data"><%= Array(inquiry['desired_features']).join(', ').presence || '—' %></td>
+              <td class="cell-data max-w-xs whitespace-pre-wrap"><%= inquiry['message'].presence || '—' %></td>
+              <td class="cell-data">
+                <%= inquiry['requested_at'].present? ? Time.zone.parse(inquiry['requested_at']).strftime('%d %b %Y, %H:%M') : '—' %>
+              </td>
+              <td class="cell-data">
+                <% if inquiry['processed_at'].present? %>
+                  <span class="text-green-700">Processed</span>
+                  <div class="text-xs text-slate-400">
+                    by <%= inquiry['processed_by'] %> on <%= Time.zone.parse(inquiry['processed_at']).strftime('%d %b %Y') %>
+                  </div>
+                <% else %>
+                  <span class="text-amber-600 font-medium">Pending</span>
+                <% end %>
+              </td>
+              <td class="cell-data">
+                <% contract = account.enterprise_contract %>
+                <% if contract.present? %>
+                  <div><%= contract.currency %> <%= number_with_precision(contract.negotiated_price, precision: 2) %>/<%= contract.billing_interval == 'annual' ? 'yr' : 'mo' %></div>
+                  <%= link_to 'Edit plan', edit_super_admin_enterprise_contract_path(contract), class: 'text-xs' %>
+                <% else %>
+                  <span class="text-amber-600">Not configured</span><br>
+                  <%= link_to 'Set plan', new_super_admin_enterprise_contract_path(account_id: account.id), class: 'text-xs' %>
+                <% end %>
+              </td>
+              <td class="cell-data">
+                <% if inquiry['payment_link_sent_at'].present? %>
+                  <span class="text-green-700">Sent ($<%= inquiry['payment_link_amount'] %>/mo)</span>
+                  <div class="text-xs text-slate-400">
+                    by <%= inquiry['payment_link_sent_by'] %> on <%= Time.zone.parse(inquiry['payment_link_sent_at']).strftime('%d %b %Y') %>
+                  </div>
+                <% else %>
+                  <%= form_tag send_payment_link_super_admin_enterprise_inquiry_path(account), method: :post, class: 'flex items-center gap-1' do %>
+                    <span class="text-slate-500">$</span>
+                    <%= number_field_tag :monthly_price, contract&.negotiated_price, min: 1, step: 0.01, placeholder: 'e.g. 499', required: true, class: 'w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm' %>
+                    <%= submit_tag 'Send link', class: 'button' %>
+                  <% end %>
+                <% end %>
+              </td>
+              <td class="cell-data">
+                <% unless inquiry['processed_at'].present? %>
+                  <%= button_to 'Mark processed', mark_processed_super_admin_enterprise_inquiry_path(account), method: :post, class: 'button' %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>

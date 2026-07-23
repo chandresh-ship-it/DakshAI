@@ -557,7 +557,9 @@ Rails.application.routes.draw do
               get :limits
               post :toggle_deletion
               post :topup_checkout
+              post :plan_checkout
               post :bypass_plan
+              post :enterprise_inquiry
             end
 
             resource :connected_account, only: [:create], controller: :connected_accounts do
@@ -729,6 +731,10 @@ Rails.application.routes.draw do
         post :reset_cache, on: :member
       end
       resources :enterprise_contracts
+      resources :enterprise_inquiries, only: [:index], controller: :enterprise_inquiries do
+        post :mark_processed, on: :member
+        post :send_payment_link, on: :member
+      end
       resources :subscriptions, only: [:index, :show]
       resources :marketplace_plan_prices, only: [:index, :show]
       resource :plan_management, only: [:show, :update], controller: :plan_management

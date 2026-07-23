@@ -13,6 +13,8 @@ import BillingCard from './components/BillingCard.vue';
 import BillingHeader from './components/BillingHeader.vue';
 import DetailItem from './components/DetailItem.vue';
 import PurchaseCreditsModal from './components/PurchaseCreditsModal.vue';
+import EnterpriseInquiryModal from './components/EnterpriseInquiryModal.vue';
+import DowngradePlanWarningModal from './components/DowngradePlanWarningModal.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import ButtonV4 from 'next/button/Button.vue';
@@ -33,6 +35,20 @@ const uiFlags = useMapGetter('accounts/getUIFlags');
 const store = useStore();
 
 const purchaseCreditsModalRef = ref(null);
+const enterpriseInquiryModalRef = ref(null);
+const downgradeWarningModalRef = ref(null);
+const showPlanPicker = ref(false);
+
+// Order matters here - used to detect downgrades and to show the retention
+// window in the downgrade warning. Keep in sync with
+// lib/seeders/plan_feature_limit_seeder.rb RESOURCE_LIMITS['data_retention_months'].
+const PLAN_RANK = { Hobby: 0, Standard: 1, Business: 2, Enterprise: 3 };
+const PLAN_RETENTION_MONTHS = {
+  Hobby: 1,
+  Standard: 6,
+  Business: 12,
+  Enterprise: null,
+};
 
 // Reseller & Client Billing States
 const isReseller = computed(() => !!currentAccount.value.is_reseller);
@@ -41,7 +57,7 @@ const hasResellerParent = computed(() => !!currentAccount.value.parent_id);
 const isFetchingMarketplace = ref(false);
 const marketplaceData = ref({
   connected_account: null,
-  prices: []
+  prices: [],
 });
 
 const agencyPriceInput = ref(0);
@@ -63,7 +79,9 @@ const totalClientPrice = computed(() => {
 });
 
 const activePlanPrice = computed(() => {
-  return marketplaceData.value.prices?.find(p => p.currency === 'usd' && p.active);
+  return marketplaceData.value.prices?.find(
+    p => p.currency === 'usd' && p.active
+  );
 });
 
 const customAttributes = computed(() => {
@@ -131,13 +149,24 @@ const t3SubaccountLimits = computed(() => {
   return { consumed: limits.consumed, totalCount: limits.allowed };
 });
 
+const dataRetentionLabel = computed(() => {
+  const months = accountLimits.value?.data_retention_months;
+  return months
+    ? t('BILLING_SETTINGS.CURRENT_PLAN.RETENTION_MONTHS', { months })
+    : t('BILLING_SETTINGS.CURRENT_PLAN.RETENTION_UNLIMITED');
+});
+
 const fetchMarketplaceData = async () => {
   if (isReseller.value || hasResellerParent.value) {
     isFetchingMarketplace.value = true;
     try {
-      const response = await window.axios.get(`/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_pricing`);
+      const response = await window.axios.get(
+        `/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_pricing`
+      );
       marketplaceData.value = response.data;
-      const usdPrice = response.data.prices?.find(p => p.currency === 'usd' && p.active);
+      const usdPrice = response.data.prices?.find(
+        p => p.currency === 'usd' && p.active
+      );
       if (usdPrice) {
         agencyPriceInput.value = usdPrice.agency_price;
       }
@@ -151,11 +180,14 @@ const fetchMarketplaceData = async () => {
 
 const handleConnectStripe = async () => {
   try {
-    const response = await window.axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/connected_account`, {
-      country: 'US',
-      refresh_url: window.location.href,
-      return_url: window.location.href
-    });
+    const response = await window.axios.post(
+      `/enterprise/api/v1/accounts/${currentAccount.value.id}/connected_account`,
+      {
+        country: 'US',
+        refresh_url: window.location.href,
+        return_url: window.location.href,
+      }
+    );
     if (response.data.onboarding_url) {
       window.location.href = response.data.onboarding_url;
     }
@@ -166,12 +198,15 @@ const handleConnectStripe = async () => {
 
 const handleSavePricing = async () => {
   try {
-    await window.axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_pricing`, {
-      marketplace_plan_price: {
-        currency: selectedCurrency.value,
-        agency_price: agencyPriceInput.value
+    await window.axios.post(
+      `/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_pricing`,
+      {
+        marketplace_plan_price: {
+          currency: selectedCurrency.value,
+          agency_price: agencyPriceInput.value,
+        },
       }
-    });
+    );
     useAlert(t('BILLING_SETTINGS.RESELLER.SAVE_SUCCESS'));
     fetchMarketplaceData();
   } catch (error) {
@@ -181,11 +216,14 @@ const handleSavePricing = async () => {
 
 const handleSubscribe = async () => {
   try {
-    const response = await window.axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_checkout`, {
-      currency: 'usd',
-      success_url: window.location.href,
-      cancel_url: window.location.href
-    });
+    const response = await window.axios.post(
+      `/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_checkout`,
+      {
+        currency: 'usd',
+        success_url: window.location.href,
+        cancel_url: window.location.href,
+      }
+    );
     if (response.data.checkout_url) {
       window.location.href = response.data.checkout_url;
     }
@@ -194,21 +232,8 @@ const handleSubscribe = async () => {
   }
 };
 
-const isBypassingPlan = ref(false);
-const handleBypassPlan = async (planName) => {
-  isBypassingPlan.value = true;
-  try {
-    const response = await window.axios.post(`/enterprise/api/v1/accounts/${currentAccount.value.id}/bypass_plan`, {
-      plan_name: planName
-    });
-    useAlert(`Successfully switched to ${planName} plan!`);
-    await fetchAccountDetails();
-    window.location.reload();
-  } catch (error) {
-    useAlert(error.response?.data?.error || 'Failed to switch plan');
-  } finally {
-    isBypassingPlan.value = false;
-  }
+const openEnterpriseInquiryModal = () => {
+  enterpriseInquiryModalRef.value?.open();
 };
 
 const fetchAccountDetails = async () => {
@@ -232,6 +257,51 @@ const handleBillingPageLogic = async () => {
 
 const onClickBillingPortal = () => {
   store.dispatch('accounts/checkout');
+};
+
+const isCheckingOut = ref(false);
+const startPlanCheckout = async selectedPlan => {
+  isCheckingOut.value = true;
+  try {
+    const response = await window.axios.post(
+      `/enterprise/api/v1/accounts/${currentAccount.value.id}/plan_checkout`,
+      {
+        plan_name: selectedPlan,
+        success_url: window.location.href,
+        cancel_url: window.location.href,
+      }
+    );
+    if (response.data.checkout_url) {
+      window.location.href = response.data.checkout_url;
+    }
+  } catch (error) {
+    useAlert(error.response?.data?.error || 'Failed to start checkout');
+    isCheckingOut.value = false;
+  }
+};
+
+const handlePlanSelection = selectedPlan => {
+  if (selectedPlan === 'Enterprise') {
+    openEnterpriseInquiryModal();
+    return;
+  }
+
+  const isDowngrade =
+    planName.value && PLAN_RANK[selectedPlan] < PLAN_RANK[planName.value];
+  if (isDowngrade) {
+    downgradeWarningModalRef.value?.open(
+      selectedPlan,
+      PLAN_RETENTION_MONTHS[selectedPlan]
+    );
+    return;
+  }
+
+  startPlanCheckout(selectedPlan);
+};
+
+const handleDowngradeConfirm = selectedPlan => {
+  downgradeWarningModalRef.value?.close();
+  startPlanCheckout(selectedPlan);
 };
 
 const onToggleChatWindow = () => {
@@ -258,8 +328,16 @@ onMounted(handleBillingPageLogic);
   >
     <template #header>
       <BaseSettingsHeader
-        :title="isReseller ? $t('BILLING_SETTINGS.RESELLER.TITLE') : $t('BILLING_SETTINGS.TITLE')"
-        :description="isReseller ? $t('BILLING_SETTINGS.RESELLER.DESCRIPTION') : $t('BILLING_SETTINGS.DESCRIPTION')"
+        :title="
+          isReseller
+            ? $t('BILLING_SETTINGS.RESELLER.TITLE')
+            : $t('BILLING_SETTINGS.TITLE')
+        "
+        :description="
+          isReseller
+            ? $t('BILLING_SETTINGS.RESELLER.DESCRIPTION')
+            : $t('BILLING_SETTINGS.DESCRIPTION')
+        "
         :link-text="isReseller ? '' : $t('BILLING_SETTINGS.VIEW_PRICING')"
         feature-name="billing"
       />
@@ -268,10 +346,15 @@ onMounted(handleBillingPageLogic);
       <!-- Direct Plan Selection Flow (Replaces Stripe Flows for Testing) -->
       <section class="grid gap-4">
         <BillingCard
-          v-if="!planName"
+          v-if="!planName || showPlanPicker"
           :title="$t('BILLING_SETTINGS.SELECT_PLAN.TITLE')"
           :description="$t('BILLING_SETTINGS.SELECT_PLAN.DESCRIPTION')"
         >
+          <template v-if="planName" #action>
+            <ButtonV4 sm flushed slate @click="showPlanPicker = false">
+              {{ $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_BUTTON') }}
+            </ButtonV4>
+          </template>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
             <div
               v-for="plan in ['Hobby', 'Standard', 'Business', 'Enterprise']"
@@ -285,10 +368,14 @@ onMounted(handleBillingPageLogic);
                 solid
                 blue
                 class="w-full justify-center"
-                :is-loading="isBypassingPlan"
-                @click="handleBypassPlan(plan)"
+                :is-loading="plan !== 'Enterprise' && isCheckingOut"
+                @click="handlePlanSelection(plan)"
               >
-                {{ $t('BILLING_SETTINGS.SELECT_PLAN.SELECT_BUTTON') }}
+                {{
+                  plan === 'Enterprise'
+                    ? $t('BILLING_SETTINGS.SELECT_PLAN.CONTACT_SALES_BUTTON')
+                    : $t('BILLING_SETTINGS.SELECT_PLAN.SELECT_BUTTON')
+                }}
               </ButtonV4>
             </div>
           </div>
@@ -298,10 +385,21 @@ onMounted(handleBillingPageLogic);
           v-if="planName"
           :title="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
         >
-          <div class="grid lg:grid-cols-4 sm:grid-cols-3 grid-cols-1 gap-2 divide-x divide-n-weak">
+          <template #action>
+            <ButtonV4 sm solid blue @click="showPlanPicker = true">
+              {{ $t('BILLING_SETTINGS.CURRENT_PLAN.CHANGE_PLAN_BUTTON') }}
+            </ButtonV4>
+          </template>
+          <div
+            class="grid lg:grid-cols-4 sm:grid-cols-3 grid-cols-1 gap-2 divide-x divide-n-weak"
+          >
             <DetailItem
               :label="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
               :value="planName"
+            />
+            <DetailItem
+              :label="$t('BILLING_SETTINGS.CURRENT_PLAN.DATA_RETENTION_LABEL')"
+              :value="dataRetentionLabel"
             />
           </div>
         </BillingCard>
@@ -421,6 +519,11 @@ onMounted(handleBillingPageLogic);
       <PurchaseCreditsModal
         ref="purchaseCreditsModalRef"
         @success="handleTopupSuccess"
+      />
+      <EnterpriseInquiryModal ref="enterpriseInquiryModalRef" />
+      <DowngradePlanWarningModal
+        ref="downgradeWarningModalRef"
+        @confirm="handleDowngradeConfirm"
       />
     </template>
   </SettingsLayout>

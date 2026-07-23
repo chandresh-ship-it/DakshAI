@@ -38,7 +38,8 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
       { 'name' => 't3_subaccounts', 'display_name' => 'T3 reseller sub-accounts' },
       { 'name' => 'automations', 'display_name' => 'Automations/workflows' },
       { 'name' => 'captain_documents', 'display_name' => 'Captain AI documents' },
-      { 'name' => 'captain_responses', 'display_name' => 'Captain AI credits (responses)/month' }
+      { 'name' => 'captain_responses', 'display_name' => 'Captain AI credits (responses)/month' },
+      { 'name' => 'data_retention_months', 'display_name' => 'Data retention (months)' }
     ]
   end
 
@@ -71,7 +72,8 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
 
       plan.merge(
         'price_per_agent' => plan_data[:price_per_agent].to_f,
-        'enabled' => plan_data[:enabled] == '1'
+        'enabled' => plan_data[:enabled] == '1',
+        'price_ids' => plan_data[:stripe_price_id].present? ? [plan_data[:stripe_price_id]] : []
       )
     end
 
@@ -131,13 +133,13 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
     plans_keys.each do |plan_key|
       limits_matrix = {
         'hobby' => { 'seats' => 1, 'contacts' => 500, 'conversations' => 200, 't3_subaccounts' => 0, 'automations' => 3,
-                     'captain_documents' => 0, 'captain_responses' => 0 },
+                     'captain_documents' => 0, 'captain_responses' => 0, 'data_retention_months' => 1 },
         'standard' => { 'seats' => 5, 'contacts' => 5000, 'conversations' => 2000, 't3_subaccounts' => 3, 'automations' => 15,
-                        'captain_documents' => 0, 'captain_responses' => 0 },
+                        'captain_documents' => 0, 'captain_responses' => 0, 'data_retention_months' => 6 },
         'business' => { 'seats' => 20, 'contacts' => 50_000, 'conversations' => 20_000, 't3_subaccounts' => 25, 'automations' => 100,
-                        'captain_documents' => 200, 'captain_responses' => 300 },
+                        'captain_documents' => 200, 'captain_responses' => 300, 'data_retention_months' => 12 },
         'enterprise' => { 'seats' => nil, 'contacts' => nil, 'conversations' => nil, 't3_subaccounts' => nil, 'automations' => nil,
-                          'captain_documents' => nil, 'captain_responses' => nil }
+                          'captain_documents' => nil, 'captain_responses' => nil, 'data_retention_months' => nil }
       }
 
       # Seed features

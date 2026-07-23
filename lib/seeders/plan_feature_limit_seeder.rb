@@ -14,18 +14,20 @@ class Seeders::PlanFeatureLimitSeeder
 
   # Numeric resource quotas per plan, keyed by PlanFeatureLimit::RESOURCE_LIMIT_KEYS.
   # captain_documents / captain_responses are the Captain AI credit allowance for the plan.
+  # data_retention_months: how long conversations/messages/attachments are kept before
+  # Internal::PurgeExpiredConversationsJob permanently deletes them (see that job for enforcement).
   RESOURCE_LIMITS = {
     'hobby' => {
       'seats' => 1, 'contacts' => 500, 'conversations' => 200, 't3_subaccounts' => 0, 'automations' => 3,
-      'captain_documents' => 0, 'captain_responses' => 0
+      'captain_documents' => 0, 'captain_responses' => 0, 'data_retention_months' => 1
     },
     'standard' => {
       'seats' => 5, 'contacts' => 5000, 'conversations' => 2000, 't3_subaccounts' => 3, 'automations' => 15,
-      'captain_documents' => 0, 'captain_responses' => 0
+      'captain_documents' => 0, 'captain_responses' => 0, 'data_retention_months' => 6
     },
     'business' => {
       'seats' => 20, 'contacts' => 50_000, 'conversations' => 20_000, 't3_subaccounts' => 25, 'automations' => 100,
-      'captain_documents' => 200, 'captain_responses' => 300
+      'captain_documents' => 200, 'captain_responses' => 300, 'data_retention_months' => 12
     }
   }.freeze
 
