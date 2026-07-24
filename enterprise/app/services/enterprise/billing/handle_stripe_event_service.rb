@@ -1,6 +1,7 @@
 class Enterprise::Billing::HandleStripeEventService
   CLOUD_PLANS_CONFIG = 'CHATWOOT_CLOUD_PLANS'.freeze
   CAPTAIN_CLOUD_PLAN_LIMITS = 'CAPTAIN_CLOUD_PLAN_LIMITS'.freeze
+  PAST_DUE_GRACE_PERIOD = 7.days
 
   def perform(event:)
     @event = event
@@ -23,7 +24,10 @@ class Enterprise::Billing::HandleStripeEventService
       when 'customer.subscription.deleted'
         process_subscription_deleted
       when 'invoice.payment_succeeded'
+        record_payment_transaction(status: 'succeeded')
         process_invoice_payment_succeeded
+      when 'invoice.payment_failed'
+        record_payment_transaction(status: 'failed')
       else
         Rails.logger.debug { "Unhandled event type: #{@event.type}" }
       end
@@ -87,6 +91,7 @@ class Enterprise::Billing::HandleStripeEventService
     update_account_attributes(subscription, plan)
 
     sub_record = Subscription.find_or_initialize_by(account: account)
+    was_already_past_due = %w[past_due unpaid].include?(sub_record.status)
     sub_record.update!(
       stripe_customer_id: subscription.customer,
       stripe_subscription_id: subscription.id,
@@ -97,15 +102,21 @@ class Enterprise::Billing::HandleStripeEventService
       plan_name: plan['name'],
       subscribed_quantity: subscription['quantity'],
       current_period_start: Time.zone.at(subscription_period_start),
-      current_period_end: Time.zone.at(subscription_period_end)
+      current_period_end: Time.zone.at(subscription_period_end),
+      grace_period_ends_at: own_grace_period_ends_at(was_already_past_due, sub_record.grace_period_ends_at)
     )
 
     if account.is_reseller?
+      sub_account_ids = account.sub_accounts.pluck(:id)
       if %w[past_due unpaid].include?(subscription.status)
-        sub_account_ids = account.sub_accounts.pluck(:id)
-        Subscription.where(account_id: sub_account_ids).update_all(grace_period_ends_at: 7.days.from_now)
+        # Only start the grace-period clock the first time the reseller goes past
+        # due - repeated Stripe retry webhooks must not keep pushing it back, or
+        # the enforcer job would never see an expired grace period to act on.
+        unless was_already_past_due
+          Subscription.where(account_id: sub_account_ids, grace_period_ends_at: nil)
+                      .update_all(grace_period_ends_at: PAST_DUE_GRACE_PERIOD.from_now)
+        end
       elsif subscription.status == 'active'
-        sub_account_ids = account.sub_accounts.pluck(:id)
         Subscription.where(account_id: sub_account_ids).update_all(grace_period_ends_at: nil)
       end
     end
@@ -148,14 +159,24 @@ class Enterprise::Billing::HandleStripeEventService
   def process_platform_subscription_deleted
     return if account.blank?
 
-    previous_monthly_credits = current_plan_credits[:responses]
-    return unless Enterprise::Billing::CreateStripeCustomerService.new(account: account).perform
+    previous_usage = { responses: account.custom_attributes['captain_responses_usage'].to_i, monthly: current_plan_credits[:responses] }
 
     sub_record = Subscription.find_by(stripe_subscription_id: subscription.id)
-    sub_record&.update!(status: 'canceled')
+    sub_record&.update!(status: 'canceled', grace_period_ends_at: nil)
 
     account.with_lock do
-      previous_usage = { responses: account.custom_attributes['captain_responses_usage'].to_i, monthly: previous_monthly_credits }
+      # Drop back to a clean "no active plan" state instead of silently re-subscribing
+      # the account to a default plan (which would re-charge the customer's card).
+      # The dashboard already redirects admins without a plan_name to billing to pick one.
+      updated_attributes = account.custom_attributes.merge('subscription_status' => 'canceled')
+      updated_attributes.delete('plan_name')
+      account.update!(custom_attributes: updated_attributes)
+
+      # Drop the account back to the free-plan feature/limit baseline now that it
+      # has no active plan - otherwise premium features from the cancelled plan
+      # would stay enabled indefinitely.
+      Enterprise::Billing::ReconcilePlanFeaturesService.new(account: account).perform
+
       adjust_captain_credits(previous_usage, new_plan_credits: 0)
       account.reset_response_usage
     end
@@ -190,6 +211,45 @@ class Enterprise::Billing::HandleStripeEventService
                             })
   rescue Stripe::StripeError => e
     Rails.logger.error("Failed to transfer funds to reseller for invoice #{invoice.id}: #{e.message}")
+  end
+
+  # Keeps a local, queryable record of every invoice Stripe attempts to charge (plan
+  # purchases, renewals, Enterprise payment links, and AI-credit top-ups all go through
+  # Stripe invoices), so both the user's billing page and Super Admin can show payment
+  # history without calling the Stripe API on every page load. Upserts by invoice id so
+  # Stripe's occasional duplicate/retry webhooks update the same row instead of creating
+  # a second one.
+  def record_payment_transaction(status:)
+    invoice = @event.data.object
+    payer_account = account_for_customer(invoice.customer)
+    return if payer_account.blank?
+
+    Enterprise::Billing::RecordPaymentTransactionService.new(
+      account: payer_account,
+      invoice: invoice,
+      status: status
+    ).perform
+  rescue StandardError => e
+    Rails.logger.error("Failed to record payment transaction for invoice #{invoice&.id}: #{e.message}")
+  end
+
+  def account_for_customer(customer_id)
+    account = Account.where("custom_attributes->>'stripe_customer_id' = ?", customer_id).first
+    account ||= Subscription.find_by(stripe_customer_id: customer_id)&.account
+    account ||= Account.find_by(id: invoice_metadata_account_id) if invoice_event?
+    account
+  end
+
+  def invoice_event?
+    @event.type.start_with?('invoice.')
+  end
+
+  # Newer Stripe invoice payloads nest subscription metadata under parent.subscription_details
+  # instead of exposing a top-level subscription id we can retrieve.
+  def invoice_metadata_account_id
+    invoice = @event.data.object
+    invoice.metadata['account_id'].presence ||
+      invoice.parent&.subscription_details&.metadata&.[]('account_id').presence
   end
 
   def capture_previous_usage
@@ -249,6 +309,17 @@ class Enterprise::Billing::HandleStripeEventService
     config[plan_name.downcase]&.symbolize_keys
   end
 
+  # Starts a PAST_DUE_GRACE_PERIOD grace window the first time a subscription goes
+  # past_due/unpaid, and clears it as soon as the status leaves that state (payment
+  # recovered, or subscription fully cancelled). Doesn't reset the clock on repeat
+  # `customer.subscription.updated` webhooks Stripe fires while still retrying the card.
+  def own_grace_period_ends_at(was_already_past_due, current_grace_period_ends_at)
+    return current_grace_period_ends_at if was_already_past_due && %w[past_due unpaid].include?(subscription.status)
+    return PAST_DUE_GRACE_PERIOD.from_now if %w[past_due unpaid].include?(subscription.status)
+
+    nil
+  end
+
   def subscription
     @subscription ||= @event.data.object
   end
@@ -268,7 +339,7 @@ class Enterprise::Billing::HandleStripeEventService
 
   def billing_period_renewed?
     previous_period_start = previous_attributes['current_period_start'] ||
-                             previous_attributes.dig('items', 'data', 0, 'current_period_start')
+                            previous_attributes.dig('items', 'data', 0, 'current_period_start')
     return false if previous_period_start.blank?
 
     previous_period_start != subscription_period_start
@@ -298,16 +369,22 @@ class Enterprise::Billing::HandleStripeEventService
     subscription.metadata['relationship_type'] == 'marketplace'
   end
 
-  # Checkout sessions created by PlanCheckoutService/EnterprisePaymentLinkService always
-  # stamp `plan_name` on the subscription metadata, so we trust that first - it works even
-  # for ad-hoc (price_data) Enterprise sessions that have no pre-configured Price/Product ID.
-  # Falls back to matching CHATWOOT_CLOUD_PLANS by product/price ID for the older
-  # CreateStripeCustomerService auto-subscribe flow, which sets no metadata.
+  # Prefer resolving the plan from the subscription's *current* Price/Product ID -
+  # that's always accurate, including when the customer changes plans themselves
+  # through the Stripe billing portal (which swaps the subscription's price but does
+  # NOT update subscription-level metadata, so trusting stale metadata first would
+  # keep reporting whatever plan the subscription was originally created with).
+  # Falls back to the `plan_name` metadata stamped by PlanCheckoutService/
+  # EnterprisePaymentLinkService only when there's no catalog match - this covers
+  # ad-hoc (price_data) Enterprise sessions that have no pre-configured Price/Product ID.
   def resolve_plan
+    plan = find_plan(subscription['plan']['product'], subscription['plan']['id']) if subscription['plan'].present?
+    return plan if plan.present?
+
     plan_name = subscription.metadata['plan_name']
     return { 'name' => plan_name } if plan_name.present?
 
-    find_plan(subscription['plan']['product'], subscription['plan']['id']) if subscription['plan'].present?
+    nil
   end
 
   def find_plan(product_id, price_id)

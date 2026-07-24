@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_21_090630) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_24_140536) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1165,6 +1165,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_21_090630) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "payment_transactions", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "stripe_customer_id"
+    t.string "stripe_invoice_id"
+    t.string "stripe_charge_id"
+    t.decimal "amount", precision: 10, scale: 2
+    t.string "currency"
+    t.string "status", null: false
+    t.string "description"
+    t.string "billing_reason"
+    t.string "hosted_invoice_url"
+    t.string "invoice_pdf"
+    t.datetime "paid_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_payment_transactions_on_account_id"
+    t.index ["stripe_invoice_id"], name: "index_payment_transactions_on_stripe_invoice_id", unique: true
+  end
+
   create_table "plan_feature_limits", force: :cascade do |t|
     t.string "plan_key", null: false
     t.string "feature_key", null: false
@@ -1590,6 +1609,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_21_090630) do
   add_foreign_key "enterprise_contracts", "users", column: "negotiated_by_user_id"
   add_foreign_key "inboxes", "portals"
   add_foreign_key "marketplace_plan_prices", "accounts"
+  add_foreign_key "payment_transactions", "accounts"
   add_foreign_key "reputation_video_testimonials", "accounts"
   add_foreign_key "subscriptions", "accounts"
   add_foreign_key "subscriptions", "connected_accounts"
