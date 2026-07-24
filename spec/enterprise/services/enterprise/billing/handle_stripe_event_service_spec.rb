@@ -30,7 +30,13 @@ describe Enterprise::Billing::HandleStripeEventService do
              }
            })
     # Setup common subscription mocks
+    # Each perform() call needs a distinct event id, otherwise the webhook dedup guard
+    # (ProcessedWebhookEvent) would treat a test's second `service.perform(event:)` call
+    # (e.g. simulating a plan downgrade after the initial upgrade) as an already-processed
+    # duplicate and skip it.
     allow(event).to receive(:data).and_return(data)
+    allow(event).to receive(:id) { SecureRandom.uuid }
+    allow(subscription).to receive_messages(id: 'sub_123', metadata: {})
     allow(data).to receive(:object).and_return(subscription)
     allow(data).to receive(:previous_attributes).and_return({})
     allow(subscription).to receive(:[]).with('quantity').and_return('10')
@@ -115,21 +121,17 @@ describe Enterprise::Billing::HandleStripeEventService do
   end
 
   describe 'subscription deletion handling' do
-    it 'calls CreateStripeCustomerService on subscription deletion' do
+    it 'drops the account back to a no-plan state instead of re-subscribing it' do
+      account.update!(custom_attributes: account.custom_attributes.merge('plan_name' => 'Startups'))
       allow(event).to receive(:type).and_return('customer.subscription.deleted')
 
-      # Create a double for the service
-      customer_service = double
-      allow(Enterprise::Billing::CreateStripeCustomerService).to receive(:new)
-        .with(account: account).and_return(customer_service)
-      allow(customer_service).to receive(:perform)
+      expect(Enterprise::Billing::CreateStripeCustomerService).not_to receive(:new)
 
       stripe_event_service.new.perform(event: event)
 
-      # Verify the service was called
-      expect(Enterprise::Billing::CreateStripeCustomerService).to have_received(:new)
-        .with(account: account)
-      expect(customer_service).to have_received(:perform)
+      account.reload
+      expect(account.custom_attributes).not_to have_key('plan_name')
+      expect(account.custom_attributes['subscription_status']).to eq('canceled')
     end
   end
 

@@ -23,8 +23,8 @@ class Enterprise::Billing::TenantRescueService
 
     # 3. Notify the T3 account administrators about the change
     begin
-      AdministratorNotifications::AccountNotificationMailer.tenant_rescued(orphaned_t3_account).deliver_later
-    rescue => e
+      AdministratorNotifications::AccountNotificationMailer.with(account: orphaned_t3_account).tenant_rescued(orphaned_t3_account).deliver_later
+    rescue StandardError => e
       Rails.logger.error("Failed to deliver tenant rescue notification: #{e.message}")
     end
 

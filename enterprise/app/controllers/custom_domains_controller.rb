@@ -3,7 +3,7 @@ class CustomDomainsController < ApplicationController
     challenge_id = permitted_params[:id]
 
     domain = request.host
-    record = Portal.find_by(custom_domain: domain) || Account.find_by(custom_domain: domain)
+    record = find_record_by_domain(domain)
 
     return render plain: 'Domain not found', status: :not_found unless record
 
@@ -18,7 +18,7 @@ class CustomDomainsController < ApplicationController
     challenge_id = permitted_params[:id]
 
     domain = request.host
-    record = Portal.find_by(custom_domain: domain) || Account.find_by(custom_domain: domain)
+    record = find_record_by_domain(domain)
 
     return render plain: 'Domain not found', status: :not_found unless record
 
@@ -30,6 +30,11 @@ class CustomDomainsController < ApplicationController
   end
 
   private
+
+  def find_record_by_domain(domain)
+    Portal.find_by('LOWER(custom_domain) = ?', domain.downcase) ||
+      Account.find_by('LOWER(custom_domain) = ?', domain.downcase)
+  end
 
   def permitted_params
     params.permit(:id)

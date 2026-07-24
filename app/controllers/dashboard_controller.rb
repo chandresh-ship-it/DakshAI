@@ -49,7 +49,7 @@ class DashboardController < ActionController::Base
     # White-labeling overrides: Inject Account branding into global config
     account_id = request.path.match(%r{/app/accounts/(\d+)})&.captures&.first
     account = Account.find_by(id: account_id) if account_id
-    account ||= Account.find_by(custom_domain: request.host)
+    account ||= Account.find_by('LOWER(custom_domain) = ?', request.host.downcase)
 
     apply_branding_overrides(account) if account
   end
@@ -204,7 +204,7 @@ class DashboardController < ActionController::Base
     domain = request.host
     return if domain == URI.parse(ENV.fetch('FRONTEND_URL', '')).host
 
-    @portal = Portal.find_by(custom_domain: domain)
+    @portal = Portal.find_by('LOWER(custom_domain) = ?', domain.downcase)
     return unless @portal
 
     @locale = @portal.default_locale

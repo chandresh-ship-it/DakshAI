@@ -48,8 +48,10 @@ class Cloudflare::BaseCloudflareZoneService
       end
     end
 
-    # Always update SSL status and errors from current response
-    ssl_settings['cf_status'] = ssl_record&.dig('status')
+    # Only overwrite the SSL status once Cloudflare actually reports one - an absent
+    # `ssl` block just means the check ran before SSL provisioning caught up, not that
+    # the domain regressed, so we keep showing the previous (e.g. "pending") status.
+    ssl_settings['cf_status'] = ssl_record['status'] if ssl_record.present?
     ssl_settings['cf_verification_errors'] = verification_errors
 
     record.update(ssl_settings: ssl_settings)

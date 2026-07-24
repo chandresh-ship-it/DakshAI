@@ -56,7 +56,15 @@
                 <%= inquiry['requested_at'].present? ? Time.zone.parse(inquiry['requested_at']).strftime('%d %b %Y, %H:%M') : '—' %>
               </td>
               <td class="cell-data">
-                <% if inquiry['processed_at'].present? %>
+                <% if inquiry['rejected_at'].present? %>
+                  <span class="text-red-700">Rejected</span>
+                  <div class="text-xs text-slate-400">
+                    by <%= inquiry['rejected_by'] %> on <%= Time.zone.parse(inquiry['rejected_at']).strftime('%d %b %Y') %>
+                  </div>
+                  <% if inquiry['rejection_note'].present? %>
+                    <div class="text-xs text-slate-500 max-w-xs whitespace-pre-wrap">"<%= inquiry['rejection_note'] %>"</div>
+                  <% end %>
+                <% elsif inquiry['processed_at'].present? %>
                   <span class="text-green-700">Processed</span>
                   <div class="text-xs text-slate-400">
                     by <%= inquiry['processed_by'] %> on <%= Time.zone.parse(inquiry['processed_at']).strftime('%d %b %Y') %>
@@ -68,10 +76,18 @@
               <td class="cell-data">
                 <% contract = account.enterprise_contract %>
                 <% if contract.present? %>
+                  <% if contract.contract_end_date < Time.zone.today %>
+                    <span class="text-red-700">Expired</span>
+                  <% elsif contract.contract_start_date > Time.zone.today %>
+                    <span class="text-amber-600">Upcoming</span>
+                  <% else %>
+                    <span class="text-green-700">Active</span>
+                  <% end %>
                   <div><%= contract.currency %> <%= number_with_precision(contract.negotiated_price, precision: 2) %>/<%= contract.billing_interval == 'annual' ? 'yr' : 'mo' %></div>
+                  <div class="text-xs text-slate-400">until <%= contract.contract_end_date.strftime('%d %b %Y') %></div>
                   <%= link_to 'Edit plan', edit_super_admin_enterprise_contract_path(contract), class: 'text-xs' %>
                 <% else %>
-                  <span class="text-amber-600">Not configured</span><br>
+                  <span class="text-amber-600">No plan yet</span><br>
                   <%= link_to 'Set plan', new_super_admin_enterprise_contract_path(account_id: account.id), class: 'text-xs' %>
                 <% end %>
               </td>
@@ -90,9 +106,17 @@
                 <% end %>
               </td>
               <td class="cell-data">
-                <% unless inquiry['processed_at'].present? %>
-                  <%= button_to 'Mark processed', mark_processed_super_admin_enterprise_inquiry_path(account), method: :post, class: 'button' %>
-                <% end %>
+                <div class="flex flex-col gap-1 items-start">
+                  <% unless inquiry['processed_at'].present? || inquiry['rejected_at'].present? %>
+                    <%= button_to 'Mark processed', mark_processed_super_admin_enterprise_inquiry_path(account), method: :post, class: 'button' %>
+                    <%= form_tag reject_super_admin_enterprise_inquiry_path(account), method: :post, class: 'flex items-center gap-1' do %>
+                      <%= text_field_tag :note, nil, placeholder: 'Reason (optional)', class: 'w-32 rounded-lg border border-slate-300 px-2 py-1 text-xs' %>
+                      <%= submit_tag 'Reject', class: 'button button--danger' %>
+                    <% end %>
+                  <% end %>
+                  <%= button_to 'Delete', super_admin_enterprise_inquiry_path(account), method: :delete,
+                                 data: { confirm: 'Delete this inquiry? This cannot be undone.' }, class: 'button button--danger' %>
+                </div>
               </td>
             </tr>
           <% end %>

@@ -28,9 +28,15 @@ const { isAdmin } = useAdmin();
 
 const isOnChatwootCloud = useMapGetter('globalConfig/isOnChatwootCloud');
 
+// The backend reports this fixed number as the "allowed" value for resources
+// that are actually unlimited on a plan (see ChatwootApp.max_limit), rather
+// than a real cap - so it must never be treated as an enforceable limit.
+const UNLIMITED_SENTINEL = 100000;
+
 const testLimit = limit => {
   if (!limit) return false;
   const { allowed, consumed } = limit;
+  if (allowed == null || allowed >= UNLIMITED_SENTINEL) return false;
   return consumed > allowed;
 };
 
@@ -65,19 +71,25 @@ const exceededLimitKey = computed(() => {
 
 const isLimitExceeded = computed(() => !!exceededLimitKey.value);
 
+// Before the account's full details load (e.g. right after login), the store
+// getter returns a placeholder `{}` rather than null/undefined - checking
+// `!account` alone doesn't catch that. Gate on `account.id` instead, which is
+// only ever present once the real account has loaded, to avoid a false
+// "no plan" flash that redirects an already-subscribed admin to billing.
+const isAccountLoaded = computed(() => !!currentAccount.value?.id);
+
 const hasNoPlan = computed(() => {
   if (!isEnterprise) return false;
-  const account = currentAccount.value;
-  if (!account) return false;
-  return !account.custom_attributes?.plan_name;
+  if (!isAccountLoaded.value) return false;
+  return !currentAccount.value.custom_attributes?.plan_name;
 });
 
 const isSubscriptionInactive = computed(() => {
   if (!isEnterprise) return false;
-  const account = currentAccount.value;
-  if (!account) return false;
+  if (!isAccountLoaded.value) return false;
 
   // If there's no subscription record, or it is not active, block access!
+  const account = currentAccount.value;
   return !account.subscription || account.subscription.active === false;
 });
 

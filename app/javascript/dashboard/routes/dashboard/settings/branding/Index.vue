@@ -23,10 +23,18 @@ import WithLabel from 'v3/components/Form/WithLabel.vue';
 import NextInput from 'next/input/Input.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import MagicBrandingModal from './components/MagicBrandingModal.vue';
+import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 
 const store = useStore();
 const { t } = useI18n();
 const { accountId } = useAccount();
+
+const isFeatureEnabledonAccount = useMapGetter(
+  'accounts/isFeatureEnabledonAccount'
+);
+const isCustomDomainEnabled = computed(() =>
+  isFeatureEnabledonAccount.value(accountId.value, FEATURE_FLAGS.CUSTOM_DOMAIN)
+);
 
 const getAccount = useMapGetter('accounts/getAccount');
 const uiFlags = useMapGetter('accounts/getUIFlags');
@@ -226,8 +234,7 @@ const handleCancel = () => {
 const handleSave = async (shouldReload = true, isVerifyAction = false) => {
   try {
     const formData = new FormData();
-    if (customDomain.value)
-      formData.append('custom_domain', customDomain.value);
+    formData.append('custom_domain', customDomain.value || '');
     if (isVerifyAction) formData.append('force_verify', 'true');
     if (lightLogoFile.value) formData.append('logo', lightLogoFile.value);
     if (darkLogoFile.value) formData.append('dark_logo', darkLogoFile.value);
@@ -363,6 +370,7 @@ const handleMagicPaletteApplied = palette => {
       <div class="flex flex-col w-full max-w-2xl">
         <!-- Custom Domain -->
         <SectionLayout
+          v-if="isCustomDomainEnabled"
           :title="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TITLE')"
           :description="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.DESCRIPTION')"
           class="!pt-0"

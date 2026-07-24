@@ -48,12 +48,36 @@ class EnterpriseContract < ApplicationRecord
   scope :active, ->(date = Time.zone.today) { where('contract_start_date <= ? AND contract_end_date >= ?', date, date) }
 
   before_validation :set_defaults
-  after_commit :reconcile_account_features, on: %i[create update]
+  after_commit :activate_enterprise_plan, on: %i[create update]
 
   private
 
-  def reconcile_account_features
+  # Configuring a contract from Super Admin is how an admin puts an account onto the
+  # Enterprise plan - without this, an account that requested Enterprise (and so has no
+  # plan_name yet) would stay stuck in the "no active plan" blocked state even after the
+  # admin negotiates and saves their terms here.
+  #
+  # Only run this when the contract is newly created or its term dates were explicitly
+  # changed (a renewal) - editing unrelated fields like notes or pricing shouldn't
+  # silently reactivate a plan the customer may have since canceled, and an expired
+  # contract shouldn't grant active status at all.
+  def activate_enterprise_plan
     return unless defined?(Enterprise::Billing::ReconcilePlanFeaturesService)
+    return unless previously_new_record? || saved_change_to_contract_start_date? || saved_change_to_contract_end_date?
+    return if contract_end_date < Time.zone.today
+
+    account.update_column(:custom_attributes, account.custom_attributes.merge('plan_name' => 'Enterprise', 'subscription_status' => 'active'))
+
+    sub_record = account.subscription || account.build_subscription
+    sub_record.assign_attributes(
+      plan_name: 'Enterprise',
+      status: 'active',
+      relationship_type: 'platform',
+      subscribed_quantity: sub_record.subscribed_quantity || 1,
+      current_period_start: contract_start_date,
+      current_period_end: contract_end_date
+    )
+    sub_record.save!
 
     Enterprise::Billing::ReconcilePlanFeaturesService.new(account: account).perform
   end

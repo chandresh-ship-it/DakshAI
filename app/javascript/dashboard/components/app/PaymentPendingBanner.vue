@@ -1,13 +1,11 @@
 <script>
 import { mapGetters } from 'vuex';
+import { differenceInCalendarDays } from 'date-fns';
 import { useAdmin } from 'dashboard/composables/useAdmin';
 import { useAccount } from 'dashboard/composables/useAccount';
 import Banner from 'dashboard/components/ui/Banner.vue';
 
-const EMPTY_SUBSCRIPTION_INFO = {
-  status: null,
-  endsOn: null,
-};
+const PAST_DUE_STATUSES = ['past_due', 'unpaid'];
 
 export default {
   components: { Banner },
@@ -26,7 +24,28 @@ export default {
       isOnChatwootCloud: 'globalConfig/isOnChatwootCloud',
       getAccount: 'accounts/getAccount',
     }),
+    subscription() {
+      return this.getAccount(this.accountId)?.subscription;
+    },
+    // Shown while a failed payment is still within its grace period (subscription
+    // stays `active` on the backend during that window - see Subscription#active?).
+    // Once the grace period lapses, UpgradePage takes over and blocks the dashboard.
+    daysRemaining() {
+      if (!this.subscription?.grace_period_ends_at) return null;
+      return Math.max(
+        0,
+        differenceInCalendarDays(
+          new Date(this.subscription.grace_period_ends_at),
+          new Date()
+        )
+      );
+    },
     bannerMessage() {
+      if (Number.isInteger(this.daysRemaining)) {
+        return this.$t('GENERAL_SETTINGS.PAYMENT_PENDING_WITH_DAYS', {
+          days: this.daysRemaining,
+        });
+      }
       return this.$t('GENERAL_SETTINGS.PAYMENT_PENDING');
     },
     actionButtonMessage() {
@@ -52,28 +71,11 @@ export default {
       });
     },
     isPaymentPending() {
-      const { status, endsOn } = this.getSubscriptionInfo();
-
-      if (status && endsOn) {
-        const now = new Date();
-        if (status === 'past_due' && endsOn < now) {
-          return true;
-        }
-      }
-
-      return false;
-    },
-    getSubscriptionInfo() {
-      const account = this.getAccount(this.accountId);
-      if (!account) return EMPTY_SUBSCRIPTION_INFO;
-
-      const { custom_attributes: subscription } = account;
-      if (!subscription) return EMPTY_SUBSCRIPTION_INFO;
-
-      const { subscription_status: status, subscription_ends_on: endsOn } =
-        subscription;
-
-      return { status, endsOn: new Date(endsOn) };
+      if (!this.subscription) return false;
+      return (
+        this.subscription.active &&
+        PAST_DUE_STATUSES.includes(this.subscription.status)
+      );
     },
   },
 };

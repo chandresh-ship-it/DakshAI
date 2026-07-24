@@ -98,7 +98,6 @@ RSpec.describe Cloudflare::CheckCustomHostnameService do
             ssl_settings: {
               'cf_verification_id' => 'verification-id',
               'cf_verification_body' => 'verification-body',
-              'cf_status' => nil,
               'cf_verification_errors' => ''
             }
           )

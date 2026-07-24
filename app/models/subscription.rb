@@ -43,6 +43,17 @@ class Subscription < ApplicationRecord
   scope :marketplace, -> { where(relationship_type: 'marketplace') }
 
   def active?
-    %w[active trialing].include?(status)
+    return true if %w[active trialing].include?(status)
+    return true if %w[past_due unpaid].include?(status) && in_grace_period?
+
+    false
+  end
+
+  # While a payment is failing, Stripe keeps retrying the card for a while before
+  # finally cancelling the subscription. We give the customer a short grace period of
+  # continued access (with a "update your card" banner) instead of locking them out
+  # the instant the first retry fails.
+  def in_grace_period?
+    grace_period_ends_at.present? && grace_period_ends_at.future?
   end
 end

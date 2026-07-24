@@ -459,6 +459,8 @@ const createContact = async contact => {
         useAlert(t(`${i18nPrefix}.EMAIL_ADDRESS_DUPLICATE`));
       } else if (error.data.includes('phone_number')) {
         useAlert(t(`${i18nPrefix}.PHONE_NUMBER_DUPLICATE`));
+      } else {
+        useAlert(error.contactErrorDetail || t(`${i18nPrefix}.ERROR_MESSAGE`));
       }
     } else if (error instanceof ExceptionWithMessage) {
       useAlert(error.data);

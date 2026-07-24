@@ -35,9 +35,15 @@ class Enterprise::Billing::PlanCheckoutService
 
   private
 
+  # Whether creating a new Checkout session would duplicate a subscription Stripe
+  # already has on file. This must key off the subscription's Stripe lifecycle
+  # (anything short of 'canceled'), not `sub.active?` - the latter also factors in
+  # our local grace period, so a past_due subscription whose grace period has
+  # expired would otherwise look "inactive" here even though Stripe still has a
+  # live (past_due) subscription object that a new Checkout session would duplicate.
   def already_on_real_stripe_subscription?
     sub = account.subscription
-    sub.present? && sub.relationship_type == 'platform' && sub.stripe_subscription_id.present? && sub.active?
+    sub.present? && sub.relationship_type == 'platform' && sub.stripe_subscription_id.present? && sub.status != 'canceled'
   end
 
   def billing_portal_url

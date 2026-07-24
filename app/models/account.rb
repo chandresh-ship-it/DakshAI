@@ -69,8 +69,10 @@ class Account < ApplicationRecord
   validate :only_two_levels_deep
   validate :t3_subaccount_limit_enforced, if: -> { parent_id.present? }
   validate :reseller_capability_allowed, if: -> { is_reseller? }
+  validate :custom_domain_capability_allowed, if: :will_save_change_to_custom_domain?
 
   before_validation -> { normalize_empty_string_to_nil(%i[custom_domain]) }
+  before_validation -> { self.custom_domain = custom_domain&.downcase }
   before_validation :sync_branding_fields_from_brand_colors
 
   store_accessor :settings, :auto_resolve_after, :auto_resolve_message, :auto_resolve_ignore_waiting
@@ -233,6 +235,14 @@ class Account < ApplicationRecord
     capability_enabled?(:white_labeling)
   end
 
+  def custom_domain_enabled?
+    capability_enabled?(:custom_domain)
+  end
+
+  def reseller_dashboard_enabled?
+    capability_enabled?(:reseller_dashboard)
+  end
+
   def effective_brand_name
     return unless white_labeling_enabled?
 
@@ -353,16 +363,22 @@ class Account < ApplicationRecord
     return if limit.nil? # unlimited
 
     existing_count = parent.children.where.not(id: id).count
-    if existing_count >= limit.to_i
-      errors.add(:parent_id, "exceeds the reseller parent's sub-account limit of #{limit}")
-    end
+    return unless existing_count >= limit.to_i
+
+    errors.add(:parent_id, "exceeds the reseller parent's sub-account limit of #{limit}")
   end
 
   def reseller_capability_allowed
     limit = limits['t3_subaccounts']
-    if limit.present? && limit.to_i == 0
-      errors.add(:is_reseller, "is not allowed on this plan tier")
-    end
+    return unless limit.present? && limit.to_i == 0
+
+    errors.add(:is_reseller, 'is not allowed on this plan tier')
+  end
+
+  def custom_domain_capability_allowed
+    return if custom_domain.blank? || custom_domain_enabled?
+
+    errors.add(:custom_domain, 'is not available on the current plan')
   end
 
   def sync_branding_fields_from_brand_colors

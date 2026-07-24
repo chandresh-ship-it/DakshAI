@@ -24,6 +24,36 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
     # rubocop:enable Rails/I18nLocaleTexts
   end
 
+  # Declines the inquiry without granting a plan, recording a note so the reason is
+  # visible later. The account itself is untouched - it stays on whatever plan (or no
+  # plan) it already had.
+  def reject
+    account = Account.find(params[:id])
+    inquiry = (account.custom_attributes['enterprise_inquiry'] || {}).merge(
+      'rejected_at' => Time.current.iso8601,
+      'rejected_by' => current_super_admin.email,
+      'rejection_note' => params[:note]
+    )
+    account.update_column(:custom_attributes, account.custom_attributes.merge('enterprise_inquiry' => inquiry))
+
+    # rubocop:disable Rails/I18nLocaleTexts
+    redirect_back(fallback_location: super_admin_enterprise_inquiries_path, notice: 'Inquiry rejected.')
+    # rubocop:enable Rails/I18nLocaleTexts
+  end
+
+  # Removes the inquiry from this list entirely (e.g. spam/duplicate submissions).
+  # Doesn't touch any plan/contract the account may already have.
+  def destroy
+    account = Account.find(params[:id])
+    updated_attributes = account.custom_attributes.dup
+    updated_attributes.delete('enterprise_inquiry')
+    account.update_column(:custom_attributes, updated_attributes)
+
+    # rubocop:disable Rails/I18nLocaleTexts
+    redirect_back(fallback_location: super_admin_enterprise_inquiries_path, notice: 'Inquiry deleted.')
+    # rubocop:enable Rails/I18nLocaleTexts
+  end
+
   def send_payment_link
     account = Account.find(params[:id])
     monthly_price = params[:monthly_price].presence || account.enterprise_contract&.negotiated_price

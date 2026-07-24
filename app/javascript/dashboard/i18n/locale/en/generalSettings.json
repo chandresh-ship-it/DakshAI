@@ -130,7 +130,8 @@
     },
     "UPDATE_CHATWOOT": "An update {latestnewrelayVersion} for newrelay is available. Please update your instance.",
     "LEARN_MORE": "Learn more",
-    "PAYMENT_PENDING": "Your payment is pending. Please update your payment information to continue using newrelay",
+    "PAYMENT_PENDING": "Your last payment failed. Please update your payment information to continue using newrelay",
+    "PAYMENT_PENDING_WITH_DAYS": "Your last payment failed. Please update your payment information within {days} day(s) to avoid losing access to newrelay",
     "UPGRADE": "Upgrade to continue using newrelay",
     "LIMITS_UPGRADE": "Your account has exceeded the usage limits, please upgrade your plan to continue using newrelay",
     "OPEN_BILLING": "Open billing"

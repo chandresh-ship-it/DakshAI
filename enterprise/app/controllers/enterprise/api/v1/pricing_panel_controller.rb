@@ -1,12 +1,19 @@
 class Enterprise::Api::V1::PricingPanelController < Api::BaseController
   before_action :fetch_account
-  before_action :ensure_reseller_account
+  before_action :ensure_authorized_account
+  before_action :ensure_reseller_account, only: [:create]
   before_action :ensure_connected_account, only: [:create]
 
+  # A reseller sees its own published prices; a marketplace client (whose
+  # account has a reseller parent) sees the parent's prices instead, since
+  # that's what they'll actually be charged when they subscribe.
   def index
-    active_prices = @account.marketplace_plan_prices.active
+    pricing_account = @account.is_reseller? ? @account : @account.parent
+    return render json: { connected_account: nil, prices: [] } if pricing_account.blank?
+
+    active_prices = pricing_account.marketplace_plan_prices.active
     render json: {
-      connected_account: connected_account_payload,
+      connected_account: connected_account_payload(pricing_account),
       prices: active_prices.map { |p| price_payload(p) }
     }
   end
@@ -28,8 +35,16 @@ class Enterprise::Api::V1::PricingPanelController < Api::BaseController
     raise Pundit::NotAuthorizedError unless @current_account_user&.administrator?
   end
 
+  def ensure_authorized_account
+    return if (@account.is_reseller? && @account.reseller_dashboard_enabled?) || @account.parent_id.present?
+
+    render json: { error: 'Pricing panel is only available for reseller accounts and their clients' }, status: :forbidden
+  end
+
   def ensure_reseller_account
-    render json: { error: 'Pricing panel is only available for reseller accounts' }, status: :forbidden unless @account.is_reseller?
+    return if @account.is_reseller? && @account.reseller_dashboard_enabled?
+
+    render json: { error: 'Pricing panel is only available for reseller accounts' }, status: :forbidden
   end
 
   def ensure_connected_account
@@ -43,8 +58,8 @@ class Enterprise::Api::V1::PricingPanelController < Api::BaseController
     params.require(:marketplace_plan_price).permit(:currency, :agency_price)
   end
 
-  def connected_account_payload
-    connected = @account.connected_account
+  def connected_account_payload(pricing_account)
+    connected = pricing_account.connected_account
     return nil if connected.blank?
 
     {
@@ -52,7 +67,7 @@ class Enterprise::Api::V1::PricingPanelController < Api::BaseController
       stripe_account_id: connected.stripe_account_id,
       charges_enabled: connected.charges_enabled,
       charge_routing: connected.charge_routing,
-      commission_percent: CommissionRule.current_percent_for(@account)
+      commission_percent: CommissionRule.current_percent_for(pricing_account)
     }
   end
 

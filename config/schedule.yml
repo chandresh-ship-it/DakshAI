@@ -82,3 +82,10 @@ purge_expired_conversations_job:
   cron: '0 3 * * *'
   class: 'Internal::PurgeExpiredConversationsSchedulerJob'
   queue: housekeeping
+
+# executed hourly
+# suspends accounts/subscriptions whose payment grace period has expired
+grace_period_enforcer_job:
+  cron: '0 * * * *'
+  class: 'Enterprise::Billing::GracePeriodEnforcerJob'
+  queue: scheduled_jobs

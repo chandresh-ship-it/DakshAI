@@ -39,6 +39,7 @@ class Portal < ApplicationRecord
   belongs_to :channel_web_widget, class_name: 'Channel::WebWidget', optional: true
 
   before_validation -> { normalize_empty_string_to_nil(%i[custom_domain homepage_link]) }
+  before_validation -> { self.custom_domain = custom_domain&.downcase }
   validates :account_id, presence: true
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
