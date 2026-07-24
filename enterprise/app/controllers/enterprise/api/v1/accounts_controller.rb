@@ -122,6 +122,28 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     }, status: :ok
   end
 
+  def transactions
+    # Past invoices (paid before this feature shipped, or while stripe_customer_id was
+    # missing/stale) are pulled from Stripe on first load so the billing page is not empty.
+    if @account.payment_transactions.none?
+      Enterprise::Billing::SyncPaymentTransactionsService.new(account: @account).perform
+    end
+
+    payments = @account.payment_transactions.recent_first.limit(100)
+
+    render json: payments.as_json(
+      only: %i[id amount currency status description billing_reason paid_at created_at hosted_invoice_url invoice_pdf]
+    )
+  end
+
+  # Public-facing plan catalog for the "Change plan" picker - only exposes what a
+  # customer needs to compare plans (name, seat price, whether it's purchasable).
+  # Deliberately omits Stripe product_id/price_ids, which are internal wiring details.
+  def plans
+    plans = (InstallationConfig.find_by(name: 'CHATWOOT_CLOUD_PLANS')&.value || [])
+    render json: plans.map { |plan| plan.slice('name', 'price_per_agent', 'enabled') }
+  end
+
   def enterprise_inquiry
     inquiry = enterprise_inquiry_params
 
@@ -229,7 +251,7 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   end
 
   def create_stripe_billing_session(customer_id)
-    session = Enterprise::Billing::CreateSessionService.new.create_session(customer_id)
+    session = Enterprise::Billing::CreateSessionService.new.create_session(customer_id, frontend_billing_url)
     render_redirect_url(session.url)
   end
 

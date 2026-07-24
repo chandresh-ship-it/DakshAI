@@ -560,6 +560,8 @@ Rails.application.routes.draw do
               post :plan_checkout
               post :bypass_plan
               post :enterprise_inquiry
+              get :plans
+              get :transactions
             end
 
             resource :connected_account, only: [:create], controller: :connected_accounts do
@@ -731,11 +733,13 @@ Rails.application.routes.draw do
         post :reset_cache, on: :member
       end
       resources :enterprise_contracts
-      resources :enterprise_inquiries, only: [:index], controller: :enterprise_inquiries do
+      resources :enterprise_inquiries, only: %i[index destroy], controller: :enterprise_inquiries do
         post :mark_processed, on: :member
         post :send_payment_link, on: :member
+        post :reject, on: :member
       end
       resources :subscriptions, only: [:index, :show]
+      resources :payment_transactions, only: [:index, :show]
       resources :marketplace_plan_prices, only: [:index, :show]
       resource :plan_management, only: [:show, :update], controller: :plan_management
       resources :users, only: [:index, :new, :create, :show, :edit, :update, :destroy] do

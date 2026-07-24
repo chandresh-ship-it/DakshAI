@@ -31,6 +31,14 @@ class EnterpriseAccountAPI extends ApiClient {
   submitEnterpriseInquiry(inquiry) {
     return axios.post(`${this.url}enterprise_inquiry`, inquiry);
   }
+
+  getTransactions() {
+    return axios.get(`${this.url}transactions`);
+  }
+
+  getPlans() {
+    return axios.get(`${this.url}plans`);
+  }
 }
 
 export default new EnterpriseAccountAPI();

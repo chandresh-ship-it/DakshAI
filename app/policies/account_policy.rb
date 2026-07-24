@@ -43,7 +43,15 @@ class AccountPolicy < ApplicationPolicy
     @account_user.administrator?
   end
 
+  def plans?
+    @account_user.administrator?
+  end
+
   def enterprise_inquiry?
+    @account_user.administrator?
+  end
+
+  def transactions?
     @account_user.administrator?
   end
 end

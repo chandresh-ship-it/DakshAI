@@ -18,10 +18,14 @@ import DowngradePlanWarningModal from './components/DowngradePlanWarningModal.vu
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import ButtonV4 from 'next/button/Button.vue';
+import Input from 'dashboard/components-next/input/Input.vue';
+import { FEATURE_FLAGS } from 'dashboard/featureFlags';
+import EnterpriseAccountAPI from 'dashboard/api/enterprise/account';
 
 const router = useRouter();
 const { t } = useI18n();
-const { currentAccount, isOnChatwootCloud } = useAccount();
+const { currentAccount, isOnChatwootCloud, isCloudFeatureEnabled } =
+  useAccount();
 const {
   captainEnabled,
   captainLimits,
@@ -51,7 +55,13 @@ const PLAN_RETENTION_MONTHS = {
 };
 
 // Reseller & Client Billing States
-const isReseller = computed(() => !!currentAccount.value.is_reseller);
+// `is_reseller` alone is not enough - the reseller_dashboard capability
+// must also be enabled on the account for the dashboard to be usable.
+const isReseller = computed(
+  () =>
+    !!currentAccount.value.is_reseller &&
+    isCloudFeatureEnabled(FEATURE_FLAGS.RESELLER_DASHBOARD)
+);
 const hasResellerParent = computed(() => !!currentAccount.value.parent_id);
 
 const isFetchingMarketplace = ref(false);
@@ -59,6 +69,25 @@ const marketplaceData = ref({
   connected_account: null,
   prices: [],
 });
+
+const planCatalog = ref([]);
+const fetchPlanCatalog = async () => {
+  try {
+    const response = await EnterpriseAccountAPI.getPlans();
+    planCatalog.value = response.data;
+  } catch (error) {
+    // Non-fatal - the plan picker still works without prices shown.
+  }
+};
+const planPriceLabel = planName => {
+  const plan = planCatalog.value.find(p => p.name === planName);
+  if (!plan || !plan.price_per_agent) {
+    return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
+  }
+  return t('BILLING_SETTINGS.SELECT_PLAN.PRICE_PER_AGENT', {
+    price: plan.price_per_agent,
+  });
+};
 
 const agencyPriceInput = ref(0);
 const selectedCurrency = ref('usd');
@@ -95,16 +124,6 @@ const planName = computed(() => {
 const canPurchaseCredits = computed(() => {
   const plan = planName.value?.toLowerCase();
   return plan && plan !== 'hacker';
-});
-
-const subscribedQuantity = computed(() => {
-  return customAttributes.value.subscribed_quantity;
-});
-
-const subscriptionRenewsOn = computed(() => {
-  if (!customAttributes.value.subscription_ends_on) return '';
-  const endDate = new Date(customAttributes.value.subscription_ends_on);
-  return format(endDate, 'dd MMM, yyyy');
 });
 
 const hasABillingPlan = computed(() => {
@@ -170,8 +189,8 @@ const fetchMarketplaceData = async () => {
       if (usdPrice) {
         agencyPriceInput.value = usdPrice.agency_price;
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Marketplace pricing is optional; keep the billing page usable without it.
     } finally {
       isFetchingMarketplace.value = false;
     }
@@ -250,6 +269,8 @@ const handleBillingPageLogic = async () => {
   // Load marketplace data if reseller or client
   if (isReseller.value || hasResellerParent.value) {
     await fetchMarketplaceData();
+  } else {
+    await fetchPlanCatalog();
   }
 
   await fetchAccountDetails();
@@ -318,7 +339,32 @@ const handleTopupSuccess = () => {
   fetchLimits();
 };
 
-onMounted(handleBillingPageLogic);
+const transactions = ref([]);
+const isFetchingTransactions = ref(false);
+const fetchTransactions = async () => {
+  isFetchingTransactions.value = true;
+  try {
+    const response = await EnterpriseAccountAPI.getTransactions();
+    transactions.value = response.data;
+  } catch (error) {
+    // Silently ignore - payment history is supplementary, not critical to the page.
+  } finally {
+    isFetchingTransactions.value = false;
+  }
+};
+
+const formatTransactionDate = value => {
+  return value ? format(new Date(value), 'dd MMM, yyyy') : '';
+};
+
+const formatTransactionAmount = transaction => {
+  return `${Number(transaction.amount || 0).toFixed(2)} ${(transaction.currency || '').toUpperCase()}`;
+};
+
+onMounted(() => {
+  handleBillingPageLogic();
+  fetchTransactions();
+});
 </script>
 
 <template>
@@ -343,10 +389,115 @@ onMounted(handleBillingPageLogic);
       />
     </template>
     <template #body>
+      <!-- Marketplace client: subscribes to the pricing their reseller parent
+           published, instead of picking a direct platform plan. -->
+      <section v-if="hasResellerParent" class="grid gap-4">
+        <BillingCard
+          :title="$t('BILLING_SETTINGS.CLIENT.TITLE')"
+          :description="$t('BILLING_SETTINGS.CLIENT.DESCRIPTION')"
+        >
+          <div class="px-5 pb-5">
+            <template v-if="activePlanPrice">
+              <div
+                class="grid sm:grid-cols-2 gap-2 divide-x divide-n-weak mb-4"
+              >
+                <DetailItem
+                  :label="$t('BILLING_SETTINGS.RESELLER.TOTAL_PRICE')"
+                  :value="`$${activePlanPrice.total_amount}/mo`"
+                />
+              </div>
+              <ButtonV4
+                solid
+                blue
+                :is-loading="isCheckingOut"
+                @click="handleSubscribe"
+              >
+                {{ $t('BILLING_SETTINGS.CLIENT.SUBSCRIBE_BTN') }}
+              </ButtonV4>
+            </template>
+            <p v-else class="text-n-slate-11 text-sm">
+              {{ $t('BILLING_SETTINGS.CLIENT.NO_ACTIVE_PRICE') }}
+            </p>
+          </div>
+        </BillingCard>
+      </section>
+
+      <!-- Reseller: manage Stripe Connect onboarding and publish client pricing. -->
+      <section v-if="isReseller" class="grid gap-4">
+        <BillingCard
+          :title="$t('BILLING_SETTINGS.RESELLER.TITLE')"
+          :description="$t('BILLING_SETTINGS.RESELLER.DESCRIPTION')"
+        >
+          <div class="px-5 pb-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <span
+                class="text-sm font-medium"
+                :class="
+                  marketplaceData.connected_account?.charges_enabled
+                    ? 'text-n-teal-10'
+                    : 'text-n-amber-10'
+                "
+              >
+                {{
+                  marketplaceData.connected_account?.charges_enabled
+                    ? $t('BILLING_SETTINGS.RESELLER.STATUS_ONBOARDED')
+                    : $t('BILLING_SETTINGS.RESELLER.STATUS_NOT_ONBOARDED')
+                }}
+              </span>
+              <ButtonV4
+                v-if="!marketplaceData.connected_account?.charges_enabled"
+                sm
+                solid
+                blue
+                @click="handleConnectStripe"
+              >
+                {{ $t('BILLING_SETTINGS.RESELLER.CONNECT_STRIPE') }}
+              </ButtonV4>
+            </div>
+            <p
+              v-if="!marketplaceData.connected_account?.charges_enabled"
+              class="text-n-slate-11 text-sm"
+            >
+              {{ $t('BILLING_SETTINGS.RESELLER.CONNECT_DESC') }}
+            </p>
+
+            <template v-if="marketplaceData.connected_account?.charges_enabled">
+              <h4 class="text-sm font-medium text-n-slate-12">
+                {{ $t('BILLING_SETTINGS.RESELLER.SET_PRICE') }}
+              </h4>
+              <div class="grid sm:grid-cols-3 gap-4">
+                <Input
+                  v-model="agencyPriceInput"
+                  type="number"
+                  min="1"
+                  :label="$t('BILLING_SETTINGS.RESELLER.AGENCY_PRICE')"
+                />
+                <DetailItem
+                  :label="
+                    $t('BILLING_SETTINGS.RESELLER.COMMISSION', {
+                      percent: commissionPercent,
+                    })
+                  "
+                  :value="`$${platformFeeAmount}`"
+                />
+                <DetailItem
+                  :label="$t('BILLING_SETTINGS.RESELLER.TOTAL_PRICE')"
+                  :value="`$${totalClientPrice}`"
+                />
+              </div>
+              <ButtonV4 solid blue @click="handleSavePricing">
+                {{ $t('BILLING_SETTINGS.RESELLER.SAVE_PRICING') }}
+              </ButtonV4>
+            </template>
+          </div>
+        </BillingCard>
+      </section>
+
       <!-- Direct Plan Selection Flow (Replaces Stripe Flows for Testing) -->
+      <!-- Marketplace clients subscribe via their reseller's pricing above, not here. -->
       <section class="grid gap-4">
         <BillingCard
-          v-if="!planName || showPlanPicker"
+          v-if="!hasResellerParent && (!planName || showPlanPicker)"
           :title="$t('BILLING_SETTINGS.SELECT_PLAN.TITLE')"
           :description="$t('BILLING_SETTINGS.SELECT_PLAN.DESCRIPTION')"
         >
@@ -361,8 +512,13 @@ onMounted(handleBillingPageLogic);
               :key="plan"
               class="border border-n-weak rounded-xl p-6 bg-n-background shadow-sm flex flex-col justify-between gap-4"
             >
-              <div class="text-xl font-bold text-center text-n-slate-12">
-                {{ $t('BILLING_SETTINGS.SELECT_PLAN.PLAN_LABEL', { plan }) }}
+              <div>
+                <div class="text-xl font-bold text-center text-n-slate-12">
+                  {{ $t('BILLING_SETTINGS.SELECT_PLAN.PLAN_LABEL', { plan }) }}
+                </div>
+                <div class="text-sm text-center text-n-slate-11 mt-1">
+                  {{ planPriceLabel(plan) }}
+                </div>
               </div>
               <ButtonV4
                 solid
@@ -382,7 +538,7 @@ onMounted(handleBillingPageLogic);
         </BillingCard>
 
         <BillingCard
-          v-if="planName"
+          v-if="!hasResellerParent && planName"
           :title="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
         >
           <template #action>
@@ -407,38 +563,38 @@ onMounted(handleBillingPageLogic);
         <!-- Resource Limits -->
         <BillingCard
           v-if="hasABillingPlan"
-          title="Resource Limits"
-          description="Usage and limits for your current billing cycle."
+          :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.TITLE')"
+          :description="$t('BILLING_SETTINGS.RESOURCE_LIMITS.DESCRIPTION')"
         >
           <div class="px-5 pb-5 grid gap-4">
             <BillingMeter
               v-if="agentLimits"
-              title="Seats (team members)"
+              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.SEATS')"
               v-bind="agentLimits"
             />
             <BillingMeter
               v-if="inboxLimits"
-              title="Inboxes"
+              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.INBOXES')"
               v-bind="inboxLimits"
             />
             <BillingMeter
               v-if="contactLimits"
-              title="Contacts"
+              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.CONTACTS')"
               v-bind="contactLimits"
             />
             <BillingMeter
               v-if="conversationLimits"
-              title="Conversations/month"
+              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.CONVERSATIONS')"
               v-bind="conversationLimits"
             />
             <BillingMeter
               v-if="t3SubaccountLimits"
-              title="T3 Reseller Sub-accounts"
+              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.T3_SUBACCOUNTS')"
               v-bind="t3SubaccountLimits"
             />
             <BillingMeter
               v-if="automationLimits"
-              title="Automations/workflows"
+              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.AUTOMATIONS')"
               v-bind="automationLimits"
             />
           </div>
@@ -497,6 +653,97 @@ onMounted(handleBillingPageLogic);
               {{ $t('CAPTAIN.PAYWALL.UPGRADE_NOW') }}
             </ButtonV4>
           </template>
+        </BillingCard>
+
+        <!-- Payment History -->
+        <BillingCard
+          v-if="hasABillingPlan"
+          :title="$t('BILLING_SETTINGS.TRANSACTIONS.TITLE')"
+          :description="$t('BILLING_SETTINGS.TRANSACTIONS.DESCRIPTION')"
+        >
+          <div class="px-5 pb-5 overflow-x-auto">
+            <p
+              v-if="isFetchingTransactions"
+              class="text-sm text-n-slate-11 py-2"
+            >
+              {{ $t('BILLING_SETTINGS.TRANSACTIONS.LOADING') }}
+            </p>
+            <p
+              v-else-if="!transactions.length"
+              class="text-sm text-n-slate-11 py-2"
+            >
+              {{ $t('BILLING_SETTINGS.TRANSACTIONS.EMPTY') }}
+            </p>
+            <table v-else class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-n-slate-11 border-b border-n-weak">
+                  <th class="py-2 pr-4 font-medium">
+                    {{ $t('BILLING_SETTINGS.TRANSACTIONS.DATE') }}
+                  </th>
+                  <th class="py-2 pr-4 font-medium">
+                    {{ $t('BILLING_SETTINGS.TRANSACTIONS.DESCRIPTION_COL') }}
+                  </th>
+                  <th class="py-2 pr-4 font-medium">
+                    {{ $t('BILLING_SETTINGS.TRANSACTIONS.AMOUNT') }}
+                  </th>
+                  <th class="py-2 pr-4 font-medium">
+                    {{ $t('BILLING_SETTINGS.TRANSACTIONS.STATUS') }}
+                  </th>
+                  <th class="py-2 font-medium">
+                    {{ $t('BILLING_SETTINGS.TRANSACTIONS.RECEIPT') }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="transaction in transactions"
+                  :key="transaction.id"
+                  class="border-b border-n-weak last:border-0"
+                >
+                  <td class="py-2 pr-4 text-n-slate-12 whitespace-nowrap">
+                    {{
+                      formatTransactionDate(
+                        transaction.paid_at || transaction.created_at
+                      )
+                    }}
+                  </td>
+                  <td class="py-2 pr-4 text-n-slate-12">
+                    {{ transaction.description || '—' }}
+                  </td>
+                  <td class="py-2 pr-4 text-n-slate-12 whitespace-nowrap">
+                    {{ formatTransactionAmount(transaction) }}
+                  </td>
+                  <td class="py-2 pr-4">
+                    <span
+                      class="px-2 py-0.5 rounded-full text-xs font-medium"
+                      :class="
+                        transaction.status === 'succeeded'
+                          ? 'bg-n-teal-3 text-n-teal-11'
+                          : 'bg-n-ruby-3 text-n-ruby-11'
+                      "
+                    >
+                      {{
+                        transaction.status === 'succeeded'
+                          ? $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_SUCCEEDED')
+                          : $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_FAILED')
+                      }}
+                    </span>
+                  </td>
+                  <td class="py-2">
+                    <a
+                      v-if="transaction.hosted_invoice_url"
+                      :href="transaction.hosted_invoice_url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-n-blue-11 hover:underline"
+                    >
+                      {{ $t('BILLING_SETTINGS.TRANSACTIONS.VIEW') }}
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </BillingCard>
 
         <BillingHeader
