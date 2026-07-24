@@ -61,8 +61,8 @@ class Enterprise::Billing::HandleStripeEventService
       stripe_product_id: subscription['plan']['product'],
       plan_name: 'Workspace Subscription',
       subscribed_quantity: subscription['quantity'],
-      current_period_start: Time.zone.at(subscription['current_period_start']),
-      current_period_end: Time.zone.at(subscription['current_period_end'])
+      current_period_start: Time.zone.at(subscription_period_start),
+      current_period_end: Time.zone.at(subscription_period_end)
     )
 
     client_account.update(
@@ -72,7 +72,7 @@ class Enterprise::Billing::HandleStripeEventService
         'subscription_status' => subscription.status,
         'plan_name' => 'Marketplace Plan',
         'subscribed_quantity' => subscription['quantity'],
-        'subscription_ends_on' => Time.zone.at(subscription['current_period_end'])
+        'subscription_ends_on' => Time.zone.at(subscription_period_end)
       )
     )
 
@@ -96,8 +96,8 @@ class Enterprise::Billing::HandleStripeEventService
       stripe_product_id: subscription['plan']['product'],
       plan_name: plan['name'],
       subscribed_quantity: subscription['quantity'],
-      current_period_start: Time.zone.at(subscription['current_period_start']),
-      current_period_end: Time.zone.at(subscription['current_period_end'])
+      current_period_start: Time.zone.at(subscription_period_start),
+      current_period_end: Time.zone.at(subscription_period_end)
     )
 
     if account.is_reseller?
@@ -211,7 +211,7 @@ class Enterprise::Billing::HandleStripeEventService
         'plan_name' => plan['name'],
         'subscribed_quantity' => subscription['quantity'],
         'subscription_status' => subscription['status'],
-        'subscription_ends_on' => Time.zone.at(subscription['current_period_end'])
+        'subscription_ends_on' => Time.zone.at(subscription_period_end)
       )
     )
   end
@@ -267,9 +267,27 @@ class Enterprise::Billing::HandleStripeEventService
   end
 
   def billing_period_renewed?
-    return false if previous_attributes['current_period_start'].blank?
+    previous_period_start = previous_attributes['current_period_start'] ||
+                             previous_attributes.dig('items', 'data', 0, 'current_period_start')
+    return false if previous_period_start.blank?
 
-    previous_attributes['current_period_start'] != subscription['current_period_start']
+    previous_period_start != subscription_period_start
+  end
+
+  # Stripe moved current_period_start/current_period_end off the top-level Subscription
+  # object and onto each subscription item once an account is on the newer "flexible"
+  # billing_mode (see https://docs.stripe.com/billing/subscriptions/billing-mode).
+  # We only ever create single-item subscriptions, so the first item's period is correct.
+  def subscription_period_start
+    subscription['current_period_start'] || subscription_item&.[]('current_period_start')
+  end
+
+  def subscription_period_end
+    subscription['current_period_end'] || subscription_item&.[]('current_period_end')
+  end
+
+  def subscription_item
+    subscription['items']&.[]('data')&.first
   end
 
   def account
