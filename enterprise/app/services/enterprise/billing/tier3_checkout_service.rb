@@ -18,6 +18,8 @@ class Enterprise::Billing::Tier3CheckoutService
     session_params = {
       mode: 'subscription',
       customer: customer_id,
+      customer_update: { name: 'auto', address: 'auto' },
+      billing_address_collection: 'required',
       line_items: [{ price: plan_price.stripe_price_id, quantity: 1 }],
       success_url: success_url,
       cancel_url: cancel_url,

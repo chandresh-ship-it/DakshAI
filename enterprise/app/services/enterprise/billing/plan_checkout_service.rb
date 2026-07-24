@@ -21,6 +21,8 @@ class Enterprise::Billing::PlanCheckoutService
     session = Stripe::Checkout::Session.create(
       mode: 'subscription',
       customer: find_or_create_customer,
+      customer_update: { name: 'auto', address: 'auto' },
+      billing_address_collection: 'required',
       line_items: [{ price: price_id, quantity: 1 }],
       success_url: success_url,
       cancel_url: cancel_url,

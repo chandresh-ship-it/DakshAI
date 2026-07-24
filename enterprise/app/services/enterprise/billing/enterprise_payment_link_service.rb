@@ -11,6 +11,8 @@ class Enterprise::Billing::EnterprisePaymentLinkService
     session = Stripe::Checkout::Session.create(
       mode: 'subscription',
       customer: find_or_create_customer,
+      customer_update: { name: 'auto', address: 'auto' },
+      billing_address_collection: 'required',
       line_items: [{
         price_data: {
           currency: 'usd',
