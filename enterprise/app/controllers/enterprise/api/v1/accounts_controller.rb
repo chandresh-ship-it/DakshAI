@@ -60,15 +60,13 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   def topup_checkout
     return render json: { error: I18n.t('errors.topup.credits_required') }, status: :unprocessable_entity if params[:credits].blank?
 
-    service = Enterprise::Billing::TopupCheckoutService.new(account: @account)
-    result = service.create_checkout_session(credits: params[:credits].to_i)
+    result = Enterprise::Billing::TopupCheckoutService.new(
+      account: @account,
+      success_url: params[:success_url].presence || frontend_billing_url,
+      cancel_url: params[:cancel_url].presence || frontend_billing_url
+    ).create_checkout_session(credits: params[:credits].to_i)
 
-    @account.reload
-    render json: result.merge(
-      id: @account.id,
-      limits: @account.limits,
-      custom_attributes: @account.custom_attributes
-    )
+    render json: result
   rescue Enterprise::Billing::TopupCheckoutService::Error, Stripe::StripeError => e
     render_could_not_create_error(e.message)
   end

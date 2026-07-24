@@ -541,7 +541,7 @@
       "ONE_TIME": "one-time",
       "POPULAR": "Most Popular",
       "NOTE_TITLE": "Note:",
-      "NOTE_DESCRIPTION": "Credits are added immediately and expire in 6 months. An active subscription is required to use credits. Purchased credits are consumed after your monthly plan credits.",
+      "NOTE_DESCRIPTION": "You will be redirected to Stripe to complete payment. Credits are added after payment succeeds and expire in 6 months. Purchased credits are consumed after your monthly plan credits.",
       "CANCEL": "Cancel",
       "PURCHASE": "Purchase Credits",
       "LOADING": "Loading options...",
@@ -551,9 +551,9 @@
       "CONFIRM": {
         "TITLE": "Confirm Purchase",
         "DESCRIPTION": "You are about to purchase {credits} credits for {amount}.",
-        "INSTANT_DEDUCTION_NOTE": "Your saved card will be charged immediately upon confirmation.",
+        "INSTANT_DEDUCTION_NOTE": "You will complete payment securely on Stripe. Credits are added to your account after payment succeeds.",
         "GO_BACK": "Go Back",
-        "CONFIRM_PURCHASE": "Confirm Purchase"
+        "CONFIRM_PURCHASE": "Continue to Payment"
       }
     },
     "RESELLER": {

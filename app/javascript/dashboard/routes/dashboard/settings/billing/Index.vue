@@ -123,7 +123,8 @@ const planName = computed(() => {
 
 const canPurchaseCredits = computed(() => {
   const plan = planName.value?.toLowerCase();
-  return plan && plan !== 'hacker';
+  // Hobby (and legacy Hacker) are free tiers - top-ups require a paid plan.
+  return plan && !['hobby', 'hacker'].includes(plan);
 });
 
 const hasABillingPlan = computed(() => {
@@ -333,10 +334,6 @@ const onToggleChatWindow = () => {
 
 const openPurchaseCreditsModal = () => {
   purchaseCreditsModalRef.value?.open();
-};
-
-const handleTopupSuccess = () => {
-  fetchLimits();
 };
 
 const transactions = ref([]);
@@ -763,10 +760,7 @@ onMounted(() => {
         </BillingHeader>
       </section>
 
-      <PurchaseCreditsModal
-        ref="purchaseCreditsModalRef"
-        @success="handleTopupSuccess"
-      />
+      <PurchaseCreditsModal ref="purchaseCreditsModalRef" />
       <EnterpriseInquiryModal ref="enterpriseInquiryModalRef" />
       <DowngradePlanWarningModal
         ref="downgradeWarningModalRef"

@@ -1,3 +1,7 @@
+# Creates a Stripe Checkout session for a one-time Captain AI credit purchase.
+# Credits are granted when Stripe sends checkout.session.completed (see
+# HandleStripeEventService) - same pattern as plan checkout, so users without a
+# saved card can still pay via Stripe's hosted page (required for RBI/India too).
 class Enterprise::Billing::TopupCheckoutService
   include BillingHelper
 
@@ -10,96 +14,71 @@ class Enterprise::Billing::TopupCheckoutService
     { credits: 12_000, amount: 200.0, currency: 'usd' }
   ].freeze
 
-  pattr_initialize [:account!]
+  pattr_initialize [:account!, :success_url!, :cancel_url!]
 
   def create_checkout_session(credits:)
     topup_option = validate_and_find_topup_option(credits)
-    charge_customer(topup_option, credits)
-    fulfill_credits(credits, topup_option)
 
-    {
-      credits: credits,
-      amount: topup_option[:amount],
-      currency: topup_option[:currency]
-    }
+    session = Stripe::Checkout::Session.create(
+      mode: 'payment',
+      customer: find_or_create_customer,
+      customer_update: { name: 'auto', address: 'auto' },
+      billing_address_collection: 'required',
+      line_items: [{
+        price_data: {
+          currency: topup_option[:currency],
+          product_data: { name: "Captain AI Credits - #{credits.to_i} credits" },
+          unit_amount: (topup_option[:amount] * 100).to_i
+        },
+        quantity: 1
+      }],
+      success_url: success_url,
+      cancel_url: cancel_url,
+      metadata: session_metadata(credits, topup_option)
+    )
+
+    { checkout_url: session.url }
   end
 
   private
 
   def validate_and_find_topup_option(credits)
     raise Error, I18n.t('errors.topup.invalid_credits') unless credits.to_i.positive?
-    raise Error, I18n.t('errors.topup.plan_not_eligible') if default_plan?(account)
-    raise Error, I18n.t('errors.topup.stripe_customer_not_configured') if stripe_customer_id.blank?
+    raise Error, I18n.t('errors.topup.plan_not_eligible') if default_plan?(account) || free_plan?
 
-    topup_option = find_topup_option(credits)
+    topup_option = TOPUP_OPTIONS.find { |opt| opt[:credits] == credits.to_i }
     raise Error, I18n.t('errors.topup.invalid_option') unless topup_option
-
-    # Validate payment method exists
-    validate_payment_method!
 
     topup_option
   end
 
-  def validate_payment_method!
-    customer = Stripe::Customer.retrieve(stripe_customer_id)
-
-    return if customer.invoice_settings.default_payment_method.present? || customer.default_source.present?
-
-    # Auto-set first payment method as default if available
-    payment_methods = Stripe::PaymentMethod.list(customer: stripe_customer_id, limit: 1)
-    raise Error, I18n.t('errors.topup.no_payment_method') if payment_methods.data.empty?
-
-    Stripe::Customer.update(stripe_customer_id, invoice_settings: { default_payment_method: payment_methods.data.first.id })
+  # Hobby (and legacy Hacker) are free tiers - top-ups require a paid plan.
+  def free_plan?
+    %w[hobby hacker].include?(account.custom_attributes['plan_name']&.downcase)
   end
 
-  def charge_customer(topup_option, credits)
-    amount_cents = (topup_option[:amount] * 100).to_i
-    currency = topup_option[:currency]
-    description = "AI Credits Topup: #{credits} credits"
-
-    invoice = Stripe::Invoice.create(
-      customer: stripe_customer_id,
-      currency: currency,
-      collection_method: 'charge_automatically',
-      auto_advance: false,
-      description: description
-    )
-
-    Stripe::InvoiceItem.create(
-      customer: stripe_customer_id,
-      amount: amount_cents,
-      currency: currency,
-      invoice: invoice.id,
-      description: description
-    )
-
-    finalize_and_pay(invoice.id)
-  end
-
-  def finalize_and_pay(invoice_id)
-    Stripe::Invoice.finalize_invoice(invoice_id, { auto_advance: false })
-    invoice = Stripe::Invoice.retrieve(invoice_id)
-    return if invoice.status == 'paid'
-
-    Stripe::Invoice.pay(invoice_id)
-  rescue Stripe::CardError
-    Stripe::Invoice.void_invoice(invoice_id)
-    raise
-  end
-
-  def fulfill_credits(credits, topup_option)
-    Enterprise::Billing::TopupFulfillmentService.new(account: account).fulfill(
-      credits: credits,
-      amount_cents: (topup_option[:amount] * 100).to_i,
+  def session_metadata(credits, topup_option)
+    {
+      source: 'captain_topup',
+      account_id: account.id.to_s,
+      credits: credits.to_i.to_s,
+      amount: topup_option[:amount].to_s,
       currency: topup_option[:currency]
+    }
+  end
+
+  def find_or_create_customer
+    customer_id = account.custom_attributes['stripe_customer_id']
+    return customer_id if customer_id.present?
+
+    customer = Stripe::Customer.create(
+      name: account.name,
+      email: account.administrators.first&.email,
+      metadata: { account_id: account.id.to_s }
     )
-  end
-
-  def stripe_customer_id
-    account.custom_attributes['stripe_customer_id']
-  end
-
-  def find_topup_option(credits)
-    TOPUP_OPTIONS.find { |opt| opt[:credits] == credits.to_i }
+    account.update!(
+      custom_attributes: (account.custom_attributes || {}).merge('stripe_customer_id' => customer.id)
+    )
+    customer.id
   end
 end

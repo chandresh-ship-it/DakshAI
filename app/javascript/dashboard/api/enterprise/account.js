@@ -24,8 +24,12 @@ class EnterpriseAccountAPI extends ApiClient {
     });
   }
 
-  createTopupCheckout(credits) {
-    return axios.post(`${this.url}topup_checkout`, { credits });
+  createTopupCheckout(credits, { successUrl, cancelUrl } = {}) {
+    return axios.post(`${this.url}topup_checkout`, {
+      credits,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    });
   }
 
   submitEnterpriseInquiry(inquiry) {

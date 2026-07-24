@@ -7,7 +7,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import CreditPackageCard from './CreditPackageCard.vue';
 import EnterpriseAccountAPI from 'dashboard/api/enterprise/account';
 
-const emit = defineEmits(['close', 'success']);
+const emit = defineEmits(['close']);
 
 const { t } = useI18n();
 
@@ -97,16 +97,19 @@ const handlePurchase = async () => {
   isLoading.value = true;
   try {
     const response = await EnterpriseAccountAPI.createTopupCheckout(
-      selectedOption.value.credits
+      selectedOption.value.credits,
+      {
+        successUrl: window.location.href,
+        cancelUrl: window.location.href,
+      }
     );
 
-    close();
-    emit('success', response.data);
-    useAlert(
-      t('BILLING_SETTINGS.TOPUP.PURCHASE_SUCCESS', {
-        credits: response.data.credits,
-      })
-    );
+    if (response.data.checkout_url) {
+      window.location.href = response.data.checkout_url;
+      return;
+    }
+
+    useAlert(t('BILLING_SETTINGS.TOPUP.PURCHASE_ERROR'));
   } catch (error) {
     const errorMessage =
       error.response?.data?.error || t('BILLING_SETTINGS.TOPUP.PURCHASE_ERROR');

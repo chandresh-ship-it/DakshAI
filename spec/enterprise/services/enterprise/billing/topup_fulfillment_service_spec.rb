@@ -32,5 +32,20 @@ describe Enterprise::Billing::TopupFulfillmentService do
         )
       )
     end
+
+    it 'still credits the account when Stripe CreditGrant fails' do
+      allow(Stripe::Billing::CreditGrant).to receive(:create).and_raise(Stripe::StripeError.new('not enabled'))
+
+      service.fulfill(credits: 1000, amount_cents: 2000, currency: 'usd')
+
+      expect(account.reload.limits['captain_responses']).to eq(2000)
+    end
+
+    it 'does not double-credit the same checkout session' do
+      service.fulfill(credits: 1000, amount_cents: 2000, currency: 'usd', stripe_session_id: 'cs_test')
+      service.fulfill(credits: 1000, amount_cents: 2000, currency: 'usd', stripe_session_id: 'cs_test')
+
+      expect(account.reload.limits['captain_responses']).to eq(2000)
+    end
   end
 end

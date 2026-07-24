@@ -23,6 +23,8 @@ class Enterprise::Billing::HandleStripeEventService
         process_subscription_updated
       when 'customer.subscription.deleted'
         process_subscription_deleted
+      when 'checkout.session.completed'
+        process_checkout_session_completed
       when 'invoice.payment_succeeded'
         record_payment_transaction(status: 'succeeded')
         process_invoice_payment_succeeded
@@ -35,6 +37,45 @@ class Enterprise::Billing::HandleStripeEventService
   end
 
   private
+
+  def process_checkout_session_completed
+    session = @event.data.object
+    return unless session.metadata['source'] == 'captain_topup'
+
+    payer_account = Account.find_by(id: session.metadata['account_id'])
+    return if payer_account.blank?
+
+    credits = session.metadata['credits'].to_i
+    amount = session.metadata['amount'].to_f
+    currency = session.metadata['currency'].presence || 'usd'
+    return if credits <= 0
+
+    Enterprise::Billing::TopupFulfillmentService.new(account: payer_account).fulfill(
+      credits: credits,
+      amount_cents: (amount * 100).to_i,
+      currency: currency,
+      stripe_session_id: session.id
+    )
+
+    record_topup_payment_transaction(payer_account, session, credits, amount, currency)
+  end
+
+  def record_topup_payment_transaction(payer_account, session, credits, amount, currency)
+    PaymentTransaction.find_or_initialize_by(
+      stripe_invoice_id: session.invoice.presence || session.payment_intent.presence || session.id
+    ).update!(
+      account: payer_account,
+      stripe_customer_id: session.customer,
+      amount: amount,
+      currency: currency,
+      status: 'succeeded',
+      description: "Captain AI Credits - #{credits} credits",
+      billing_reason: 'captain_topup',
+      paid_at: Time.current
+    )
+  rescue StandardError => e
+    Rails.logger.error("Failed to record topup payment transaction for session #{session.id}: #{e.message}")
+  end
 
   def process_subscription_updated
     if marketplace_subscription?
