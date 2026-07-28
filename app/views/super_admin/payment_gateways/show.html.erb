@@ -16,10 +16,10 @@
   <% end %>
 
   <p class="mb-6 text-sm text-slate-600 max-w-3xl">
-    Enable or disable payment gateways for cloud billing. Country codes route checkout by billing country
-    (for example, <code>IN</code> for India). Leave country codes blank to use a gateway as the default
-    fallback for countries not matched elsewhere. API keys stay in environment variables; gateways marked
-    “Not configured” are ignored even if enabled.
+    Enable or disable payment gateways for cloud billing. Search and select country codes to route checkout
+    (for example, India → <code>IN</code>). Leave country codes empty to use a gateway as the default fallback
+    for countries not matched elsewhere. API keys stay in environment variables; gateways marked “Not configured”
+    are ignored even if enabled.
   </p>
 
   <%= form_tag super_admin_payment_gateways_path, method: :patch do %>
@@ -45,9 +45,23 @@
                   class: 'rounded border-slate-300 text-violet-600 focus:ring-violet-600' %>
               </td>
               <td class="cell-data">
-                <%= text_field_tag "gateways[#{gateway['id']}][country_codes]", gateway['country_codes_text'],
-                  placeholder: 'Leave blank for default fallback',
-                  class: 'block w-full min-w-[12rem] rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-violet-600 focus:ring-violet-600' %>
+                <div
+                  class="payment-gateway-countries min-w-[18rem]"
+                  data-payment-gateway-countries
+                  data-initial-codes="<%= gateway['country_codes_text'] %>"
+                >
+                  <div class="js-country-tags flex flex-wrap gap-1 mb-2"></div>
+                  <div class="relative">
+                    <input
+                      type="text"
+                      class="js-country-search block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-violet-600 focus:ring-violet-600"
+                      placeholder="Search country to add..."
+                      autocomplete="off"
+                    />
+                    <ul class="js-country-suggestions hidden absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg"></ul>
+                  </div>
+                  <%= hidden_field_tag "gateways[#{gateway['id']}][country_codes]", gateway['country_codes_text'], class: 'js-country-codes-input' %>
+                </div>
               </td>
               <td class="cell-data uppercase text-slate-700"><%= gateway['currency'] %></td>
               <td class="cell-data">
