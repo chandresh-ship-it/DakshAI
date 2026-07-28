@@ -66,18 +66,28 @@ class EnterpriseContract < ApplicationRecord
     return unless previously_new_record? || saved_change_to_contract_start_date? || saved_change_to_contract_end_date?
     return if contract_end_date < Time.zone.today
 
-    account.update_column(:custom_attributes, account.custom_attributes.merge('plan_name' => 'Enterprise', 'subscription_status' => 'active'))
-
     sub_record = account.subscription || account.build_subscription
+    payment_provider = currency.to_s.upcase == 'INR' ? 'razorpay' : 'stripe'
     sub_record.assign_attributes(
       plan_name: 'Enterprise',
       status: 'active',
       relationship_type: 'platform',
+      payment_provider: payment_provider,
       subscribed_quantity: sub_record.subscribed_quantity || 1,
       current_period_start: contract_start_date,
       current_period_end: contract_end_date
     )
     sub_record.save!
+
+    account.update_column(
+      :custom_attributes,
+      account.custom_attributes.merge(
+        'plan_name' => 'Enterprise',
+        'subscription_status' => 'active',
+        'payment_provider' => payment_provider,
+        'billing_country' => (payment_provider == 'razorpay' ? 'IN' : account.custom_attributes['billing_country'])
+      )
+    )
 
     Enterprise::Billing::ReconcilePlanFeaturesService.new(account: account).perform
   end
@@ -86,9 +96,9 @@ class EnterpriseContract < ApplicationRecord
     self.currency ||= 'USD'
     self.collection_method ||= 'charge_automatically'
 
-    if new_record? && negotiated_features.blank?
-      self.negotiated_features = PlanFeatureLimit.where(plan_key: 'enterprise', enabled: true).pluck(:feature_key)
-    end
+    return unless new_record? && negotiated_features.blank?
+
+    self.negotiated_features = PlanFeatureLimit.where(plan_key: 'enterprise', enabled: true).pluck(:feature_key)
   end
 
   def end_date_must_be_after_start_date

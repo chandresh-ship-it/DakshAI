@@ -60,9 +60,11 @@ const hasActiveSubscription = computed(
   () => !!accountSubscription.value?.active
 );
 const lockedPaymentProvider = computed(() => {
-  if (!hasActiveSubscription.value) return null;
+  const sub = accountSubscription.value;
+  if (!sub) return null;
+
   return (
-    accountSubscription.value?.payment_provider ||
+    sub.payment_provider ||
     currentAccount.value?.custom_attributes?.payment_provider ||
     null
   );
@@ -92,7 +94,10 @@ const paymentProviderLabel = computed(() => {
     : t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE');
 });
 const usesStripePortal = computed(
-  () => !lockedPaymentProvider.value || lockedPaymentProvider.value === 'stripe'
+  () => lockedPaymentProvider.value === 'stripe'
+);
+const usesRazorpayBilling = computed(
+  () => lockedPaymentProvider.value === 'razorpay'
 );
 
 // Order matters here - used to detect downgrades and to show the retention
@@ -441,11 +446,19 @@ const handleBillingPageLogic = async () => {
 };
 
 const onClickBillingPortal = () => {
-  if (!usesStripePortal.value) {
+  if (usesRazorpayBilling.value) {
     useAlert(t('BILLING_SETTINGS.SELECT_PLAN.RAZORPAY_MANAGE_HINT'));
     return;
   }
   store.dispatch('accounts/checkout');
+};
+
+const onClickCaptainUpgrade = () => {
+  if (usesStripePortal.value) {
+    onClickBillingPortal();
+    return;
+  }
+  showPlanPicker.value = true;
 };
 
 const isCancelingSubscription = ref(false);
@@ -769,6 +782,18 @@ onMounted(() => {
               >
                 {{ $t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.BUTTON_TXT') }}
               </ButtonV4>
+              <ButtonV4
+                v-if="usesRazorpayBilling && hasActiveSubscription"
+                sm
+                flushed
+                slate
+                :is-loading="isCancelingSubscription"
+                @click="onCancelRazorpaySubscription"
+              >
+                {{
+                  $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_SUBSCRIPTION_BUTTON')
+                }}
+              </ButtonV4>
               <ButtonV4 sm solid blue @click="showPlanPicker = true">
                 {{ $t('BILLING_SETTINGS.CURRENT_PLAN.CHANGE_PLAN_BUTTON') }}
               </ButtonV4>
@@ -960,7 +985,7 @@ onMounted(() => {
           :description="$t('BILLING_SETTINGS.CAPTAIN.UPGRADE')"
         >
           <template #action>
-            <ButtonV4 sm solid slate @click="onClickBillingPortal">
+            <ButtonV4 sm solid slate @click="onClickCaptainUpgrade">
               {{ $t('CAPTAIN.PAYWALL.UPGRADE_NOW') }}
             </ButtonV4>
           </template>
