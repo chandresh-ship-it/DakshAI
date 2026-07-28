@@ -24,6 +24,15 @@ class Enterprise::Billing::TopupCheckoutService
       customer: find_or_create_customer,
       customer_update: { name: 'auto', address: 'auto' },
       billing_address_collection: 'required',
+      # One-time Checkout does not create a Stripe Invoice unless this is on -
+      # without it there is no hosted invoice/PDF for Captain credit purchases.
+      invoice_creation: {
+        enabled: true,
+        invoice_data: {
+          description: "Captain AI Credits - #{credits.to_i} credits",
+          metadata: session_metadata(credits, topup_option)
+        }
+      },
       line_items: [{
         price_data: {
           currency: topup_option[:currency],

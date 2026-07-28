@@ -36,6 +36,7 @@ describe Enterprise::Billing::TopupCheckoutService do
         hash_including(
           mode: 'payment',
           customer: stripe_customer_id,
+          invoice_creation: hash_including(enabled: true),
           metadata: hash_including(source: 'captain_topup', credits: '1000')
         )
       )

@@ -61,20 +61,51 @@ class Enterprise::Billing::HandleStripeEventService
   end
 
   def record_topup_payment_transaction(payer_account, session, credits, amount, currency)
+    invoice = retrieve_checkout_invoice(session)
+    description = "Captain AI Credits - #{credits} credits"
+
+    if invoice.present?
+      Enterprise::Billing::RecordPaymentTransactionService.new(
+        account: payer_account,
+        invoice: invoice,
+        status: 'succeeded'
+      ).perform
+      # Prefer the Captain-specific label over Stripe's generic line description.
+      PaymentTransaction.find_by(stripe_invoice_id: invoice.id)&.update!(
+        description: description,
+        billing_reason: 'captain_topup'
+      )
+      return
+    end
+
     PaymentTransaction.find_or_initialize_by(
-      stripe_invoice_id: session.invoice.presence || session.payment_intent.presence || session.id
+      stripe_invoice_id: session['payment_intent'].presence || session.id
     ).update!(
       account: payer_account,
       stripe_customer_id: session.customer,
       amount: amount,
       currency: currency,
       status: 'succeeded',
-      description: "Captain AI Credits - #{credits} credits",
+      description: description,
       billing_reason: 'captain_topup',
       paid_at: Time.current
     )
   rescue StandardError => e
     Rails.logger.error("Failed to record topup payment transaction for session #{session.id}: #{e.message}")
+  end
+
+  def retrieve_checkout_invoice(session)
+    invoice_id = session['invoice'].presence
+    return Stripe::Invoice.retrieve(invoice_id) if invoice_id.present?
+
+    # invoice_creation can attach the invoice slightly after session.completed -
+    # re-fetch the session once so Payment History gets the hosted invoice link.
+    refreshed = Stripe::Checkout::Session.retrieve(session.id)
+    invoice_id = refreshed['invoice'].presence
+    Stripe::Invoice.retrieve(invoice_id) if invoice_id.present?
+  rescue Stripe::StripeError => e
+    Rails.logger.warn("[topup] could not load invoice for session #{session.id}: #{e.message}")
+    nil
   end
 
   def process_subscription_updated
