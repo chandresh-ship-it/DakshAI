@@ -1,13 +1,19 @@
-# Creates a Stripe Checkout session for a negotiated Enterprise price. Since
-# Enterprise pricing isn't a pre-configured Stripe Price, this builds the price
-# on the fly via `price_data`. The resulting subscription is tagged with
-# `plan_name: 'Enterprise'` in its metadata so HandleStripeEventService can
-# activate the Enterprise plan for the account once payment succeeds, without
-# needing a matching Product/Price ID in CHATWOOT_CLOUD_PLANS.
+# Creates a hosted checkout URL for a negotiated Enterprise price. Routes to
+# Stripe Checkout (USD) or Razorpay Subscriptions (INR) based on the account's
+# billing country / locked payment provider.
 class Enterprise::Billing::EnterprisePaymentLinkService
-  pattr_initialize [:account!, :monthly_price!, :success_url!, :cancel_url!]
+  pattr_initialize [:account!, :monthly_price!, :success_url!, :cancel_url!, :provider]
 
   def perform
+    if razorpay?
+      return Enterprise::Billing::RazorpayEnterprisePaymentLinkService.new(
+        account: account,
+        monthly_price: monthly_price,
+        success_url: success_url,
+        cancel_url: cancel_url
+      ).perform
+    end
+
     session = Stripe::Checkout::Session.create(
       mode: 'subscription',
       customer: find_or_create_customer,
@@ -28,10 +34,19 @@ class Enterprise::Billing::EnterprisePaymentLinkService
       subscription_data: { metadata: session_metadata }
     )
 
-    { checkout_url: session.url }
+    { checkout_url: session.url, provider: 'stripe' }
   end
 
   private
+
+  def razorpay?
+    return provider.to_s == 'razorpay' if provider.present?
+
+    locked = account.subscription&.payment_provider
+    return locked == 'razorpay' if locked.present?
+
+    account.custom_attributes['billing_country'].to_s.upcase == 'IN'
+  end
 
   def session_metadata
     { relationship_type: 'platform', account_id: account.id.to_s, plan_name: 'Enterprise' }

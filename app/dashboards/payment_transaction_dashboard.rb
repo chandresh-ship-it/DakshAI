@@ -4,6 +4,7 @@ class PaymentTransactionDashboard < Administrate::BaseDashboard
   ATTRIBUTE_TYPES = {
     id: Field::Number,
     account: Field::BelongsTo,
+    payment_provider: Field::String,
     stripe_customer_id: Field::String,
     stripe_invoice_id: Field::String,
     stripe_charge_id: Field::String,
@@ -23,6 +24,7 @@ class PaymentTransactionDashboard < Administrate::BaseDashboard
     id
     account
     description
+    payment_provider
     amount
     currency
     status
@@ -32,6 +34,7 @@ class PaymentTransactionDashboard < Administrate::BaseDashboard
   SHOW_PAGE_ATTRIBUTES = %i[
     id
     account
+    payment_provider
     stripe_customer_id
     stripe_invoice_id
     stripe_charge_id

@@ -1,0 +1,159 @@
+<%# locals: account, transactions, plan_name (optional) %>
+<% sub = account.subscription %>
+<% plan_name = local_assigns[:plan_name].presence || sub&.plan_name.presence || account.custom_attributes['plan_name'] %>
+<% billing_country = account.custom_attributes['billing_country'] %>
+
+<section class="space-y-6">
+  <div class="rounded-lg border border-slate-200 bg-white overflow-hidden">
+    <div class="border-b border-slate-200 px-4 py-3">
+      <h2 class="text-sm font-semibold text-slate-900">Current plan</h2>
+    </div>
+    <table>
+      <tbody>
+        <tr class="js-table-row">
+          <td class="cell-label w-1/3">Account</td>
+          <td class="cell-data font-semibold text-slate-800">
+            #<%= account.id %> — <%= account.name %>
+          </td>
+        </tr>
+        <tr class="js-table-row">
+          <td class="cell-label">Plan</td>
+          <td class="cell-data"><%= plan_name.presence || '—' %></td>
+        </tr>
+        <% if sub.present? %>
+          <tr class="js-table-row">
+            <td class="cell-label">Subscription status</td>
+            <td class="cell-data"><%= sub.status %></td>
+          </tr>
+          <tr class="js-table-row">
+            <td class="cell-label">Active</td>
+            <td class="cell-data"><%= sub.active? ? 'Yes' : 'No' %></td>
+          </tr>
+          <tr class="js-table-row">
+            <td class="cell-label">Payment provider</td>
+            <td class="cell-data"><%= sub.payment_provider.to_s.capitalize %></td>
+          </tr>
+          <tr class="js-table-row">
+            <td class="cell-label">Current period start</td>
+            <td class="cell-data">
+              <%= sub.current_period_start.present? ? l(sub.current_period_start, format: :long) : '—' %>
+            </td>
+          </tr>
+          <tr class="js-table-row">
+            <td class="cell-label"><%= sub.cancel_at_period_end? ? 'Access until' : 'Renews on' %></td>
+            <td class="cell-data">
+              <%= sub.current_period_end.present? ? l(sub.current_period_end, format: :long) : '—' %>
+            </td>
+          </tr>
+          <% if sub.grace_period_ends_at.present? %>
+            <tr class="js-table-row">
+              <td class="cell-label">Payment retry by</td>
+              <td class="cell-data"><%= l(sub.grace_period_ends_at, format: :long) %></td>
+            </tr>
+          <% end %>
+          <tr class="js-table-row">
+            <td class="cell-label">Cancel at period end</td>
+            <td class="cell-data"><%= sub.cancel_at_period_end? ? 'Yes' : 'No' %></td>
+          </tr>
+        <% else %>
+          <tr class="js-table-row">
+            <td class="cell-label">Subscription</td>
+            <td class="cell-data text-slate-500">No subscription record</td>
+          </tr>
+        <% end %>
+        <% if billing_country.present? %>
+          <tr class="js-table-row">
+            <td class="cell-label">Billing country</td>
+            <td class="cell-data"><%= billing_country %></td>
+          </tr>
+        <% end %>
+        <% if account.parent.present? %>
+          <tr class="js-table-row">
+            <td class="cell-label">Reseller parent</td>
+            <td class="cell-data">
+              <%= link_to account.parent.name, account_super_admin_account_hierarchy_path(account.parent), class: 'text-violet-700 hover:underline' %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if sub.present? %>
+    <div class="rounded-lg border border-slate-200 bg-white overflow-hidden">
+      <div class="border-b border-slate-200 px-4 py-3">
+        <h2 class="text-sm font-semibold text-slate-900">Payment gateway IDs</h2>
+      </div>
+      <table>
+        <tbody>
+          <% if sub.payment_provider == 'stripe' %>
+            <tr class="js-table-row">
+              <td class="cell-label w-1/3">Stripe customer</td>
+              <td class="cell-data font-mono text-sm"><%= sub.stripe_customer_id.presence || account.custom_attributes['stripe_customer_id'].presence || '—' %></td>
+            </tr>
+            <tr class="js-table-row">
+              <td class="cell-label">Stripe subscription</td>
+              <td class="cell-data font-mono text-sm"><%= sub.stripe_subscription_id.presence || '—' %></td>
+            </tr>
+          <% else %>
+            <tr class="js-table-row">
+              <td class="cell-label w-1/3">Razorpay customer</td>
+              <td class="cell-data font-mono text-sm"><%= sub.razorpay_customer_id.presence || account.custom_attributes['razorpay_customer_id'].presence || '—' %></td>
+            </tr>
+            <tr class="js-table-row">
+              <td class="cell-label">Razorpay subscription</td>
+              <td class="cell-data font-mono text-sm"><%= sub.razorpay_subscription_id.presence || '—' %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <div class="rounded-lg border border-slate-200 bg-white overflow-hidden">
+    <div class="border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-slate-900">Payment transactions</h2>
+      <span class="text-xs text-slate-500"><%= pluralize(transactions.size, 'record') %></span>
+    </div>
+    <% if transactions.empty? %>
+      <p class="px-4 py-6 text-sm text-slate-500">No payment transactions yet.</p>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table>
+          <thead>
+            <tr>
+              <th class="cell-label" scope="col">Date</th>
+              <th class="cell-label" scope="col">Description</th>
+              <th class="cell-label" scope="col">Provider</th>
+              <th class="cell-label" scope="col">Amount</th>
+              <th class="cell-label" scope="col">Status</th>
+              <th class="cell-label" scope="col">Receipt</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% transactions.each do |txn| %>
+              <tr class="js-table-row">
+                <td class="cell-data whitespace-nowrap">
+                  <%= txn.paid_at.present? ? l(txn.paid_at, format: :long) : l(txn.created_at, format: :long) %>
+                </td>
+                <td class="cell-data"><%= txn.description.presence || '—' %></td>
+                <td class="cell-data"><%= txn.payment_provider.to_s.capitalize %></td>
+                <td class="cell-data whitespace-nowrap">
+                  <%= txn.amount %> <%= txn.currency.to_s.upcase %>
+                </td>
+                <td class="cell-data"><%= txn.status.titleize %></td>
+                <td class="cell-data">
+                  <% if txn.hosted_invoice_url.present? %>
+                    <%= link_to 'View', txn.hosted_invoice_url, target: '_blank', rel: 'noopener noreferrer', class: 'text-violet-700 hover:underline' %>
+                  <% else %>
+                    —
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+</section>

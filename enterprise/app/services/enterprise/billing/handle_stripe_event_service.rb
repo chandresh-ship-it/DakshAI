@@ -127,6 +127,7 @@ class Enterprise::Billing::HandleStripeEventService
 
     sub_record = Subscription.find_or_initialize_by(account: client_account)
     sub_record.update!(
+      payment_provider: 'stripe',
       stripe_customer_id: subscription.customer,
       stripe_subscription_id: subscription.id,
       status: subscription.status,
@@ -165,6 +166,7 @@ class Enterprise::Billing::HandleStripeEventService
     sub_record = Subscription.find_or_initialize_by(account: account)
     was_already_past_due = %w[past_due unpaid].include?(sub_record.status)
     sub_record.update!(
+      payment_provider: 'stripe',
       stripe_customer_id: subscription.customer,
       stripe_subscription_id: subscription.id,
       status: subscription.status,
@@ -175,6 +177,7 @@ class Enterprise::Billing::HandleStripeEventService
       subscribed_quantity: subscription['quantity'],
       current_period_start: Time.zone.at(subscription_period_start),
       current_period_end: Time.zone.at(subscription_period_end),
+      cancel_at_period_end: subscription.cancel_at_period_end == true,
       grace_period_ends_at: own_grace_period_ends_at(was_already_past_due, sub_record.grace_period_ends_at)
     )
 
@@ -194,6 +197,7 @@ class Enterprise::Billing::HandleStripeEventService
     end
 
     Enterprise::Billing::ReconcilePlanFeaturesService.new(account: account).perform
+    record_coupon_redemption!(subscription.metadata) if @event.type == 'customer.subscription.created'
 
     if billing_period_renewed?
       ActiveRecord::Base.transaction do
@@ -439,6 +443,13 @@ class Enterprise::Billing::HandleStripeEventService
 
   def marketplace_subscription?
     subscription.metadata['relationship_type'] == 'marketplace'
+  end
+
+  def record_coupon_redemption!(metadata)
+    code = metadata&.[]('coupon_code').presence
+    return if code.blank?
+
+    BillingCoupon.find_by(code: code.to_s.upcase)&.record_redemption!
   end
 
   # Prefer resolving the plan from the subscription's *current* Price/Product ID -

@@ -73,7 +73,8 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
       plan.merge(
         'price_per_agent' => plan_data[:price_per_agent].to_f,
         'enabled' => plan_data[:enabled] == '1',
-        'price_ids' => plan_data[:stripe_price_id].present? ? [plan_data[:stripe_price_id]] : []
+        'price_ids' => plan_data[:stripe_price_id].present? ? [plan_data[:stripe_price_id]] : [],
+        'razorpay_plan_ids' => plan_data[:razorpay_plan_id].present? ? [plan_data[:razorpay_plan_id]] : []
       )
     end
 

@@ -2,6 +2,9 @@
 # self-serve cloud plans (Hobby/Standard/Business). Requires the plan's Stripe
 # Price ID to have been configured in Super Admin > Plan Management first.
 #
+# Optional coupon_code attaches a Stripe Coupon (synced from BillingCoupon) and
+# stamps coupon metadata onto the Checkout session + subscription.
+#
 # Not used for Enterprise (negotiated - see EnterprisePaymentLinkService). If the
 # account already has an active *real* Stripe subscription (as opposed to one set
 # via the dev-only bypass_plan), a new Checkout session would create a second,
@@ -12,23 +15,15 @@ class Enterprise::Billing::PlanCheckoutService
 
   class Error < StandardError; end
 
-  pattr_initialize [:account!, :plan_name!, :success_url!, :cancel_url!]
+  pattr_initialize [:account!, :plan_name!, :success_url!, :cancel_url!, :coupon_code]
 
   def perform
     return { checkout_url: billing_portal_url } if already_on_real_stripe_subscription?
     raise Error, 'This plan is not available for online purchase yet. Please contact support.' if price_id.blank?
 
-    session = Stripe::Checkout::Session.create(
-      mode: 'subscription',
-      customer: find_or_create_customer,
-      customer_update: { name: 'auto', address: 'auto' },
-      billing_address_collection: 'required',
-      line_items: [{ price: price_id, quantity: 1 }],
-      success_url: success_url,
-      cancel_url: cancel_url,
-      metadata: session_metadata,
-      subscription_data: { metadata: session_metadata }
-    )
+    ensure_stripe_coupon! if coupon.present?
+
+    session = Stripe::Checkout::Session.create(session_payload)
 
     { checkout_url: session.url }
   end
@@ -50,8 +45,43 @@ class Enterprise::Billing::PlanCheckoutService
     Enterprise::Billing::CreateSessionService.new.create_session(find_or_create_customer, success_url).url
   end
 
+  def session_payload
+    payload = {
+      mode: 'subscription',
+      customer: find_or_create_customer,
+      customer_update: { name: 'auto', address: 'auto' },
+      billing_address_collection: 'required',
+      line_items: [{ price: price_id, quantity: 1 }],
+      success_url: success_url,
+      cancel_url: cancel_url,
+      metadata: session_metadata,
+      subscription_data: { metadata: session_metadata }
+    }
+    payload[:discounts] = [{ coupon: coupon.stripe_coupon_id }] if coupon&.stripe_coupon_id.present?
+    payload
+  end
+
   def session_metadata
-    { relationship_type: 'platform', account_id: account.id.to_s, plan_name: plan_name }
+    meta = { relationship_type: 'platform', account_id: account.id.to_s, plan_name: plan_name }
+    return meta if coupon.blank?
+
+    meta.merge(coupon.gateway_metadata.stringify_keys)
+  end
+
+  def coupon
+    return @coupon if defined?(@coupon)
+    return @coupon = nil if coupon_code.blank?
+
+    @coupon = Enterprise::Billing::ApplyBillingCouponService.new(code: coupon_code, context: 'plan').perform
+  rescue Enterprise::Billing::ApplyBillingCouponService::Error => e
+    raise Error, e.message
+  end
+
+  def ensure_stripe_coupon!
+    return if coupon.stripe_coupon_id.present?
+
+    Enterprise::Billing::SyncBillingCouponService.new(coupon: coupon).perform
+    coupon.reload
   end
 
   def plan

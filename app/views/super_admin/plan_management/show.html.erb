@@ -42,7 +42,12 @@
             <div class="mt-3">
               <label class="block text-sm font-medium text-slate-700 mb-1">Stripe Price ID</label>
               <%= text_field_tag "plans[#{plan['name']}][stripe_price_id]", plan['price_ids']&.first, placeholder: 'price_...', class: 'block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-violet-600 focus:ring-violet-600' %>
-              <p class="mt-1 text-xs text-slate-400">Recurring monthly Price from your Stripe Dashboard. Required before users can buy this plan.</p>
+              <p class="mt-1 text-xs text-slate-400">Recurring monthly Price from your Stripe Dashboard. Required before non-India users can buy this plan.</p>
+            </div>
+            <div class="mt-3">
+              <label class="block text-sm font-medium text-slate-700 mb-1">Razorpay Plan ID</label>
+              <%= text_field_tag "plans[#{plan['name']}][razorpay_plan_id]", plan['razorpay_plan_ids']&.first || plan['razorpay_plan_id'], placeholder: 'plan_...', class: 'block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-violet-600 focus:ring-violet-600' %>
+              <p class="mt-1 text-xs text-slate-400">Monthly Plan from your Razorpay Dashboard. Required before India users can buy this plan.</p>
             </div>
           <% end %>
         </div>

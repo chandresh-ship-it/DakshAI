@@ -50,7 +50,7 @@ class Enterprise::Api::V1::PricingPanelController < Api::BaseController
   def ensure_connected_account
     connected = @account.connected_account
     if connected.blank? || !connected.charges_enabled?
-      render json: { error: 'You must complete Stripe Connect onboarding first before setting prices' }, status: :forbidden
+      render json: { error: 'You must complete payment onboarding first before setting prices' }, status: :forbidden
     end
   end
 
@@ -64,7 +64,9 @@ class Enterprise::Api::V1::PricingPanelController < Api::BaseController
 
     {
       id: connected.id,
+      payment_provider: connected.payment_provider,
       stripe_account_id: connected.stripe_account_id,
+      razorpay_account_id: connected.razorpay_account_id,
       charges_enabled: connected.charges_enabled,
       charge_routing: connected.charge_routing,
       commission_percent: CommissionRule.current_percent_for(pricing_account)
@@ -80,6 +82,7 @@ class Enterprise::Api::V1::PricingPanelController < Api::BaseController
       platform_fee_amount: price.platform_fee_amount.to_f,
       total_amount: price.total_amount.to_f,
       stripe_price_id: price.stripe_price_id,
+      razorpay_plan_id: price.razorpay_plan_id,
       active: price.active
     }
   end

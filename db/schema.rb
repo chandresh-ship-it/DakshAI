@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_24_140536) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_28_140000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -269,6 +269,30 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_24_140536) do
     t.datetime "updated_at", null: false
     t.boolean "active", default: true, null: false
     t.index ["account_id"], name: "index_automation_rules_on_account_id"
+  end
+
+  create_table "billing_coupons", force: :cascade do |t|
+    t.string "code", null: false
+    t.string "name", null: false
+    t.string "discount_type", default: "percent", null: false
+    t.decimal "percent_off", precision: 5, scale: 2
+    t.decimal "amount_off", precision: 10, scale: 2
+    t.string "currency", default: "usd"
+    t.string "duration", default: "once", null: false
+    t.integer "duration_in_months"
+    t.integer "max_redemptions"
+    t.integer "times_redeemed", default: 0, null: false
+    t.datetime "redeem_by"
+    t.boolean "active", default: true, null: false
+    t.string "applies_to", default: "plan", null: false
+    t.string "stripe_coupon_id"
+    t.string "razorpay_offer_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_billing_coupons_on_active"
+    t.index ["code"], name: "index_billing_coupons_on_code", unique: true
+    t.index ["stripe_coupon_id"], name: "index_billing_coupons_on_stripe_coupon_id", unique: true, where: "(stripe_coupon_id IS NOT NULL)"
   end
 
   create_table "bulk_action_audits", force: :cascade do |t|
@@ -659,7 +683,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_24_140536) do
 
   create_table "connected_accounts", force: :cascade do |t|
     t.bigint "account_id", null: false
-    t.string "stripe_account_id", null: false
+    t.string "stripe_account_id"
     t.string "country", null: false
     t.string "charge_routing", null: false
     t.string "onboarding_status", default: "onboarding_incomplete", null: false
@@ -667,7 +691,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_24_140536) do
     t.boolean "payouts_enabled", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "payment_provider", default: "stripe", null: false
+    t.string "razorpay_account_id"
     t.index ["account_id"], name: "index_connected_accounts_on_account_id", unique: true
+    t.index ["razorpay_account_id"], name: "index_connected_accounts_on_razorpay_account_id", unique: true, where: "(razorpay_account_id IS NOT NULL)"
     t.index ["stripe_account_id"], name: "index_connected_accounts_on_stripe_account_id", unique: true
   end
 
@@ -1061,6 +1088,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_24_140536) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "razorpay_plan_id"
     t.index ["account_id"], name: "index_marketplace_plan_prices_on_account_id"
   end
 
@@ -1465,8 +1493,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_24_140536) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "grace_period_ends_at"
+    t.string "payment_provider", default: "stripe", null: false
+    t.string "razorpay_subscription_id"
+    t.string "razorpay_customer_id"
+    t.boolean "cancel_at_period_end", default: false, null: false
     t.index ["account_id"], name: "index_subscriptions_on_account_id", unique: true
     t.index ["connected_account_id"], name: "index_subscriptions_on_connected_account_id"
+    t.index ["razorpay_subscription_id"], name: "index_subscriptions_on_razorpay_subscription_id", unique: true, where: "(razorpay_subscription_id IS NOT NULL)"
     t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
   end
 

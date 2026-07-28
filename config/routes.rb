@@ -558,10 +558,12 @@ Rails.application.routes.draw do
               post :toggle_deletion
               post :topup_checkout
               post :plan_checkout
+              post :validate_coupon
               post :bypass_plan
               post :enterprise_inquiry
               get :plans
               get :transactions
+              post :cancel_subscription
             end
 
             resource :connected_account, only: [:create], controller: :connected_accounts do
@@ -575,6 +577,7 @@ Rails.application.routes.draw do
       end
 
       post 'webhooks/stripe', to: 'webhooks/stripe#process_payload'
+      post 'webhooks/razorpay', to: 'webhooks/razorpay#process_payload'
       post 'webhooks/firecrawl', to: 'webhooks/firecrawl#process_payload'
     end
   end
@@ -740,6 +743,7 @@ Rails.application.routes.draw do
       end
       resources :subscriptions, only: [:index, :show]
       resources :payment_transactions, only: [:index, :show]
+      resources :billing_coupons
       resources :marketplace_plan_prices, only: [:index, :show]
       resource :plan_management, only: [:show, :update], controller: :plan_management
       resources :users, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
@@ -747,7 +751,9 @@ Rails.application.routes.draw do
       end
 
       resources :access_tokens, only: [:index, :show]
-      resource :account_hierarchy, only: [:show], controller: :account_hierarchy
+      resource :account_hierarchy, only: [:show], controller: :account_hierarchy do
+        get 'accounts/:account_id', action: :account, as: :account
+      end
       resources :installation_configs, only: [:index, :new, :create, :show, :edit, :update]
       resources :agent_bots, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         delete :avatar, on: :member, action: :destroy_avatar

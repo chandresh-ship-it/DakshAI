@@ -59,6 +59,8 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
     monthly_price = params[:monthly_price].presence || account.enterprise_contract&.negotiated_price
     inquiry = account.custom_attributes['enterprise_inquiry'] || {}
     recipient_email = inquiry['requested_by']
+    provider = params[:payment_provider].presence ||
+               (account.custom_attributes['billing_country'].to_s.upcase == 'IN' ? 'razorpay' : 'stripe')
 
     if monthly_price.blank? || recipient_email.blank?
       # rubocop:disable Rails/I18nLocaleTexts
@@ -70,7 +72,8 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
       account: account,
       monthly_price: monthly_price,
       success_url: ENV.fetch('FRONTEND_URL', root_url),
-      cancel_url: ENV.fetch('FRONTEND_URL', root_url)
+      cancel_url: ENV.fetch('FRONTEND_URL', root_url),
+      provider: provider
     ).perform
 
     EnterpriseInquiryPaymentLinkMailer.with(account: account)
@@ -82,13 +85,15 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
                                                 'enterprise_inquiry' => inquiry.merge(
                                                   'payment_link_url' => result[:checkout_url],
                                                   'payment_link_amount' => monthly_price,
+                                                  'payment_link_provider' => result[:provider] || provider,
                                                   'payment_link_sent_at' => Time.current.iso8601,
                                                   'payment_link_sent_by' => current_super_admin.email
                                                 )
                                               ))
 
     redirect_back(fallback_location: super_admin_enterprise_inquiries_path, notice: "Payment link sent to #{recipient_email}.")
-  rescue Stripe::StripeError => e
+  rescue Stripe::StripeError, Enterprise::Billing::RazorpayClient::Error,
+         Enterprise::Billing::RazorpayEnterprisePaymentLinkService::Error => e
     redirect_back(fallback_location: super_admin_enterprise_inquiries_path, alert: "Failed to create payment link: #{e.message}")
   end
 end

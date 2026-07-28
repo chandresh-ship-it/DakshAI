@@ -15,15 +15,17 @@ import DetailItem from './components/DetailItem.vue';
 import PurchaseCreditsModal from './components/PurchaseCreditsModal.vue';
 import EnterpriseInquiryModal from './components/EnterpriseInquiryModal.vue';
 import DowngradePlanWarningModal from './components/DowngradePlanWarningModal.vue';
+import PlanCheckoutModal from './components/PlanCheckoutModal.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import ButtonV4 from 'next/button/Button.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import EnterpriseAccountAPI from 'dashboard/api/enterprise/account';
+import countries from 'shared/constants/countries.js';
 
 const router = useRouter();
-const { t } = useI18n();
+const { t, te } = useI18n();
 const { currentAccount, isOnChatwootCloud, isCloudFeatureEnabled } =
   useAccount();
 const {
@@ -41,7 +43,57 @@ const store = useStore();
 const purchaseCreditsModalRef = ref(null);
 const enterpriseInquiryModalRef = ref(null);
 const downgradeWarningModalRef = ref(null);
+const planCheckoutModalRef = ref(null);
 const showPlanPicker = ref(false);
+const billingCountry = ref(
+  currentAccount.value?.custom_attributes?.billing_country || ''
+);
+const countryOptions = countries.map(country => ({
+  value: country.id,
+  label: `${country.emoji} ${country.name}`,
+}));
+
+const accountSubscription = computed(
+  () => currentAccount.value?.subscription || null
+);
+const hasActiveSubscription = computed(
+  () => !!accountSubscription.value?.active
+);
+const lockedPaymentProvider = computed(() => {
+  if (!hasActiveSubscription.value) return null;
+  return (
+    accountSubscription.value?.payment_provider ||
+    currentAccount.value?.custom_attributes?.payment_provider ||
+    null
+  );
+});
+// Country picker is only for first-time / inactive accounts. An active plan
+// locks the gateway so the customer cannot switch Stripe <-> Razorpay mid-cycle.
+const showBillingCountrySelect = computed(() => !hasActiveSubscription.value);
+const effectiveBillingCountry = computed(() => {
+  if (lockedPaymentProvider.value === 'razorpay') return 'IN';
+  if (lockedPaymentProvider.value === 'stripe') {
+    return billingCountry.value || 'US';
+  }
+  return billingCountry.value;
+});
+const isIndiaBillingCountry = computed(
+  () => effectiveBillingCountry.value === 'IN'
+);
+const paymentProviderLabel = computed(() => {
+  if (lockedPaymentProvider.value === 'razorpay') {
+    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_RAZORPAY');
+  }
+  if (lockedPaymentProvider.value === 'stripe') {
+    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE');
+  }
+  return isIndiaBillingCountry.value
+    ? t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_RAZORPAY')
+    : t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE');
+});
+const usesStripePortal = computed(
+  () => !lockedPaymentProvider.value || lockedPaymentProvider.value === 'stripe'
+);
 
 // Order matters here - used to detect downgrades and to show the retention
 // window in the downgrade warning. Keep in sync with
@@ -108,8 +160,14 @@ const totalClientPrice = computed(() => {
 });
 
 const activePlanPrice = computed(() => {
-  return marketplaceData.value.prices?.find(
-    p => p.currency === 'usd' && p.active
+  const preferred =
+    marketplaceData.value.connected_account?.payment_provider === 'razorpay'
+      ? 'inr'
+      : 'usd';
+  return (
+    marketplaceData.value.prices?.find(
+      p => p.currency === preferred && p.active
+    ) || marketplaceData.value.prices?.find(p => p.active)
   );
 });
 
@@ -176,6 +234,95 @@ const dataRetentionLabel = computed(() => {
     : t('BILLING_SETTINGS.CURRENT_PLAN.RETENTION_UNLIMITED');
 });
 
+const transactions = ref([]);
+const isFetchingTransactions = ref(false);
+
+const formatTransactionDate = value => {
+  return value ? format(new Date(value), 'dd MMM, yyyy') : '';
+};
+
+const formatBillingDate = value => {
+  return value ? format(new Date(value), 'dd MMM, yyyy') : '—';
+};
+
+const formatMoneyAmount = (amount, currency) => {
+  const code = (currency || 'usd').toUpperCase();
+  const locale = code === 'INR' ? 'en-IN' : 'en-US';
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: code,
+  }).format(Number(amount || 0));
+};
+
+const formatTransactionAmount = transaction => {
+  return formatMoneyAmount(transaction.amount, transaction.currency);
+};
+
+const PAST_DUE_STATUSES = ['past_due', 'unpaid'];
+
+const subscriptionStatusLabel = computed(() => {
+  const status = accountSubscription.value?.status;
+  if (!status) return '—';
+  const key = `BILLING_SETTINGS.SUBSCRIPTION.STATUS_${status.toUpperCase().replace(/-/g, '_')}`;
+  return te(key) ? t(key) : status;
+});
+
+const isSubscriptionPaymentPending = computed(() => {
+  const status = accountSubscription.value?.status;
+  return status && PAST_DUE_STATUSES.includes(status);
+});
+
+const subscriptionPeriodEndLabel = computed(() => {
+  if (accountSubscription.value?.cancel_at_period_end) {
+    return t('BILLING_SETTINGS.SUBSCRIPTION.ACCESS_UNTIL');
+  }
+  return t('BILLING_SETTINGS.CURRENT_PLAN.RENEWS_ON');
+});
+
+const subscriptionPeriodEndValue = computed(() => {
+  const endAt =
+    accountSubscription.value?.current_period_end ||
+    customAttributes.value?.subscription_ends_on;
+  return formatBillingDate(endAt);
+});
+
+const subscriptionPeriodStartValue = computed(() => {
+  return formatBillingDate(accountSubscription.value?.current_period_start);
+});
+
+const nextPaymentRetryValue = computed(() => {
+  if (!isSubscriptionPaymentPending.value) return null;
+  return formatBillingDate(accountSubscription.value?.grace_period_ends_at);
+});
+
+const currentPlanPriceLabel = computed(() => {
+  const plan = planCatalog.value.find(p => p.name === planName.value);
+  if (!plan?.price_per_agent) {
+    return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
+  }
+  const currency =
+    accountSubscription.value?.payment_provider === 'razorpay' ? 'inr' : 'usd';
+  return `${formatMoneyAmount(plan.price_per_agent, currency)}/${t('BILLING_SETTINGS.PLAN_CHECKOUT.PER_MONTH')}`;
+});
+
+const lastPayment = computed(() => transactions.value[0] || null);
+
+const paymentProviderDisplay = computed(() => {
+  const provider = accountSubscription.value?.payment_provider;
+  if (provider === 'razorpay') {
+    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_RAZORPAY');
+  }
+  if (provider === 'stripe') {
+    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE');
+  }
+  return '—';
+});
+
+const cancellationScheduledLabel = computed(() => {
+  if (!accountSubscription.value?.cancel_at_period_end) return null;
+  return t('BILLING_SETTINGS.SUBSCRIPTION.CANCELLATION_SCHEDULED');
+});
+
 const fetchMarketplaceData = async () => {
   if (isReseller.value || hasResellerParent.value) {
     isFetchingMarketplace.value = true;
@@ -184,11 +331,16 @@ const fetchMarketplaceData = async () => {
         `/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_pricing`
       );
       marketplaceData.value = response.data;
-      const usdPrice = response.data.prices?.find(
-        p => p.currency === 'usd' && p.active
+      const preferredCurrency =
+        response.data.connected_account?.payment_provider === 'razorpay'
+          ? 'inr'
+          : 'usd';
+      selectedCurrency.value = preferredCurrency;
+      const activePrice = response.data.prices?.find(
+        p => p.currency === preferredCurrency && p.active
       );
-      if (usdPrice) {
-        agencyPriceInput.value = usdPrice.agency_price;
+      if (activePrice) {
+        agencyPriceInput.value = activePrice.agency_price;
       }
     } catch {
       // Marketplace pricing is optional; keep the billing page usable without it.
@@ -200,10 +352,14 @@ const fetchMarketplaceData = async () => {
 
 const handleConnectStripe = async () => {
   try {
+    const country =
+      currentAccount.value?.custom_attributes?.billing_country ||
+      billingCountry.value ||
+      'US';
     const response = await window.axios.post(
       `/enterprise/api/v1/accounts/${currentAccount.value.id}/connected_account`,
       {
-        country: 'US',
+        country,
         refresh_url: window.location.href,
         return_url: window.location.href,
       }
@@ -212,7 +368,9 @@ const handleConnectStripe = async () => {
       window.location.href = response.data.onboarding_url;
     }
   } catch (error) {
-    useAlert(error.response?.data?.error || 'Stripe onboarding request failed');
+    useAlert(
+      error.response?.data?.error || 'Payment onboarding request failed'
+    );
   }
 };
 
@@ -236,10 +394,14 @@ const handleSavePricing = async () => {
 
 const handleSubscribe = async () => {
   try {
+    const currency =
+      marketplaceData.value.connected_account?.payment_provider === 'razorpay'
+        ? 'inr'
+        : 'usd';
     const response = await window.axios.post(
       `/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_checkout`,
       {
-        currency: 'usd',
+        currency,
         success_url: window.location.href,
         cancel_url: window.location.href,
       }
@@ -257,6 +419,7 @@ const openEnterpriseInquiryModal = () => {
 };
 
 const fetchAccountDetails = async () => {
+  await store.dispatch('accounts/get', currentAccount.value.id);
   fetchLimits();
 };
 
@@ -278,28 +441,68 @@ const handleBillingPageLogic = async () => {
 };
 
 const onClickBillingPortal = () => {
+  if (!usesStripePortal.value) {
+    useAlert(t('BILLING_SETTINGS.SELECT_PLAN.RAZORPAY_MANAGE_HINT'));
+    return;
+  }
   store.dispatch('accounts/checkout');
 };
 
-const isCheckingOut = ref(false);
-const startPlanCheckout = async selectedPlan => {
-  isCheckingOut.value = true;
+const isCancelingSubscription = ref(false);
+const onCancelRazorpaySubscription = async () => {
+  isCancelingSubscription.value = true;
   try {
-    const response = await window.axios.post(
-      `/enterprise/api/v1/accounts/${currentAccount.value.id}/plan_checkout`,
-      {
-        plan_name: selectedPlan,
-        success_url: window.location.href,
-        cancel_url: window.location.href,
-      }
+    await EnterpriseAccountAPI.cancelSubscription({ cancelAtCycleEnd: true });
+    useAlert(t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_SUBSCRIPTION_SUCCESS'));
+    await store.dispatch('accounts/get', currentAccount.value.id);
+  } catch (error) {
+    useAlert(
+      error.response?.data?.error ||
+        t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_SUBSCRIPTION_ERROR')
     );
+  } finally {
+    isCancelingSubscription.value = false;
+  }
+};
+
+const topupPaymentProvider = computed(() => {
+  return (
+    lockedPaymentProvider.value ||
+    (isIndiaBillingCountry.value ? 'razorpay' : 'stripe')
+  );
+});
+
+const isCheckingOut = ref(false);
+const handlePlanCheckoutProceed = async ({
+  planName: selectedPlanName,
+  country,
+  couponCode,
+}) => {
+  isCheckingOut.value = true;
+  planCheckoutModalRef.value?.setProceeding(true);
+  try {
+    const response = await EnterpriseAccountAPI.planCheckout({
+      planName: selectedPlanName,
+      country,
+      couponCode,
+      successUrl: window.location.href,
+      cancelUrl: window.location.href,
+    });
     if (response.data.checkout_url) {
       window.location.href = response.data.checkout_url;
+      return;
     }
+    useAlert('Failed to start checkout');
   } catch (error) {
     useAlert(error.response?.data?.error || 'Failed to start checkout');
+  } finally {
     isCheckingOut.value = false;
+    planCheckoutModalRef.value?.setProceeding(false);
   }
+};
+
+const openPlanCheckoutModal = selectedPlan => {
+  planCheckoutModalRef.value?.open(selectedPlan);
 };
 
 const handlePlanSelection = selectedPlan => {
@@ -318,12 +521,12 @@ const handlePlanSelection = selectedPlan => {
     return;
   }
 
-  startPlanCheckout(selectedPlan);
+  openPlanCheckoutModal(selectedPlan);
 };
 
 const handleDowngradeConfirm = selectedPlan => {
   downgradeWarningModalRef.value?.close();
-  startPlanCheckout(selectedPlan);
+  openPlanCheckoutModal(selectedPlan);
 };
 
 const onToggleChatWindow = () => {
@@ -336,8 +539,6 @@ const openPurchaseCreditsModal = () => {
   purchaseCreditsModalRef.value?.open();
 };
 
-const transactions = ref([]);
-const isFetchingTransactions = ref(false);
 const fetchTransactions = async () => {
   isFetchingTransactions.value = true;
   try {
@@ -348,14 +549,6 @@ const fetchTransactions = async () => {
   } finally {
     isFetchingTransactions.value = false;
   }
-};
-
-const formatTransactionDate = value => {
-  return value ? format(new Date(value), 'dd MMM, yyyy') : '';
-};
-
-const formatTransactionAmount = transaction => {
-  return `${Number(transaction.amount || 0).toFixed(2)} ${(transaction.currency || '').toUpperCase()}`;
 };
 
 onMounted(() => {
@@ -503,6 +696,32 @@ onMounted(() => {
               {{ $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_BUTTON') }}
             </ButtonV4>
           </template>
+          <p
+            v-if="lockedPaymentProvider"
+            class="px-4 pt-4 text-xs text-n-slate-11"
+          >
+            {{
+              $t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_LOCKED_HINT', {
+                provider: paymentProviderLabel,
+              })
+            }}
+          </p>
+          <div
+            v-if="lockedPaymentProvider === 'razorpay' && hasActiveSubscription"
+            class="px-4 pt-2"
+          >
+            <ButtonV4
+              sm
+              solid
+              slate
+              :is-loading="isCancelingSubscription"
+              @click="onCancelRazorpaySubscription"
+            >
+              {{
+                $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_SUBSCRIPTION_BUTTON')
+              }}
+            </ButtonV4>
+          </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
             <div
               v-for="plan in ['Hobby', 'Standard', 'Business', 'Enterprise']"
@@ -537,23 +756,118 @@ onMounted(() => {
         <BillingCard
           v-if="!hasResellerParent && planName"
           :title="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
+          :description="$t('BILLING_SETTINGS.SUBSCRIPTION.DESCRIPTION')"
         >
           <template #action>
-            <ButtonV4 sm solid blue @click="showPlanPicker = true">
-              {{ $t('BILLING_SETTINGS.CURRENT_PLAN.CHANGE_PLAN_BUTTON') }}
-            </ButtonV4>
+            <div class="flex gap-2">
+              <ButtonV4
+                v-if="usesStripePortal && accountSubscription"
+                sm
+                flushed
+                slate
+                @click="onClickBillingPortal"
+              >
+                {{ $t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.BUTTON_TXT') }}
+              </ButtonV4>
+              <ButtonV4 sm solid blue @click="showPlanPicker = true">
+                {{ $t('BILLING_SETTINGS.CURRENT_PLAN.CHANGE_PLAN_BUTTON') }}
+              </ButtonV4>
+            </div>
           </template>
+          <div class="px-5 pb-2">
+            <p
+              v-if="cancellationScheduledLabel"
+              class="text-sm text-n-amber-11 mb-4"
+            >
+              {{ cancellationScheduledLabel }}
+            </p>
+            <p
+              v-if="isSubscriptionPaymentPending"
+              class="text-sm text-n-ruby-11 mb-4"
+            >
+              {{ $t('BILLING_SETTINGS.SUBSCRIPTION.PAYMENT_FAILED_HINT') }}
+            </p>
+          </div>
           <div
-            class="grid lg:grid-cols-4 sm:grid-cols-3 grid-cols-1 gap-2 divide-x divide-n-weak"
+            class="grid lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-4 divide-x divide-n-weak"
           >
             <DetailItem
               :label="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
-              :value="planName"
+              :value="planName || '—'"
+            />
+            <DetailItem
+              :label="$t('BILLING_SETTINGS.SUBSCRIPTION.STATUS')"
+              :value="subscriptionStatusLabel"
+            />
+            <DetailItem
+              :label="$t('BILLING_SETTINGS.SUBSCRIPTION.PLAN_PRICE')"
+              :value="currentPlanPriceLabel"
+            />
+            <DetailItem
+              :label="$t('BILLING_SETTINGS.SUBSCRIPTION.PAYMENT_PROVIDER')"
+              :value="paymentProviderDisplay"
+            />
+            <DetailItem
+              :label="$t('BILLING_SETTINGS.SUBSCRIPTION.PERIOD_START')"
+              :value="subscriptionPeriodStartValue"
+            />
+            <DetailItem
+              :label="subscriptionPeriodEndLabel"
+              :value="subscriptionPeriodEndValue"
+            />
+            <DetailItem
+              v-if="nextPaymentRetryValue"
+              :label="$t('BILLING_SETTINGS.SUBSCRIPTION.NEXT_RETRY')"
+              :value="nextPaymentRetryValue"
             />
             <DetailItem
               :label="$t('BILLING_SETTINGS.CURRENT_PLAN.DATA_RETENTION_LABEL')"
               :value="dataRetentionLabel"
             />
+          </div>
+
+          <div
+            v-if="lastPayment"
+            class="mx-5 mt-4 mb-5 rounded-lg border border-n-weak bg-n-solid-1 p-4"
+          >
+            <p class="text-sm font-medium text-n-slate-12 mb-3">
+              {{ $t('BILLING_SETTINGS.SUBSCRIPTION.LAST_PAYMENT') }}
+            </p>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <DetailItem
+                :label="$t('BILLING_SETTINGS.TRANSACTIONS.DATE')"
+                :value="
+                  formatTransactionDate(
+                    lastPayment.paid_at || lastPayment.created_at
+                  )
+                "
+              />
+              <DetailItem
+                :label="$t('BILLING_SETTINGS.TRANSACTIONS.AMOUNT')"
+                :value="formatTransactionAmount(lastPayment)"
+              />
+              <DetailItem
+                :label="$t('BILLING_SETTINGS.TRANSACTIONS.STATUS')"
+                :value="
+                  lastPayment.status === 'succeeded'
+                    ? $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_SUCCEEDED')
+                    : $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_FAILED')
+                "
+              />
+              <DetailItem
+                :label="$t('BILLING_SETTINGS.TRANSACTIONS.DESCRIPTION_COL')"
+                :value="lastPayment.description || '—'"
+              />
+            </div>
+            <a
+              v-if="lastPayment.hosted_invoice_url"
+              :href="lastPayment.hosted_invoice_url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-block mt-3 text-sm text-n-blue-11 hover:underline"
+            >
+              {{ $t('BILLING_SETTINGS.TRANSACTIONS.VIEW') }}
+            </a>
           </div>
         </BillingCard>
 
@@ -760,11 +1074,22 @@ onMounted(() => {
         </BillingHeader>
       </section>
 
-      <PurchaseCreditsModal ref="purchaseCreditsModalRef" />
+      <PurchaseCreditsModal
+        ref="purchaseCreditsModalRef"
+        :payment-provider="topupPaymentProvider"
+      />
       <EnterpriseInquiryModal ref="enterpriseInquiryModalRef" />
       <DowngradePlanWarningModal
         ref="downgradeWarningModalRef"
         @confirm="handleDowngradeConfirm"
+      />
+      <PlanCheckoutModal
+        ref="planCheckoutModalRef"
+        :show-country-select="showBillingCountrySelect"
+        :locked-payment-provider="lockedPaymentProvider"
+        :initial-country="billingCountry"
+        :country-options="countryOptions"
+        @proceed="handlePlanCheckoutProceed"
       />
     </template>
   </SettingsLayout>

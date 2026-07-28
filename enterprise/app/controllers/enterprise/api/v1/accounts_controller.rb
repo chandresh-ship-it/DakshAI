@@ -39,6 +39,12 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   end
 
   def checkout
+    if locked_payment_provider == 'razorpay'
+      return render json: {
+        error: 'This subscription is managed through Razorpay. Cancel it before using the Stripe billing portal.'
+      }, status: :unprocessable_entity
+    end
+
     return create_stripe_billing_session(stripe_customer_id) if stripe_customer_id.present?
 
     render_invalid_billing_details
@@ -60,14 +66,68 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   def topup_checkout
     return render json: { error: I18n.t('errors.topup.credits_required') }, status: :unprocessable_entity if params[:credits].blank?
 
-    result = Enterprise::Billing::TopupCheckoutService.new(
-      account: @account,
-      success_url: params[:success_url].presence || frontend_billing_url,
-      cancel_url: params[:cancel_url].presence || frontend_billing_url
-    ).create_checkout_session(credits: params[:credits].to_i)
+    provider = checkout_payment_provider
+    result = if provider == 'razorpay'
+               Enterprise::Billing::RazorpayTopupCheckoutService.new(
+                 account: @account,
+                 success_url: params[:success_url].presence || frontend_billing_url,
+                 cancel_url: params[:cancel_url].presence || frontend_billing_url
+               ).create_checkout_session(credits: params[:credits].to_i)
+             else
+               Enterprise::Billing::TopupCheckoutService.new(
+                 account: @account,
+                 success_url: params[:success_url].presence || frontend_billing_url,
+                 cancel_url: params[:cancel_url].presence || frontend_billing_url
+               ).create_checkout_session(credits: params[:credits].to_i).merge(provider: 'stripe')
+             end
 
     render json: result
-  rescue Enterprise::Billing::TopupCheckoutService::Error, Stripe::StripeError => e
+  rescue Enterprise::Billing::TopupCheckoutService::Error,
+         Enterprise::Billing::RazorpayTopupCheckoutService::Error,
+         Enterprise::Billing::RazorpayClient::Error,
+         Stripe::StripeError => e
+    render_could_not_create_error(e.message)
+  end
+
+  def cancel_subscription
+    provider = locked_payment_provider || @account.subscription&.payment_provider
+    if provider == 'razorpay'
+      result = Enterprise::Billing::RazorpayCancelSubscriptionService.new(account: @account).perform(
+        cancel_at_cycle_end: params[:cancel_at_cycle_end] != false && params[:cancel_at_cycle_end] != 'false'
+      )
+      return render json: result
+    end
+
+    return create_stripe_billing_session(stripe_customer_id) if stripe_customer_id.present?
+
+    render_invalid_billing_details
+  rescue Enterprise::Billing::RazorpayCancelSubscriptionService::Error,
+         Enterprise::Billing::RazorpayClient::Error => e
+    render_could_not_create_error(e.message)
+  end
+
+  def validate_coupon
+    return render json: { error: 'Invalid plan name' }, status: :unprocessable_entity unless %w[Hobby Standard
+                                                                                                Business].include?(params[:plan_name])
+
+    locked_provider = locked_payment_provider
+    country = normalize_billing_country(params[:country])
+
+    if locked_provider.present?
+      country = country_for_provider(locked_provider)
+    elsif country.blank?
+      return render json: { error: 'Country is required' }, status: :unprocessable_entity
+    end
+
+    result = Enterprise::Billing::ValidatePlanCouponService.new(
+      plan_name: params[:plan_name],
+      country: country,
+      coupon_code: params[:coupon_code].presence
+    ).perform
+
+    render json: result
+  rescue Enterprise::Billing::ValidatePlanCouponService::Error,
+         Enterprise::Billing::ApplyBillingCouponService::Error => e
     render_could_not_create_error(e.message)
   end
 
@@ -75,15 +135,43 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     return render json: { error: 'Invalid plan name' }, status: :unprocessable_entity unless %w[Hobby Standard
                                                                                                 Business].include?(params[:plan_name])
 
-    result = Enterprise::Billing::PlanCheckoutService.new(
+    locked_provider = locked_payment_provider
+    country = normalize_billing_country(params[:country])
+
+    if locked_provider.present?
+      requested_provider = provider_for_country(country.presence || country_for_provider(locked_provider))
+      if requested_provider != locked_provider
+        return render json: {
+          error: "Your active plan is billed through #{locked_provider.capitalize}. Cancel it before switching payment gateways."
+        }, status: :unprocessable_entity
+      end
+      country = country_for_provider(locked_provider)
+    else
+      return render json: { error: 'Country is required' }, status: :unprocessable_entity if country.blank?
+
+      persist_billing_country!(country)
+    end
+
+    checkout_args = {
       account: @account,
       plan_name: params[:plan_name],
       success_url: params[:success_url].presence || frontend_billing_url,
-      cancel_url: params[:cancel_url].presence || frontend_billing_url
-    ).perform
+      cancel_url: params[:cancel_url].presence || frontend_billing_url,
+      coupon_code: params[:coupon_code].presence
+    }
+
+    result = if provider_for_country(country) == 'razorpay'
+               Enterprise::Billing::RazorpayPlanCheckoutService.new(**checkout_args).perform
+             else
+               Enterprise::Billing::PlanCheckoutService.new(**checkout_args).perform.merge(provider: 'stripe')
+             end
 
     render json: result
-  rescue Enterprise::Billing::PlanCheckoutService::Error, Stripe::StripeError => e
+  rescue Enterprise::Billing::PlanCheckoutService::Error,
+         Enterprise::Billing::RazorpayPlanCheckoutService::Error,
+         Enterprise::Billing::ApplyBillingCouponService::Error,
+         Enterprise::Billing::RazorpayClient::Error,
+         Stripe::StripeError => e
     Rails.logger.error("[plan_checkout] account=#{@account.id} plan=#{params[:plan_name]} #{e.class}: #{e.message}")
     render_could_not_create_error(e.message)
   rescue StandardError => e
@@ -222,6 +310,44 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
 
   def frontend_billing_url
     "#{ENV.fetch('FRONTEND_URL', request.base_url)}/app/accounts/#{@account.id}/settings/billing"
+  end
+
+  def normalize_billing_country(value)
+    value.to_s.strip.upcase.presence
+  end
+
+  def india_country?(country)
+    country == 'IN'
+  end
+
+  def provider_for_country(country)
+    india_country?(country) ? 'razorpay' : 'stripe'
+  end
+
+  def country_for_provider(provider)
+    provider.to_s == 'razorpay' ? 'IN' : (@account.custom_attributes['billing_country'].presence || 'US')
+  end
+
+  # An active (or still-grace) subscription locks the account to one gateway so
+  # customers cannot open a second Stripe/Razorpay subscription in parallel.
+  def locked_payment_provider
+    sub = @account.subscription
+    return if sub.blank?
+    return unless sub.active? || %w[past_due unpaid].include?(sub.status)
+
+    sub.payment_provider.presence || @account.custom_attributes['payment_provider']
+  end
+
+  # Prefer the locked subscription gateway; otherwise use billing country (India → Razorpay).
+  def checkout_payment_provider
+    locked_payment_provider.presence ||
+      provider_for_country(@account.custom_attributes['billing_country'])
+  end
+
+  def persist_billing_country!(country)
+    @account.update!(
+      custom_attributes: (@account.custom_attributes || {}).merge('billing_country' => country)
+    )
   end
 
   def mark_for_deletion

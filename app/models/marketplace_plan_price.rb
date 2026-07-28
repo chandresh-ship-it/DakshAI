@@ -12,6 +12,7 @@
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #  account_id          :bigint           not null
+#  razorpay_plan_id    :string
 #  stripe_price_id     :string
 #  stripe_product_id   :string
 #
@@ -34,9 +35,16 @@ class MarketplacePlanPrice < ApplicationRecord
 
   scope :active, -> { where(active: true) }
 
+  def payment_gateway
+    return 'Razorpay' if razorpay_plan_id.present? || currency.to_s.downcase == 'inr'
+    return 'Stripe' if stripe_price_id.present?
+
+    currency.to_s.downcase == 'inr' ? 'Razorpay' : 'Stripe'
+  end
+
   before_validation :calculate_fees, on: :create
   before_create :deactivate_old_prices
-  before_create :create_stripe_price
+  before_create :create_provider_price
 
   private
 
@@ -52,28 +60,60 @@ class MarketplacePlanPrice < ApplicationRecord
     account.marketplace_plan_prices.where(active: true, currency: currency.downcase).update_all(active: false)
   end
 
+  def create_provider_price
+    if account.connected_account&.payment_provider == 'razorpay' || currency.to_s.downcase == 'inr'
+      create_razorpay_plan
+    else
+      create_stripe_price
+    end
+  end
+
+  def create_razorpay_plan
+    return if razorpay_plan_id.present?
+
+    plan = Enterprise::Billing::RazorpayClient.new.create_plan(
+      period: 'monthly',
+      interval: 1,
+      item: {
+        name: "Workspace Subscription (#{account.brand_name.presence || account.name})",
+        amount: (total_amount * 100).to_i,
+        currency: currency.to_s.upcase,
+        description: 'Marketplace workspace subscription'
+      },
+      notes: {
+        reseller_account_id: account.id.to_s,
+        agency_price: agency_price.to_s,
+        platform_fee_amount: platform_fee_amount.to_s
+      }
+    )
+    self.razorpay_plan_id = plan['id']
+  rescue Enterprise::Billing::RazorpayClient::Error => e
+    errors.add(:base, "Razorpay API error: #{e.message}")
+    throw(:abort)
+  end
+
   def create_stripe_price
     return if stripe_price_id.present?
 
     product_name = "Workspace Subscription (#{account.brand_name.presence || account.name})"
     product = Stripe::Product.create({
-      name: product_name,
-      metadata: {
-        reseller_account_id: account.id.to_s
-      }
-    })
+                                      name: product_name,
+                                      metadata: {
+                                        reseller_account_id: account.id.to_s
+                                      }
+                                    })
 
     price = Stripe::Price.create({
-      product: product.id,
-      unit_amount: (total_amount * 100).to_i,
-      currency: currency.downcase,
-      recurring: { interval: 'month' },
-      metadata: {
-        reseller_account_id: account.id.to_s,
-        agency_price: agency_price.to_s,
-        platform_fee_amount: platform_fee_amount.to_s
-      }
-    })
+                                   product: product.id,
+                                   unit_amount: (total_amount * 100).to_i,
+                                   currency: currency.downcase,
+                                   recurring: { interval: 'month' },
+                                   metadata: {
+                                     reseller_account_id: account.id.to_s,
+                                     agency_price: agency_price.to_s,
+                                     platform_fee_amount: platform_fee_amount.to_s
+                                   }
+                                 })
 
     self.stripe_product_id = product.id
     self.stripe_price_id = price.id

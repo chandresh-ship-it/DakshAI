@@ -11,6 +11,8 @@ class MarketplacePlanPriceDashboard < Administrate::BaseDashboard
     total_amount: Field::Number.with_options(decimals: 2),
     stripe_price_id: Field::String,
     stripe_product_id: Field::String,
+    razorpay_plan_id: Field::String,
+    payment_gateway: Field::String,
     active: Field::Boolean,
     created_at: Field::DateTime,
     updated_at: Field::DateTime
@@ -20,6 +22,7 @@ class MarketplacePlanPriceDashboard < Administrate::BaseDashboard
     id
     account
     currency
+    payment_gateway
     agency_price
     total_amount
     active
@@ -29,12 +32,14 @@ class MarketplacePlanPriceDashboard < Administrate::BaseDashboard
     id
     account
     currency
+    payment_gateway
     agency_price
     commission_percent
     platform_fee_amount
     total_amount
     stripe_price_id
     stripe_product_id
+    razorpay_plan_id
     active
     created_at
     updated_at

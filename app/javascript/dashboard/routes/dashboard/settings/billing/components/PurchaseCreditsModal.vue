@@ -7,16 +7,36 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import CreditPackageCard from './CreditPackageCard.vue';
 import EnterpriseAccountAPI from 'dashboard/api/enterprise/account';
 
+const props = defineProps({
+  paymentProvider: {
+    type: String,
+    default: 'stripe',
+  },
+});
+
 const emit = defineEmits(['close']);
 
 const { t } = useI18n();
 
-const TOPUP_OPTIONS = [
+const STRIPE_TOPUP_OPTIONS = [
   { credits: 1000, amount: 20.0, currency: 'usd' },
   { credits: 2500, amount: 50.0, currency: 'usd' },
   { credits: 6000, amount: 100.0, currency: 'usd' },
   { credits: 12000, amount: 200.0, currency: 'usd' },
 ];
+
+const RAZORPAY_TOPUP_OPTIONS = [
+  { credits: 1000, amount: 1699.0, currency: 'inr' },
+  { credits: 2500, amount: 4199.0, currency: 'inr' },
+  { credits: 6000, amount: 8299.0, currency: 'inr' },
+  { credits: 12000, amount: 16499.0, currency: 'inr' },
+];
+
+const TOPUP_OPTIONS = computed(() =>
+  props.paymentProvider === 'razorpay'
+    ? RAZORPAY_TOPUP_OPTIONS
+    : STRIPE_TOPUP_OPTIONS
+);
 
 const POPULAR_CREDITS_AMOUNT = 6000;
 const STEP_SELECT = 'select';
@@ -28,15 +48,18 @@ const isLoading = ref(false);
 const currentStep = ref(STEP_SELECT);
 
 const selectedOption = computed(() => {
-  return TOPUP_OPTIONS.find(o => o.credits === selectedCredits.value);
+  return TOPUP_OPTIONS.value.find(o => o.credits === selectedCredits.value);
 });
 
 const formattedAmount = computed(() => {
   if (!selectedOption.value) return '';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: selectedOption.value.currency.toUpperCase(),
-  }).format(selectedOption.value.amount);
+  return new Intl.NumberFormat(
+    selectedOption.value.currency === 'inr' ? 'en-IN' : 'en-US',
+    {
+      style: 'currency',
+      currency: selectedOption.value.currency.toUpperCase(),
+    }
+  ).format(selectedOption.value.amount);
 });
 
 const formattedCredits = computed(() => {
@@ -65,10 +88,11 @@ const handlePackageSelect = credits => {
 };
 
 const open = () => {
-  const popularOption = TOPUP_OPTIONS.find(
+  const popularOption = TOPUP_OPTIONS.value.find(
     o => o.credits === POPULAR_CREDITS_AMOUNT
   );
-  selectedCredits.value = popularOption?.credits || TOPUP_OPTIONS[0]?.credits;
+  selectedCredits.value =
+    popularOption?.credits || TOPUP_OPTIONS.value[0]?.credits;
   currentStep.value = STEP_SELECT;
   isLoading.value = false;
   dialogRef.value?.open();
@@ -132,7 +156,6 @@ defineExpose({ open, close });
     :show-cancel-button="false"
     @close="handleClose"
   >
-    <!-- Step 1: Select Credits Package -->
     <template v-if="currentStep === 'select'">
       <div class="grid grid-cols-2 gap-4">
         <CreditPackageCard
@@ -158,7 +181,6 @@ defineExpose({ open, close });
       </div>
     </template>
 
-    <!-- Step 2: Confirm Purchase -->
     <template v-else>
       <div class="flex flex-col gap-4">
         <p class="text-sm text-n-slate-11">
@@ -169,54 +191,41 @@ defineExpose({ open, close });
             })
           }}
         </p>
-
-        <div class="p-2.5 rounded-lg bg-n-amber-2 border border-n-amber-6">
-          <p class="text-sm text-n-amber-11">
-            {{ $t('BILLING_SETTINGS.TOPUP.CONFIRM.INSTANT_DEDUCTION_NOTE') }}
-          </p>
-        </div>
       </div>
     </template>
 
     <template #footer>
-      <!-- Step 1 Footer -->
-      <div
-        v-if="currentStep === 'select'"
-        class="flex items-center justify-between w-full gap-3"
-      >
-        <Button
-          variant="faded"
-          color="slate"
-          :label="$t('BILLING_SETTINGS.TOPUP.CANCEL')"
-          class="w-full"
-          @click="close"
-        />
-        <Button
-          color="blue"
-          :label="$t('BILLING_SETTINGS.TOPUP.PURCHASE')"
-          class="w-full"
-          :disabled="!selectedCredits"
-          @click="goToConfirmStep"
-        />
-      </div>
-
-      <!-- Step 2 Footer -->
-      <div v-else class="flex items-center justify-between w-full gap-3">
-        <Button
-          variant="faded"
-          color="slate"
-          :label="$t('BILLING_SETTINGS.TOPUP.CONFIRM.GO_BACK')"
-          class="w-full"
-          :disabled="isLoading"
-          @click="goBackToSelectStep"
-        />
-        <Button
-          color="blue"
-          :label="$t('BILLING_SETTINGS.TOPUP.CONFIRM.CONFIRM_PURCHASE')"
-          class="w-full"
-          :is-loading="isLoading"
-          @click="handlePurchase"
-        />
+      <div class="flex justify-end gap-2 w-full">
+        <template v-if="currentStep === 'select'">
+          <Button
+            slate
+            faded
+            :label="$t('BILLING_SETTINGS.TOPUP.CANCEL')"
+            @click="close"
+          />
+          <Button
+            solid
+            blue
+            :label="$t('BILLING_SETTINGS.TOPUP.CONFIRM.CONFIRM_PURCHASE')"
+            :disabled="!selectedOption"
+            @click="goToConfirmStep"
+          />
+        </template>
+        <template v-else>
+          <Button
+            slate
+            faded
+            :label="$t('BILLING_SETTINGS.TOPUP.CONFIRM.GO_BACK')"
+            @click="goBackToSelectStep"
+          />
+          <Button
+            solid
+            blue
+            :label="$t('BILLING_SETTINGS.TOPUP.PURCHASE')"
+            :is-loading="isLoading"
+            @click="handlePurchase"
+          />
+        </template>
       </div>
     </template>
   </Dialog>

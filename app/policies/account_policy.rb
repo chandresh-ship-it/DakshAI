@@ -35,11 +35,19 @@ class AccountPolicy < ApplicationPolicy
     @account_user.administrator?
   end
 
+  def cancel_subscription?
+    @account_user.administrator?
+  end
+
   def bypass_plan?
     @account_user.administrator?
   end
 
   def plan_checkout?
+    @account_user.administrator?
+  end
+
+  def validate_coupon?
     @account_user.administrator?
   end
 

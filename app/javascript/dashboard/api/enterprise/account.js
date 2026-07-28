@@ -43,6 +43,30 @@ class EnterpriseAccountAPI extends ApiClient {
   getPlans() {
     return axios.get(`${this.url}plans`);
   }
+
+  cancelSubscription({ cancelAtCycleEnd = true } = {}) {
+    return axios.post(`${this.url}cancel_subscription`, {
+      cancel_at_cycle_end: cancelAtCycleEnd,
+    });
+  }
+
+  validatePlanCoupon({ planName, country, couponCode } = {}) {
+    return axios.post(`${this.url}validate_coupon`, {
+      plan_name: planName,
+      country,
+      coupon_code: couponCode,
+    });
+  }
+
+  planCheckout({ planName, country, couponCode, successUrl, cancelUrl } = {}) {
+    return axios.post(`${this.url}plan_checkout`, {
+      plan_name: planName,
+      country,
+      coupon_code: couponCode,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    });
+  }
 }
 
 export default new EnterpriseAccountAPI();

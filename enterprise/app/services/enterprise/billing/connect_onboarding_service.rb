@@ -5,7 +5,17 @@ class Enterprise::Billing::ConnectOnboardingService
   pattr_initialize [:account!]
 
   def create_onboarding_link(country:, refresh_url:, return_url:)
-    connected_account = find_or_create_connected_account(country)
+    normalized_country = normalize_country(country)
+    if normalized_country == INDIA_COUNTRY_CODE
+      return Enterprise::Billing::RazorpayConnectOnboardingService.new(account: account)
+                                                                  .create_onboarding_link(
+                                                                    country: normalized_country,
+                                                                    refresh_url: refresh_url,
+                                                                    return_url: return_url
+                                                                  )
+    end
+
+    connected_account = find_or_create_connected_account(normalized_country)
     stripe_account = Stripe::Account.retrieve(connected_account.stripe_account_id)
     update_status!(connected_account, stripe_account)
 
@@ -22,6 +32,10 @@ class Enterprise::Billing::ConnectOnboardingService
   def sync_status
     return nil if account.connected_account.blank?
 
+    if account.connected_account.payment_provider == 'razorpay'
+      return Enterprise::Billing::RazorpayConnectOnboardingService.new(account: account).sync_status
+    end
+
     stripe_account = Stripe::Account.retrieve(account.connected_account.stripe_account_id)
     update_status!(account.connected_account, stripe_account)
   end
@@ -33,10 +47,9 @@ class Enterprise::Billing::ConnectOnboardingService
   end
 
   def create_connected_account(country)
-    normalized_country = normalize_country(country)
     stripe_account = Stripe::Account.create(
       type: 'express',
-      country: normalized_country,
+      country: country,
       email: account.administrators.first&.email,
       business_type: 'company',
       capabilities: {
@@ -49,9 +62,10 @@ class Enterprise::Billing::ConnectOnboardingService
     )
 
     account.create_connected_account!(
+      payment_provider: 'stripe',
       stripe_account_id: stripe_account.id,
-      country: normalized_country,
-      charge_routing: charge_routing_for(normalized_country),
+      country: country,
+      charge_routing: charge_routing_for(country),
       onboarding_status: onboarding_status_for(stripe_account),
       charges_enabled: stripe_account.charges_enabled,
       payouts_enabled: stripe_account.payouts_enabled

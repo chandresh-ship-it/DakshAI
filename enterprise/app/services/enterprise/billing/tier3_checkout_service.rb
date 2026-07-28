@@ -10,6 +10,15 @@ class Enterprise::Billing::Tier3CheckoutService
       raise 'Reseller has not completed payment onboarding yet'
     end
 
+    if connected_account.payment_provider == 'razorpay'
+      return Enterprise::Billing::RazorpayMarketplaceCheckoutService.new(
+        account: account,
+        currency: currency,
+        success_url: success_url,
+        cancel_url: cancel_url
+      ).perform
+    end
+
     plan_price = reseller.marketplace_plan_prices.active.find_by(currency: currency.downcase)
     raise "No active pricing found for currency: #{currency.upcase}" if plan_price.blank?
 
@@ -57,7 +66,7 @@ class Enterprise::Billing::Tier3CheckoutService
     end
 
     session = Stripe::Checkout::Session.create(session_params)
-    { checkout_url: session.url }
+    { checkout_url: session.url, provider: 'stripe' }
   end
 
   private
@@ -66,12 +75,12 @@ class Enterprise::Billing::Tier3CheckoutService
     customer_id = acc.custom_attributes['stripe_customer_id']
     if customer_id.blank?
       customer = Stripe::Customer.create({
-        name: acc.name,
-        email: acc.administrators.first&.email,
-        metadata: {
-          account_id: acc.id.to_s
-        }
-      })
+                                           name: acc.name,
+                                           email: acc.administrators.first&.email,
+                                           metadata: {
+                                             account_id: acc.id.to_s
+                                           }
+                                         })
       customer_id = customer.id
       acc.update!(custom_attributes: (acc.custom_attributes || {}).merge('stripe_customer_id' => customer_id))
     end

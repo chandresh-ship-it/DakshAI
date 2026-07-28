@@ -98,9 +98,17 @@
                     by <%= inquiry['payment_link_sent_by'] %> on <%= Time.zone.parse(inquiry['payment_link_sent_at']).strftime('%d %b %Y') %>
                   </div>
                 <% else %>
-                  <%= form_tag send_payment_link_super_admin_enterprise_inquiry_path(account), method: :post, class: 'flex items-center gap-1' do %>
-                    <span class="text-slate-500">$</span>
-                    <%= number_field_tag :monthly_price, contract&.negotiated_price, min: 1, step: 0.01, placeholder: 'e.g. 499', required: true, class: 'w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm' %>
+                  <%= form_tag send_payment_link_super_admin_enterprise_inquiry_path(account), method: :post, class: 'flex flex-col gap-1 items-start' do %>
+                    <div class="flex items-center gap-1">
+                      <span class="text-slate-500"><%= (account.custom_attributes['billing_country'].to_s.upcase == 'IN') ? '₹' : '$' %></span>
+                      <%= number_field_tag :monthly_price, contract&.negotiated_price, min: 1, step: 0.01, placeholder: 'e.g. 499', required: true, class: 'w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm' %>
+                    </div>
+                    <%= select_tag :payment_provider,
+                                   options_for_select(
+                                     [['Stripe (USD)', 'stripe'], ['Razorpay (INR)', 'razorpay']],
+                                     account.custom_attributes['billing_country'].to_s.upcase == 'IN' ? 'razorpay' : 'stripe'
+                                   ),
+                                   class: 'rounded-lg border border-slate-300 px-2 py-1 text-xs' %>
                     <%= submit_tag 'Send link', class: 'button' %>
                   <% end %>
                 <% end %>

@@ -1,15 +1,17 @@
 class Enterprise::Billing::TopupFulfillmentService
   pattr_initialize [:account!]
 
-  def fulfill(credits:, amount_cents:, currency:, stripe_session_id: nil)
-    account.with_lock do
-      # Idempotent: if this Checkout session was already fulfilled (Stripe can
-      # retry webhooks), don't double-credit the account.
-      return if already_fulfilled?(stripe_session_id)
+  def fulfill(credits:, amount_cents:, currency:, stripe_session_id: nil, external_payment_id: nil)
+    payment_ref = external_payment_id.presence || stripe_session_id
 
-      create_stripe_credit_grant(credits, amount_cents, currency)
+    account.with_lock do
+      # Idempotent: if this payment was already fulfilled (providers can retry
+      # webhooks), don't double-credit the account.
+      return if already_fulfilled?(payment_ref)
+
+      create_stripe_credit_grant(credits, amount_cents, currency) if stripe_session_id.present?
       update_account_credits(credits)
-      mark_fulfilled!(stripe_session_id) if stripe_session_id.present?
+      mark_fulfilled!(payment_ref) if payment_ref.present?
     end
 
     Rails.logger.info("Topup fulfilled for account #{account.id}: #{credits} credits, #{amount_cents} cents")

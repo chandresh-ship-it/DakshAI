@@ -10,10 +10,16 @@ plan_name = @account.custom_attributes['plan_name'].to_s.downcase
 # would otherwise be reported as having no subscription at all.
 if @account.subscription.present?
   json.subscription do
-    json.status @account.subscription.status
-    json.plan_name @account.subscription.plan_name
-    json.active @account.subscription.active?
-    json.grace_period_ends_at @account.subscription.grace_period_ends_at
+    sub = @account.subscription
+    json.status sub.status
+    json.plan_name sub.plan_name
+    json.active sub.active?
+    json.grace_period_ends_at sub.grace_period_ends_at
+    json.payment_provider sub.payment_provider
+    json.current_period_start sub.current_period_start
+    json.current_period_end sub.current_period_end
+    json.cancel_at_period_end sub.cancel_at_period_end
+    json.subscribed_quantity sub.subscribed_quantity
   end
 elsif plan_name == 'enterprise'
   contract = EnterpriseContract.find_by(account_id: @account.id)
