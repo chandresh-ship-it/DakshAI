@@ -461,7 +461,7 @@
       "TITLE": "Select a plan to continue",
       "DESCRIPTION": "You do not have an active plan yet. Please choose a plan below to unlock your dashboard and start using all features.",
       "PLAN_LABEL": "{plan} Plan",
-      "PRICE_PER_AGENT": "${price}/agent/month",
+      "PRICE_PER_MONTH": "${price}/month",
       "CUSTOM_PRICING": "Custom pricing",
       "SELECT_BUTTON": "Select plan",
       "CONTACT_SALES_BUTTON": "Contact sales",

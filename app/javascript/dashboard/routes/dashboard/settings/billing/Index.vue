@@ -84,7 +84,7 @@ const planPriceLabel = planName => {
   if (!plan || !plan.price_per_agent) {
     return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
   }
-  return t('BILLING_SETTINGS.SELECT_PLAN.PRICE_PER_AGENT', {
+  return t('BILLING_SETTINGS.SELECT_PLAN.PRICE_PER_MONTH', {
     price: plan.price_per_agent,
   });
 };
