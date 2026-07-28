@@ -1,13 +1,15 @@
 class SuperAdmin::EnterpriseContractsController < SuperAdmin::ApplicationController
   # Lets "Set Plan" links from the Enterprise Inquiries page pre-fill the account
   # and sensible contract defaults, e.g. /super_admin/enterprise_contracts/new?account_id=61
-  def new_resource
-    resource_class.new(
-      account_id: params[:account_id],
+  def new_resource(incoming_params = {})
+    attrs = {
       billing_interval: 'monthly',
       contract_start_date: Time.zone.today,
       contract_end_date: 1.year.from_now.to_date
-    )
+    }.merge(incoming_params.to_h.symbolize_keys)
+    attrs[:account_id] ||= params[:account_id] if params[:account_id].present?
+
+    resource_class.new(attrs)
   end
 
   private
@@ -37,6 +39,7 @@ class SuperAdmin::EnterpriseContractsController < SuperAdmin::ApplicationControl
       overrides = {}
       params[:negotiated_limit_overrides].each do |k, v|
         next if v.blank?
+
         overrides[k] = v.to_i if v.to_s.match?(/\A\d+\z/)
       end
       params[:negotiated_limit_overrides] = overrides
@@ -44,9 +47,7 @@ class SuperAdmin::EnterpriseContractsController < SuperAdmin::ApplicationControl
       params[:negotiated_limit_overrides] = {}
     end
 
-    if params[:negotiated_features].is_a?(Array)
-      params[:negotiated_features].reject!(&:blank?)
-    end
+    params[:negotiated_features].reject!(&:blank?) if params[:negotiated_features].is_a?(Array)
 
     params
   end
