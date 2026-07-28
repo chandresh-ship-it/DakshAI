@@ -6,7 +6,7 @@ class Enterprise::Billing::ConnectOnboardingService
 
   def create_onboarding_link(country:, refresh_url:, return_url:)
     normalized_country = normalize_country(country)
-    if normalized_country == INDIA_COUNTRY_CODE
+    if Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(country: normalized_country) == 'razorpay'
       return Enterprise::Billing::RazorpayConnectOnboardingService.new(account: account)
                                                                   .create_onboarding_link(
                                                                     country: normalized_country,

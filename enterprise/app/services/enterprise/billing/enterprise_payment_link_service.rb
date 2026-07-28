@@ -45,7 +45,9 @@ class Enterprise::Billing::EnterprisePaymentLinkService
     locked = account.subscription&.payment_provider
     return locked == 'razorpay' if locked.present?
 
-    account.custom_attributes['billing_country'].to_s.upcase == 'IN'
+    Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(
+      country: account.custom_attributes['billing_country']
+    ) == 'razorpay'
   end
 
   def session_metadata

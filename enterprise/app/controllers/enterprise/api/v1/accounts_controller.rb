@@ -211,9 +211,7 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   def transactions
     # Past invoices (paid before this feature shipped, or while stripe_customer_id was
     # missing/stale) are pulled from Stripe on first load so the billing page is not empty.
-    if @account.payment_transactions.none?
-      Enterprise::Billing::SyncPaymentTransactionsService.new(account: @account).perform
-    end
+    Enterprise::Billing::SyncPaymentTransactionsService.new(account: @account).perform if @account.payment_transactions.none?
 
     payments = @account.payment_transactions.recent_first.limit(100)
 
@@ -227,7 +225,10 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   # Deliberately omits Stripe product_id/price_ids, which are internal wiring details.
   def plans
     plans = (InstallationConfig.find_by(name: 'CHATWOOT_CLOUD_PLANS')&.value || [])
-    render json: plans.map { |plan| plan.slice('name', 'price_per_agent', 'enabled') }
+    render json: {
+      plans: plans.map { |plan| plan.slice('name', 'price_per_agent', 'enabled') },
+      payment_gateways: Enterprise::Billing::PaymentGatewayRegistry.public_config
+    }
   end
 
   def enterprise_inquiry
@@ -321,11 +322,11 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   end
 
   def provider_for_country(country)
-    india_country?(country) ? 'razorpay' : 'stripe'
+    Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(country: country)
   end
 
   def country_for_provider(provider)
-    provider.to_s == 'razorpay' ? 'IN' : (@account.custom_attributes['billing_country'].presence || 'US')
+    Enterprise::Billing::PaymentGatewayRegistry.default_country_for(provider)
   end
 
   # An active (or still-grace) subscription locks the account to one gateway so
@@ -338,7 +339,6 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     sub.payment_provider.presence || @account.custom_attributes['payment_provider']
   end
 
-  # Prefer the locked subscription gateway; otherwise use billing country (India → Razorpay).
   def checkout_payment_provider
     locked_payment_provider.presence ||
       provider_for_country(@account.custom_attributes['billing_country'])

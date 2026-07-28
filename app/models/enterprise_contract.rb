@@ -67,7 +67,9 @@ class EnterpriseContract < ApplicationRecord
     return if contract_end_date < Time.zone.today
 
     sub_record = account.subscription || account.build_subscription
-    payment_provider = currency.to_s.upcase == 'INR' ? 'razorpay' : 'stripe'
+    payment_provider = Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(
+      country: currency.to_s.upcase == 'INR' ? 'IN' : 'US'
+    )
     sub_record.assign_attributes(
       plan_name: 'Enterprise',
       status: 'active',

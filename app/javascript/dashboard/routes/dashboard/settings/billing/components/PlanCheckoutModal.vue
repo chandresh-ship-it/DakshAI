@@ -25,6 +25,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  paymentGateways: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['proceed']);
@@ -41,8 +45,39 @@ const couponError = ref('');
 const isValidatingCoupon = ref(false);
 const isProceeding = ref(false);
 
+const resolveProviderForCountry = country => {
+  const normalizedCountry = (country || '').toUpperCase();
+  if (!props.paymentGateways.length) {
+    return normalizedCountry === 'IN' ? 'razorpay' : 'stripe';
+  }
+
+  const countryMatch = props.paymentGateways.find(gateway =>
+    (gateway.country_codes || []).includes(normalizedCountry)
+  );
+  if (countryMatch) return countryMatch.id;
+
+  const fallbackGateway = props.paymentGateways.find(
+    gateway => !(gateway.country_codes || []).length
+  );
+  return fallbackGateway?.id || props.paymentGateways[0]?.id || 'stripe';
+};
+
+const gatewayLabel = provider => {
+  const gateway = props.paymentGateways.find(entry => entry.id === provider);
+  if (gateway?.label) return gateway.label;
+  if (provider === 'razorpay') {
+    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_RAZORPAY');
+  }
+  return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE');
+};
+
 const effectiveCountry = computed(() => {
-  if (props.lockedPaymentProvider === 'razorpay') return 'IN';
+  if (props.lockedPaymentProvider === 'razorpay') {
+    return (
+      props.paymentGateways.find(gateway => gateway.id === 'razorpay')
+        ?.country_codes?.[0] || 'IN'
+    );
+  }
   if (props.lockedPaymentProvider === 'stripe') {
     return billingCountry.value || 'US';
   }
@@ -50,15 +85,10 @@ const effectiveCountry = computed(() => {
 });
 
 const paymentProviderLabel = computed(() => {
-  if (props.lockedPaymentProvider === 'razorpay') {
-    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_RAZORPAY');
+  if (props.lockedPaymentProvider) {
+    return gatewayLabel(props.lockedPaymentProvider);
   }
-  if (props.lockedPaymentProvider === 'stripe') {
-    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE');
-  }
-  return effectiveCountry.value === 'IN'
-    ? t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_RAZORPAY')
-    : t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE');
+  return gatewayLabel(resolveProviderForCountry(effectiveCountry.value));
 });
 
 const canProceed = computed(() => {

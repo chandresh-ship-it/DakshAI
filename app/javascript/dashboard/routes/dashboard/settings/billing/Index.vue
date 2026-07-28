@@ -69,29 +69,53 @@ const lockedPaymentProvider = computed(() => {
     null
   );
 });
+
+const planCatalog = ref([]);
+const paymentGateways = ref([]);
+
+const resolveProviderForCountry = country => {
+  const normalizedCountry = (country || '').toUpperCase();
+  if (!paymentGateways.value.length) {
+    return normalizedCountry === 'IN' ? 'razorpay' : 'stripe';
+  }
+
+  const countryMatch = paymentGateways.value.find(gateway =>
+    (gateway.country_codes || []).includes(normalizedCountry)
+  );
+  if (countryMatch) return countryMatch.id;
+
+  const fallbackGateway = paymentGateways.value.find(
+    gateway => !(gateway.country_codes || []).length
+  );
+  return fallbackGateway?.id || paymentGateways.value[0]?.id || 'stripe';
+};
+
+const gatewayLabel = provider =>
+  paymentGateways.value.find(gateway => gateway.id === provider)?.label ||
+  (provider === 'razorpay'
+    ? t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_RAZORPAY')
+    : t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE'));
+
 // Country picker is only for first-time / inactive accounts. An active plan
 // locks the gateway so the customer cannot switch Stripe <-> Razorpay mid-cycle.
 const showBillingCountrySelect = computed(() => !hasActiveSubscription.value);
 const effectiveBillingCountry = computed(() => {
-  if (lockedPaymentProvider.value === 'razorpay') return 'IN';
+  if (lockedPaymentProvider.value === 'razorpay') {
+    return (
+      paymentGateways.value.find(gateway => gateway.id === 'razorpay')
+        ?.country_codes?.[0] || 'IN'
+    );
+  }
   if (lockedPaymentProvider.value === 'stripe') {
     return billingCountry.value || 'US';
   }
   return billingCountry.value;
 });
-const isIndiaBillingCountry = computed(
-  () => effectiveBillingCountry.value === 'IN'
-);
 const paymentProviderLabel = computed(() => {
-  if (lockedPaymentProvider.value === 'razorpay') {
-    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_RAZORPAY');
+  if (lockedPaymentProvider.value) {
+    return gatewayLabel(lockedPaymentProvider.value);
   }
-  if (lockedPaymentProvider.value === 'stripe') {
-    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE');
-  }
-  return isIndiaBillingCountry.value
-    ? t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_RAZORPAY')
-    : t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE');
+  return gatewayLabel(resolveProviderForCountry(effectiveBillingCountry.value));
 });
 const usesStripePortal = computed(
   () => lockedPaymentProvider.value === 'stripe'
@@ -127,11 +151,11 @@ const marketplaceData = ref({
   prices: [],
 });
 
-const planCatalog = ref([]);
 const fetchPlanCatalog = async () => {
   try {
     const response = await EnterpriseAccountAPI.getPlans();
-    planCatalog.value = response.data;
+    planCatalog.value = response.data.plans || response.data;
+    paymentGateways.value = response.data.payment_gateways || [];
   } catch (error) {
     // Non-fatal - the plan picker still works without prices shown.
   }
@@ -300,13 +324,19 @@ const nextPaymentRetryValue = computed(() => {
   return formatBillingDate(accountSubscription.value?.grace_period_ends_at);
 });
 
+const currencyForProvider = provider => {
+  const gateway = paymentGateways.value.find(entry => entry.id === provider);
+  return gateway?.currency || (provider === 'razorpay' ? 'inr' : 'usd');
+};
+
 const currentPlanPriceLabel = computed(() => {
   const plan = planCatalog.value.find(p => p.name === planName.value);
   if (!plan?.price_per_agent) {
     return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
   }
-  const currency =
-    accountSubscription.value?.payment_provider === 'razorpay' ? 'inr' : 'usd';
+  const currency = currencyForProvider(
+    accountSubscription.value?.payment_provider
+  );
   return `${formatMoneyAmount(plan.price_per_agent, currency)}/${t('BILLING_SETTINGS.PLAN_CHECKOUT.PER_MONTH')}`;
 });
 
@@ -314,13 +344,8 @@ const lastPayment = computed(() => transactions.value[0] || null);
 
 const paymentProviderDisplay = computed(() => {
   const provider = accountSubscription.value?.payment_provider;
-  if (provider === 'razorpay') {
-    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_RAZORPAY');
-  }
-  if (provider === 'stripe') {
-    return t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_STRIPE');
-  }
-  return '—';
+  if (!provider) return '—';
+  return gatewayLabel(provider);
 });
 
 const cancellationScheduledLabel = computed(() => {
@@ -481,7 +506,7 @@ const onCancelRazorpaySubscription = async () => {
 const topupPaymentProvider = computed(() => {
   return (
     lockedPaymentProvider.value ||
-    (isIndiaBillingCountry.value ? 'razorpay' : 'stripe')
+    resolveProviderForCountry(effectiveBillingCountry.value)
   );
 });
 
@@ -1114,6 +1139,7 @@ onMounted(() => {
         :locked-payment-provider="lockedPaymentProvider"
         :initial-country="billingCountry"
         :country-options="countryOptions"
+        :payment-gateways="paymentGateways"
         @proceed="handlePlanCheckoutProceed"
       />
     </template>

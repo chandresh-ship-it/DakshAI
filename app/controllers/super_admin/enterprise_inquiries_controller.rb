@@ -9,6 +9,7 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
                                 "(custom_attributes -> 'enterprise_inquiry' ->> 'processed_at') IS NOT NULL, " \
                                 "custom_attributes -> 'enterprise_inquiry' ->> 'requested_at' DESC"
                               ))
+    @payment_gateways = Enterprise::Billing::PaymentGatewayRegistry.enabled_gateways
   end
 
   def mark_processed
@@ -60,7 +61,9 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
     inquiry = account.custom_attributes['enterprise_inquiry'] || {}
     recipient_email = inquiry['requested_by']
     provider = params[:payment_provider].presence ||
-               (account.custom_attributes['billing_country'].to_s.upcase == 'IN' ? 'razorpay' : 'stripe')
+               Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(
+                 country: account.custom_attributes['billing_country']
+               )
 
     if monthly_price.blank? || recipient_email.blank?
       # rubocop:disable Rails/I18nLocaleTexts

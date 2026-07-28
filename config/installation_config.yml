@@ -250,6 +250,19 @@
   description: 'The Chatwoot Inbox HMAC Key for Contact Support in Cloud'
   locked: false
   type: secret
+- name: BILLING_PAYMENT_GATEWAYS
+  display_title: 'Billing Payment Gateways'
+  description: 'Enabled payment gateways and country routing for cloud billing'
+  locked: false
+  type: code
+  value:
+    - id: stripe
+      enabled: true
+      country_codes: []
+    - id: razorpay
+      enabled: true
+      country_codes:
+        - IN
 - name: CHATWOOT_CLOUD_PLANS
   display_title: 'Cloud Plans'
   value:

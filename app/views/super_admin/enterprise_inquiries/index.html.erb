@@ -105,8 +105,10 @@
                     </div>
                     <%= select_tag :payment_provider,
                                    options_for_select(
-                                     [['Stripe (USD)', 'stripe'], ['Razorpay (INR)', 'razorpay']],
-                                     account.custom_attributes['billing_country'].to_s.upcase == 'IN' ? 'razorpay' : 'stripe'
+                                     @payment_gateways.map { |gateway|
+                                       ["#{Enterprise::Billing::PaymentGatewayRegistry.label_for(gateway['id'])} (#{Enterprise::Billing::PaymentGatewayRegistry.currency_for(gateway['id']).upcase})", gateway['id']]
+                                     },
+                                     Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(country: account.custom_attributes['billing_country'])
                                    ),
                                    class: 'rounded-lg border border-slate-300 px-2 py-1 text-xs' %>
                     <%= submit_tag 'Send link', class: 'button' %>
