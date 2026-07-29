@@ -1,5 +1,5 @@
 class Enterprise::Billing::RecordBillingActivityService
-  pattr_initialize [:account!, :action!, :message!, :status!, :user: nil, :error_class: nil, :payment_provider: nil, :metadata: {}]
+  pattr_initialize [:account!, :action!, :message!, :status!, { user: nil, error_class: nil, payment_provider: nil, metadata: {} }]
 
   def perform
     BillingActivityLog.create!(
