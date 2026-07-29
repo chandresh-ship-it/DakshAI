@@ -513,6 +513,7 @@
       "COUPON_REQUIRED": "Enter a coupon code to apply.",
       "COUPON_INVALID": "This coupon could not be applied.",
       "COUPON_APPLIED": "Coupon applied",
+      "COUPON_OPTIONAL_HINT": "Optional — leave blank to continue without a coupon.",
       "ORIGINAL_PRICE": "Plan price",
       "DISCOUNT": "Discount",
       "TOTAL": "Total",

@@ -101,7 +101,6 @@ const canProceed = computed(() => {
   if (!selectedPlan.value) return false;
   if (props.showCountrySelect && !effectiveCountry.value) return false;
   if (!isCountrySupported.value) return false;
-  if (couponInput.value.trim() && !appliedCouponCode.value) return false;
   if (effectiveCountry.value && !pricing.value) return false;
   return true;
 });
@@ -333,6 +332,9 @@ defineExpose({
         </div>
         <p v-if="couponError" class="text-xs text-n-ruby-10">
           {{ couponError }}
+        </p>
+        <p v-else class="text-xs text-n-slate-11">
+          {{ $t('BILLING_SETTINGS.PLAN_CHECKOUT.COUPON_OPTIONAL_HINT') }}
         </p>
       </div>
 
