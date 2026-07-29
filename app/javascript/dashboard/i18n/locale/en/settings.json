@@ -553,7 +553,11 @@
       "CANCEL": "Cancel",
       "SUBMIT": "Submit request",
       "SUCCESS": "Thanks! Our team will reach out to discuss your Enterprise plan shortly.",
-      "ERROR": "Failed to submit your request. Please try again."
+      "ERROR": "Failed to submit your request. Please try again.",
+      "PENDING_BANNER": "Your Enterprise plan request is with our sales team. You can still choose a self-serve plan below, or cancel the request if you changed your mind.",
+      "CANCEL_REQUEST": "Cancel Enterprise request",
+      "CANCEL_SUCCESS": "Enterprise request cancelled. You can choose a plan below.",
+      "CANCEL_ERROR": "Failed to cancel your Enterprise request. Please try again."
     },
     "VIEW_PRICING": "View Pricing",
     "MANAGE_SUBSCRIPTION": {

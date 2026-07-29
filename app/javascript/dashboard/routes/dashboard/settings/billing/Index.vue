@@ -22,9 +22,12 @@ import ButtonV4 from 'next/button/Button.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import EnterpriseAccountAPI from 'dashboard/api/enterprise/account';
+import { useBillingCheckoutReturn } from 'dashboard/composables/useBillingCheckoutReturn';
 import countries from 'shared/constants/countries.js';
 
 const router = useRouter();
+const { buildCheckoutReturnUrls, processCheckoutReturn } =
+  useBillingCheckoutReturn();
 const { t, te } = useI18n();
 const { currentAccount, isOnChatwootCloud, isCloudFeatureEnabled } =
   useAccount();
@@ -257,6 +260,17 @@ const customAttributes = computed(() => {
   return currentAccount.value.custom_attributes || {};
 });
 
+const enterpriseInquiry = computed(
+  () => customAttributes.value.enterprise_inquiry || null
+);
+
+const hasPendingEnterpriseInquiry = computed(() => {
+  const inquiry = enterpriseInquiry.value;
+  if (!inquiry) return false;
+
+  return !inquiry.processed_at && !inquiry.rejected_at;
+});
+
 const planName = computed(() => {
   return customAttributes.value.plan_name;
 });
@@ -484,12 +498,15 @@ const handleSubscribe = async () => {
       marketplaceData.value.connected_account?.payment_provider === 'razorpay'
         ? 'inr'
         : 'usd';
+    const { successUrl, cancelUrl } = buildCheckoutReturnUrls(
+      'marketplace_checkout'
+    );
     const response = await window.axios.post(
       `/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_checkout`,
       {
         currency,
-        success_url: window.location.href,
-        cancel_url: window.location.href,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
       }
     );
     if (response.data.checkout_url) {
@@ -502,6 +519,28 @@ const handleSubscribe = async () => {
 
 const openEnterpriseInquiryModal = () => {
   enterpriseInquiryModalRef.value?.open();
+};
+
+const isCancelingEnterpriseInquiry = ref(false);
+
+const handleEnterpriseInquirySuccess = async () => {
+  await store.dispatch('accounts/get', currentAccount.value.id);
+};
+
+const onCancelEnterpriseInquiry = async () => {
+  isCancelingEnterpriseInquiry.value = true;
+  try {
+    await EnterpriseAccountAPI.cancelEnterpriseInquiry();
+    useAlert(t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.CANCEL_SUCCESS'));
+    await store.dispatch('accounts/get', currentAccount.value.id);
+  } catch (error) {
+    useAlert(
+      error.response?.data?.error ||
+        t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.CANCEL_ERROR')
+    );
+  } finally {
+    isCancelingEnterpriseInquiry.value = false;
+  }
 };
 
 const fetchAccountDetails = async () => {
@@ -524,6 +563,7 @@ const handleBillingPageLogic = async () => {
   }
 
   await fetchAccountDetails();
+  await processCheckoutReturn();
 };
 
 const onClickBillingPortal = () => {
@@ -575,12 +615,13 @@ const handlePlanCheckoutProceed = async ({
   isCheckingOut.value = true;
   planCheckoutModalRef.value?.setProceeding(true);
   try {
+    const { successUrl, cancelUrl } = buildCheckoutReturnUrls('plan_checkout');
     const response = await EnterpriseAccountAPI.planCheckout({
       planName: selectedPlanName,
       country,
       couponCode,
-      successUrl: window.location.href,
-      cancelUrl: window.location.href,
+      successUrl,
+      cancelUrl,
     });
     if (response.data.checkout_url) {
       const checkoutUrl = response.data.checkout_url;
@@ -789,6 +830,26 @@ onMounted(() => {
 
       <!-- Direct Plan Selection Flow (Replaces Stripe Flows for Testing) -->
       <!-- Marketplace clients subscribe via their reseller's pricing above, not here. -->
+      <section v-if="hasPendingEnterpriseInquiry" class="grid gap-4">
+        <BillingCard
+          :title="$t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.TITLE')"
+          :description="
+            $t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.PENDING_BANNER')
+          "
+        >
+          <div class="p-4">
+            <ButtonV4
+              sm
+              solid
+              slate
+              :is-loading="isCancelingEnterpriseInquiry"
+              @click="onCancelEnterpriseInquiry"
+            >
+              {{ $t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.CANCEL_REQUEST') }}
+            </ButtonV4>
+          </div>
+        </BillingCard>
+      </section>
       <section class="grid gap-4">
         <BillingCard
           v-if="!hasResellerParent && (!planName || showPlanPicker)"
@@ -1194,7 +1255,10 @@ onMounted(() => {
         ref="purchaseCreditsModalRef"
         :payment-provider="topupPaymentProvider"
       />
-      <EnterpriseInquiryModal ref="enterpriseInquiryModalRef" />
+      <EnterpriseInquiryModal
+        ref="enterpriseInquiryModalRef"
+        @success="handleEnterpriseInquirySuccess"
+      />
       <DowngradePlanWarningModal
         ref="downgradeWarningModalRef"
         @confirm="handleDowngradeConfirm"

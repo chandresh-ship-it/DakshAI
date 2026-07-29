@@ -121,6 +121,19 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     render_payment_failure('cancel_subscription', e.message, error_class: e.class.name, payment_provider: provider)
   end
 
+  def checkout_return
+    Enterprise::Billing::RecordCheckoutAbandonmentService.new(
+      account: @account,
+      user: current_user,
+      return_type: params[:return_type],
+      checkout_type: params[:checkout_type],
+      checkout_ref: params[:checkout_ref],
+      payment_provider: checkout_return_payment_provider
+    ).perform
+
+    head :no_content
+  end
+
   def validate_coupon
     return render_payment_failure('validate_coupon', 'Invalid plan name') unless Enterprise::Billing::CloudPlans.purchasable?(params[:plan_name])
 
@@ -276,23 +289,25 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   end
 
   def enterprise_inquiry
-    inquiry = enterprise_inquiry_params
-
-    @account.update_column(
-      :custom_attributes,
-      @account.custom_attributes.merge(
-        'enterprise_inquiry' => inquiry.merge(
-          'requested_at' => Time.current.iso8601,
-          'requested_by' => current_user.email
-        )
-      )
+    inquiry = enterprise_inquiry_params.merge(
+      'requested_at' => Time.current.iso8601,
+      'requested_by' => current_user.email
     )
+
+    Enterprise::Billing::EnterpriseInquiryAttributes.save_enterprise_inquiry!(@account, inquiry)
 
     AdministratorNotifications::EnterpriseInquiryMailer.with(account: @account)
                                                        .submitted(account: @account, user: current_user, inquiry: inquiry)
                                                        .deliver_later
 
     render json: { message: 'Thanks! Our team will reach out to discuss your Enterprise plan shortly.' }, status: :ok
+  end
+
+  def cancel_enterprise_inquiry
+    cleared = Enterprise::Billing::ClearEnterpriseInquiryService.new(account: @account).perform
+    return render json: { error: 'No pending Enterprise inquiry found.' }, status: :not_found unless cleared
+
+    render json: { message: 'Enterprise inquiry cancelled. You can choose a self-serve plan anytime.' }, status: :ok
   end
 
   private
@@ -390,6 +405,10 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   def checkout_payment_provider
     locked_payment_provider.presence ||
       provider_for_country(@account.custom_attributes['billing_country'])
+  end
+
+  def checkout_return_payment_provider
+    checkout_payment_provider
   end
 
   def checkout_payment_provider!

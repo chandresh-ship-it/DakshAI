@@ -51,11 +51,19 @@ class AccountPolicy < ApplicationPolicy
     @account_user.administrator?
   end
 
+  def checkout_return?
+    @account_user.administrator?
+  end
+
   def plans?
     @account_user.administrator?
   end
 
   def enterprise_inquiry?
+    @account_user.administrator?
+  end
+
+  def cancel_enterprise_inquiry?
     @account_user.administrator?
   end
 

@@ -36,6 +36,10 @@ class EnterpriseAccountAPI extends ApiClient {
     return axios.post(`${this.url}enterprise_inquiry`, inquiry);
   }
 
+  cancelEnterpriseInquiry() {
+    return axios.post(`${this.url}cancel_enterprise_inquiry`);
+  }
+
   getTransactions() {
     return axios.get(`${this.url}transactions`);
   }
@@ -55,6 +59,14 @@ class EnterpriseAccountAPI extends ApiClient {
       plan_name: planName,
       country,
       coupon_code: couponCode,
+    });
+  }
+
+  recordCheckoutReturn({ returnType, checkoutType, checkoutRef } = {}) {
+    return axios.post(`${this.url}checkout_return`, {
+      return_type: returnType,
+      checkout_type: checkoutType,
+      checkout_ref: checkoutRef,
     });
   }
 

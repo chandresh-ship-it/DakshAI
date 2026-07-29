@@ -51,6 +51,7 @@ class Enterprise::Billing::RazorpayPlanCheckoutService
     sub = account.subscription
     return if sub.blank? || sub.payment_provider != 'razorpay' || sub.razorpay_subscription_id.blank?
     return if sub.active? || sub.status == 'canceled'
+    return if sub.plan_name.present? && sub.plan_name != plan_name
 
     razorpay_sub = client.fetch_subscription(sub.razorpay_subscription_id)
     return if %w[active cancelled completed expired halted].include?(razorpay_sub['status'])

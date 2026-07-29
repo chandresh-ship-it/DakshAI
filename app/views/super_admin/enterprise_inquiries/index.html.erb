@@ -42,7 +42,7 @@
         </thead>
         <tbody>
           <% @accounts.each do |account| %>
-            <% inquiry = account.custom_attributes['enterprise_inquiry'] || {} %>
+            <% inquiry = Enterprise::Billing::EnterpriseInquiryAttributes.enterprise_inquiry(account) || {} %>
             <tr class="js-table-row">
               <td class="cell-data font-medium text-slate-800">
                 <%= link_to "##{account.id} #{account.name}", [namespace, account] %>
@@ -100,7 +100,7 @@
                 <% else %>
                   <%= form_tag send_payment_link_super_admin_enterprise_inquiry_path(account), method: :post, class: 'flex flex-col gap-1 items-start' do %>
                     <div class="flex items-center gap-1">
-                      <span class="text-slate-500"><%= (account.custom_attributes['billing_country'].to_s.upcase == 'IN') ? '₹' : '$' %></span>
+                      <span class="text-slate-500"><%= (Enterprise::Billing::EnterpriseInquiryAttributes.stored_custom_attributes(account)['billing_country'].to_s.upcase == 'IN') ? '₹' : '$' %></span>
                       <%= number_field_tag :monthly_price, contract&.negotiated_price, min: 1, step: 0.01, placeholder: 'e.g. 499', required: true, class: 'w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm' %>
                     </div>
                     <%= select_tag :payment_provider,
@@ -108,7 +108,7 @@
                                      @payment_gateways.map { |gateway|
                                        ["#{Enterprise::Billing::PaymentGatewayRegistry.label_for(gateway['id'])} (#{Enterprise::Billing::PaymentGatewayRegistry.currency_for(gateway['id']).upcase})", gateway['id']]
                                      },
-                                     Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(country: account.custom_attributes['billing_country'])
+                                     Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(country: Enterprise::Billing::EnterpriseInquiryAttributes.stored_custom_attributes(account)['billing_country'])
                                    ),
                                    class: 'rounded-lg border border-slate-300 px-2 py-1 text-xs' %>
                     <%= submit_tag 'Send link', class: 'button' %>

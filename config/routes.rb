@@ -559,8 +559,10 @@ Rails.application.routes.draw do
               post :topup_checkout
               post :plan_checkout
               post :validate_coupon
+              post :checkout_return
               post :bypass_plan
               post :enterprise_inquiry
+              post :cancel_enterprise_inquiry
               get :plans
               get :transactions
               post :cancel_subscription

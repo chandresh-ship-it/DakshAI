@@ -14,11 +14,11 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
 
   def mark_processed
     account = Account.find(params[:id])
-    inquiry = (account.custom_attributes['enterprise_inquiry'] || {}).merge(
+    inquiry = (Enterprise::Billing::EnterpriseInquiryAttributes.enterprise_inquiry(account) || {}).merge(
       'processed_at' => Time.current.iso8601,
       'processed_by' => current_super_admin.email
     )
-    account.update_column(:custom_attributes, account.custom_attributes.merge('enterprise_inquiry' => inquiry))
+    Enterprise::Billing::EnterpriseInquiryAttributes.save_enterprise_inquiry!(account, inquiry)
 
     # rubocop:disable Rails/I18nLocaleTexts
     redirect_back(fallback_location: super_admin_enterprise_inquiries_path, notice: 'Inquiry marked as processed.')
@@ -26,16 +26,17 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
   end
 
   # Declines the inquiry without granting a plan, recording a note so the reason is
-  # visible later. The account itself is untouched - it stays on whatever plan (or no
-  # plan) it already had.
+  # visible later. Clears any unpaid Enterprise checkout so the account can pick a
+  # self-serve plan again.
   def reject
     account = Account.find(params[:id])
-    inquiry = (account.custom_attributes['enterprise_inquiry'] || {}).merge(
+    inquiry = (Enterprise::Billing::EnterpriseInquiryAttributes.enterprise_inquiry(account) || {}).merge(
       'rejected_at' => Time.current.iso8601,
       'rejected_by' => current_super_admin.email,
       'rejection_note' => params[:note]
     )
-    account.update_column(:custom_attributes, account.custom_attributes.merge('enterprise_inquiry' => inquiry))
+    Enterprise::Billing::EnterpriseInquiryAttributes.save_enterprise_inquiry!(account, inquiry)
+    Enterprise::Billing::ClearEnterpriseInquiryService.new(account: account, remove_inquiry: false).perform
 
     # rubocop:disable Rails/I18nLocaleTexts
     redirect_back(fallback_location: super_admin_enterprise_inquiries_path, notice: 'Inquiry rejected.')
@@ -46,9 +47,7 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
   # Doesn't touch any plan/contract the account may already have.
   def destroy
     account = Account.find(params[:id])
-    updated_attributes = account.custom_attributes.dup
-    updated_attributes.delete('enterprise_inquiry')
-    account.update_column(:custom_attributes, updated_attributes)
+    Enterprise::Billing::ClearEnterpriseInquiryService.new(account: account).perform
 
     # rubocop:disable Rails/I18nLocaleTexts
     redirect_back(fallback_location: super_admin_enterprise_inquiries_path, notice: 'Inquiry deleted.')
@@ -58,11 +57,12 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
   def send_payment_link
     account = Account.find(params[:id])
     monthly_price = params[:monthly_price].presence || account.enterprise_contract&.negotiated_price
-    inquiry = account.custom_attributes['enterprise_inquiry'] || {}
+    inquiry = Enterprise::Billing::EnterpriseInquiryAttributes.enterprise_inquiry(account) || {}
     recipient_email = inquiry['requested_by']
+    stored_attrs = Enterprise::Billing::EnterpriseInquiryAttributes.stored_custom_attributes(account)
     provider = params[:payment_provider].presence ||
                Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(
-                 country: account.custom_attributes['billing_country']
+                 country: stored_attrs['billing_country']
                )
 
     if monthly_price.blank? || recipient_email.blank?
@@ -84,15 +84,16 @@ class SuperAdmin::EnterpriseInquiriesController < SuperAdmin::ApplicationControl
                                                  payment_url: result[:checkout_url])
                                       .deliver_later
 
-    account.update_column(:custom_attributes, account.custom_attributes.merge(
-                                                'enterprise_inquiry' => inquiry.merge(
-                                                  'payment_link_url' => result[:checkout_url],
-                                                  'payment_link_amount' => monthly_price,
-                                                  'payment_link_provider' => result[:provider] || provider,
-                                                  'payment_link_sent_at' => Time.current.iso8601,
-                                                  'payment_link_sent_by' => current_super_admin.email
-                                                )
-                                              ))
+    Enterprise::Billing::EnterpriseInquiryAttributes.save_enterprise_inquiry!(
+      account,
+      inquiry.merge(
+        'payment_link_url' => result[:checkout_url],
+        'payment_link_amount' => monthly_price,
+        'payment_link_provider' => result[:provider] || provider,
+        'payment_link_sent_at' => Time.current.iso8601,
+        'payment_link_sent_by' => current_super_admin.email
+      )
+    )
 
     redirect_back(fallback_location: super_admin_enterprise_inquiries_path, notice: "Payment link sent to #{recipient_email}.")
   rescue Stripe::StripeError, Enterprise::Billing::RazorpayClient::Error,
