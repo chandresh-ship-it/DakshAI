@@ -9,8 +9,10 @@ class Enterprise::Billing::HandleRazorpayEventService
     case @event[:event]
     when 'subscription.activated', 'subscription.charged'
       process_subscription_active(payload_entity)
+      record_subscription_billing_activity(payload_entity, status: 'success')
     when 'subscription.pending', 'subscription.halted'
       process_subscription_past_due(payload_entity)
+      record_subscription_billing_activity(payload_entity, status: 'failed')
     when 'subscription.cancelled', 'subscription.completed'
       process_subscription_deleted(payload_entity)
     when 'payment_link.paid', 'payment.captured'
@@ -172,6 +174,38 @@ class Enterprise::Billing::HandleRazorpayEventService
     account.update!(
       custom_attributes: (account.custom_attributes || {}).merge('subscription_status' => 'past_due')
     )
+  end
+
+  def record_subscription_billing_activity(payload_entity, status:)
+    razorpay_sub = subscription_payload(payload_entity)
+    return if razorpay_sub[:id].blank?
+
+    subscription = Subscription.find_by(razorpay_subscription_id: razorpay_sub[:id])
+    account = subscription&.account || find_account_from_notes(razorpay_sub)
+    return if account.blank?
+
+    message = if status == 'success'
+                "Razorpay subscription #{@event[:event]}"
+              else
+                "Razorpay subscription payment failed (#{@event[:event]})"
+              end
+
+    Enterprise::Billing::RecordBillingActivityService.new(
+      account: account,
+      action: 'subscription_payment',
+      status: status,
+      message: message,
+      error_class: status == 'failed' ? @event[:event] : nil,
+      payment_provider: 'razorpay',
+      metadata: {
+        razorpay_subscription_id: razorpay_sub[:id],
+        plan_name: razorpay_sub.dig(:notes, :plan_name),
+        event: @event[:event],
+        subscription_status: razorpay_sub[:status]
+      }
+    ).perform
+  rescue StandardError => e
+    Rails.logger.error("[razorpay_webhook] failed to record billing activity: #{e.message}")
   end
 
   def process_subscription_deleted(payload_entity)

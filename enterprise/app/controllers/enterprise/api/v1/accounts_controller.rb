@@ -1,5 +1,6 @@
 class Enterprise::Api::V1::AccountsController < Api::BaseController
   include BillingHelper
+  include Enterprise::BillingActivityLogging
   before_action :fetch_account
   before_action :check_authorization
   before_action :check_cloud_env, only: [:toggle_deletion]
@@ -64,7 +65,7 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   end
 
   def topup_checkout
-    return render json: { error: I18n.t('errors.topup.credits_required') }, status: :unprocessable_entity if params[:credits].blank?
+    return render_payment_failure('topup_checkout', I18n.t('errors.topup.credits_required')) if params[:credits].blank?
 
     provider = checkout_payment_provider!
     result = if provider == 'razorpay'
@@ -81,14 +82,20 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
                ).create_checkout_session(credits: params[:credits].to_i).merge(provider: 'stripe')
              end
 
+    log_billing_success(
+      'topup_checkout',
+      "Checkout session created for #{params[:credits]} credits",
+      payment_provider: provider,
+      metadata: { checkout_id: result[:id] || result[:subscription_id], credits: params[:credits].to_i }
+    )
     render json: result
   rescue Enterprise::Billing::PaymentGatewayRegistry::UnsupportedCountryError => e
-    render_could_not_create_error(e.message)
+    render_payment_failure('topup_checkout', e.message, error_class: e.class.name, payment_provider: checkout_payment_provider)
   rescue Enterprise::Billing::TopupCheckoutService::Error,
          Enterprise::Billing::RazorpayTopupCheckoutService::Error,
          Enterprise::Billing::RazorpayClient::Error,
          Stripe::StripeError => e
-    render_could_not_create_error(e.message)
+    render_payment_failure('topup_checkout', e.message, error_class: e.class.name, payment_provider: checkout_payment_provider)
   end
 
   def cancel_subscription
@@ -96,6 +103,12 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     if provider == 'razorpay'
       result = Enterprise::Billing::RazorpayCancelSubscriptionService.new(account: @account).perform(
         cancel_at_cycle_end: params[:cancel_at_cycle_end] != false && params[:cancel_at_cycle_end] != 'false'
+      )
+      log_billing_success(
+        'cancel_subscription',
+        'Subscription cancellation scheduled',
+        payment_provider: 'razorpay',
+        metadata: result.to_h.slice('cancel_at_cycle_end', 'current_period_end').compact
       )
       return render json: result
     end
@@ -105,12 +118,11 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     render_invalid_billing_details
   rescue Enterprise::Billing::RazorpayCancelSubscriptionService::Error,
          Enterprise::Billing::RazorpayClient::Error => e
-    render_could_not_create_error(e.message)
+    render_payment_failure('cancel_subscription', e.message, error_class: e.class.name, payment_provider: provider)
   end
 
   def validate_coupon
-    return render json: { error: 'Invalid plan name' }, status: :unprocessable_entity unless %w[Hobby Standard
-                                                                                                Business].include?(params[:plan_name])
+    return render_payment_failure('validate_coupon', 'Invalid plan name') unless %w[Hobby Standard Business].include?(params[:plan_name])
 
     locked_provider = locked_payment_provider
     country = normalize_billing_country(params[:country])
@@ -118,7 +130,7 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     if locked_provider.present?
       country = country_for_provider(locked_provider)
     elsif country.blank?
-      return render json: { error: 'Country is required' }, status: :unprocessable_entity
+      return render_payment_failure('validate_coupon', 'Country is required')
     end
 
     result = Enterprise::Billing::ValidatePlanCouponService.new(
@@ -127,17 +139,22 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
       coupon_code: params[:coupon_code].presence
     ).perform
 
+    log_billing_success(
+      'validate_coupon',
+      params[:coupon_code].present? ? "Coupon applied for #{params[:plan_name]} plan" : "Pricing loaded for #{params[:plan_name]} plan",
+      payment_provider: locked_provider || provider_for_country(country),
+      metadata: { plan_name: params[:plan_name], country: country, coupon_code: params[:coupon_code].presence }
+    )
     render json: result
   rescue Enterprise::Billing::PaymentGatewayRegistry::UnsupportedCountryError => e
-    render_could_not_create_error(e.message)
+    render_payment_failure('validate_coupon', e.message, error_class: e.class.name, payment_provider: locked_payment_provider)
   rescue Enterprise::Billing::ValidatePlanCouponService::Error,
          Enterprise::Billing::ApplyBillingCouponService::Error => e
-    render_could_not_create_error(e.message)
+    render_payment_failure('validate_coupon', e.message, error_class: e.class.name, payment_provider: locked_payment_provider)
   end
 
   def plan_checkout
-    return render json: { error: 'Invalid plan name' }, status: :unprocessable_entity unless %w[Hobby Standard
-                                                                                                Business].include?(params[:plan_name])
+    return render_payment_failure('plan_checkout', 'Invalid plan name') unless %w[Hobby Standard Business].include?(params[:plan_name])
 
     locked_provider = locked_payment_provider
     country = normalize_billing_country(params[:country])
@@ -145,18 +162,22 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     if locked_provider.present?
       requested_provider = provider_for_country(country.presence || country_for_provider(locked_provider))
       if requested_provider.blank?
-        return render json: {
-          error: "Online billing is not available for #{country}. Please contact support."
-        }, status: :unprocessable_entity
+        return render_payment_failure(
+          'plan_checkout',
+          "Online billing is not available for #{country}. Please contact support.",
+          payment_provider: locked_provider
+        )
       end
       if requested_provider != locked_provider
-        return render json: {
-          error: "Your active plan is billed through #{locked_provider.capitalize}. Cancel it before switching payment gateways."
-        }, status: :unprocessable_entity
+        return render_payment_failure(
+          'plan_checkout',
+          "Your active plan is billed through #{locked_provider.capitalize}. Cancel it before switching payment gateways.",
+          payment_provider: locked_provider
+        )
       end
       country = country_for_provider(locked_provider)
     else
-      return render json: { error: 'Country is required' }, status: :unprocessable_entity if country.blank?
+      return render_payment_failure('plan_checkout', 'Country is required') if country.blank?
 
       persist_billing_country!(country)
     end
@@ -169,25 +190,38 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
       coupon_code: params[:coupon_code].presence
     }
 
-    result = if provider_for_country!(country) == 'razorpay'
+    provider = provider_for_country!(country)
+    result = if provider == 'razorpay'
                Enterprise::Billing::RazorpayPlanCheckoutService.new(**checkout_args).perform
              else
                Enterprise::Billing::PlanCheckoutService.new(**checkout_args).perform.merge(provider: 'stripe')
              end
 
+    log_billing_success(
+      'plan_checkout',
+      "Checkout session created for #{params[:plan_name]} plan",
+      payment_provider: provider,
+      metadata: {
+        plan_name: params[:plan_name],
+        country: country,
+        checkout_id: result[:id] || result[:subscription_id],
+        coupon_code: params[:coupon_code].presence
+      }.compact
+    )
     render json: result
   rescue Enterprise::Billing::PaymentGatewayRegistry::UnsupportedCountryError => e
-    render_could_not_create_error(e.message)
+    render_payment_failure('plan_checkout', e.message, error_class: e.class.name)
   rescue Enterprise::Billing::PlanCheckoutService::Error,
          Enterprise::Billing::RazorpayPlanCheckoutService::Error,
          Enterprise::Billing::ApplyBillingCouponService::Error,
          Enterprise::Billing::RazorpayClient::Error,
          Stripe::StripeError => e
     Rails.logger.error("[plan_checkout] account=#{@account.id} plan=#{params[:plan_name]} #{e.class}: #{e.message}")
-    render_could_not_create_error(e.message)
+    render_payment_failure('plan_checkout', e.message, error_class: e.class.name,
+                                                       payment_provider: provider_for_country(normalize_billing_country(params[:country])))
   rescue StandardError => e
     Rails.logger.error("[plan_checkout] account=#{@account.id} plan=#{params[:plan_name]} UNEXPECTED #{e.class}: #{e.message}\n#{e.backtrace&.first(10)&.join("\n")}")
-    render_could_not_create_error("Checkout failed: #{e.message}")
+    render_payment_failure('plan_checkout', "Checkout failed: #{e.message}", error_class: e.class.name)
   end
 
   def bypass_plan

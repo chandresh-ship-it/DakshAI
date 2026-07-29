@@ -1,4 +1,6 @@
 class Enterprise::Api::V1::MarketplaceCheckoutController < Api::BaseController
+  include Enterprise::BillingActivityLogging
+
   before_action :fetch_account
   before_action :ensure_marketplace_client
 
@@ -15,9 +17,22 @@ class Enterprise::Api::V1::MarketplaceCheckoutController < Api::BaseController
     )
 
     result = service.perform
+    provider = @account.parent&.connected_account&.payment_provider
+    log_billing_success(
+      'marketplace_checkout',
+      "Marketplace checkout session created (#{currency.upcase})",
+      payment_provider: provider,
+      metadata: { currency: currency, checkout_id: result[:id] || result[:checkout_url] }
+    )
     render json: result
   rescue StandardError => e
-    render json: { error: e.message }, status: :unprocessable_entity
+    provider = @account.parent&.connected_account&.payment_provider
+    render_payment_failure(
+      'marketplace_checkout',
+      e.message,
+      error_class: e.class.name,
+      payment_provider: provider
+    )
   end
 
   private
@@ -29,7 +44,9 @@ class Enterprise::Api::V1::MarketplaceCheckoutController < Api::BaseController
   end
 
   def ensure_marketplace_client
-    render json: { error: 'Account must have a reseller parent to subscribe' }, status: :forbidden if @account.parent_id.blank?
+    return if @account.parent_id.present?
+
+    render_payment_failure('marketplace_checkout', 'Account must have a reseller parent to subscribe')
   end
 
   def default_return_url

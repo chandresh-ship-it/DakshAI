@@ -92,6 +92,7 @@ class Account < ApplicationRecord
   has_one :subscription, dependent: :destroy
   has_one :enterprise_contract, dependent: :destroy
   has_many :payment_transactions, dependent: :destroy
+  has_many :billing_activity_logs, dependent: :destroy
 
   has_many :account_users, dependent: :destroy_async
   has_many :agent_bot_inboxes, dependent: :destroy_async

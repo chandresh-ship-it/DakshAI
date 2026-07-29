@@ -27,9 +27,11 @@ class Enterprise::Billing::HandleStripeEventService
         process_checkout_session_completed
       when 'invoice.payment_succeeded'
         record_payment_transaction(status: 'succeeded')
+        record_billing_activity_from_invoice(status: 'success')
         process_invoice_payment_succeeded
       when 'invoice.payment_failed'
         record_payment_transaction(status: 'failed')
+        record_billing_activity_from_invoice(status: 'failed')
       else
         Rails.logger.debug { "Unhandled event type: #{@event.type}" }
       end
@@ -307,6 +309,35 @@ class Enterprise::Billing::HandleStripeEventService
     ).perform
   rescue StandardError => e
     Rails.logger.error("Failed to record payment transaction for invoice #{invoice&.id}: #{e.message}")
+  end
+
+  def record_billing_activity_from_invoice(status:)
+    invoice = @event.data.object
+    payer_account = account_for_customer(invoice.customer)
+    return if payer_account.blank?
+
+    message = if status == 'success'
+                "Invoice payment succeeded (#{invoice.amount_paid.to_f / 100} #{invoice.currency.upcase})"
+              else
+                invoice.last_finalization_error&.message.presence || 'Invoice payment failed'
+              end
+
+    Enterprise::Billing::RecordBillingActivityService.new(
+      account: payer_account,
+      action: 'invoice_payment',
+      status: status,
+      message: message,
+      error_class: status == 'failed' ? (invoice.last_finalization_error&.code.presence || 'invoice.payment_failed') : nil,
+      payment_provider: 'stripe',
+      metadata: {
+        stripe_invoice_id: invoice.id,
+        billing_reason: invoice.billing_reason,
+        amount: status == 'success' ? invoice.amount_paid : invoice.amount_due,
+        currency: invoice.currency
+      }
+    ).perform
+  rescue StandardError => e
+    Rails.logger.error("Failed to record billing activity for invoice #{invoice&.id}: #{e.message}")
   end
 
   def account_for_customer(customer_id)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_28_140000) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_29_130000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -269,6 +269,24 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_28_140000) do
     t.datetime "updated_at", null: false
     t.boolean "active", default: true, null: false
     t.index ["account_id"], name: "index_automation_rules_on_account_id"
+  end
+
+  create_table "billing_activity_logs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "user_id"
+    t.string "action", null: false
+    t.string "payment_provider"
+    t.string "error_class"
+    t.text "message", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "status", default: "failed", null: false
+    t.index ["account_id"], name: "index_billing_activity_logs_on_account_id"
+    t.index ["action"], name: "index_billing_activity_logs_on_action"
+    t.index ["created_at"], name: "index_billing_activity_logs_on_created_at"
+    t.index ["status"], name: "index_billing_activity_logs_on_status"
+    t.index ["user_id"], name: "index_billing_activity_logs_on_user_id"
   end
 
   create_table "billing_coupons", force: :cascade do |t|
@@ -1635,6 +1653,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_28_140000) do
   add_foreign_key "accounts", "accounts", column: "parent_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "billing_activity_logs", "accounts"
+  add_foreign_key "billing_activity_logs", "users"
   add_foreign_key "commission_rules", "accounts"
   add_foreign_key "commission_rules", "users", column: "created_by_user_id"
   add_foreign_key "connected_accounts", "accounts"

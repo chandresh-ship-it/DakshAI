@@ -1,4 +1,5 @@
-<%# locals: account, transactions, plan_name (optional) %>
+<%# locals: account, transactions (optional), billing_activity (optional), plan_name (optional) %>
+<% billing_activity = local_assigns[:billing_activity] || [] %>
 <% sub = account.subscription %>
 <% plan_name = local_assigns[:plan_name].presence || sub&.plan_name.presence || account.custom_attributes['plan_name'] %>
 <% billing_country = account.custom_attributes['billing_country'] %>
@@ -112,42 +113,40 @@
 
   <div class="rounded-lg border border-slate-200 bg-white overflow-hidden">
     <div class="border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-      <h2 class="text-sm font-semibold text-slate-900">Payment transactions</h2>
-      <span class="text-xs text-slate-500"><%= pluralize(transactions.size, 'record') %></span>
+      <h2 class="text-sm font-semibold text-slate-900">Billing activity</h2>
+      <span class="text-xs text-slate-500"><%= pluralize(billing_activity.size, 'record') %></span>
     </div>
-    <% if transactions.empty? %>
-      <p class="px-4 py-6 text-sm text-slate-500">No payment transactions yet.</p>
+    <% if billing_activity.empty? %>
+      <p class="px-4 py-6 text-sm text-slate-500">No billing activity recorded yet.</p>
     <% else %>
       <div class="overflow-x-auto">
         <table>
           <thead>
             <tr>
               <th class="cell-label" scope="col">Date</th>
-              <th class="cell-label" scope="col">Description</th>
-              <th class="cell-label" scope="col">Provider</th>
-              <th class="cell-label" scope="col">Amount</th>
+              <th class="cell-label" scope="col">User</th>
+              <th class="cell-label" scope="col">Action</th>
               <th class="cell-label" scope="col">Status</th>
-              <th class="cell-label" scope="col">Receipt</th>
+              <th class="cell-label" scope="col">Provider</th>
+              <th class="cell-label" scope="col">Message</th>
+              <th class="cell-label" scope="col">Details</th>
             </tr>
           </thead>
           <tbody>
-            <% transactions.each do |txn| %>
+            <% billing_activity.each do |log| %>
               <tr class="js-table-row">
-                <td class="cell-data whitespace-nowrap">
-                  <%= txn.paid_at.present? ? l(txn.paid_at, format: :long) : l(txn.created_at, format: :long) %>
-                </td>
-                <td class="cell-data"><%= txn.description.presence || '—' %></td>
-                <td class="cell-data"><%= txn.payment_provider.to_s.capitalize %></td>
-                <td class="cell-data whitespace-nowrap">
-                  <%= txn.amount %> <%= txn.currency.to_s.upcase %>
-                </td>
-                <td class="cell-data"><%= txn.status.titleize %></td>
+                <td class="cell-data whitespace-nowrap"><%= l(log.created_at, format: :long) %></td>
+                <td class="cell-data"><%= log.user&.email.presence || '—' %></td>
+                <td class="cell-data"><%= log.action %></td>
                 <td class="cell-data">
-                  <% if txn.hosted_invoice_url.present? %>
-                    <%= link_to 'View', txn.hosted_invoice_url, target: '_blank', rel: 'noopener noreferrer', class: 'text-violet-700 hover:underline' %>
-                  <% else %>
-                    —
-                  <% end %>
+                  <span class="<%= log.success? ? 'text-green-700' : 'text-red-700' %>">
+                    <%= log.status.titleize %>
+                  </span>
+                </td>
+                <td class="cell-data"><%= log.payment_provider.to_s.capitalize.presence || '—' %></td>
+                <td class="cell-data"><%= log.message %></td>
+                <td class="cell-data">
+                  <%= link_to 'View', super_admin_billing_activity_log_path(log), class: 'text-violet-700 hover:underline' %>
                 </td>
               </tr>
             <% end %>
