@@ -583,7 +583,14 @@ const handlePlanCheckoutProceed = async ({
       cancelUrl: window.location.href,
     });
     if (response.data.checkout_url) {
-      window.location.href = response.data.checkout_url;
+      const checkoutUrl = response.data.checkout_url;
+      if (checkoutUrl === window.location.href) {
+        useAlert(
+          'Could not open the payment page. Please try again or contact support.'
+        );
+        return;
+      }
+      window.location.href = checkoutUrl;
       return;
     }
     useAlert('Failed to start checkout');

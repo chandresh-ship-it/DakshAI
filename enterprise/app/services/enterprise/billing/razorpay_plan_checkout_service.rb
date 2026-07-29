@@ -14,7 +14,11 @@ class Enterprise::Billing::RazorpayPlanCheckoutService
   pattr_initialize [:account!, :plan_name!, :success_url!, :cancel_url!, :coupon_code]
 
   def perform
-    return { checkout_url: manage_existing_subscription_url } if already_on_real_razorpay_subscription?
+    return { checkout_url: manage_existing_subscription_url, provider: 'razorpay' } if active_razorpay_subscription?
+
+    pending_checkout = resume_pending_checkout
+    return pending_checkout if pending_checkout.present?
+
     raise Error, 'This plan is not available for Razorpay purchase yet. Please contact support.' if razorpay_plan_id.blank?
 
     subscription = client.create_subscription(
@@ -27,18 +31,42 @@ class Enterprise::Billing::RazorpayPlanCheckoutService
 
     upsert_pending_subscription!(subscription)
 
-    checkout_url = subscription['short_url'].presence || success_url
+    checkout_url = razorpay_checkout_url!(subscription)
     { checkout_url: checkout_url, provider: 'razorpay', razorpay_subscription_id: subscription['id'] }
   end
 
   private
 
-  def already_on_real_razorpay_subscription?
+  # Only block new checkout when Razorpay billing is already live. Pending
+  # `created` subscriptions from an abandoned/failed first payment must allow retry.
+  def active_razorpay_subscription?
     sub = account.subscription
     sub.present? &&
       sub.payment_provider == 'razorpay' &&
       sub.razorpay_subscription_id.present? &&
-      sub.status != 'canceled'
+      sub.active?
+  end
+
+  def resume_pending_checkout
+    sub = account.subscription
+    return if sub.blank? || sub.payment_provider != 'razorpay' || sub.razorpay_subscription_id.blank?
+    return if sub.active? || sub.status == 'canceled'
+
+    razorpay_sub = client.fetch_subscription(sub.razorpay_subscription_id)
+    return if %w[active cancelled completed expired halted].include?(razorpay_sub['status'])
+
+    checkout_url = razorpay_checkout_url!(razorpay_sub)
+    { checkout_url: checkout_url, provider: 'razorpay', razorpay_subscription_id: razorpay_sub['id'] }
+  rescue Enterprise::Billing::RazorpayClient::Error => e
+    Rails.logger.warn("[razorpay_plan_checkout] could not resume pending sub for account #{account.id}: #{e.message}")
+    nil
+  end
+
+  def razorpay_checkout_url!(subscription)
+    checkout_url = subscription['short_url'].presence
+    return checkout_url if checkout_url.present?
+
+    raise Error, 'Razorpay did not return a checkout URL. Please try again or contact support.'
   end
 
   def manage_existing_subscription_url
