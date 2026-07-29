@@ -122,6 +122,9 @@ const formatMoney = (amount, currency) => {
   }).format(Number(amount));
 };
 
+const apiErrorMessage = (error, fallback) =>
+  error.response?.data?.error || error.response?.data?.message || fallback;
+
 const resetState = () => {
   couponInput.value = '';
   appliedCouponCode.value = '';
@@ -134,6 +137,7 @@ const resetState = () => {
 
 const refreshPricing = async ({
   couponCode = appliedCouponCode.value,
+  isCouponValidation = false,
 } = {}) => {
   if (!selectedPlan.value) return;
   if (props.showCountrySelect && !effectiveCountry.value) {
@@ -155,13 +159,34 @@ const refreshPricing = async ({
     pricing.value = response.data;
   } catch (error) {
     pricing.value = null;
-    pricingError.value =
-      error.response?.data?.error ||
-      t('BILLING_SETTINGS.PLAN_CHECKOUT.PRICING_ERROR');
+    if (!isCouponValidation) {
+      pricingError.value = apiErrorMessage(
+        error,
+        t('BILLING_SETTINGS.PLAN_CHECKOUT.PRICING_ERROR')
+      );
+    }
     throw error;
   } finally {
     isLoadingPricing.value = false;
   }
+};
+
+const restoreBasePricing = async () => {
+  try {
+    await refreshPricing({ couponCode: '' });
+  } catch {
+    // pricingError is set in refreshPricing
+  }
+};
+
+const handleCouponValidationFailure = async error => {
+  appliedCouponCode.value = '';
+  couponError.value = apiErrorMessage(
+    error,
+    t('BILLING_SETTINGS.PLAN_CHECKOUT.COUPON_INVALID')
+  );
+  pricingError.value = '';
+  await restoreBasePricing();
 };
 
 const open = async plan => {
@@ -201,15 +226,12 @@ const handleApplyCoupon = async () => {
 
   isValidatingCoupon.value = true;
   couponError.value = '';
+  pricingError.value = '';
   try {
-    await refreshPricing({ couponCode: code });
+    await refreshPricing({ couponCode: code, isCouponValidation: true });
     appliedCouponCode.value = code.toUpperCase();
   } catch (error) {
-    appliedCouponCode.value = '';
-    pricing.value = null;
-    couponError.value =
-      error.response?.data?.error ||
-      t('BILLING_SETTINGS.PLAN_CHECKOUT.COUPON_INVALID');
+    await handleCouponValidationFailure(error);
   } finally {
     isValidatingCoupon.value = false;
   }
@@ -241,26 +263,28 @@ const handleProceed = async () => {
   }
 };
 
+watch(couponInput, () => {
+  if (couponError.value) {
+    couponError.value = '';
+  }
+});
+
 watch(effectiveCountry, async (country, previousCountry) => {
   if (!selectedPlan.value || !country || country === previousCountry) return;
   if (appliedCouponCode.value) {
     try {
-      await refreshPricing();
+      await refreshPricing({ isCouponValidation: true });
       couponError.value = '';
     } catch (error) {
-      appliedCouponCode.value = '';
       couponInput.value = '';
-      pricing.value = null;
-      couponError.value =
-        error.response?.data?.error ||
-        t('BILLING_SETTINGS.PLAN_CHECKOUT.COUPON_INVALID');
+      await handleCouponValidationFailure(error);
     }
     return;
   }
 
   try {
     await refreshPricing({ couponCode: '' });
-  } catch (error) {
+  } catch {
     pricing.value = null;
   }
 });
