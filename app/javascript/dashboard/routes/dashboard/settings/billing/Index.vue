@@ -48,7 +48,7 @@ const showPlanPicker = ref(false);
 const billingCountry = ref(
   currentAccount.value?.custom_attributes?.billing_country || ''
 );
-const countryOptions = countries.map(country => ({
+const allCountryOptions = countries.map(country => ({
   value: country.id,
   label: `${country.emoji} ${country.name}`,
 }));
@@ -72,9 +72,12 @@ const lockedPaymentProvider = computed(() => {
 
 const planCatalog = ref([]);
 const paymentGateways = ref([]);
+const supportsAllCountries = ref(true);
+const supportedCountryCodes = ref([]);
 
 const resolveProviderForCountry = country => {
   const normalizedCountry = (country || '').toUpperCase();
+  if (!normalizedCountry) return null;
   if (!paymentGateways.value.length) {
     return normalizedCountry === 'IN' ? 'razorpay' : 'stripe';
   }
@@ -87,8 +90,22 @@ const resolveProviderForCountry = country => {
   const fallbackGateway = paymentGateways.value.find(
     gateway => !(gateway.country_codes || []).length
   );
-  return fallbackGateway?.id || paymentGateways.value[0]?.id || 'stripe';
+  return fallbackGateway?.id || null;
 };
+
+const availableCountryOptions = computed(() => {
+  if (supportsAllCountries.value) {
+    return allCountryOptions;
+  }
+
+  if (!supportedCountryCodes.value.length) {
+    return allCountryOptions;
+  }
+
+  return allCountryOptions.filter(option =>
+    supportedCountryCodes.value.includes(option.value)
+  );
+});
 
 const gatewayLabel = provider =>
   paymentGateways.value.find(gateway => gateway.id === provider)?.label ||
@@ -151,11 +168,34 @@ const marketplaceData = ref({
   prices: [],
 });
 
+const normalizeBillingCountrySelection = () => {
+  if (supportsAllCountries.value) return;
+
+  const availableCodes = availableCountryOptions.value.map(
+    option => option.value
+  );
+  if (billingCountry.value && !availableCodes.includes(billingCountry.value)) {
+    billingCountry.value = availableCodes[0] || '';
+  }
+};
+
 const fetchPlanCatalog = async () => {
   try {
     const response = await EnterpriseAccountAPI.getPlans();
     planCatalog.value = response.data.plans || response.data;
-    paymentGateways.value = response.data.payment_gateways || [];
+    const gatewayConfig = response.data.payment_gateways;
+    if (Array.isArray(gatewayConfig)) {
+      paymentGateways.value = gatewayConfig;
+      supportsAllCountries.value = true;
+      supportedCountryCodes.value = [];
+    } else {
+      paymentGateways.value = gatewayConfig?.gateways || [];
+      supportsAllCountries.value =
+        gatewayConfig?.supports_all_countries !== false;
+      supportedCountryCodes.value =
+        gatewayConfig?.supported_country_codes || [];
+    }
+    normalizeBillingCountrySelection();
   } catch (error) {
     // Non-fatal - the plan picker still works without prices shown.
   }
@@ -1138,7 +1178,7 @@ onMounted(() => {
         :show-country-select="showBillingCountrySelect"
         :locked-payment-provider="lockedPaymentProvider"
         :initial-country="billingCountry"
-        :country-options="countryOptions"
+        :country-options="availableCountryOptions"
         :payment-gateways="paymentGateways"
         @proceed="handlePlanCheckoutProceed"
       />

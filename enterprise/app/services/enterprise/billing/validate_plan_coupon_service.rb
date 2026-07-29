@@ -13,7 +13,7 @@ class Enterprise::Billing::ValidatePlanCouponService
     raise Error, 'Plan is not available' if plan.blank? || plan['enabled'] == false
 
     base_amount = plan['price_per_agent'].to_f
-    provider = Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(country: country)
+    provider = Enterprise::Billing::PaymentGatewayRegistry.resolve_provider!(country: country)
     currency = Enterprise::Billing::PaymentGatewayRegistry.currency_for(provider)
     coupon = resolve_coupon
 

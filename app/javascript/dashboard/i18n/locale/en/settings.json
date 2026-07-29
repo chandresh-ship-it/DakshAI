@@ -496,6 +496,7 @@
       "PROVIDER_RAZORPAY": "Razorpay",
       "PROVIDER_HINT": "Checkout will use {provider} based on your country.",
       "PROVIDER_LOCKED_HINT": "Your active plan is billed through {provider}. You cannot switch payment gateways while this subscription is active.",
+      "UNSUPPORTED_COUNTRY": "Online billing is not available for this country. Please contact support.",
       "RAZORPAY_MANAGE_HINT": "This subscription is managed through Razorpay. Use Cancel subscription to stop renewals at the end of the current billing period.",
       "CANCEL_SUBSCRIPTION_BUTTON": "Cancel subscription",
       "CANCEL_SUBSCRIPTION_SUCCESS": "Subscription cancellation scheduled. Access continues until the current period ends.",

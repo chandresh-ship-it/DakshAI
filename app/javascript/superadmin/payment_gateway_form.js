@@ -17,6 +17,37 @@ const formatCodes = codes => [...new Set(codes)].join(', ');
 const findCountry = code =>
   countryOptions.find(country => country.id === code.toUpperCase());
 
+const countryPickerByRoot = new WeakMap();
+
+const showCountryConflictMessage = (code, gatewayLabel) => {
+  window.alert(
+    `${code} is already assigned to ${gatewayLabel}. Each country can only use one enabled gateway.`
+  );
+};
+
+const getEnabledPickerCodes = (form, excludeRoot = null) => {
+  const assignments = new Map();
+
+  form.querySelectorAll('[data-payment-gateway-countries]').forEach(picker => {
+    if (picker === excludeRoot) return;
+
+    const row = picker.closest('tr');
+    const checkbox = row?.querySelector(
+      'input[type="checkbox"][name*="[enabled]"]'
+    );
+    if (!checkbox?.checked || checkbox.disabled) return;
+
+    const gatewayLabel = picker.dataset.gatewayLabel || 'Another gateway';
+    parseCodes(
+      picker.querySelector('.js-country-codes-input')?.value || ''
+    ).forEach(code => {
+      assignments.set(code, gatewayLabel);
+    });
+  });
+
+  return assignments;
+};
+
 class PaymentGatewayCountryPicker {
   constructor(root) {
     this.root = root;
@@ -30,6 +61,23 @@ class PaymentGatewayCountryPicker {
 
     this.renderTags();
     this.bindEvents();
+  }
+
+  isGatewayEnabled() {
+    const row = this.root.closest('tr');
+    const checkbox = row?.querySelector(
+      'input[type="checkbox"][name*="[enabled]"]'
+    );
+    return Boolean(checkbox?.checked && !checkbox.disabled);
+  }
+
+  conflictForCode(code) {
+    if (!this.isGatewayEnabled()) return null;
+
+    const form = this.root.closest('form');
+    if (!form) return null;
+
+    return getEnabledPickerCodes(form, this.root).get(code) || null;
   }
 
   bindEvents() {
@@ -56,6 +104,7 @@ class PaymentGatewayCountryPicker {
     const query = this.searchInput.value.trim().toLowerCase();
     const matches = countryOptions
       .filter(country => !this.selectedCodes.includes(country.id))
+      .filter(country => !this.conflictForCode(country.id))
       .filter(country => {
         if (!query) return true;
         return (
@@ -105,14 +154,34 @@ class PaymentGatewayCountryPicker {
       return;
     }
 
+    const conflict = this.conflictForCode(normalized);
+    if (conflict) {
+      showCountryConflictMessage(normalized, conflict);
+      return;
+    }
+
     this.selectedCodes.push(normalized);
     this.sync();
+    this.refreshOtherPickers();
   }
 
   removeCode(code) {
     if (!code) return;
     this.selectedCodes = this.selectedCodes.filter(item => item !== code);
     this.sync();
+    this.refreshOtherPickers();
+  }
+
+  refreshOtherPickers() {
+    const form = this.root.closest('form');
+    if (!form) return;
+
+    form
+      .querySelectorAll('[data-payment-gateway-countries]')
+      .forEach(picker => {
+        if (picker === this.root) return;
+        countryPickerByRoot.get(picker)?.showSuggestions?.();
+      });
   }
 
   sync() {
@@ -157,5 +226,77 @@ class PaymentGatewayCountryPicker {
 document.addEventListener('DOMContentLoaded', () => {
   document
     .querySelectorAll('[data-payment-gateway-countries]')
-    .forEach(root => new PaymentGatewayCountryPicker(root));
+    .forEach(root => {
+      const picker = new PaymentGatewayCountryPicker(root);
+      countryPickerByRoot.set(root, picker);
+    });
+
+  const form = document
+    .querySelector('[data-payment-gateway-countries]')
+    ?.closest('form');
+  if (!form) return;
+
+  form.addEventListener('submit', event => {
+    const assignments = new Map();
+    const enabledGateways = [];
+
+    form
+      .querySelectorAll('[data-payment-gateway-countries]')
+      .forEach(picker => {
+        if (event.defaultPrevented) return;
+
+        const row = picker.closest('tr');
+        const checkbox = row?.querySelector(
+          'input[type="checkbox"][name*="[enabled]"]'
+        );
+        if (!checkbox?.checked || checkbox.disabled) return;
+
+        const gatewayLabel = picker.dataset.gatewayLabel || 'A gateway';
+        const countryCodes = parseCodes(
+          picker.querySelector('.js-country-codes-input')?.value || ''
+        );
+        enabledGateways.push({ gatewayLabel, countryCodes });
+
+        countryCodes.forEach(code => {
+          if (event.defaultPrevented) return;
+
+          if (assignments.has(code)) {
+            event.preventDefault();
+            window.alert(
+              `${code} is assigned to both ${assignments.get(code)} and ${gatewayLabel}. Each country can only use one enabled gateway.`
+            );
+            return;
+          }
+
+          assignments.set(code, gatewayLabel);
+        });
+      });
+
+    if (event.defaultPrevented) return;
+
+    if (enabledGateways.length > 1) {
+      const fallbackCount = enabledGateways.filter(
+        gateway => !gateway.countryCodes.length
+      ).length;
+      if (fallbackCount !== 1) {
+        event.preventDefault();
+        window.alert(
+          'When multiple gateways are enabled, exactly one must have empty country codes as the default fallback for all other countries.'
+        );
+      }
+    }
+  });
+
+  form
+    .querySelectorAll('input[type="checkbox"][name*="[enabled]"]')
+    .forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        form
+          .querySelectorAll('[data-payment-gateway-countries]')
+          .forEach(picker => {
+            countryPickerByRoot.get(picker)?.renderTags?.();
+            countryPickerByRoot.get(picker)?.showSuggestions?.();
+          });
+      });
+    });
 });

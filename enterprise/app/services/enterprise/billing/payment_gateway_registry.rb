@@ -2,6 +2,9 @@
 # are enabled and which countries they serve; new gateways are added to DEFINITIONS
 # in code (env keys, currency, label) and automatically appear in the admin UI.
 class Enterprise::Billing::PaymentGatewayRegistry
+  class ValidationError < StandardError; end
+  class UnsupportedCountryError < StandardError; end
+
   CONFIG_NAME = 'BILLING_PAYMENT_GATEWAYS'.freeze
 
   DEFINITIONS = {
@@ -55,9 +58,22 @@ class Enterprise::Billing::PaymentGatewayRegistry
     def resolve_provider(country:, locked_provider: nil)
       return locked_provider.to_s if locked_provider.present? && enabled?(locked_provider)
 
+      resolve_provider_for_country(country)
+    end
+
+    def resolve_provider!(country:, locked_provider: nil)
+      provider = resolve_provider(country: country, locked_provider: locked_provider)
+      return provider if provider.present?
+
+      normalized_country = country.to_s.strip.upcase.presence || 'unknown'
+      raise UnsupportedCountryError,
+            "Online billing is not available for #{normalized_country}. Please contact support."
+    end
+
+    def resolve_provider_for_country(country)
       normalized_country = country.to_s.strip.upcase.presence
       gateways = enabled_gateways
-      return 'stripe' if gateways.blank?
+      return nil if gateways.blank? || normalized_country.blank?
 
       country_match = gateways.find do |gateway|
         codes = normalized_country_codes(gateway['country_codes'])
@@ -66,9 +82,17 @@ class Enterprise::Billing::PaymentGatewayRegistry
       return country_match['id'] if country_match
 
       wildcard = gateways.find { |gateway| normalized_country_codes(gateway['country_codes']).blank? }
-      return wildcard['id'] if wildcard
+      wildcard&.dig('id')
+    end
 
-      gateways.first['id']
+    def supports_all_countries?
+      enabled_gateways.any? { |gateway| normalized_country_codes(gateway['country_codes']).blank? }
+    end
+
+    def supported_country_codes
+      return :all if supports_all_countries?
+
+      enabled_gateways.flat_map { |gateway| normalized_country_codes(gateway['country_codes']) }.uniq
     end
 
     def default_country_for(gateway_id)
@@ -86,14 +110,18 @@ class Enterprise::Billing::PaymentGatewayRegistry
     end
 
     def public_config
-      enabled_gateways.map do |gateway|
-        {
-          id: gateway['id'],
-          label: label_for(gateway['id']),
-          currency: currency_for(gateway['id']),
-          country_codes: normalized_country_codes(gateway['country_codes'])
-        }
-      end
+      {
+        gateways: enabled_gateways.map do |gateway|
+          {
+            id: gateway['id'],
+            label: label_for(gateway['id']),
+            currency: currency_for(gateway['id']),
+            country_codes: normalized_country_codes(gateway['country_codes'])
+          }
+        end,
+        supports_all_countries: supports_all_countries?,
+        supported_country_codes: supported_country_codes == :all ? [] : supported_country_codes
+      }
     end
 
     def admin_view
@@ -119,6 +147,9 @@ class Enterprise::Billing::PaymentGatewayRegistry
         }
       end
 
+      validate_country_assignments!(entries)
+      validate_fallback_gateway!(entries)
+
       config = InstallationConfig.find_or_initialize_by(name: CONFIG_NAME)
       config.value = entries
       config.save!
@@ -126,6 +157,35 @@ class Enterprise::Billing::PaymentGatewayRegistry
     end
 
     private
+
+    def validate_country_assignments!(entries)
+      assignments = {}
+
+      entries.each do |entry|
+        next if entry['enabled'] == false
+
+        normalized_country_codes(entry['country_codes']).each do |code|
+          if assignments.key?(code)
+            raise ValidationError,
+                  "#{code} cannot be assigned to both #{label_for(assignments[code])} and #{label_for(entry['id'])}. " \
+                  'Each country must map to only one enabled gateway.'
+          end
+
+          assignments[code] = entry['id']
+        end
+      end
+    end
+
+    def validate_fallback_gateway!(entries)
+      enabled = entries.select { |entry| entry['enabled'] != false && configured?(entry['id']) }
+      return if enabled.size <= 1
+
+      fallback_count = enabled.count { |entry| normalized_country_codes(entry['country_codes']).blank? }
+      return if fallback_count == 1
+
+      raise ValidationError,
+            'When multiple gateways are enabled, exactly one must have empty country codes as the default fallback for all other countries.'
+    end
 
     def merge_with_defaults(raw)
       saved_by_id = Array(raw).each_with_object({}) do |entry, memo|

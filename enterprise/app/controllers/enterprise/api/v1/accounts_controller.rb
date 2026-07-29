@@ -66,7 +66,7 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   def topup_checkout
     return render json: { error: I18n.t('errors.topup.credits_required') }, status: :unprocessable_entity if params[:credits].blank?
 
-    provider = checkout_payment_provider
+    provider = checkout_payment_provider!
     result = if provider == 'razorpay'
                Enterprise::Billing::RazorpayTopupCheckoutService.new(
                  account: @account,
@@ -82,6 +82,8 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
              end
 
     render json: result
+  rescue Enterprise::Billing::PaymentGatewayRegistry::UnsupportedCountryError => e
+    render_could_not_create_error(e.message)
   rescue Enterprise::Billing::TopupCheckoutService::Error,
          Enterprise::Billing::RazorpayTopupCheckoutService::Error,
          Enterprise::Billing::RazorpayClient::Error,
@@ -126,6 +128,8 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     ).perform
 
     render json: result
+  rescue Enterprise::Billing::PaymentGatewayRegistry::UnsupportedCountryError => e
+    render_could_not_create_error(e.message)
   rescue Enterprise::Billing::ValidatePlanCouponService::Error,
          Enterprise::Billing::ApplyBillingCouponService::Error => e
     render_could_not_create_error(e.message)
@@ -140,6 +144,11 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
 
     if locked_provider.present?
       requested_provider = provider_for_country(country.presence || country_for_provider(locked_provider))
+      if requested_provider.blank?
+        return render json: {
+          error: "Online billing is not available for #{country}. Please contact support."
+        }, status: :unprocessable_entity
+      end
       if requested_provider != locked_provider
         return render json: {
           error: "Your active plan is billed through #{locked_provider.capitalize}. Cancel it before switching payment gateways."
@@ -160,13 +169,15 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
       coupon_code: params[:coupon_code].presence
     }
 
-    result = if provider_for_country(country) == 'razorpay'
+    result = if provider_for_country!(country) == 'razorpay'
                Enterprise::Billing::RazorpayPlanCheckoutService.new(**checkout_args).perform
              else
                Enterprise::Billing::PlanCheckoutService.new(**checkout_args).perform.merge(provider: 'stripe')
              end
 
     render json: result
+  rescue Enterprise::Billing::PaymentGatewayRegistry::UnsupportedCountryError => e
+    render_could_not_create_error(e.message)
   rescue Enterprise::Billing::PlanCheckoutService::Error,
          Enterprise::Billing::RazorpayPlanCheckoutService::Error,
          Enterprise::Billing::ApplyBillingCouponService::Error,
@@ -325,6 +336,10 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     Enterprise::Billing::PaymentGatewayRegistry.resolve_provider(country: country)
   end
 
+  def provider_for_country!(country)
+    Enterprise::Billing::PaymentGatewayRegistry.resolve_provider!(country: country)
+  end
+
   def country_for_provider(provider)
     Enterprise::Billing::PaymentGatewayRegistry.default_country_for(provider)
   end
@@ -342,6 +357,13 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   def checkout_payment_provider
     locked_payment_provider.presence ||
       provider_for_country(@account.custom_attributes['billing_country'])
+  end
+
+  def checkout_payment_provider!
+    locked = locked_payment_provider
+    return locked if locked.present?
+
+    provider_for_country!(@account.custom_attributes['billing_country'])
   end
 
   def persist_billing_country!(country)

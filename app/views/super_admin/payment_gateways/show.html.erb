@@ -14,12 +14,18 @@
       <%= notice %>
     </div>
   <% end %>
+  <% if alert.present? %>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      <%= alert %>
+    </div>
+  <% end %>
 
   <p class="mb-6 text-sm text-slate-600 max-w-3xl">
     Enable or disable payment gateways for cloud billing. Search and select country codes to route checkout
-    (for example, India → <code>IN</code>). Leave country codes empty to use a gateway as the default fallback
-    for countries not matched elsewhere. API keys stay in environment variables; gateways marked “Not configured”
-    are ignored even if enabled.
+    (for example, India → <code>IN</code>). Each country can only be assigned to one enabled gateway.
+    Leave country codes empty to use a gateway as the default fallback for countries not matched elsewhere.
+    When multiple gateways are enabled, exactly one must be left as the fallback (empty country codes).
+    API keys stay in environment variables; gateways marked “Not configured” are ignored even if enabled.
   </p>
 
   <%= form_tag super_admin_payment_gateways_path, method: :patch do %>
@@ -48,6 +54,8 @@
                 <div
                   class="payment-gateway-countries min-w-[18rem]"
                   data-payment-gateway-countries
+                  data-gateway-id="<%= gateway['id'] %>"
+                  data-gateway-label="<%= gateway['label'] %>"
                   data-initial-codes="<%= gateway['country_codes_text'] %>"
                 >
                   <div class="js-country-tags flex flex-wrap gap-1 mb-2"></div>

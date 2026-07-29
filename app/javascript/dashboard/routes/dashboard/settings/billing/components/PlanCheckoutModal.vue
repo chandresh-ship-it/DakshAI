@@ -47,6 +47,7 @@ const isProceeding = ref(false);
 
 const resolveProviderForCountry = country => {
   const normalizedCountry = (country || '').toUpperCase();
+  if (!normalizedCountry) return null;
   if (!props.paymentGateways.length) {
     return normalizedCountry === 'IN' ? 'razorpay' : 'stripe';
   }
@@ -59,7 +60,7 @@ const resolveProviderForCountry = country => {
   const fallbackGateway = props.paymentGateways.find(
     gateway => !(gateway.country_codes || []).length
   );
-  return fallbackGateway?.id || props.paymentGateways[0]?.id || 'stripe';
+  return fallbackGateway?.id || null;
 };
 
 const gatewayLabel = provider => {
@@ -84,6 +85,11 @@ const effectiveCountry = computed(() => {
   return billingCountry.value;
 });
 
+const isCountrySupported = computed(() => {
+  if (!effectiveCountry.value) return true;
+  return Boolean(resolveProviderForCountry(effectiveCountry.value));
+});
+
 const paymentProviderLabel = computed(() => {
   if (props.lockedPaymentProvider) {
     return gatewayLabel(props.lockedPaymentProvider);
@@ -94,6 +100,7 @@ const paymentProviderLabel = computed(() => {
 const canProceed = computed(() => {
   if (!selectedPlan.value) return false;
   if (props.showCountrySelect && !effectiveCountry.value) return false;
+  if (!isCountrySupported.value) return false;
   if (couponInput.value.trim() && !appliedCouponCode.value) return false;
   if (effectiveCountry.value && !pricing.value) return false;
   return true;
@@ -279,12 +286,22 @@ defineExpose({
         }}
       </p>
 
-      <p v-if="effectiveCountry" class="text-xs text-n-slate-11">
+      <p
+        v-if="effectiveCountry && isCountrySupported"
+        class="text-xs text-n-slate-11"
+      >
         {{
           $t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_HINT', {
             provider: paymentProviderLabel,
           })
         }}
+      </p>
+
+      <p
+        v-else-if="effectiveCountry && !isCountrySupported"
+        class="text-xs text-n-ruby-11"
+      >
+        {{ $t('BILLING_SETTINGS.SELECT_PLAN.UNSUPPORTED_COUNTRY') }}
       </p>
 
       <div class="flex flex-col gap-2">
