@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import { usePolicy } from 'dashboard/composables/usePolicy';
 
@@ -58,14 +58,15 @@ const handleContactAction = ({ action }) => {
 
 <template>
   <div v-on-clickaway="() => (showActionsDropdown = false)" class="relative">
-    <Button
-      icon="i-lucide-ellipsis-vertical"
-      color="slate"
+    <RelayButton
       variant="ghost"
-      size="sm"
+      size="icon"
+      class="size-8"
       :class="showActionsDropdown ? 'bg-n-alpha-2' : ''"
       @click="showActionsDropdown = !showActionsDropdown"
-    />
+    >
+      <span class="i-lucide-ellipsis-vertical size-4" />
+    </RelayButton>
     <DropdownMenu
       v-if="showActionsDropdown"
       :menu-items="contactMenuItems"

@@ -5,9 +5,13 @@ import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
 import { useMapGetter } from 'dashboard/composables/store';
 
-import Input from 'dashboard/components-next/input/Input.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+  RelayCheckbox,
+} from 'dashboard/components-next/relay';
 
 const props = defineProps({
   mode: {
@@ -112,13 +116,19 @@ watch(
 
 <template>
   <form class="flex flex-col gap-4" @submit.prevent="handleSubmit">
-    <Input
-      v-model="state.name"
-      :label="t('CAPTAIN.ASSISTANTS.FORM.NAME.LABEL')"
-      :placeholder="t('CAPTAIN.ASSISTANTS.FORM.NAME.PLACEHOLDER')"
-      :message="formErrors.name"
-      :message-type="formErrors.name ? 'error' : 'info'"
-    />
+    <div class="flex flex-col gap-2">
+      <RelayLabel html-for="captain-assistant-name">
+        {{ t('CAPTAIN.ASSISTANTS.FORM.NAME.LABEL') }}
+      </RelayLabel>
+      <RelayInput
+        id="captain-assistant-name"
+        v-model="state.name"
+        :placeholder="t('CAPTAIN.ASSISTANTS.FORM.NAME.PLACEHOLDER')"
+      />
+      <p v-if="formErrors.name" class="text-xs text-n-ruby-11">
+        {{ formErrors.name }}
+      </p>
+    </div>
 
     <Editor
       v-model="state.description"
@@ -128,57 +138,63 @@ watch(
       :message-type="formErrors.description ? 'error' : 'info'"
     />
 
-    <Input
-      v-model="state.productName"
-      :label="t('CAPTAIN.ASSISTANTS.FORM.PRODUCT_NAME.LABEL')"
-      :placeholder="t('CAPTAIN.ASSISTANTS.FORM.PRODUCT_NAME.PLACEHOLDER')"
-      :message="formErrors.productName"
-      :message-type="formErrors.productName ? 'error' : 'info'"
-    />
+    <div class="flex flex-col gap-2">
+      <RelayLabel html-for="captain-assistant-product-name">
+        {{ t('CAPTAIN.ASSISTANTS.FORM.PRODUCT_NAME.LABEL') }}
+      </RelayLabel>
+      <RelayInput
+        id="captain-assistant-product-name"
+        v-model="state.productName"
+        :placeholder="t('CAPTAIN.ASSISTANTS.FORM.PRODUCT_NAME.PLACEHOLDER')"
+      />
+      <p v-if="formErrors.productName" class="text-xs text-n-ruby-11">
+        {{ formErrors.productName }}
+      </p>
+    </div>
 
     <fieldset class="flex flex-col gap-2.5">
       <legend class="mb-3 text-sm font-medium text-n-slate-12">
         {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.TITLE') }}
       </legend>
 
-      <label class="flex items-center gap-2">
-        <input v-model="state.featureFaq" type="checkbox" />
+      <label class="flex cursor-pointer items-center gap-3 select-none">
+        <RelayCheckbox v-model="state.featureFaq" />
         <span class="text-sm font-medium text-n-slate-12">
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_CONVERSATION_FAQS') }}
         </span>
       </label>
 
-      <label class="flex items-center gap-2">
-        <input v-model="state.featureMemory" type="checkbox" />
+      <label class="flex cursor-pointer items-center gap-3 select-none">
+        <RelayCheckbox v-model="state.featureMemory" />
         <span class="text-sm font-medium text-n-slate-12">
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_MEMORIES') }}
         </span>
       </label>
 
-      <label class="flex items-center gap-2">
-        <input v-model="state.featureCitation" type="checkbox" />
+      <label class="flex cursor-pointer items-center gap-3 select-none">
+        <RelayCheckbox v-model="state.featureCitation" />
         <span class="text-sm font-medium text-n-slate-12">
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_CITATIONS') }}
         </span>
       </label>
     </fieldset>
 
-    <div class="flex items-center justify-between w-full gap-3">
-      <Button
+    <div class="flex w-full items-center justify-between gap-3">
+      <RelayButton
         type="button"
-        variant="faded"
-        color="slate"
-        :label="t('CAPTAIN.FORM.CANCEL')"
-        class="w-full bg-n-alpha-2 text-n-blue-11 hover:bg-n-alpha-3"
-        @click="handleCancel"
-      />
-      <Button
-        type="submit"
-        :label="t(`CAPTAIN.FORM.${mode.toUpperCase()}`)"
+        variant="secondary"
         class="w-full"
-        :is-loading="isLoading"
-        :disabled="isLoading"
-      />
+        @click="handleCancel"
+      >
+        {{ t('CAPTAIN.FORM.CANCEL') }}
+      </RelayButton>
+      <RelayButton type="submit" class="w-full" :disabled="isLoading">
+        <span
+          v-if="isLoading"
+          class="i-lucide-loader-circle size-4 animate-spin"
+        />
+        {{ t(`CAPTAIN.FORM.${mode.toUpperCase()}`) }}
+      </RelayButton>
     </div>
   </form>
 </template>

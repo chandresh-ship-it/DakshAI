@@ -1,8 +1,11 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
-import Input from 'dashboard/components-next/input/Input.vue';
+import {
+  RelayButton,
+  RelayCheckbox,
+  RelayInput,
+} from 'dashboard/components-next/relay';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 
 const emit = defineEmits(['remove']);
@@ -69,10 +72,10 @@ defineExpose({ validate });
     >
       <div class="flex flex-1 flex-col gap-3">
         <div class="grid grid-cols-3 gap-2">
-          <Input
+          <RelayInput
             v-model="name"
             :placeholder="t('CAPTAIN.CUSTOM_TOOLS.FORM.PARAM_NAME.PLACEHOLDER')"
-            class="col-span-2"
+            class-name="col-span-2"
           />
           <ComboBox
             v-model="type"
@@ -81,7 +84,7 @@ defineExpose({ validate });
             class="[&>div>button]:bg-n-alpha-black2"
           />
         </div>
-        <Input
+        <RelayInput
           v-model="description"
           :placeholder="
             t('CAPTAIN.CUSTOM_TOOLS.FORM.PARAM_DESCRIPTION.PLACEHOLDER')

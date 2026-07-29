@@ -12,7 +12,7 @@ const sections = [
     items: [
       {
         title: 'Relay AI',
-        icon: 'i-lucide-bot',
+        icon: 'i-lucide-brain-circuit',
         children: [
           { title: 'FAQs', href: '/ai/faqs' },
           { title: 'Documents', href: '/ai/documents' },

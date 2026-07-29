@@ -89,7 +89,13 @@ const openLink = link => {
             </template>
           </div>
 
-          <p v-if="note" class="text-n-slate-12 text-start text-sm mb-0">
+          <h3
+            v-if="title"
+            class="mb-0 text-start text-base font-medium text-n-slate-12"
+          >
+            {{ title }}
+          </h3>
+          <p v-if="note" class="mb-0 text-start text-sm text-n-slate-12">
             {{ note }}
           </p>
 

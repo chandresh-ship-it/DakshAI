@@ -480,7 +480,7 @@ const menuItems = computed(() => {
     },
     {
       name: 'Captain',
-      icon: 'i-lucide-bot',
+      icon: 'i-lucide-brain-circuit',
       label: t('SIDEBAR.CAPTAIN'),
       activeOn: ['captain_assistants_create_index'],
       children: [
@@ -692,7 +692,7 @@ const menuItems = computed(() => {
         // {
         //   name: 'Settings Captain',
         //   label: t('SIDEBAR.CAPTAIN_AI'),
-        //   icon: 'i-woot-captain',
+        //   icon: 'i-lucide-brain-circuit',
         //   to: accountScopedRoute('captain_settings_index'),
         // },
         {

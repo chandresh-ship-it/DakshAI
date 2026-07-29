@@ -1,7 +1,7 @@
 <script setup>
 import { useAccount } from 'dashboard/composables/useAccount';
 import EmptyStateLayout from 'dashboard/components-next/EmptyStateLayout.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import AssistantCard from 'dashboard/components-next/captain/assistant/AssistantCard.vue';
 import FeatureSpotlight from 'dashboard/components-next/feature-spotlight/FeatureSpotlight.vue';
 import { assistantsList } from 'dashboard/components-next/captain/pageComponents/emptyStates/captainEmptyStateContent.js';
@@ -42,11 +42,10 @@ const onClick = () => {
       </div>
     </template>
     <template #actions>
-      <Button
-        :label="$t('CAPTAIN.ASSISTANTS.ADD_NEW')"
-        icon="i-lucide-plus"
-        @click="onClick"
-      />
+      <RelayButton @click="onClick">
+        <span class="i-lucide-plus size-4" />
+        {{ $t('CAPTAIN.ASSISTANTS.ADD_NEW') }}
+      </RelayButton>
     </template>
   </EmptyStateLayout>
 </template>

@@ -7,7 +7,7 @@ import { usePolicy } from 'dashboard/composables/usePolicy';
 
 import CardLayout from 'dashboard/components-next/CardLayout.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   id: {
@@ -86,13 +86,14 @@ const handleAction = ({ action, value }) => {
           v-on-clickaway="() => toggleDropdown(false)"
           class="relative flex items-center group"
         >
-          <Button
-            icon="i-lucide-ellipsis-vertical"
-            color="slate"
-            size="xs"
-            class="rounded-md group-hover:bg-n-alpha-2"
+          <RelayButton
+            variant="ghost"
+            size="icon"
+            class="size-8 rounded-md text-n-slate-11 hover:bg-n-alpha-2"
             @click="toggleDropdown()"
-          />
+          >
+            <span class="i-lucide-ellipsis-vertical size-4" />
+          </RelayButton>
           <DropdownMenu
             v-if="showActionsDropdown"
             :menu-items="menuItems"

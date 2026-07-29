@@ -10,4 +10,5 @@ export { default as RelayTabsTrigger } from './tabs/TabsTrigger.vue';
 export { default as RelayTabsContent } from './tabs/TabsContent.vue';
 export { default as RelaySidebar } from './layout/RelaySidebar.vue';
 export { default as RelayHeader } from './layout/RelayHeader.vue';
+export { default as RelayWorkspaceMenu } from './layout/RelayWorkspaceMenu.vue';
 export { cn } from './utils/cn';

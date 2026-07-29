@@ -1,10 +1,8 @@
 <script setup>
-import { useAccount } from 'dashboard/composables/useAccount';
 import { useBranding } from 'shared/composables/useBranding';
 import EmptyStateLayout from 'dashboard/components-next/EmptyStateLayout.vue';
 import { RelayButton } from 'dashboard/components-next/relay';
 import ResponseCard from 'dashboard/components-next/captain/assistant/ResponseCard.vue';
-import FeatureSpotlight from 'dashboard/components-next/feature-spotlight/FeatureSpotlight.vue';
 import { responsesList } from 'dashboard/components-next/captain/pageComponents/emptyStates/captainEmptyStateContent.js';
 
 import { computed } from 'vue';
@@ -26,7 +24,6 @@ const emit = defineEmits(['click', 'clearFilters']);
 const isApproved = computed(() => props.variant === 'approved');
 const isPending = computed(() => props.variant === 'pending');
 
-const { isOnChatwootCloud } = useAccount();
 const { replaceInstallationName } = useBranding();
 
 const onClick = () => {
@@ -39,16 +36,6 @@ const onClearFilters = () => {
 </script>
 
 <template>
-  <FeatureSpotlight
-    v-if="isApproved"
-    :title="$t('CAPTAIN.RESPONSES.EMPTY_STATE.FEATURE_SPOTLIGHT.TITLE')"
-    :note="$t('CAPTAIN.RESPONSES.EMPTY_STATE.FEATURE_SPOTLIGHT.NOTE')"
-    fallback-thumbnail="/assets/images/dashboard/captain/faqs-light.svg"
-    fallback-thumbnail-dark="/assets/images/dashboard/captain/faqs-dark.svg"
-    learn-more-url="https://newrelay.com/captain-faq"
-    :hide-actions="!isOnChatwootCloud"
-    class="mb-8"
-  />
   <EmptyStateLayout
     :title="
       isPending

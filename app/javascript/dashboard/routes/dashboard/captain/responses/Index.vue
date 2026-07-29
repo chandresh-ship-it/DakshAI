@@ -113,7 +113,6 @@ const fetchResponses = (page = 1) => {
 
 // Bulk action
 const bulkSelectedIds = ref(new Set());
-const hoveredCard = ref(null);
 
 const buildSelectedCountLabel = computed(() => {
   const count = responses.value?.length || 0;
@@ -128,10 +127,6 @@ const selectedCountLabel = computed(() => {
     count: bulkSelectedIds.value.size,
   });
 });
-
-const handleCardHover = (isHovered, id) => {
-  hoveredCard.value = isHovered ? id : null;
-};
 
 const handleCardSelect = id => {
   const selected = new Set(bulkSelectedIds.value);
@@ -236,25 +231,22 @@ onMounted(() => {
         <RelayInput
           v-model="searchQuery"
           :placeholder="$t('CAPTAIN.RESPONSES.SEARCH_PLACEHOLDER')"
-          type="search"
-          class-name="pl-9"
-          autofocus
-          @input="debouncedSearch"
+          type="text"
+          class-name="h-9 bg-n-background pl-9"
+          @update:model-value="debouncedSearch"
         />
       </div>
     </template>
 
     <template #subHeader>
       <BulkSelectBar
+        v-if="bulkSelectedIds.size > 0"
         v-model="bulkSelectedIds"
         :all-items="responses"
         :select-all-label="buildSelectedCountLabel"
         :selected-count-label="selectedCountLabel"
         :delete-label="$t('CAPTAIN.RESPONSES.BULK_DELETE_BUTTON')"
-        class="w-fit"
-        :class="{
-          'mb-2': bulkSelectedIds.size > 0,
-        }"
+        class="mb-2 w-fit"
         @bulk-delete="bulkDeleteDialog.dialogRef.open()"
       />
     </template>
@@ -272,7 +264,7 @@ onMounted(() => {
       <Banner
         v-if="pendingCount > 0"
         color="blue"
-        class="mb-4 -mt-3"
+        class="mb-4"
         :action-label="$t('CAPTAIN.RESPONSES.PENDING_BANNER.ACTION')"
         @action="navigateToPendingFAQs"
       >
@@ -298,7 +290,6 @@ onMounted(() => {
           @action="handleAction"
           @navigate="handleNavigationAction"
           @select="handleCardSelect"
-          @hover="isHovered => handleCardHover(isHovered, response.id)"
         />
       </div>
     </template>

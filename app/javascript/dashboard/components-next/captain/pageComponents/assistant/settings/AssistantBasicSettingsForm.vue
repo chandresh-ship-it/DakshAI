@@ -4,8 +4,12 @@ import { useI18n } from 'vue-i18n';
 import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
 
-import Input from 'dashboard/components-next/input/Input.vue';
-import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
+import {
+  RelayButton,
+  RelayCheckbox,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
 
 const props = defineProps({
@@ -99,21 +103,33 @@ watch(
 
 <template>
   <div class="flex flex-col gap-6">
-    <Input
-      v-model="state.name"
-      :label="t('CAPTAIN.ASSISTANTS.FORM.NAME.LABEL')"
-      :placeholder="t('CAPTAIN.ASSISTANTS.FORM.NAME.PLACEHOLDER')"
-      :message="formErrors.name"
-      :message-type="formErrors.name ? 'error' : 'info'"
-    />
+    <div class="flex flex-col gap-2">
+      <RelayLabel html-for="captain-assistant-settings-name">
+        {{ t('CAPTAIN.ASSISTANTS.FORM.NAME.LABEL') }}
+      </RelayLabel>
+      <RelayInput
+        id="captain-assistant-settings-name"
+        v-model="state.name"
+        :placeholder="t('CAPTAIN.ASSISTANTS.FORM.NAME.PLACEHOLDER')"
+      />
+      <p v-if="formErrors.name" class="text-xs text-n-ruby-11">
+        {{ formErrors.name }}
+      </p>
+    </div>
 
-    <Input
-      v-model="state.productName"
-      :label="t('CAPTAIN.ASSISTANTS.FORM.PRODUCT_NAME.LABEL')"
-      :placeholder="t('CAPTAIN.ASSISTANTS.FORM.PRODUCT_NAME.PLACEHOLDER')"
-      :message="formErrors.productName"
-      :message-type="formErrors.productName ? 'error' : 'info'"
-    />
+    <div class="flex flex-col gap-2">
+      <RelayLabel html-for="captain-assistant-settings-product-name">
+        {{ t('CAPTAIN.ASSISTANTS.FORM.PRODUCT_NAME.LABEL') }}
+      </RelayLabel>
+      <RelayInput
+        id="captain-assistant-settings-product-name"
+        v-model="state.productName"
+        :placeholder="t('CAPTAIN.ASSISTANTS.FORM.PRODUCT_NAME.PLACEHOLDER')"
+      />
+      <p v-if="formErrors.productName" class="text-xs text-n-ruby-11">
+        {{ formErrors.productName }}
+      </p>
+    </div>
 
     <Editor
       v-model="state.description"
@@ -125,9 +141,9 @@ watch(
     />
 
     <div class="flex flex-col gap-2">
-      <label class="text-sm font-medium text-n-slate-12">
+      <RelayLabel>
         {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.TITLE') }}
-      </label>
+      </RelayLabel>
       <div class="flex flex-col gap-3">
         <label class="flex cursor-pointer items-center gap-3 select-none">
           <RelayCheckbox v-model="state.features.conversationFaqs" />

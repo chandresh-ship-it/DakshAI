@@ -8,8 +8,7 @@ import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import { debounce } from '@chatwoot/utils';
 import { useAccount } from 'dashboard/composables/useAccount';
 
-import Button from 'dashboard/components-next/button/Button.vue';
-import Input from 'dashboard/components-next/input/Input.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 import BulkSelectBar from 'dashboard/components-next/captain/assistant/BulkSelectBar.vue';
 import DeleteDialog from 'dashboard/components-next/captain/pageComponents/DeleteDialog.vue';
 import BulkDeleteDialog from 'dashboard/components-next/captain/pageComponents/BulkDeleteDialog.vue';
@@ -140,7 +139,6 @@ const fetchResponses = (page = 1) => {
 
 // Bulk action
 const bulkSelectedIds = ref(new Set());
-const hoveredCard = ref(null);
 
 const buildSelectedCountLabel = computed(() => {
   const count = filteredResponses.value?.length || 0;
@@ -155,10 +153,6 @@ const selectedCountLabel = computed(() => {
     count: bulkSelectedIds.value.size,
   });
 });
-
-const handleCardHover = (isHovered, id) => {
-  hoveredCard.value = isHovered ? id : null;
-};
 
 const handleCardSelect = id => {
   const selected = new Set(bulkSelectedIds.value);
@@ -250,7 +244,6 @@ onMounted(() => {
     :is-fetching="isFetching"
     :is-empty="!filteredResponses.length"
     :show-pagination-footer="!isFetching && !!filteredResponses.length"
-    :show-know-more="false"
     :feature-flag="FEATURE_FLAGS.CAPTAIN"
     :back-url="backUrl"
     @update:current-page="onPageChange"
@@ -268,44 +261,41 @@ onMounted(() => {
     </template>
 
     <template #search>
-      <div
-        v-if="bulkSelectedIds.size === 0"
-        class="flex gap-3 justify-between w-full items-center"
-      >
-        <Input
+      <div v-if="bulkSelectedIds.size === 0" class="relative w-full sm:w-64">
+        <span
+          class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-n-slate-11"
+        />
+        <RelayInput
           v-model="searchQuery"
           :placeholder="$t('CAPTAIN.RESPONSES.SEARCH_PLACEHOLDER')"
-          class="w-64"
-          size="sm"
-          type="search"
-          autofocus
-          @input="debouncedSearch"
+          type="text"
+          class-name="h-9 bg-n-background pl-9"
+          @update:model-value="debouncedSearch"
         />
       </div>
     </template>
 
     <template #subHeader>
       <BulkSelectBar
+        v-if="bulkSelectedIds.size > 0"
         v-model="bulkSelectedIds"
         :all-items="filteredResponses"
         :select-all-label="buildSelectedCountLabel"
         :selected-count-label="selectedCountLabel"
         :delete-label="$t('CAPTAIN.RESPONSES.BULK_DELETE_BUTTON')"
-        class="w-fit"
-        :class="{
-          'mb-2': bulkSelectedIds.size > 0,
-        }"
+        class="mb-2 w-fit"
         @bulk-delete="bulkDeleteDialog.dialogRef.open()"
       >
         <template #secondaryActions>
-          <Button
-            :label="$t('CAPTAIN.RESPONSES.BULK_APPROVE_BUTTON')"
-            sm
-            ghost
-            icon="i-lucide-check"
-            class="!px-1.5"
+          <RelayButton
+            variant="ghost"
+            size="sm"
+            class="!px-1.5 text-n-slate-11"
             @click="handleBulkApprove"
-          />
+          >
+            <span class="i-lucide-check size-3.5" />
+            {{ $t('CAPTAIN.RESPONSES.BULK_APPROVE_BUTTON') }}
+          </RelayButton>
         </template>
       </BulkSelectBar>
     </template>
@@ -338,13 +328,12 @@ onMounted(() => {
           :created-at="response.created_at"
           :updated-at="response.updated_at"
           :is-selected="bulkSelectedIds.has(response.id)"
-          :selectable="hoveredCard === response.id || bulkSelectedIds.size > 0"
+          selectable
           :show-menu="false"
           :show-actions="!bulkSelectedIds.has(response.id)"
           @action="handleAction"
           @navigate="handleNavigationAction"
           @select="handleCardSelect"
-          @hover="isHovered => handleCardHover(isHovered, response.id)"
         />
       </div>
     </template>

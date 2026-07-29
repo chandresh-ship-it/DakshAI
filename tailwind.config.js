@@ -38,6 +38,10 @@ const tailwindConfig = {
   ],
   theme: {
     extend: {
+      // Matches Tailwind v4 / shadcn `shadow-xs` (same value as TW3 `shadow-sm`)
+      boxShadow: {
+        xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+      },
       fontFamily: {
         sans: defaultSansFonts,
         inter: ['Inter', ...defaultSansFonts],

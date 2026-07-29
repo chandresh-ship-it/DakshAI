@@ -5,7 +5,6 @@ import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store.js';
 import { usePolicy } from 'dashboard/composables/usePolicy';
-import Button from 'dashboard/components-next/button/Button.vue';
 import { RelayButton } from 'dashboard/components-next/relay';
 import BackButton from 'dashboard/components/widgets/BackButton.vue';
 import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter.vue';
@@ -120,47 +119,46 @@ const handleCreateAssistant = () => {
     <header class="z-10 shrink-0 border-b border-n-weak bg-n-background px-6">
       <div class="mx-auto w-full max-w-5xl">
         <div
-          class="flex min-h-14 w-full flex-col items-start justify-between gap-3 py-3 lg:h-14 lg:flex-row lg:items-center lg:gap-2 lg:py-0"
+          class="flex min-h-14 w-full flex-col items-start justify-between gap-4 py-3 sm:flex-row sm:items-center"
         >
           <div class="flex items-center gap-3">
             <BackButton v-if="backUrl" :back-url="backUrl" />
             <div
               v-if="showAssistantSwitcher && !showPaywall"
-              class="flex items-center gap-2"
+              class="relative flex items-center"
             >
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="!isFetchingAssistants"
-                  class="truncate text-base font-medium text-n-slate-12"
+              <OnClickOutside @trigger="showAssistantSwitcherDropdown = false">
+                <RelayButton
+                  variant="outline"
+                  size="sm"
+                  class="h-8 max-w-[14rem] gap-1.5 rounded-lg border-n-weak bg-n-background px-2.5 text-n-slate-12 shadow-sm hover:bg-n-alpha-2"
+                  :class="{ 'bg-n-alpha-2': showAssistantSwitcherDropdown }"
+                  :disabled="isFetchingAssistants"
+                  @click="toggleAssistantSwitcher"
                 >
-                  {{ activeAssistantName }}
-                </span>
-                <div class="relative group">
-                  <OnClickOutside
-                    @trigger="showAssistantSwitcherDropdown = false"
-                  >
-                    <Button
-                      icon="i-lucide-chevron-down"
-                      :variant="
-                        showAssistantSwitcherDropdown ? 'faded' : 'ghost'
-                      "
-                      color="slate"
-                      size="xs"
-                      :disabled="isFetchingAssistants"
-                      :is-loading="isFetchingAssistants"
-                      class="rounded-md group-hover:bg-n-slate-3 hover:bg-n-slate-3 [&>span]:size-4"
-                      @click="toggleAssistantSwitcher"
-                    />
+                  <span
+                    v-if="isFetchingAssistants"
+                    class="i-lucide-loader-circle size-3.5 shrink-0 animate-spin text-n-slate-11"
+                  />
+                  <span
+                    v-else
+                    class="i-lucide-brain-circuit size-3.5 shrink-0 text-n-brand"
+                  />
+                  <span class="min-w-0 truncate text-sm font-medium">
+                    {{ activeAssistantName }}
+                  </span>
+                  <span
+                    class="i-lucide-chevron-down size-3.5 shrink-0 text-n-slate-11"
+                  />
+                </RelayButton>
 
-                    <AssistantSwitcher
-                      v-if="showAssistantSwitcherDropdown"
-                      class="absolute ltr:left-0 rtl:right-0 top-9"
-                      @close="showAssistantSwitcherDropdown = false"
-                      @create-assistant="handleCreateAssistant"
-                    />
-                  </OnClickOutside>
-                </div>
-              </div>
+                <AssistantSwitcher
+                  v-if="showAssistantSwitcherDropdown"
+                  class="absolute ltr:left-0 rtl:right-0 top-9"
+                  @close="showAssistantSwitcherDropdown = false"
+                  @create-assistant="handleCreateAssistant"
+                />
+              </OnClickOutside>
             </div>
             <div class="flex items-center gap-3">
               <div
@@ -173,30 +171,26 @@ const handleCreateAssistant = () => {
               >
                 {{ headerTitle }}
               </span>
-              <div
-                v-if="!isEmpty && showKnowMore"
-                class="flex items-center gap-2"
-              >
+              <div v-if="showKnowMore" class="flex items-center gap-2">
                 <div class="h-4 w-0.5 rounded-2xl bg-n-weak" />
                 <slot name="knowMore" />
               </div>
             </div>
           </div>
 
-          <div class="flex gap-2">
+          <div class="flex w-full items-center gap-3 sm:w-auto">
             <slot name="search" />
             <div
               v-if="!showPaywall && buttonLabel"
               v-on-clickaway="() => emit('close')"
-              class="relative group/captain-button"
+              class="relative shrink-0 group/captain-button"
             >
-              <Policy :permissions="buttonPolicy">
+              <Policy class="contents" :permissions="buttonPolicy">
                 <RelayButton
-                  size="sm"
-                  class="group-hover/captain-button:brightness-110"
+                  class="h-9 shrink-0 group-hover/captain-button:brightness-110"
                   @click="handleButtonClick"
                 >
-                  <span class="i-lucide-plus size-4" />
+                  <span class="i-lucide-plus size-4 mr-1.5" />
                   {{ buttonLabel }}
                 </RelayButton>
               </Policy>

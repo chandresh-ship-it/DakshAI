@@ -395,7 +395,7 @@
     "ASSISTANT_SWITCHER": {
       "ASSISTANTS": "Assistants",
       "SWITCH_ASSISTANT": "Switch between assistants",
-      "NEW_ASSISTANT": "Create Assistant",
+      "NEW_ASSISTANT": "Create",
       "EMPTY_LIST": "No assistants found, please create one to get started"
     },
     "COPILOT": {

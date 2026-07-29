@@ -1,6 +1,6 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 defineProps({
   isLoading: {
@@ -16,13 +16,13 @@ const { t } = useI18n();
 
 <template>
   <div class="flex justify-center py-4">
-    <Button
-      :label="t('CONTACTS_LAYOUT.LOAD_MORE')"
-      :is-loading="isLoading"
-      variant="faded"
-      color="slate"
+    <RelayButton
+      variant="secondary"
       size="sm"
+      :disabled="isLoading"
       @click="emit('loadMore')"
-    />
+    >
+      {{ t('CONTACTS_LAYOUT.LOAD_MORE') }}
+    </RelayButton>
   </div>
 </template>

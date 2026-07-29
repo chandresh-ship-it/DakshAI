@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 import EmptyStateLayout from 'dashboard/components-next/EmptyStateLayout.vue';
 import CreateNewContactDialog from 'dashboard/components-next/Contacts/ContactsForm/CreateNewContactDialog.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import ContactsCard from 'dashboard/components-next/Contacts/ContactsCard/ContactsCard.vue';
 import contactContent from 'dashboard/components-next/Contacts/EmptyState/contactEmptyStateContent';
 
@@ -38,7 +38,7 @@ const onClick = () => {
 <template>
   <EmptyStateLayout :title="title" :subtitle="subtitle">
     <template #empty-state-item>
-      <div class="grid grid-cols-1 gap-4 p-px overflow-hidden">
+      <div class="grid grid-cols-1 gap-4 overflow-hidden p-px">
         <ContactsCard
           v-for="contact in contactContent.slice(0, 5)"
           :id="contact.id"
@@ -55,7 +55,10 @@ const onClick = () => {
     </template>
     <template #actions>
       <div v-if="showButton">
-        <Button :label="buttonLabel" icon="i-lucide-plus" @click="onClick" />
+        <RelayButton @click="onClick">
+          <span class="i-lucide-plus size-4" />
+          {{ buttonLabel }}
+        </RelayButton>
         <CreateNewContactDialog
           ref="createNewContactDialogRef"
           @create="emit('create', $event)"

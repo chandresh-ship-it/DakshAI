@@ -2,7 +2,7 @@
 import { ref, computed, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import SelectMenu from 'dashboard/components-next/selectmenu/SelectMenu.vue';
 
 const props = defineProps({
@@ -94,14 +94,15 @@ const handleOrderChange = value => {
 
 <template>
   <div class="relative">
-    <Button
-      icon="i-lucide-arrow-down-up"
-      color="slate"
-      size="sm"
+    <RelayButton
       variant="ghost"
+      size="icon"
+      class="size-8"
       :class="isMenuOpen ? 'bg-n-alpha-2' : ''"
       @click="isMenuOpen = !isMenuOpen"
-    />
+    >
+      <span class="i-lucide-arrow-down-up size-4" />
+    </RelayButton>
     <div
       v-if="isMenuOpen"
       v-on-clickaway="() => (isMenuOpen = false)"

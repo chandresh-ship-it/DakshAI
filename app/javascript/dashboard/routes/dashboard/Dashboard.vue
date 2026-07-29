@@ -257,9 +257,9 @@ export default {
     />
 
     <div
-      class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      class="flex min-h-0 min-w-0 flex-1 flex-col"
       :class="{
-        'rounded-2xl border border-n-weak bg-n-surface-1 shadow-md':
+        'overflow-hidden rounded-2xl border border-n-weak bg-n-surface-1 shadow-md':
           activeLayout === 'documentation',
       }"
     >
@@ -269,6 +269,7 @@ export default {
         @toggle-sidebar="toggleMobileSidebar"
         @toggle-collapse="toggleSidebarCollapse"
         @open-search="openSearch"
+        @show-create-account-modal="openCreateAccountModal"
       />
 
       <main class="flex min-h-0 w-full flex-1 overflow-hidden bg-n-background">

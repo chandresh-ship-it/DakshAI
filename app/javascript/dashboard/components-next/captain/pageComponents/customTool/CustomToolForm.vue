@@ -6,9 +6,12 @@ import { required, maxLength } from '@vuelidate/validators';
 import { useMapGetter } from 'dashboard/composables/store';
 import CustomToolsAPI from 'dashboard/api/captain/customTools';
 
-import Input from 'dashboard/components-next/input/Input.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
-import { RelayButton } from 'dashboard/components-next/relay';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import ParamRow from './ParamRow.vue';
 import AuthConfig from './AuthConfig.vue';
@@ -182,13 +185,19 @@ const handleTest = async () => {
     class="flex flex-col px-4 -mx-4 gap-4 max-h-[calc(100vh-200px)] overflow-y-scroll"
     @submit.prevent="handleSubmit"
   >
-    <Input
-      v-model="state.title"
-      :label="t('CAPTAIN.CUSTOM_TOOLS.FORM.TITLE.LABEL')"
-      :placeholder="t('CAPTAIN.CUSTOM_TOOLS.FORM.TITLE.PLACEHOLDER')"
-      :message="formErrors.title"
-      :message-type="formErrors.title ? 'error' : 'info'"
-    />
+    <div class="flex flex-col gap-2">
+      <RelayLabel html-for="captain-tool-title">
+        {{ t('CAPTAIN.CUSTOM_TOOLS.FORM.TITLE.LABEL') }}
+      </RelayLabel>
+      <RelayInput
+        id="captain-tool-title"
+        v-model="state.title"
+        :placeholder="t('CAPTAIN.CUSTOM_TOOLS.FORM.TITLE.PLACEHOLDER')"
+      />
+      <p v-if="formErrors.title" class="text-xs text-n-ruby-11">
+        {{ formErrors.title }}
+      </p>
+    </div>
 
     <TextArea
       v-model="state.description"
@@ -198,30 +207,35 @@ const handleTest = async () => {
     />
 
     <div class="flex gap-2">
-      <div class="flex flex-col gap-1 w-28">
-        <label class="mb-0.5 text-sm font-medium text-n-slate-12">
+      <div class="flex w-28 flex-col gap-2">
+        <RelayLabel>
           {{ t('CAPTAIN.CUSTOM_TOOLS.FORM.HTTP_METHOD.LABEL') }}
-        </label>
+        </RelayLabel>
         <ComboBox
           v-model="state.http_method"
           :options="httpMethodOptions"
           class="[&>div>button]:bg-n-alpha-black2 [&_li]:font-mono [&_button]:font-mono [&>div>button]:outline-offset-[-1px]"
         />
       </div>
-      <Input
-        v-model="state.endpoint_url"
-        :label="t('CAPTAIN.CUSTOM_TOOLS.FORM.ENDPOINT_URL.LABEL')"
-        :placeholder="t('CAPTAIN.CUSTOM_TOOLS.FORM.ENDPOINT_URL.PLACEHOLDER')"
-        :message="formErrors.endpoint_url"
-        :message-type="formErrors.endpoint_url ? 'error' : 'info'"
-        class="flex-1"
-      />
+      <div class="flex flex-1 flex-col gap-2">
+        <RelayLabel html-for="captain-tool-endpoint-url">
+          {{ t('CAPTAIN.CUSTOM_TOOLS.FORM.ENDPOINT_URL.LABEL') }}
+        </RelayLabel>
+        <RelayInput
+          id="captain-tool-endpoint-url"
+          v-model="state.endpoint_url"
+          :placeholder="t('CAPTAIN.CUSTOM_TOOLS.FORM.ENDPOINT_URL.PLACEHOLDER')"
+        />
+        <p v-if="formErrors.endpoint_url" class="text-xs text-n-ruby-11">
+          {{ formErrors.endpoint_url }}
+        </p>
+      </div>
     </div>
 
-    <div class="flex flex-col gap-1">
-      <label class="mb-0.5 text-sm font-medium text-n-slate-12">
+    <div class="flex flex-col gap-2">
+      <RelayLabel>
         {{ t('CAPTAIN.CUSTOM_TOOLS.FORM.AUTH_TYPE.LABEL') }}
-      </label>
+      </RelayLabel>
       <ComboBox
         v-model="state.auth_type"
         :options="authTypeOptions"

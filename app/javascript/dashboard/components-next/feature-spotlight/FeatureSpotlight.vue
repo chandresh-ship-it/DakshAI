@@ -64,7 +64,10 @@ const openLink = link => {
       </div>
 
       <div class="flex flex-col flex-1 gap-3 ltr:pr-8 rtl:pl-8">
-        <p v-if="note" class="text-n-slate-12 text-sm mb-0">{{ note }}</p>
+        <h3 v-if="title" class="mb-0 text-base font-medium text-n-slate-12">
+          {{ title }}
+        </h3>
+        <p v-if="note" class="mb-0 text-sm text-n-slate-12">{{ note }}</p>
 
         <div v-if="!hideActions" class="flex gap-3">
           <slot name="actions">

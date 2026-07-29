@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import BulkSelectBar from 'dashboard/components-next/captain/assistant/BulkSelectBar.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import BulkLabelActions from 'dashboard/components/widgets/conversation/conversationBulkActions/BulkLabelActions.vue';
 import Policy from 'dashboard/components/policy.vue';
 
@@ -81,27 +81,27 @@ const handleRemoveLabels = labels => {
 
 <template>
   <div
-    class="sticky top-0 z-10 bg-gradient-to-b from-n-surface-1 from-90% to-transparent pt-1 pb-2"
+    class="sticky top-0 z-10 bg-gradient-to-b from-n-background from-90% to-transparent pb-2 pt-1"
   >
     <BulkSelectBar
       v-model="selectionModel"
       :all-items="allItems"
       :select-all-label="selectAllLabel"
       :selected-count-label="selectedCountLabel"
-      class="py-2 ltr:!pr-3 rtl:!pl-3 justify-between"
+      class="justify-between py-2 ltr:!pr-3 rtl:!pl-3"
     >
       <template #primaryActions>
-        <Button
-          sm
-          ghost
-          slate
-          :label="t('CONTACTS_BULK_ACTIONS.CLEAR_SELECTION')"
-          class="!px-1"
+        <RelayButton
+          variant="ghost"
+          size="sm"
+          class="px-1"
           @click="emit('clearSelection')"
-        />
+        >
+          {{ t('CONTACTS_BULK_ACTIONS.CLEAR_SELECTION') }}
+        </RelayButton>
       </template>
       <template #actions>
-        <div class="flex items-center gap-2 ml-auto">
+        <div class="ml-auto flex items-center gap-2">
           <BulkLabelActions
             type="contact"
             :is-loading="isLoading"
@@ -115,21 +115,22 @@ const handleRemoveLabels = labels => {
             :disabled="!selectedCount"
             @remove="handleRemoveLabels"
           />
-          <div class="w-px h-3 bg-n-weak rounded-lg" />
+          <div class="h-3 w-px rounded-lg bg-n-weak" />
           <Policy :permissions="['administrator']">
-            <Button
+            <RelayButton
               v-tooltip.bottom="t('CONTACTS_BULK_ACTIONS.DELETE_CONTACTS')"
-              sm
-              ghost
-              ruby
-              icon="i-lucide-trash"
-              :label="t('CONTACTS_BULK_ACTIONS.DELETE_CONTACTS')"
-              :aria-label="t('CONTACTS_BULK_ACTIONS.DELETE_CONTACTS')"
+              variant="destructive"
+              size="sm"
+              class="px-2"
               :disabled="!selectedCount || isLoading"
-              :is-loading="isLoading"
-              class="!px-2 [&>span:nth-child(2)]:hidden md:[&>span:nth-child(2)]:inline-flex"
+              :aria-label="t('CONTACTS_BULK_ACTIONS.DELETE_CONTACTS')"
               @click="emit('deleteSelected')"
-            />
+            >
+              <span class="i-lucide-trash size-4" />
+              <span class="hidden md:inline">
+                {{ t('CONTACTS_BULK_ACTIONS.DELETE_CONTACTS') }}
+              </span>
+            </RelayButton>
           </Policy>
         </div>
       </template>
