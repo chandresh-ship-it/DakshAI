@@ -43,7 +43,8 @@ class Enterprise::Billing::TopupCheckoutService
       }],
       success_url: success_url,
       cancel_url: cancel_url,
-      metadata: session_metadata(credits, topup_option)
+      metadata: session_metadata(credits, topup_option),
+      payment_intent_data: { metadata: session_metadata(credits, topup_option) }
     )
 
     { checkout_url: session.url }

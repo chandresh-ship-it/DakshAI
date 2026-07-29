@@ -17,6 +17,8 @@ class Enterprise::Billing::HandleRazorpayEventService
       process_subscription_deleted(payload_entity)
     when 'payment_link.paid', 'payment.captured'
       process_topup_payment(payload_entity)
+    when 'payment.failed'
+      record_payment_failed_billing_activity(payload_entity)
     end
 
     return if event_id.blank?
@@ -206,6 +208,66 @@ class Enterprise::Billing::HandleRazorpayEventService
     ).perform
   rescue StandardError => e
     Rails.logger.error("[razorpay_webhook] failed to record billing activity: #{e.message}")
+  end
+
+  # First-checkout / hosted-page payment failures arrive as payment.failed, not
+  # subscription.pending/halted. Log them so Super Admin can see invalid card/UPI attempts.
+  def record_payment_failed_billing_activity(payload_entity)
+    payment = payment_payload(payload_entity)
+    return if payment[:id].blank?
+
+    account = find_account_from_payment(payment)
+    return if account.blank?
+
+    error_code = payment[:error_code].presence || 'payment.failed'
+    error_description = payment[:error_description].presence ||
+                        payment[:error_reason].presence ||
+                        'Razorpay payment failed'
+
+    action = if payment.dig(:notes, :source) == 'captain_topup'
+               'topup_checkout'
+             else
+               'plan_checkout'
+             end
+
+    Enterprise::Billing::RecordBillingActivityService.new(
+      account: account,
+      action: action,
+      status: 'failed',
+      message: error_description,
+      error_class: error_code,
+      payment_provider: 'razorpay',
+      metadata: {
+        event: @event[:event],
+        razorpay_payment_id: payment[:id],
+        razorpay_subscription_id: payment[:subscription_id],
+        razorpay_order_id: payment[:order_id],
+        plan_name: payment.dig(:notes, :plan_name),
+        method: payment[:method],
+        amount: payment[:amount],
+        currency: payment[:currency],
+        error_code: error_code,
+        error_description: error_description
+      }.compact
+    ).perform
+  rescue StandardError => e
+    Rails.logger.error("[razorpay_webhook] failed to record payment.failed activity: #{e.message}")
+  end
+
+  def find_account_from_payment(payment)
+    notes = (payment[:notes] || {}).with_indifferent_access
+    account = Account.find_by(id: notes[:account_id]) if notes[:account_id].present?
+    return account if account.present?
+
+    account = Account.find_by(id: notes[:client_account_id]) if notes[:client_account_id].present?
+    return account if account.present?
+
+    if payment[:subscription_id].present?
+      subscription = Subscription.find_by(razorpay_subscription_id: payment[:subscription_id])
+      return subscription.account if subscription.present?
+    end
+
+    nil
   end
 
   def process_subscription_deleted(payload_entity)

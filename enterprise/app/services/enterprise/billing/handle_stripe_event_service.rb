@@ -32,6 +32,8 @@ class Enterprise::Billing::HandleStripeEventService
       when 'invoice.payment_failed'
         record_payment_transaction(status: 'failed')
         record_billing_activity_from_invoice(status: 'failed')
+      when 'payment_intent.payment_failed'
+        record_payment_intent_failed_billing_activity
       else
         Rails.logger.debug { "Unhandled event type: #{@event.type}" }
       end
@@ -319,7 +321,7 @@ class Enterprise::Billing::HandleStripeEventService
     message = if status == 'success'
                 "Invoice payment succeeded (#{invoice.amount_paid.to_f / 100} #{invoice.currency.upcase})"
               else
-                invoice.last_finalization_error&.message.presence || 'Invoice payment failed'
+                invoice_payment_failure_message(invoice)
               end
 
     Enterprise::Billing::RecordBillingActivityService.new(
@@ -327,7 +329,7 @@ class Enterprise::Billing::HandleStripeEventService
       action: 'invoice_payment',
       status: status,
       message: message,
-      error_class: status == 'failed' ? (invoice.last_finalization_error&.code.presence || 'invoice.payment_failed') : nil,
+      error_class: status == 'failed' ? invoice_payment_failure_code(invoice) : nil,
       payment_provider: 'stripe',
       metadata: {
         stripe_invoice_id: invoice.id,
@@ -338,6 +340,84 @@ class Enterprise::Billing::HandleStripeEventService
     ).perform
   rescue StandardError => e
     Rails.logger.error("Failed to record billing activity for invoice #{invoice&.id}: #{e.message}")
+  end
+
+  # Hosted Checkout declines (invalid card, authentication failure, etc.) arrive as
+  # payment_intent.payment_failed — same signal as Razorpay payment.failed.
+  def record_payment_intent_failed_billing_activity
+    payment_intent = @event.data.object
+    payer_account = account_for_payment_intent(payment_intent)
+    return if payer_account.blank?
+
+    error = payment_intent.last_payment_error
+    error_code = error&.code.presence || 'payment_intent.payment_failed'
+    message = error&.message.presence || 'Stripe payment failed'
+    metadata = payment_intent_metadata(payment_intent)
+    action = metadata['source'] == 'captain_topup' ? 'topup_checkout' : 'plan_checkout'
+
+    Enterprise::Billing::RecordBillingActivityService.new(
+      account: payer_account,
+      action: action,
+      status: 'failed',
+      message: message,
+      error_class: error_code,
+      payment_provider: 'stripe',
+      metadata: {
+        event: @event.type,
+        stripe_payment_intent_id: payment_intent.id,
+        stripe_invoice_id: payment_intent.invoice,
+        plan_name: metadata['plan_name'],
+        amount: payment_intent.amount,
+        currency: payment_intent.currency,
+        error_code: error_code,
+        error_description: message
+      }.compact
+    ).perform
+  rescue StandardError => e
+    Rails.logger.error("[stripe_webhook] failed to record payment_intent.payment_failed activity: #{e.message}")
+  end
+
+  def account_for_payment_intent(payment_intent)
+    metadata = payment_intent_metadata(payment_intent)
+    account = Account.find_by(id: metadata['account_id']) if metadata['account_id'].present?
+    return account if account.present?
+
+    account = account_for_customer(payment_intent.customer)
+    return account if account.present?
+
+    account_from_payment_intent_invoice(payment_intent)
+  end
+
+  def account_from_payment_intent_invoice(payment_intent)
+    invoice_id = payment_intent.invoice
+    return if invoice_id.blank?
+
+    invoice = Stripe::Invoice.retrieve(invoice_id)
+    account_id = invoice.metadata['account_id'].presence ||
+                 invoice.parent&.subscription_details&.metadata&.[]('account_id').presence
+    return Account.find_by(id: account_id) if account_id.present?
+
+    subscription_id = invoice.subscription.presence ||
+                      invoice.parent&.subscription_details&.subscription.presence
+    return if subscription_id.blank?
+
+    Subscription.find_by(stripe_subscription_id: subscription_id)&.account
+  rescue Stripe::StripeError => e
+    Rails.logger.warn("[stripe_webhook] could not resolve account from payment_intent invoice: #{e.message}")
+    nil
+  end
+
+  def payment_intent_metadata(payment_intent)
+    (payment_intent.metadata.respond_to?(:to_hash) ? payment_intent.metadata.to_hash : payment_intent.metadata) || {}
+  end
+
+  def invoice_payment_failure_message(invoice)
+    invoice.last_finalization_error&.message.presence ||
+      'Invoice payment failed'
+  end
+
+  def invoice_payment_failure_code(invoice)
+    invoice.last_finalization_error&.code.presence || 'invoice.payment_failed'
   end
 
   def account_for_customer(customer_id)
