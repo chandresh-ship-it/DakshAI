@@ -122,7 +122,7 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   end
 
   def validate_coupon
-    return render_payment_failure('validate_coupon', 'Invalid plan name') unless %w[Hobby Standard Business].include?(params[:plan_name])
+    return render_payment_failure('validate_coupon', 'Invalid plan name') unless Enterprise::Billing::CloudPlans.purchasable?(params[:plan_name])
 
     locked_provider = locked_payment_provider
     country = normalize_billing_country(params[:country])
@@ -154,7 +154,7 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   end
 
   def plan_checkout
-    return render_payment_failure('plan_checkout', 'Invalid plan name') unless %w[Hobby Standard Business].include?(params[:plan_name])
+    return render_payment_failure('plan_checkout', 'Invalid plan name') unless Enterprise::Billing::CloudPlans.purchasable?(params[:plan_name])
 
     locked_provider = locked_payment_provider
     country = normalize_billing_country(params[:country])
@@ -269,9 +269,8 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
   # customer needs to compare plans (name, seat price, whether it's purchasable).
   # Deliberately omits Stripe product_id/price_ids, which are internal wiring details.
   def plans
-    plans = (InstallationConfig.find_by(name: 'CHATWOOT_CLOUD_PLANS')&.value || [])
     render json: {
-      plans: plans.map { |plan| plan.slice('name', 'price_per_agent', 'enabled') },
+      plans: Enterprise::Billing::CloudPlans.public_catalog,
       payment_gateways: Enterprise::Billing::PaymentGatewayRegistry.public_config
     }
   end

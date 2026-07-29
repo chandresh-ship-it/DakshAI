@@ -41,7 +41,9 @@ const billingCountry = ref('');
 const couponInput = ref('');
 const appliedCouponCode = ref('');
 const pricing = ref(null);
+const pricingError = ref('');
 const couponError = ref('');
+const isLoadingPricing = ref(false);
 const isValidatingCoupon = ref(false);
 const isProceeding = ref(false);
 
@@ -124,6 +126,7 @@ const resetState = () => {
   couponInput.value = '';
   appliedCouponCode.value = '';
   pricing.value = null;
+  pricingError.value = '';
   couponError.value = '';
   isValidatingCoupon.value = false;
   isProceeding.value = false;
@@ -133,15 +136,32 @@ const refreshPricing = async ({
   couponCode = appliedCouponCode.value,
 } = {}) => {
   if (!selectedPlan.value) return;
-  if (props.showCountrySelect && !effectiveCountry.value) return;
+  if (props.showCountrySelect && !effectiveCountry.value) {
+    pricingError.value = t(
+      'BILLING_SETTINGS.PLAN_CHECKOUT.SELECT_COUNTRY_FOR_PRICING'
+    );
+    return;
+  }
 
-  const response = await EnterpriseAccountAPI.validatePlanCoupon({
-    planName: selectedPlan.value,
-    country: effectiveCountry.value,
-    couponCode: couponCode || undefined,
-  });
+  isLoadingPricing.value = true;
+  pricingError.value = '';
+  try {
+    const response = await EnterpriseAccountAPI.validatePlanCoupon({
+      planName: selectedPlan.value,
+      country: effectiveCountry.value,
+      couponCode: couponCode || undefined,
+    });
 
-  pricing.value = response.data;
+    pricing.value = response.data;
+  } catch (error) {
+    pricing.value = null;
+    pricingError.value =
+      error.response?.data?.error ||
+      t('BILLING_SETTINGS.PLAN_CHECKOUT.PRICING_ERROR');
+    throw error;
+  } finally {
+    isLoadingPricing.value = false;
+  }
 };
 
 const open = async plan => {
@@ -154,8 +174,12 @@ const open = async plan => {
     try {
       await refreshPricing({ couponCode: '' });
     } catch {
-      pricing.value = null;
+      // pricingError is set in refreshPricing
     }
+  } else if (props.showCountrySelect) {
+    pricingError.value = t(
+      'BILLING_SETTINGS.PLAN_CHECKOUT.SELECT_COUNTRY_FOR_PRICING'
+    );
   }
 };
 
@@ -337,6 +361,13 @@ defineExpose({
           {{ $t('BILLING_SETTINGS.PLAN_CHECKOUT.COUPON_OPTIONAL_HINT') }}
         </p>
       </div>
+
+      <p v-if="pricingError" class="text-xs text-n-ruby-11">
+        {{ pricingError }}
+      </p>
+      <p v-else-if="isLoadingPricing" class="text-xs text-n-slate-11">
+        {{ $t('BILLING_SETTINGS.PLAN_CHECKOUT.LOADING_PRICING') }}
+      </p>
 
       <div
         v-if="pricing"

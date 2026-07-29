@@ -1,13 +1,11 @@
 # Validates an optional billing coupon for a plan purchase and returns pricing.
 class Enterprise::Billing::ValidatePlanCouponService
-  CLOUD_PLANS_CONFIG = 'CHATWOOT_CLOUD_PLANS'.freeze
-
   class Error < StandardError; end
 
   pattr_initialize [:plan_name!, :country!, :coupon_code]
 
   def perform
-    raise Error, 'Invalid plan name' unless %w[Hobby Standard Business].include?(plan_name)
+    raise Error, 'Invalid plan name' unless Enterprise::Billing::CloudPlans.purchasable?(plan_name)
 
     plan = find_plan
     raise Error, 'Plan is not available' if plan.blank? || plan['enabled'] == false
@@ -30,8 +28,7 @@ class Enterprise::Billing::ValidatePlanCouponService
   private
 
   def find_plan
-    (InstallationConfig.find_by(name: CLOUD_PLANS_CONFIG)&.value || [])
-      .find { |config| config['name'] == plan_name }
+    Enterprise::Billing::CloudPlans.find(plan_name)
   end
 
   def resolve_coupon

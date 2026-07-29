@@ -200,10 +200,23 @@ const fetchPlanCatalog = async () => {
     // Non-fatal - the plan picker still works without prices shown.
   }
 };
+const DEFAULT_PLAN_NAMES = ['Hobby', 'Standard', 'Business', 'Enterprise'];
+
+const selectablePlans = computed(() => {
+  const enabledPlans = planCatalog.value.filter(plan => plan.enabled !== false);
+  if (enabledPlans.length) {
+    return enabledPlans.map(plan => plan.name);
+  }
+  return DEFAULT_PLAN_NAMES;
+});
+
 const planPriceLabel = planName => {
   const plan = planCatalog.value.find(p => p.name === planName);
-  if (!plan || !plan.price_per_agent) {
+  if (!plan || plan.price_per_agent == null || plan.price_per_agent === '') {
     return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
+  }
+  if (Number(plan.price_per_agent) === 0) {
+    return t('BILLING_SETTINGS.SELECT_PLAN.FREE_PLAN');
   }
   return t('BILLING_SETTINGS.SELECT_PLAN.PRICE_PER_MONTH', {
     price: plan.price_per_agent,
@@ -371,8 +384,11 @@ const currencyForProvider = provider => {
 
 const currentPlanPriceLabel = computed(() => {
   const plan = planCatalog.value.find(p => p.name === planName.value);
-  if (!plan?.price_per_agent) {
+  if (!plan || plan.price_per_agent == null || plan.price_per_agent === '') {
     return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
+  }
+  if (Number(plan.price_per_agent) === 0) {
+    return t('BILLING_SETTINGS.SELECT_PLAN.FREE_PLAN');
   }
   const currency = currencyForProvider(
     accountSubscription.value?.payment_provider
@@ -590,7 +606,10 @@ const handlePlanSelection = selectedPlan => {
   }
 
   const isDowngrade =
-    planName.value && PLAN_RANK[selectedPlan] < PLAN_RANK[planName.value];
+    planName.value &&
+    PLAN_RANK[selectedPlan] != null &&
+    PLAN_RANK[planName.value] != null &&
+    PLAN_RANK[selectedPlan] < PLAN_RANK[planName.value];
   if (isDowngrade) {
     downgradeWarningModalRef.value?.open(
       selectedPlan,
@@ -802,7 +821,7 @@ onMounted(() => {
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
             <div
-              v-for="plan in ['Hobby', 'Standard', 'Business', 'Enterprise']"
+              v-for="plan in selectablePlans"
               :key="plan"
               class="border border-n-weak rounded-xl p-6 bg-n-background shadow-sm flex flex-col justify-between gap-4"
             >
