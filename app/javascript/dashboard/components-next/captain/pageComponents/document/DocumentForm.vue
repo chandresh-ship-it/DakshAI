@@ -6,9 +6,12 @@ import { minLength, requiredIf, url } from '@vuelidate/validators';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 
-import Input from 'dashboard/components-next/input/Input.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 
 const props = defineProps({
   assistantId: {
@@ -81,7 +84,6 @@ const handleFileChange = event => {
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
-      // 10MB
       useAlert(t('CAPTAIN.DOCUMENTS.FORM.PDF_FILE.TOO_LARGE'));
       event.target.value = '';
       return;
@@ -92,7 +94,6 @@ const handleFileChange = event => {
 };
 
 const openFileDialog = () => {
-  // Use nextTick to ensure the ref is available
   nextTick(() => {
     if (fileInputRef.value) {
       fileInputRef.value.click();
@@ -113,7 +114,6 @@ const prepareDocumentDetails = () => {
       'document[name]',
       state.name || state.pdfFile.name.replace('.pdf', '')
     );
-    // No need to send external_link for PDF - it's auto-generated in the backend
   }
 
   return formData;
@@ -132,12 +132,9 @@ const handleSubmit = async () => {
 <template>
   <form class="flex flex-col gap-4" @submit.prevent="handleSubmit">
     <div class="flex flex-col gap-1">
-      <label
-        for="documentType"
-        class="mb-0.5 text-sm font-medium text-n-slate-12"
-      >
+      <RelayLabel html-for="documentType">
         {{ t('CAPTAIN.DOCUMENTS.FORM.TYPE.LABEL') }}
-      </label>
+      </RelayLabel>
       <ComboBox
         id="documentType"
         v-model="state.documentType"
@@ -146,19 +143,24 @@ const handleSubmit = async () => {
       />
     </div>
 
-    <Input
-      v-if="state.documentType === 'url'"
-      v-model="state.url"
-      :label="t('CAPTAIN.DOCUMENTS.FORM.URL.LABEL')"
-      :placeholder="t('CAPTAIN.DOCUMENTS.FORM.URL.PLACEHOLDER')"
-      :message="formErrors.url"
-      :message-type="formErrors.url ? 'error' : 'info'"
-    />
+    <div v-if="state.documentType === 'url'" class="flex flex-col gap-2">
+      <RelayLabel html-for="document-url">
+        {{ t('CAPTAIN.DOCUMENTS.FORM.URL.LABEL') }}
+      </RelayLabel>
+      <RelayInput
+        id="document-url"
+        v-model="state.url"
+        :placeholder="t('CAPTAIN.DOCUMENTS.FORM.URL.PLACEHOLDER')"
+      />
+      <p v-if="formErrors.url" class="text-xs text-n-ruby-11">
+        {{ formErrors.url }}
+      </p>
+    </div>
 
     <div v-if="state.documentType === 'pdf'" class="flex flex-col gap-2">
-      <label class="text-sm font-medium text-n-slate-12">
+      <RelayLabel>
         {{ t('CAPTAIN.DOCUMENTS.FORM.PDF_FILE.LABEL') }}
-      </label>
+      </RelayLabel>
       <div class="relative">
         <input
           ref="fileInputRef"
@@ -167,69 +169,70 @@ const handleSubmit = async () => {
           class="hidden"
           @change="handleFileChange"
         />
-        <Button
+        <RelayButton
           type="button"
-          :color="hasPdfFileError ? 'ruby' : 'slate'"
-          :variant="hasPdfFileError ? 'outline' : 'solid'"
-          class="!w-full !h-auto !justify-between !py-4"
+          :variant="hasPdfFileError ? 'destructive' : 'outline'"
+          class="!h-auto w-full !justify-between !py-4"
           @click="openFileDialog"
         >
-          <template #default>
-            <div class="flex gap-2 items-center">
-              <div
-                class="flex justify-center items-center w-10 h-10 rounded-lg bg-n-slate-3"
-              >
-                <i class="text-xl i-ph-file-pdf text-n-slate-11" />
-              </div>
-              <div class="flex flex-col flex-1 gap-1 items-start">
-                <p class="m-0 text-sm font-medium text-n-slate-12">
-                  {{
-                    state.pdfFile
-                      ? state.pdfFile.name
-                      : t('CAPTAIN.DOCUMENTS.FORM.PDF_FILE.CHOOSE_FILE')
-                  }}
-                </p>
-                <p class="m-0 text-xs text-n-slate-11">
-                  {{
-                    state.pdfFile
-                      ? `${(state.pdfFile.size / 1024 / 1024).toFixed(2)} MB`
-                      : t('CAPTAIN.DOCUMENTS.FORM.PDF_FILE.HELP_TEXT')
-                  }}
-                </p>
-              </div>
+          <div class="flex items-center gap-2">
+            <div
+              class="flex size-10 items-center justify-center rounded-lg bg-n-slate-3"
+            >
+              <span class="i-ph-file-pdf text-xl text-n-slate-11" />
             </div>
-
-            <i class="i-lucide-upload text-n-slate-11" />
-          </template>
-        </Button>
+            <div class="flex flex-1 flex-col items-start gap-1">
+              <p class="m-0 text-sm font-medium text-n-slate-12">
+                {{
+                  state.pdfFile
+                    ? state.pdfFile.name
+                    : t('CAPTAIN.DOCUMENTS.FORM.PDF_FILE.CHOOSE_FILE')
+                }}
+              </p>
+              <p class="m-0 text-xs text-n-slate-11">
+                {{
+                  state.pdfFile
+                    ? `${(state.pdfFile.size / 1024 / 1024).toFixed(2)} MB`
+                    : t('CAPTAIN.DOCUMENTS.FORM.PDF_FILE.HELP_TEXT')
+                }}
+              </p>
+            </div>
+          </div>
+          <span class="i-lucide-upload text-n-slate-11" />
+        </RelayButton>
       </div>
       <p v-if="formErrors.pdfFile" class="text-xs text-n-ruby-9">
         {{ formErrors.pdfFile }}
       </p>
     </div>
 
-    <Input
-      v-model="state.name"
-      :label="t('CAPTAIN.DOCUMENTS.FORM.NAME.LABEL')"
-      :placeholder="t('CAPTAIN.DOCUMENTS.FORM.NAME.PLACEHOLDER')"
-    />
+    <div class="flex flex-col gap-2">
+      <RelayLabel html-for="document-name">
+        {{ t('CAPTAIN.DOCUMENTS.FORM.NAME.LABEL') }}
+      </RelayLabel>
+      <RelayInput
+        id="document-name"
+        v-model="state.name"
+        :placeholder="t('CAPTAIN.DOCUMENTS.FORM.NAME.PLACEHOLDER')"
+      />
+    </div>
 
-    <div class="flex gap-3 justify-between items-center w-full">
-      <Button
+    <div class="flex w-full items-center justify-between gap-3">
+      <RelayButton
         type="button"
-        variant="faded"
-        color="slate"
-        :label="t('CAPTAIN.FORM.CANCEL')"
-        class="w-full bg-n-alpha-2 text-n-blue-11 hover:bg-n-alpha-3"
-        @click="handleCancel"
-      />
-      <Button
-        type="submit"
-        :label="t('CAPTAIN.FORM.CREATE')"
+        variant="secondary"
         class="w-full"
-        :is-loading="isLoading"
-        :disabled="isLoading"
-      />
+        @click="handleCancel"
+      >
+        {{ t('CAPTAIN.FORM.CANCEL') }}
+      </RelayButton>
+      <RelayButton type="submit" class="w-full" :disabled="isLoading">
+        <span
+          v-if="isLoading"
+          class="i-lucide-loader-circle size-4 animate-spin"
+        />
+        {{ t('CAPTAIN.FORM.CREATE') }}
+      </RelayButton>
     </div>
   </form>
 </template>

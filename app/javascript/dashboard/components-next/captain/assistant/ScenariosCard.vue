@@ -5,13 +5,16 @@ import { useToggle, useElementSize } from '@vueuse/core';
 import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
 import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
-import Input from 'dashboard/components-next/input/Input.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
 import CardLayout from 'dashboard/components-next/CardLayout.vue';
-import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import {
+  RelayButton,
+  RelayCheckbox,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 
 const props = defineProps({
   id: {
@@ -126,10 +129,11 @@ const renderInstruction = instruction => () =>
 <template>
   <CardLayout
     selectable
-    class="relative [&>div]:!py-4"
+    class="relative transition-colors [&>div]:!py-4"
     :class="{
       '[&>div]:ltr:!pr-4 [&>div]:rtl:!pl-4': !isEditing,
       '[&>div]:ltr:!pr-10 [&>div]:rtl:!pl-10': isEditing,
+      'outline-n-brand/50 bg-n-brand/5': isSelected && !isEditing,
     }"
     layout="row"
     @mouseenter="emit('hover', true)"
@@ -139,34 +143,44 @@ const renderInstruction = instruction => () =>
       v-show="selectable && !isEditing"
       class="absolute top-[1.125rem] ltr:left-3 rtl:right-3"
     >
-      <Checkbox v-model="modelValue" />
+      <RelayCheckbox v-model="modelValue" />
     </div>
 
-    <div v-if="!isEditing" class="flex flex-col w-full">
-      <div class="flex items-start justify-between w-full gap-2">
+    <div v-if="!isEditing" class="flex w-full flex-col">
+      <div class="flex w-full items-start justify-between gap-2">
         <div class="flex flex-col items-start">
-          <span class="text-sm text-n-slate-12 font-medium">{{ title }}</span>
-          <span class="text-sm text-n-slate-11 mt-2">
+          <span class="text-[15px] font-medium text-n-slate-12">{{
+            title
+          }}</span>
+          <span class="mt-2 text-sm text-n-slate-11">
             {{ description }}
           </span>
         </div>
-        <div class="flex items-center gap-2">
-          <!-- <Button label="Test" slate xs ghost class="!text-sm" />
-          <span class="w-px h-4 bg-n-weak" /> -->
-          <Button icon="i-lucide-pen" slate xs ghost @click="startEdit" />
-          <span class="w-px h-4 bg-n-weak" />
-          <Button
-            icon="i-lucide-trash"
-            slate
-            xs
-            ghost
+        <div
+          class="flex items-center gap-1 opacity-0 transition-opacity group-hover/cardLayout:opacity-100 focus-within:opacity-100"
+        >
+          <RelayButton
+            variant="ghost"
+            size="icon"
+            class="size-8 text-n-slate-11"
+            @click="startEdit"
+          >
+            <span class="i-lucide-pen size-4" />
+          </RelayButton>
+          <span class="h-4 w-px bg-n-weak" />
+          <RelayButton
+            variant="ghost"
+            size="icon"
+            class="size-8 text-n-slate-11 hover:text-n-ruby-11"
             @click="emit('delete', id)"
-          />
+          >
+            <span class="i-lucide-trash size-4" />
+          </RelayButton>
         </div>
       </div>
 
       <div
-        class="relative overflow-hidden transition-all duration-300 ease-in-out group/expandable"
+        class="group/expandable relative overflow-hidden transition-all duration-300 ease-in-out"
         :class="{ 'cursor-pointer': needsOverlay }"
         :style="{
           maxHeight: isInstructionExpanded ? `${contentHeight}px` : '10rem',
@@ -180,7 +194,7 @@ const renderInstruction = instruction => () =>
         </div>
 
         <div
-          class="absolute bottom-0 w-full flex items-end justify-center text-xs text-n-slate-11 bg-gradient-to-t h-40 from-n-solid-2 via-n-solid-2 via-10% to-transparent transition-all duration-500 ease-in-out px-2 py-1 rounded pointer-events-none"
+          class="pointer-events-none absolute bottom-0 flex h-40 w-full items-end justify-center rounded bg-gradient-to-t from-n-solid-2 via-n-solid-2 via-10% to-transparent px-2 py-1 text-xs text-n-slate-11 transition-all duration-500 ease-in-out"
           :class="{
             'visible opacity-100': !isInstructionExpanded,
             'invisible opacity-0': isInstructionExpanded || !needsOverlay,
@@ -188,28 +202,32 @@ const renderInstruction = instruction => () =>
         >
           <Icon
             icon="i-lucide-chevron-down"
-            class="text-n-slate-7 mb-4 size-4 group-hover/expandable:text-n-slate-11 transition-colors duration-200"
+            class="mb-4 size-4 text-n-slate-7 transition-colors duration-200 group-hover/expandable:text-n-slate-11"
           />
         </div>
       </div>
       <span
         v-if="tools?.length"
-        class="text-sm text-n-slate-11 font-medium mb-1"
+        class="mb-1 text-sm font-medium text-n-slate-11"
       >
         {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.SUGGESTED.TOOLS_USED') }}
         {{ tools?.map(tool => `@${tool}`).join(', ') }}
       </span>
     </div>
-    <div v-else class="overflow-hidden flex flex-col gap-4 w-full">
-      <Input
-        v-model="state.title"
-        :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.LABEL')"
-        :placeholder="
-          t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.PLACEHOLDER')
-        "
-        :message="titleError"
-        :message-type="titleError ? 'error' : 'info'"
-      />
+    <div v-else class="flex w-full flex-col gap-4 overflow-hidden">
+      <div class="flex flex-col gap-2">
+        <RelayLabel html-for="scenario-title">
+          {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.LABEL') }}
+        </RelayLabel>
+        <RelayInput
+          id="scenario-title"
+          v-model="state.title"
+          :placeholder="
+            t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.PLACEHOLDER')
+          "
+        />
+        <p v-if="titleError" class="text-xs text-n-ruby-11">{{ titleError }}</p>
+      </div>
 
       <TextArea
         v-model="state.description"
@@ -237,18 +255,16 @@ const renderInstruction = instruction => () =>
         enable-captain-tools
       />
       <div class="flex items-center gap-3">
-        <Button
-          faded
-          slate
-          sm
-          :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.UPDATE.CANCEL')"
+        <RelayButton
+          variant="secondary"
+          size="sm"
           @click="toggleEditing(false)"
-        />
-        <Button
-          sm
-          :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.UPDATE.UPDATE')"
-          @click="onClickUpdate"
-        />
+        >
+          {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.UPDATE.CANCEL') }}
+        </RelayButton>
+        <RelayButton size="sm" @click="onClickUpdate">
+          {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.UPDATE.UPDATE') }}
+        </RelayButton>
       </div>
     </div>
   </CardLayout>

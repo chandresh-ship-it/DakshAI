@@ -7,7 +7,7 @@ import { useStore } from 'dashboard/composables/store';
 import { useMapGetter } from 'dashboard/composables/store';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import { useAccount } from 'dashboard/composables/useAccount';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import PageLayout from 'dashboard/components-next/captain/PageLayout.vue';
 import SettingsHeader from 'dashboard/components-next/captain/pageComponents/settings/SettingsHeader.vue';
 import AssistantBasicSettingsForm from 'dashboard/components-next/captain/pageComponents/assistant/settings/AssistantBasicSettingsForm.vue';
@@ -104,6 +104,7 @@ const handleDeleteSuccess = () => {
 
 <template>
   <PageLayout
+    :header-title="t('CAPTAIN.ASSISTANTS.SETTINGS.HEADER')"
     :is-fetching="isFetching"
     :show-pagination-footer="false"
     :show-know-more="false"
@@ -154,16 +155,13 @@ const handleDeleteSuccess = () => {
               </span>
             </div>
             <div class="flex-shrink-0">
-              <Button
-                :label="
+              <RelayButton variant="destructive" @click="handleDelete">
+                {{
                   t('CAPTAIN.ASSISTANTS.SETTINGS.DELETE.BUTTON_TEXT', {
                     assistantName: assistant.name,
                   })
-                "
-                color="ruby"
-                class="max-w-56 !w-fit"
-                @click="handleDelete"
-              />
+                }}
+              </RelayButton>
             </div>
           </div>
         </div>

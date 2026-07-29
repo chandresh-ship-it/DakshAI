@@ -7,8 +7,7 @@ import { picoSearch } from '@scmmishra/pico-search';
 import { useStore } from 'dashboard/composables/store';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useUISettings } from 'dashboard/composables/useUISettings';
-import Input from 'dashboard/components-next/input/Input.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 
 import PageLayout from 'dashboard/components-next/captain/PageLayout.vue';
 import SettingsHeader from 'dashboard/components-next/captain/pageComponents/settings/SettingsHeader.vue';
@@ -198,16 +197,16 @@ const addAllExample = () => {
               <span class="text-sm text-n-slate-12">
                 {{ item.content }}
               </span>
-              <Button
-                :label="
-                  $t('CAPTAIN.ASSISTANTS.GUARDRAILS.ADD.SUGGESTED.ADD_SINGLE')
-                "
-                ghost
-                xs
-                slate
-                class="!text-sm !text-n-slate-11 flex-shrink-0"
+              <RelayButton
+                variant="link"
+                size="sm"
+                class="flex-shrink-0 !text-sm text-n-slate-11"
                 @click="addGuardrail(item.content)"
-              />
+              >
+                {{
+                  $t('CAPTAIN.ASSISTANTS.GUARDRAILS.ADD.SUGGESTED.ADD_SINGLE')
+                }}
+              </RelayButton>
             </div>
           </template>
         </SuggestedRules>
@@ -254,7 +253,7 @@ const addAllExample = () => {
             v-if="displayGuardrails.length && bulkSelectedIds.size === 0"
             class="max-w-[22.5rem] w-full min-w-0"
           >
-            <Input
+            <RelayInput
               v-model="searchQuery"
               :placeholder="
                 t('CAPTAIN.ASSISTANTS.GUARDRAILS.LIST.SEARCH_PLACEHOLDER')

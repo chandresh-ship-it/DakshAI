@@ -7,8 +7,7 @@ import { picoSearch } from '@scmmishra/pico-search';
 import { useStore } from 'dashboard/composables/store';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useUISettings } from 'dashboard/composables/useUISettings';
-import Input from 'dashboard/components-next/input/Input.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 
 import PageLayout from 'dashboard/components-next/captain/PageLayout.vue';
 import SettingsHeader from 'dashboard/components-next/captain/pageComponents/settings/SettingsHeader.vue';
@@ -205,18 +204,18 @@ const addAllExample = async () => {
               <span class="text-sm text-n-slate-12">
                 {{ item.content }}
               </span>
-              <Button
-                :label="
+              <RelayButton
+                variant="link"
+                size="sm"
+                class="flex-shrink-0 !text-sm text-n-slate-11"
+                @click="addGuideline(item.content)"
+              >
+                {{
                   t(
                     'CAPTAIN.ASSISTANTS.RESPONSE_GUIDELINES.ADD.SUGGESTED.ADD_SINGLE'
                   )
-                "
-                ghost
-                xs
-                slate
-                class="!text-sm !text-n-slate-11 flex-shrink-0"
-                @click="addGuideline(item.content)"
-              />
+                }}
+              </RelayButton>
             </div>
           </template>
         </SuggestedRules>
@@ -270,7 +269,7 @@ const addAllExample = async () => {
             v-if="displayGuidelines.length && bulkSelectedIds.size === 0"
             class="max-w-[22.5rem] w-full min-w-0"
           >
-            <Input
+            <RelayInput
               v-model="searchQuery"
               :placeholder="
                 t(

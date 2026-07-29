@@ -2,7 +2,6 @@
 import { h, ref, computed, onMounted, watch } from 'vue';
 import { provideSidebarContext, useSidebarResize } from './provider';
 import { useAccount } from 'dashboard/composables/useAccount';
-import { useKbd } from 'dashboard/composables/utils/useKbd';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
@@ -11,16 +10,13 @@ import { vOnClickOutside } from '@vueuse/components';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import { useWindowSize, useEventListener } from '@vueuse/core';
 
-import Button from 'dashboard/components-next/button/Button.vue';
-import SidebarGroup from './SidebarGroup.vue';
-import SidebarProfileMenu from './SidebarProfileMenu.vue';
-import SidebarChangelogCard from './SidebarChangelogCard.vue';
-import SidebarChangelogButton from './SidebarChangelogButton.vue';
 import ChannelLeaf from './ChannelLeaf.vue';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
-import Logo from 'next/icon/Logo.vue';
-import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
+import SidebarProfileMenu from './SidebarProfileMenu.vue';
+import SidebarChangelogCard from './SidebarChangelogCard.vue';
+import SidebarChangelogButton from './SidebarChangelogButton.vue';
+import SidebarGroup from './SidebarGroup.vue';
 
 const props = defineProps({
   isMobileSidebarOpen: {
@@ -38,13 +34,18 @@ const emit = defineEmits([
 
 const { accountScopedRoute, isOnChatwootCloud } = useAccount();
 const store = useStore();
-const searchShortcut = useKbd([`$mod`, 'k']);
 const { t } = useI18n();
 
 const isACustomBrandedInstance = useMapGetter(
   'globalConfig/isACustomBrandedInstance'
 );
+const globalConfig = useMapGetter('globalConfig/get');
 const isRTL = useMapGetter('accounts/isRTL');
+const brandInitial = computed(() => {
+  const name = globalConfig.value?.installationName || 'N';
+  return name.charAt(0).toUpperCase();
+});
+const brandSubtitle = computed(() => 'Enterprise Edition');
 
 const { width: windowWidth } = useWindowSize();
 const isMobile = computed(() => windowWidth.value < 768);
@@ -167,6 +168,13 @@ const onResizeHandleDoubleClick = () => {
   else snapToCollapsed();
 };
 
+const toggleSidebarCollapse = () => {
+  if (isCollapsed.value) snapToExpanded();
+  else snapToCollapsed();
+};
+
+defineExpose({ toggleSidebarCollapse });
+
 // Support both mouse and touch events
 useEventListener(document, 'mousemove', onResizeMove);
 useEventListener(document, 'mouseup', onResizeEnd);
@@ -189,6 +197,7 @@ const contactCustomViews = useMapGetter('customViews/getContactCustomViews');
 const conversationCustomViews = useMapGetter(
   'customViews/getConversationCustomViews'
 );
+const inboxNotificationCount = useMapGetter('notifications/getUnreadCount');
 
 onMounted(() => {
   store.dispatch('labels/get');
@@ -280,23 +289,20 @@ const reportRoutes = computed(() => newReportRoutes());
 const menuItems = computed(() => {
   return [
     {
-      name: 'Inbox',
-      label: t('SIDEBAR.INBOX'),
-      icon: 'i-lucide-inbox',
-      to: accountScopedRoute('inbox_view'),
-      activeOn: ['inbox_view', 'inbox_view_conversation'],
-      getterKeys: {
-        count: 'notifications/getUnreadCount',
-      },
-    },
-    {
-      name: 'Conversation',
-      label: t('SIDEBAR.CONVERSATIONS'),
+      name: 'Customer Engagement',
+      label: t('SIDEBAR.CUSTOMER_ENGAGEMENT'),
       icon: 'i-lucide-message-circle',
       children: [
         {
+          name: 'Inbox',
+          label: t('SIDEBAR.INBOX'),
+          to: accountScopedRoute('inbox_view'),
+          activeOn: ['inbox_view', 'inbox_view_conversation'],
+          badgeCount: inboxNotificationCount.value,
+        },
+        {
           name: 'All',
-          label: t('SIDEBAR.ALL_CONVERSATIONS'),
+          label: t('SIDEBAR.CONVERSATIONS'),
           activeOn: ['inbox_conversation'],
           to: accountScopedRoute('home'),
         },
@@ -382,8 +388,99 @@ const menuItems = computed(() => {
       ],
     },
     {
+      name: 'CRM & Sales',
+      label: t('SIDEBAR.CRM_AND_SALES'),
+      icon: 'i-lucide-users',
+      children: [
+        {
+          name: 'All Contacts',
+          label: t('SIDEBAR.CONTACTS'),
+          to: accountScopedRoute(
+            'contacts_dashboard_index',
+            {},
+            { page: 1, search: undefined }
+          ),
+          activeOn: ['contacts_dashboard_index', 'contacts_edit'],
+        },
+        {
+          name: 'Active',
+          label: t('SIDEBAR.ACTIVE'),
+          to: accountScopedRoute('contacts_dashboard_active'),
+          activeOn: ['contacts_dashboard_active'],
+        },
+        {
+          name: 'Companies',
+          label: t('SIDEBAR.COMPANIES'),
+          to: accountScopedRoute('contacts_dashboard_companies'),
+          activeOn: ['contacts_dashboard_companies'],
+        },
+        {
+          name: 'Segments',
+          icon: 'i-lucide-group',
+          label: t('SIDEBAR.CUSTOM_VIEWS_SEGMENTS'),
+          children: contactCustomViews.value.map(view => ({
+            name: `${view.name}-${view.id}`,
+            label: view.name,
+            to: accountScopedRoute(
+              'contacts_dashboard_segments_index',
+              { segmentId: view.id },
+              { page: 1 }
+            ),
+            activeOn: [
+              'contacts_dashboard_segments_index',
+              'contacts_edit_segment',
+            ],
+          })),
+        },
+        {
+          name: 'Tagged With',
+          icon: 'i-lucide-tag',
+          label: t('SIDEBAR.TAGGED_WITH'),
+          children: labels.value.map(label => ({
+            name: `${label.title}-${label.id}`,
+            label: label.title,
+            icon: h('span', {
+              class: `size-[8px] rounded-sm`,
+              style: { backgroundColor: label.color },
+            }),
+            to: accountScopedRoute(
+              'contacts_dashboard_labels_index',
+              { label: label.title },
+              { page: 1, search: undefined }
+            ),
+            activeOn: [
+              'contacts_dashboard_labels_index',
+              'contacts_edit_label',
+            ],
+          })),
+        },
+      ],
+    },
+    {
+      name: 'Marketing',
+      label: t('SIDEBAR.MARKETING'),
+      icon: 'i-lucide-megaphone',
+      children: [
+        {
+          name: 'Live chat',
+          label: t('SIDEBAR.LIVE_CHAT'),
+          to: accountScopedRoute('campaigns_livechat_index'),
+        },
+        {
+          name: 'SMS',
+          label: t('SIDEBAR.SMS'),
+          to: accountScopedRoute('campaigns_sms_index'),
+        },
+        {
+          name: 'WhatsApp',
+          label: t('SIDEBAR.WHATSAPP'),
+          to: accountScopedRoute('campaigns_whatsapp_index'),
+        },
+      ],
+    },
+    {
       name: 'Captain',
-      icon: 'i-woot-captain',
+      icon: 'i-lucide-bot',
       label: t('SIDEBAR.CAPTAIN'),
       activeOn: ['captain_assistants_create_index'],
       children: [
@@ -456,89 +553,49 @@ const menuItems = computed(() => {
       name: 'Reputation',
       icon: 'i-lucide-star',
       label: t('SIDEBAR.REPUTATION'),
-      to: accountScopedRoute('reputation_overview'),
-      activeOn: [
-        'reputation_overview',
-        'reputation_reviews',
-        'reputation_requests',
-        'reputation_widgets',
-        'reputation_settings',
-      ],
-    },
-    {
-      name: 'Contacts',
-      label: t('SIDEBAR.CONTACTS'),
-      icon: 'i-lucide-contact',
       children: [
         {
-          name: 'All Contacts',
-          label: t('SIDEBAR.ALL_CONTACTS'),
-          to: accountScopedRoute(
-            'contacts_dashboard_index',
-            {},
-            { page: 1, search: undefined }
-          ),
-          activeOn: ['contacts_dashboard_index', 'contacts_edit'],
+          name: 'Reputation Overview',
+          label: t('SIDEBAR.REPUTATION_OVERVIEW'),
+          to: accountScopedRoute('reputation_overview'),
+          activeOn: ['reputation_overview'],
         },
         {
-          name: 'Active',
-          label: t('SIDEBAR.ACTIVE'),
-          to: accountScopedRoute('contacts_dashboard_active'),
-          activeOn: ['contacts_dashboard_active'],
+          name: 'Reputation Reviews',
+          label: t('SIDEBAR.REPUTATION_REVIEWS'),
+          to: accountScopedRoute('reputation_reviews'),
+          activeOn: ['reputation_reviews'],
         },
         {
-          name: 'Segments',
-          icon: 'i-lucide-group',
-          label: t('SIDEBAR.CUSTOM_VIEWS_SEGMENTS'),
-          children: contactCustomViews.value.map(view => ({
-            name: `${view.name}-${view.id}`,
-            label: view.name,
-            to: accountScopedRoute(
-              'contacts_dashboard_segments_index',
-              { segmentId: view.id },
-              { page: 1 }
-            ),
-            activeOn: [
-              'contacts_dashboard_segments_index',
-              'contacts_edit_segment',
-            ],
-          })),
+          name: 'Reputation Video',
+          label: t('SIDEBAR.REPUTATION_VIDEO'),
+          to: accountScopedRoute('reputation_video_testimonials'),
+          activeOn: ['reputation_video_testimonials'],
         },
         {
-          name: 'Tagged With',
-          icon: 'i-lucide-tag',
-          label: t('SIDEBAR.TAGGED_WITH'),
-          children: labels.value.map(label => ({
-            name: `${label.title}-${label.id}`,
-            label: label.title,
-            icon: h('span', {
-              class: `size-[8px] rounded-sm`,
-              style: { backgroundColor: label.color },
-            }),
-            to: accountScopedRoute(
-              'contacts_dashboard_labels_index',
-              { label: label.title },
-              { page: 1, search: undefined }
-            ),
-            activeOn: [
-              'contacts_dashboard_labels_index',
-              'contacts_edit_label',
-            ],
-          })),
+          name: 'Reputation Listings',
+          label: t('SIDEBAR.REPUTATION_LISTINGS'),
+          to: accountScopedRoute('reputation_widgets'),
+          activeOn: ['reputation_widgets'],
+        },
+        {
+          name: 'Reputation Feedback',
+          label: t('SIDEBAR.REPUTATION_FEEDBACK'),
+          to: accountScopedRoute('reputation_requests'),
+          activeOn: ['reputation_requests'],
+        },
+        {
+          name: 'Reputation Settings',
+          label: t('SIDEBAR.REPUTATION_SETTINGS'),
+          to: accountScopedRoute('reputation_settings'),
+          activeOn: ['reputation_settings'],
         },
       ],
     },
     {
-      name: 'Companies',
-      label: t('SIDEBAR.COMPANIES'),
-      icon: 'i-lucide-building-2',
-      to: accountScopedRoute('contacts_dashboard_companies'),
-      activeOn: ['contacts_dashboard_companies'],
-    },
-    {
-      name: 'Reports',
-      label: t('SIDEBAR.REPORTS'),
-      icon: 'i-lucide-chart-spline',
+      name: 'Analytics',
+      label: t('SIDEBAR.ANALYTICS'),
+      icon: 'i-lucide-chart-bar',
       children: [
         {
           name: 'Report Overview',
@@ -569,30 +626,8 @@ const menuItems = computed(() => {
       ],
     },
     {
-      name: 'Campaigns',
-      label: t('SIDEBAR.CAMPAIGNS'),
-      icon: 'i-lucide-megaphone',
-      children: [
-        {
-          name: 'Live chat',
-          label: t('SIDEBAR.LIVE_CHAT'),
-          to: accountScopedRoute('campaigns_livechat_index'),
-        },
-        {
-          name: 'SMS',
-          label: t('SIDEBAR.SMS'),
-          to: accountScopedRoute('campaigns_sms_index'),
-        },
-        {
-          name: 'WhatsApp',
-          label: t('SIDEBAR.WHATSAPP'),
-          to: accountScopedRoute('campaigns_whatsapp_index'),
-        },
-      ],
-    },
-    {
       name: 'Portals',
-      label: t('SIDEBAR.HELP_CENTER.TITLE'),
+      label: t('SIDEBAR.KNOWLEDGE_BASE'),
       icon: 'i-lucide-library-big',
       children: [
         {
@@ -640,7 +675,7 @@ const menuItems = computed(() => {
     {
       name: 'Settings',
       label: t('SIDEBAR.SETTINGS'),
-      icon: 'i-lucide-bolt',
+      icon: 'i-lucide-settings',
       children: [
         {
           name: 'Settings Account Settings',
@@ -811,7 +846,7 @@ const menuItems = computed(() => {
         ],
       },
     ]"
-    class="bg-n-background flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full z-40 w-[200px] md:w-auto md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0 ltr:border-r rtl:border-l border-n-weak"
+    class="bg-n-solid-1 flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full z-40 w-60 md:w-auto md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0 ltr:border-r rtl:border-l border-n-weak"
     :class="[
       {
         'shadow-lg md:shadow-none': isMobileSidebarOpen,
@@ -823,14 +858,14 @@ const menuItems = computed(() => {
     :style="isMobile ? undefined : { width: `${sidebarWidth}px` }"
   >
     <section
-      class="grid"
-      :class="isEffectivelyCollapsed ? 'mt-3 mb-6 gap-4' : 'mt-1 mb-4 gap-2'"
+      class="flex flex-col gap-2"
+      :class="isEffectivelyCollapsed ? 'mt-2 mb-4' : 'p-2 pb-4'"
     >
       <div
-        class="flex gap-2 items-center min-w-0"
+        class="flex min-w-0 items-center gap-2"
         :class="{
           'justify-center px-1': isEffectivelyCollapsed,
-          'px-2': !isEffectivelyCollapsed,
+          'h-12 overflow-hidden rounded-md p-2': !isEffectivelyCollapsed,
         }"
       >
         <template v-if="isEffectivelyCollapsed">
@@ -840,67 +875,29 @@ const menuItems = computed(() => {
           />
         </template>
         <template v-else>
-          <div class="grid flex-shrink-0 place-content-center size-6">
-            <Logo class="size-4" />
-          </div>
-          <div class="flex-shrink-0 w-px h-3 bg-n-strong" />
-          <SidebarAccountSwitcher
-            class="flex-grow -mx-1 min-w-0"
-            @show-create-account-modal="emit('showCreateAccountModal')"
-          />
-        </template>
-      </div>
-      <div
-        class="flex gap-2"
-        :class="isEffectivelyCollapsed ? 'flex-col items-center' : 'px-2'"
-      >
-        <RouterLink
-          v-if="!isEffectivelyCollapsed"
-          :to="{ name: 'search' }"
-          class="flex gap-2 items-center px-2 py-1 w-full h-7 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out"
-        >
-          <span class="flex-shrink-0 i-lucide-search size-4 text-n-slate-10" />
-          <span class="flex-grow text-start text-n-slate-10">
-            {{ t('COMBOBOX.SEARCH_PLACEHOLDER') }}
-          </span>
-          <span
-            class="hidden tracking-wide pointer-events-none select-none text-n-slate-10"
+          <div
+            class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-n-brand text-sm font-bold text-white"
           >
-            {{ searchShortcut }}
-          </span>
-        </RouterLink>
-        <RouterLink
-          v-else
-          :to="{ name: 'search' }"
-          class="flex items-center justify-center size-8 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out hover:bg-n-alpha-2 dark:hover:bg-n-slate-9/30"
-          :title="t('COMBOBOX.SEARCH_PLACEHOLDER')"
-        >
-          <span class="i-lucide-search size-4 text-n-slate-11" />
-        </RouterLink>
-        <ComposeConversation align="start">
-          <template #trigger="{ isOpen }">
-            <Button
-              icon="i-lucide-pen-line"
-              color="slate"
-              size="sm"
-              class="dark:hover:!bg-n-slate-9/30"
-              :class="[
-                isEffectivelyCollapsed
-                  ? '!size-8 !outline-n-weak !text-n-slate-11'
-                  : '!h-7 !outline-n-weak !text-n-slate-11',
-                { '!bg-n-alpha-2 dark:!bg-n-slate-9/30': isOpen },
-              ]"
+            {{ brandInitial }}
+          </div>
+          <div class="grid min-w-0 flex-1 text-left text-sm leading-tight">
+            <SidebarAccountSwitcher
+              class="min-w-0"
+              @show-create-account-modal="emit('showCreateAccountModal')"
             />
-          </template>
-        </ComposeConversation>
+            <span class="truncate px-2 text-xs font-normal text-n-slate-11">
+              {{ brandSubtitle }}
+            </span>
+          </div>
+        </template>
       </div>
     </section>
     <nav
-      class="grid overflow-y-scroll flex-grow gap-2 pb-5 no-scrollbar min-w-0"
+      class="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar pb-4"
       :class="isEffectivelyCollapsed ? 'px-1' : 'px-2'"
     >
       <ul
-        class="flex flex-col gap-1 m-0 list-none min-w-0"
+        class="m-0 flex list-none flex-col gap-3 min-w-0"
         :class="{ 'items-center': isEffectivelyCollapsed }"
       >
         <SidebarGroup
@@ -914,7 +911,7 @@ const menuItems = computed(() => {
       class="flex relative flex-col flex-shrink-0 gap-1 justify-between items-center"
     >
       <div
-        class="pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t from-n-background to-transparent"
+        class="pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t from-n-solid-1 to-transparent"
       />
       <SidebarChangelogCard
         v-if="

@@ -5,9 +5,9 @@ import { useUISettings } from 'dashboard/composables/useUISettings';
 
 const SidebarControl = Symbol('SidebarControl');
 
-const DEFAULT_WIDTH = 200;
-const MIN_WIDTH = 56;
-const COLLAPSED_THRESHOLD = 160;
+const DEFAULT_WIDTH = 240;
+const MIN_WIDTH = 64;
+const COLLAPSED_THRESHOLD = 100;
 const MAX_WIDTH = 320;
 
 // Shared state for active popover (only one can be open at a time)
@@ -17,7 +17,14 @@ let globalCloseTimeout = null;
 export function useSidebarResize() {
   const { uiSettings, updateUISettings } = useUISettings();
 
-  const sidebarWidth = ref(uiSettings.value.sidebar_width || DEFAULT_WIDTH);
+  const savedWidth = uiSettings.value.sidebar_width;
+  // Migrate legacy narrow sidebar (e.g. 200) up to the new-ui default (240)
+  const initialWidth =
+    !savedWidth ||
+    (savedWidth > COLLAPSED_THRESHOLD && savedWidth < DEFAULT_WIDTH)
+      ? DEFAULT_WIDTH
+      : savedWidth;
+  const sidebarWidth = ref(initialWidth);
   const isCollapsed = computed(() => sidebarWidth.value < COLLAPSED_THRESHOLD);
 
   const setSidebarWidth = width => {

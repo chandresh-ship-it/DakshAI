@@ -6,7 +6,7 @@ import { minLength } from '@vuelidate/validators';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import { useAccount } from 'dashboard/composables/useAccount';
 
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
 
 const props = defineProps({
@@ -152,10 +152,9 @@ watch(
     </div>
 
     <div>
-      <Button
-        :label="t('CAPTAIN.ASSISTANTS.FORM.UPDATE')"
-        @click="handleSystemMessagesUpdate"
-      />
+      <RelayButton @click="handleSystemMessagesUpdate">
+        {{ t('CAPTAIN.ASSISTANTS.FORM.UPDATE') }}
+      </RelayButton>
     </div>
   </div>
 </template>

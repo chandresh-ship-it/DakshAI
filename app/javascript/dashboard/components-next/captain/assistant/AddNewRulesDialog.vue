@@ -2,7 +2,7 @@
 import { useToggle } from '@vueuse/core';
 import { vOnClickOutside } from '@vueuse/components';
 
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue';
 
 defineProps({
@@ -47,34 +47,32 @@ const onClickCancel = () => {
 <template>
   <div
     v-on-click-outside="() => togglePopover(false)"
-    class="inline-flex relative"
+    class="relative inline-flex"
   >
-    <Button
-      :label="buttonLabel"
-      sm
-      slate
+    <RelayButton
+      variant="outline"
+      size="sm"
       class="flex-shrink-0"
       @click="togglePopover(!showPopover)"
-    />
+    >
+      {{ buttonLabel }}
+    </RelayButton>
     <div
       v-if="showPopover"
-      class="absolute w-[26.5rem] top-9 z-50 ltr:left-0 rtl:right-0 flex flex-col gap-5 bg-n-alpha-3 backdrop-blur-[100px] p-4 rounded-xl border border-n-weak shadow-md"
+      class="absolute top-9 z-50 flex w-[26.5rem] flex-col gap-5 rounded-xl border border-n-weak bg-n-alpha-3 p-4 shadow-md backdrop-blur-[100px] ltr:left-0 rtl:right-0"
     >
       <InlineInput
         v-model="modelValue"
         :placeholder="placeholder"
         @keyup.enter="onClickAdd"
       />
-      <div class="flex gap-2 justify-between">
-        <Button
-          :label="cancelLabel"
-          sm
-          link
-          slate
-          class="h-10 hover:!no-underline"
-          @click="onClickCancel"
-        />
-        <Button :label="confirmLabel" sm @click="onClickAdd" />
+      <div class="flex justify-between gap-2">
+        <RelayButton variant="ghost" size="sm" @click="onClickCancel">
+          {{ cancelLabel }}
+        </RelayButton>
+        <RelayButton size="sm" @click="onClickAdd">
+          {{ confirmLabel }}
+        </RelayButton>
       </div>
     </div>
   </div>

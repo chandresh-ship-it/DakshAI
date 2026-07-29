@@ -2,7 +2,7 @@
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useBranding } from 'shared/composables/useBranding';
 import EmptyStateLayout from 'dashboard/components-next/EmptyStateLayout.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import ResponseCard from 'dashboard/components-next/captain/assistant/ResponseCard.vue';
 import FeatureSpotlight from 'dashboard/components-next/feature-spotlight/FeatureSpotlight.vue';
 import { responsesList } from 'dashboard/components-next/captain/pageComponents/emptyStates/captainEmptyStateContent.js';
@@ -76,19 +76,18 @@ const onClearFilters = () => {
     </template>
     <template #actions>
       <div class="flex flex-col items-center gap-3">
-        <Button
-          v-if="isApproved"
-          :label="$t('CAPTAIN.RESPONSES.ADD_NEW')"
-          icon="i-lucide-plus"
-          @click="onClick"
-        />
-        <Button
+        <RelayButton v-if="isApproved" @click="onClick">
+          <span class="i-lucide-plus size-4" />
+          {{ $t('CAPTAIN.RESPONSES.ADD_NEW') }}
+        </RelayButton>
+        <RelayButton
           v-else-if="isPending && hasActiveFilters"
-          :label="$t('CAPTAIN.RESPONSES.EMPTY_STATE.CLEAR_SEARCH')"
           variant="link"
           size="sm"
           @click="onClearFilters"
-        />
+        >
+          {{ $t('CAPTAIN.RESPONSES.EMPTY_STATE.CLEAR_SEARCH') }}
+        </RelayButton>
       </div>
     </template>
   </EmptyStateLayout>

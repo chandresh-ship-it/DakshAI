@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { dynamicTime } from 'shared/helpers/timeHelper';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
 const props = defineProps({
@@ -139,15 +139,15 @@ const statusIcon = computed(() => {
     <Spinner v-if="isSyncing" class="text-n-amber-11 size-3" />
     <Icon v-else :icon="statusIcon" class="shrink-0 size-3.5" />
     <span class="truncate">{{ label }}</span>
-    <Button
+    <RelayButton
       v-if="showRetry && canRetry"
-      :label="t('CAPTAIN.DOCUMENTS.OPTIONS.RETRY_SYNC')"
-      xs
-      link
-      ruby
-      icon="i-lucide-refresh-cw"
-      class="hover:!no-underline !gap-1 ms-1"
+      variant="link"
+      size="sm"
+      class="ms-1 !gap-1 text-n-ruby-11 hover:!no-underline"
       @click.stop="emit('retry')"
-    />
+    >
+      <span class="i-lucide-refresh-cw size-3.5" />
+      {{ t('CAPTAIN.DOCUMENTS.OPTIONS.RETRY_SYNC') }}
+    </RelayButton>
   </span>
 </template>

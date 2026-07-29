@@ -1,8 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
 import CardLayout from 'dashboard/components-next/CardLayout.vue';
-import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue';
 
 const props = defineProps({
@@ -67,7 +66,7 @@ const saveEdit = () => {
     @mouseleave="emit('hover', false)"
   >
     <div v-show="selectable" class="absolute top-6 ltr:left-3 rtl:right-3">
-      <Checkbox v-model="modelValue" />
+      <RelayCheckbox v-model="modelValue" />
     </div>
     <InlineInput
       v-if="isEditing"
@@ -79,15 +78,23 @@ const saveEdit = () => {
       {{ localContent }}
     </span>
     <div class="flex items-center gap-2">
-      <Button icon="i-lucide-pen" slate xs ghost @click="startEdit" />
-      <span class="w-px h-4 bg-n-weak" />
-      <Button
-        icon="i-lucide-trash"
-        slate
-        xs
-        ghost
+      <RelayButton
+        variant="ghost"
+        size="icon"
+        class="size-8 text-n-slate-11"
+        @click="startEdit"
+      >
+        <span class="i-lucide-pen size-3.5" />
+      </RelayButton>
+      <span class="h-4 w-px bg-n-weak" />
+      <RelayButton
+        variant="ghost"
+        size="icon"
+        class="size-8 text-n-slate-11 hover:text-n-ruby-9"
         @click="emit('delete', id)"
-      />
+      >
+        <span class="i-lucide-trash size-3.5" />
+      </RelayButton>
     </div>
   </CardLayout>
 </template>

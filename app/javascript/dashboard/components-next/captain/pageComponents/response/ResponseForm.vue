@@ -5,9 +5,12 @@ import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
 import { useMapGetter } from 'dashboard/composables/store';
 
-import Input from 'dashboard/components-next/input/Input.vue';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 
 const props = defineProps({
   mode: {
@@ -95,13 +98,19 @@ watch(
 
 <template>
   <form class="flex flex-col gap-4" @submit.prevent="handleSubmit">
-    <Input
-      v-model="state.question"
-      :label="t('CAPTAIN.RESPONSES.FORM.QUESTION.LABEL')"
-      :placeholder="t('CAPTAIN.RESPONSES.FORM.QUESTION.PLACEHOLDER')"
-      :message="formErrors.question"
-      :message-type="formErrors.question ? 'error' : 'info'"
-    />
+    <div class="flex flex-col gap-2">
+      <RelayLabel html-for="captain-faq-question">
+        {{ t('CAPTAIN.RESPONSES.FORM.QUESTION.LABEL') }}
+      </RelayLabel>
+      <RelayInput
+        id="captain-faq-question"
+        v-model="state.question"
+        :placeholder="t('CAPTAIN.RESPONSES.FORM.QUESTION.PLACEHOLDER')"
+      />
+      <p v-if="formErrors.question" class="text-xs text-n-ruby-11">
+        {{ formErrors.question }}
+      </p>
+    </div>
     <Editor
       v-model="state.answer"
       :label="t('CAPTAIN.RESPONSES.FORM.ANSWER.LABEL')"
@@ -110,22 +119,22 @@ watch(
       :max-length="10000"
       :message-type="formErrors.answer ? 'error' : 'info'"
     />
-    <div class="flex items-center justify-between w-full gap-3">
-      <Button
+    <div class="flex w-full items-center justify-between gap-3">
+      <RelayButton
         type="button"
-        variant="faded"
-        color="slate"
-        :label="t('CAPTAIN.FORM.CANCEL')"
-        class="w-full bg-n-alpha-2 text-n-blue-11 hover:bg-n-alpha-3"
-        @click="handleCancel"
-      />
-      <Button
-        type="submit"
-        :label="t(`CAPTAIN.FORM.${mode.toUpperCase()}`)"
+        variant="secondary"
         class="w-full"
-        :is-loading="isLoading"
-        :disabled="isLoading"
-      />
+        @click="handleCancel"
+      >
+        {{ t('CAPTAIN.FORM.CANCEL') }}
+      </RelayButton>
+      <RelayButton type="submit" class="w-full" :disabled="isLoading">
+        <span
+          v-if="isLoading"
+          class="i-lucide-loader-circle size-4 animate-spin"
+        />
+        {{ t(`CAPTAIN.FORM.${mode.toUpperCase()}`) }}
+      </RelayButton>
     </div>
   </form>
 </template>

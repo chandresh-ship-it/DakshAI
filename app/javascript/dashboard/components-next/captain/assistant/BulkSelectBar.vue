@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   allItems: {
@@ -75,21 +74,21 @@ const bulkCheckboxState = computed({
   >
     <div
       v-if="hasSelected"
-      class="flex items-center gap-3 py-1 ltr:pl-3 rtl:pr-3 ltr:pr-4 rtl:pl-4 rounded-lg bg-n-solid-2 outline outline-1 outline-n-container shadow"
+      class="flex w-full items-center justify-between gap-3 rounded-xl border border-n-weak bg-n-solid-2 px-4 py-3 shadow-sm"
     >
-      <div class="flex items-center gap-3 min-w-0">
-        <div class="flex items-center gap-1.5 min-w-0">
-          <Checkbox
+      <div class="flex min-w-0 items-center gap-4">
+        <div class="flex min-w-0 items-center gap-2.5">
+          <RelayCheckbox
             v-model="bulkCheckboxState"
             :indeterminate="isIndeterminate"
           />
           <span
-            class="text-sm font-medium truncate text-n-slate-12 tabular-nums"
+            class="truncate text-sm font-medium tabular-nums text-n-slate-12"
           >
             {{ selectAllLabel }}
           </span>
         </div>
-        <span class="text-sm text-n-slate-10 truncate tabular-nums">
+        <span class="truncate text-sm tabular-nums text-n-slate-11">
           {{ selectedCountLabel }}
         </span>
         <div v-if="$slots.primaryActions" class="h-4 w-px bg-n-strong" />
@@ -100,15 +99,15 @@ const bulkCheckboxState = computed({
         <div v-if="$slots.secondaryActions" class="h-4 w-px bg-n-strong" />
         <div class="flex items-center gap-3">
           <slot name="actions" :selected-count="selectedCount">
-            <Button
-              :label="deleteLabel"
-              sm
-              ruby
-              ghost
-              class="!px-1.5"
-              icon="i-lucide-trash"
+            <RelayButton
+              variant="ghost"
+              size="sm"
+              class="border border-n-weak text-n-ruby-11 hover:border-transparent hover:bg-n-ruby-9/10 hover:text-n-ruby-11"
               @click="emit('bulkDelete')"
-            />
+            >
+              <span class="i-lucide-trash size-3.5" />
+              {{ deleteLabel }}
+            </RelayButton>
           </slot>
         </div>
       </div>

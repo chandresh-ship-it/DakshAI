@@ -1,6 +1,6 @@
 <script setup>
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue';
 
 defineProps({
@@ -30,22 +30,22 @@ const onClickAdd = () => {
 
 <template>
   <div
-    class="flex py-3 ltr:pl-3 h-16 rtl:pr-3 ltr:pr-4 rtl:pl-4 items-center gap-3 rounded-xl bg-n-solid-2 outline-1 outline outline-n-container"
+    class="flex h-16 items-center gap-3 rounded-xl bg-n-solid-2 py-3 outline outline-1 outline-n-container ltr:pl-3 ltr:pr-4 rtl:pl-4 rtl:pr-3"
   >
-    <Icon icon="i-lucide-plus" class="text-n-slate-10 size-5 flex-shrink-0" />
+    <Icon icon="i-lucide-plus" class="size-5 flex-shrink-0 text-n-slate-10" />
 
     <InlineInput
       v-model="modelValue"
       :placeholder="placeholder"
       @keyup.enter="onClickAdd"
     />
-    <Button
-      :label="label"
-      ghost
-      xs
-      slate
-      class="!text-sm !text-n-slate-11 flex-shrink-0"
+    <RelayButton
+      size="sm"
+      class="flex-shrink-0"
+      :disabled="!modelValue?.trim()"
       @click="onClickAdd"
-    />
+    >
+      {{ label }}
+    </RelayButton>
   </div>
 </template>

@@ -13,7 +13,7 @@ import DeleteDialog from 'dashboard/components-next/captain/pageComponents/Delet
 import DocumentCard from 'dashboard/components-next/captain/assistant/DocumentCard.vue';
 import DocumentFilter from 'dashboard/components-next/captain/assistant/DocumentFilter.vue';
 import DocumentBulkActions from 'dashboard/components-next/captain/assistant/DocumentBulkActions.vue';
-import Input from 'dashboard/components-next/input/Input.vue';
+import { RelayInput } from 'dashboard/components-next/relay';
 import Policy from 'dashboard/components/policy.vue';
 import PageLayout from 'dashboard/components-next/captain/PageLayout.vue';
 import CaptainPaywall from 'dashboard/components-next/captain/pageComponents/Paywall.vue';
@@ -45,7 +45,6 @@ const canManageDocuments = computed(() => checkPermissions(['administrator']));
 const selectedDocument = ref(null);
 const deleteDocumentDialog = ref(null);
 const bulkSelectedIds = ref(new Set());
-const hoveredCard = ref(null);
 
 const handleDelete = () => {
   deleteDocumentDialog.value.dialogRef.open();
@@ -260,13 +259,7 @@ const onDeleteSuccess = () => {
   }
 };
 
-const shouldShowSelectionControl = docId =>
-  canManageDocuments.value &&
-  (hoveredCard.value === docId || bulkSelectedIds.value.size > 0);
-
-const handleCardHover = (isHovered, id) => {
-  hoveredCard.value = isHovered ? id : null;
-};
+const shouldShowSelectionControl = computed(() => canManageDocuments.value);
 
 const handleCardSelect = id => {
   if (!canManageDocuments.value) return;
@@ -334,16 +327,15 @@ onUnmounted(() => {
     @click="handleCreateDocument"
   >
     <template #search>
-      <div
-        v-if="bulkSelectedIds.size === 0"
-        class="flex gap-3 justify-between w-full items-center"
-      >
-        <Input
+      <div v-if="bulkSelectedIds.size === 0" class="relative w-full sm:w-64">
+        <span
+          class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-n-slate-11"
+        />
+        <RelayInput
           v-model="searchQuery"
           :placeholder="$t('CAPTAIN.DOCUMENTS.FILTERS.SEARCH_PLACEHOLDER')"
-          class="max-w-64 min-w-0 w-full"
-          size="sm"
           type="search"
+          class-name="pl-9"
           @input="debouncedSearch"
         />
       </div>
@@ -418,11 +410,10 @@ onUnmounted(() => {
           :sync-stale-after-hours="syncIntervalHours"
           :is-selected="canManageDocuments && bulkSelectedIds.has(doc.id)"
           :selectable="canManageDocuments"
-          :show-selection-control="shouldShowSelectionControl(doc.id)"
+          :show-selection-control="shouldShowSelectionControl"
           :show-menu="!bulkSelectedIds.has(doc.id)"
           @action="handleAction"
           @select="handleCardSelect"
-          @hover="isHovered => handleCardHover(isHovered, doc.id)"
         />
       </div>
     </template>

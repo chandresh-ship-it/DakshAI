@@ -2,7 +2,7 @@
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useBranding } from 'shared/composables/useBranding';
 import EmptyStateLayout from 'dashboard/components-next/EmptyStateLayout.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import DocumentCard from 'dashboard/components-next/captain/assistant/DocumentCard.vue';
 import FeatureSpotlight from 'dashboard/components-next/feature-spotlight/FeatureSpotlight.vue';
 import { documentsList } from 'dashboard/components-next/captain/pageComponents/emptyStates/captainEmptyStateContent.js';
@@ -46,11 +46,10 @@ const onClick = () => {
       </div>
     </template>
     <template #actions>
-      <Button
-        :label="$t('CAPTAIN.DOCUMENTS.ADD_NEW')"
-        icon="i-lucide-plus"
-        @click="onClick"
-      />
+      <RelayButton @click="onClick">
+        <span class="i-lucide-plus size-4" />
+        {{ $t('CAPTAIN.DOCUMENTS.ADD_NEW') }}
+      </RelayButton>
     </template>
   </EmptyStateLayout>
 </template>

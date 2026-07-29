@@ -5,7 +5,7 @@ import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
 
 import Input from 'dashboard/components-next/input/Input.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
 
 const props = defineProps({
@@ -128,31 +128,30 @@ watch(
       <label class="text-sm font-medium text-n-slate-12">
         {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.TITLE') }}
       </label>
-      <div class="flex flex-col gap-2">
-        <label class="flex items-center gap-2">
-          <input v-model="state.features.conversationFaqs" type="checkbox" />
+      <div class="flex flex-col gap-3">
+        <label class="flex cursor-pointer items-center gap-3 select-none">
+          <RelayCheckbox v-model="state.features.conversationFaqs" />
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_CONVERSATION_FAQS') }}
         </label>
-        <label class="flex items-center gap-2">
-          <input v-model="state.features.memories" type="checkbox" />
+        <label class="flex cursor-pointer items-center gap-3 select-none">
+          <RelayCheckbox v-model="state.features.memories" />
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_MEMORIES') }}
         </label>
-        <label class="flex items-center gap-2">
-          <input v-model="state.features.citations" type="checkbox" />
+        <label class="flex cursor-pointer items-center gap-3 select-none">
+          <RelayCheckbox v-model="state.features.citations" />
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_CITATIONS') }}
         </label>
-        <label class="flex items-center gap-2">
-          <input v-model="state.features.contactAttributes" type="checkbox" />
+        <label class="flex cursor-pointer items-center gap-3 select-none">
+          <RelayCheckbox v-model="state.features.contactAttributes" />
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_CONTACT_ATTRIBUTES') }}
         </label>
       </div>
     </div>
 
     <div>
-      <Button
-        :label="t('CAPTAIN.ASSISTANTS.FORM.UPDATE')"
-        @click="handleBasicInfoUpdate"
-      />
+      <RelayButton @click="handleBasicInfoUpdate">
+        {{ t('CAPTAIN.ASSISTANTS.FORM.UPDATE') }}
+      </RelayButton>
     </div>
   </div>
 </template>

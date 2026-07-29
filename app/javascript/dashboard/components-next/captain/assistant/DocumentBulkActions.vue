@@ -6,7 +6,7 @@ import { useAlert } from 'dashboard/composables';
 
 import BulkSelectBar from 'dashboard/components-next/captain/assistant/BulkSelectBar.vue';
 import BulkDeleteDialog from 'dashboard/components-next/captain/pageComponents/BulkDeleteDialog.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   selectedIds: { type: Set, default: () => new Set() },
@@ -92,15 +92,15 @@ const handleBulkSync = async () => {
       @bulk-delete="bulkDeleteDialog.dialogRef.open()"
     >
       <template v-if="hasSyncableSelection" #secondaryActions>
-        <Button
-          :label="$t('CAPTAIN.DOCUMENTS.BULK_SYNC_BUTTON')"
-          sm
-          slate
-          ghost
-          icon="i-lucide-refresh-cw"
-          class="!px-1.5"
+        <RelayButton
+          variant="ghost"
+          size="sm"
+          class="!px-1.5 text-n-slate-11"
           @click="handleBulkSync"
-        />
+        >
+          <span class="i-lucide-refresh-cw size-3.5" />
+          {{ $t('CAPTAIN.DOCUMENTS.BULK_SYNC_BUTTON') }}
+        </RelayButton>
       </template>
     </BulkSelectBar>
     <BulkDeleteDialog

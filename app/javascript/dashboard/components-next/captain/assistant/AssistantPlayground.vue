@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import MessageList from './MessageList.vue';
 import CaptainAssistant from 'dashboard/api/captain/assistant';
 
@@ -37,7 +37,6 @@ const resetConversation = () => {
   newMessage.value = '';
 };
 
-// Watch for assistant ID changes and reset conversation
 watch(
   () => assistantId,
   (newId, oldId) => {
@@ -90,20 +89,22 @@ const handleEnterKey = event => {
 
 <template>
   <div
-    class="flex flex-col h-full rounded-xl border py-6 border-n-weak text-n-slate-11"
+    class="flex h-full flex-col rounded-xl border border-n-weak bg-n-solid-2 py-6 text-n-slate-11"
   >
-    <div class="mb-8 px-6">
-      <div class="flex justify-between items-center mb-1">
-        <h3 class="text-lg font-medium">
+    <div class="mb-6 px-6">
+      <div class="mb-1 flex items-center justify-between">
+        <h3 class="text-lg font-medium text-n-slate-12">
           {{ t('CAPTAIN.PLAYGROUND.HEADER') }}
         </h3>
-        <NextButton
-          ghost
-          sm
-          slate
-          icon="i-lucide-rotate-ccw"
+        <RelayButton
+          variant="ghost"
+          size="icon"
+          class="size-8 text-n-slate-11"
+          :title="t('CAPTAIN.PLAYGROUND.HEADER')"
           @click="resetConversation"
-        />
+        >
+          <span class="i-lucide-rotate-ccw size-4" />
+        </RelayButton>
       </div>
       <p class="text-sm text-n-slate-11">
         {{ t('CAPTAIN.PLAYGROUND.DESCRIPTION') }}
@@ -113,24 +114,29 @@ const handleEnterKey = event => {
     <MessageList :messages="messages" :is-loading="isLoading" />
 
     <div
-      class="flex items-center mx-6 bg-n-background outline outline-1 outline-n-weak rounded-xl p-3"
+      class="mx-6 flex items-center gap-2 rounded-xl border border-n-weak bg-n-background p-2 shadow-sm"
     >
       <input
         v-model="newMessage"
-        class="flex-1 bg-transparent border-none focus:outline-none text-sm mb-0 text-n-slate-12 placeholder:text-n-slate-10"
+        class="mb-0 flex-1 border-none bg-transparent px-2 text-sm text-n-slate-12 placeholder:text-n-slate-11 focus:outline-none"
         :placeholder="t('CAPTAIN.PLAYGROUND.MESSAGE_PLACEHOLDER')"
         @keydown.enter.exact="handleEnterKey"
       />
-      <NextButton
-        ghost
-        sm
-        :disabled="!newMessage.trim()"
-        icon="i-lucide-send"
+      <RelayButton
+        size="icon"
+        class="size-9 shrink-0"
+        :disabled="!newMessage.trim() || isLoading"
         @click="sendMessage"
-      />
+      >
+        <span
+          v-if="isLoading"
+          class="i-lucide-loader-circle size-4 animate-spin"
+        />
+        <span v-else class="i-lucide-send size-4" />
+      </RelayButton>
     </div>
 
-    <p class="text-xs text-n-slate-11 pt-2 text-center">
+    <p class="pt-2 text-center text-xs text-n-slate-11">
       {{ t('CAPTAIN.PLAYGROUND.CREDIT_NOTE') }}
     </p>
   </div>

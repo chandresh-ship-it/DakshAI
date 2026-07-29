@@ -7,8 +7,7 @@ import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
-import Button from 'dashboard/components-next/button/Button.vue';
-import Input from 'dashboard/components-next/input/Input.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 
 import PageLayout from 'dashboard/components-next/captain/PageLayout.vue';
 import SettingsHeader from 'dashboard/components-next/captain/pageComponents/settings/SettingsHeader.vue';
@@ -39,7 +38,6 @@ const renderInstruction = instruction => () =>
     innerHTML: instruction,
   });
 
-// Suggested example scenarios for quick add
 const scenariosExample = [
   {
     id: 1,
@@ -67,9 +65,7 @@ const closeSuggestedRules = () => {
   updateUISettings({ show_scenarios_suggestions: false });
 };
 
-// Bulk selection & hover state
 const bulkSelectedIds = ref(new Set());
-const hoveredCard = ref(null);
 
 const handleRuleSelect = id => {
   const selected = new Set(bulkSelectedIds.value);
@@ -90,10 +86,6 @@ const selectedCountLabel = computed(() => {
     count: bulkSelectedIds.value.size,
   });
 });
-
-const handleRuleHover = (isHovered, id) => {
-  hoveredCard.value = isHovered ? id : null;
-};
 
 const getToolsFromInstruction = instruction => [
   ...new Set(
@@ -133,7 +125,6 @@ const deleteScenario = async id => {
   }
 };
 
-// TODO: Add bulk delete endpoint
 const bulkDeleteScenarios = async ids => {
   const idsArray = ids || Array.from(bulkSelectedIds.value);
   await Promise.all(
@@ -201,7 +192,7 @@ onMounted(() => {
         :heading="$t('CAPTAIN.ASSISTANTS.SCENARIOS.TITLE')"
         :description="$t('CAPTAIN.ASSISTANTS.SCENARIOS.DESCRIPTION')"
       />
-      <div v-if="shouldShowSuggestedRules" class="flex mt-7 flex-col gap-4">
+      <div v-if="shouldShowSuggestedRules" class="mt-7 flex flex-col gap-4">
         <SuggestedScenarios
           :title="$t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.SUGGESTED.TITLE')"
           :items="scenariosExample"
@@ -209,29 +200,29 @@ onMounted(() => {
           @add="addAllExampleScenarios"
         >
           <template #default="{ item }">
-            <div class="flex items-center gap-3 justify-between">
+            <div class="flex items-center justify-between gap-3">
               <span class="text-sm text-n-slate-12">
                 {{ item.title }}
               </span>
-              <Button
-                :label="
-                  $t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.SUGGESTED.ADD_SINGLE')
-                "
-                ghost
-                xs
-                slate
-                class="!text-sm !text-n-slate-11 flex-shrink-0"
+              <RelayButton
+                variant="ghost"
+                size="sm"
+                class="!text-sm text-n-slate-11"
                 @click="addScenario(item)"
-              />
+              >
+                {{
+                  $t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.SUGGESTED.ADD_SINGLE')
+                }}
+              </RelayButton>
             </div>
             <div class="flex flex-col">
-              <span class="text-sm text-n-slate-11 mt-2">
+              <span class="mt-2 text-sm text-n-slate-11">
                 {{ item.description }}
               </span>
               <component
                 :is="renderInstruction(formatMessage(item.instruction, false))"
               />
-              <span class="text-sm text-n-slate-11 font-medium mb-1">
+              <span class="mb-1 text-sm font-medium text-n-slate-11">
                 {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.SUGGESTED.TOOLS_USED') }}
                 {{ item.tools?.map(tool => `@${tool}`).join(', ') }}
               </span>
@@ -239,8 +230,8 @@ onMounted(() => {
           </template>
         </SuggestedScenarios>
       </div>
-      <div class="flex mt-7 flex-col gap-4">
-        <div class="flex justify-between items-center">
+      <div class="mt-7 flex flex-col gap-4">
+        <div class="flex items-center justify-between gap-3">
           <BulkSelectBar
             v-model="bulkSelectedIds"
             :all-items="scenarios"
@@ -257,23 +248,28 @@ onMounted(() => {
           </BulkSelectBar>
           <div
             v-if="scenarios.length && bulkSelectedIds.size === 0"
-            class="max-w-[22.5rem] w-full min-w-0"
+            class="relative w-full min-w-0 max-w-[22.5rem]"
           >
-            <Input
+            <span
+              class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-n-slate-11"
+            />
+            <RelayInput
               v-model="searchQuery"
               :placeholder="
                 t('CAPTAIN.ASSISTANTS.SCENARIOS.LIST.SEARCH_PLACEHOLDER')
               "
+              type="search"
+              class-name="pl-9"
             />
           </div>
         </div>
-        <div v-if="scenarios.length === 0" class="mt-1 mb-2">
-          <span class="text-n-slate-11 text-sm">
+        <div v-if="scenarios.length === 0" class="mb-2 mt-1">
+          <span class="text-sm text-n-slate-11">
             {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.EMPTY_MESSAGE') }}
           </span>
         </div>
-        <div v-else-if="filteredScenarios.length === 0" class="mt-1 mb-2">
-          <span class="text-n-slate-11 text-sm">
+        <div v-else-if="filteredScenarios.length === 0" class="mb-2 mt-1">
+          <span class="text-sm text-n-slate-11">
             {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.SEARCH_EMPTY_MESSAGE') }}
           </span>
         </div>
@@ -287,13 +283,10 @@ onMounted(() => {
             :instruction="scenario.instruction"
             :tools="scenario.tools"
             :is-selected="bulkSelectedIds.has(scenario.id)"
-            :selectable="
-              hoveredCard === scenario.id || bulkSelectedIds.size > 0
-            "
+            selectable
             @select="handleRuleSelect"
             @delete="deleteScenario(scenario.id)"
             @update="updateScenario"
-            @hover="isHovered => handleRuleHover(isHovered, scenario.id)"
           />
         </div>
       </div>

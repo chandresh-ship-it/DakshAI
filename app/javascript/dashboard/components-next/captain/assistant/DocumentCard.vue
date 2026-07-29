@@ -13,8 +13,7 @@ import {
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import CardLayout from 'dashboard/components-next/CardLayout.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
-import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
+import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
 import DocumentSyncStatus from 'dashboard/components-next/captain/assistant/DocumentSyncStatus.vue';
 
 const props = defineProps({
@@ -166,7 +165,8 @@ const handleRetry = () => {
 <template>
   <CardLayout
     :selectable="selectable"
-    class="relative"
+    class="relative transition-colors"
+    :class="{ 'outline-n-brand/50 bg-n-brand/5': isSelected }"
     @mouseenter="emit('hover', true)"
     @mouseleave="emit('hover', false)"
   >
@@ -174,24 +174,25 @@ const handleRetry = () => {
       v-show="showSelectionControl"
       class="absolute top-7 ltr:left-3 rtl:right-3"
     >
-      <Checkbox v-model="modelValue" />
+      <RelayCheckbox v-model="modelValue" />
     </div>
-    <div class="flex gap-1 justify-between w-full">
-      <span class="text-base text-n-slate-12 line-clamp-1">
+    <div class="flex w-full justify-between gap-1">
+      <span class="line-clamp-1 text-[15px] font-medium text-n-slate-12">
         {{ name }}
       </span>
-      <div v-if="showMenu" class="flex gap-2 items-center">
+      <div v-if="showMenu" class="flex items-center gap-2">
         <div
           v-on-clickaway="() => toggleDropdown(false)"
-          class="flex relative items-center group"
+          class="group relative flex items-center opacity-0 transition-opacity group-hover/cardLayout:opacity-100 focus-within:opacity-100"
         >
-          <Button
-            icon="i-lucide-ellipsis-vertical"
-            color="slate"
-            size="xs"
-            class="rounded-md group-hover:bg-n-alpha-2"
+          <RelayButton
+            variant="ghost"
+            size="icon"
+            class="size-8 rounded-md text-n-slate-11 hover:bg-n-alpha-2"
             @click="toggleDropdown()"
-          />
+          >
+            <span class="i-lucide-ellipsis-vertical size-4" />
+          </RelayButton>
           <DropdownMenu
             v-if="showActionsDropdown"
             :menu-items="menuItems"
@@ -201,9 +202,9 @@ const handleRetry = () => {
         </div>
       </div>
     </div>
-    <div class="flex gap-4 justify-between items-center w-full">
+    <div class="flex w-full items-center justify-between gap-4">
       <span
-        class="flex gap-1 items-center text-sm truncate shrink-0 text-n-slate-11"
+        class="flex shrink-0 items-center gap-1 truncate text-sm text-n-slate-11"
       >
         <Icon icon="i-woot-captain" />
         {{ assistant?.name || '' }}
@@ -214,7 +215,7 @@ const handleRetry = () => {
         :title="externalLink"
         target="_blank"
         rel="noopener noreferrer"
-        class="flex flex-1 gap-1 justify-start items-center text-sm truncate text-n-slate-11 hover:text-n-slate-12 hover:underline"
+        class="flex flex-1 items-center justify-start gap-1 truncate text-sm text-n-slate-11 hover:text-n-slate-12 hover:underline"
         @click.stop
       >
         <Icon :icon="linkIcon" class="shrink-0" />
@@ -223,7 +224,7 @@ const handleRetry = () => {
       </a>
       <span
         v-else
-        class="flex flex-1 gap-1 justify-start items-center text-sm truncate text-n-slate-11"
+        class="flex flex-1 items-center justify-start gap-1 truncate text-sm text-n-slate-11"
       >
         <Icon :icon="linkIcon" class="shrink-0" />
         <span class="truncate">{{ displayLink }}</span>
@@ -238,7 +239,7 @@ const handleRetry = () => {
         :show-retry="canSync && isRetryableSync"
         @retry="handleRetry"
       />
-      <div v-else class="text-sm shrink-0 text-n-slate-11 line-clamp-1">
+      <div v-else class="shrink-0 text-sm text-n-slate-11 line-clamp-1">
         {{ createdAtLabel }}
       </div>
     </div>

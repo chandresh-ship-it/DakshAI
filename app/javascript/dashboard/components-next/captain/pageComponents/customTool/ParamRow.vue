@@ -1,10 +1,9 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
 import Input from 'dashboard/components-next/input/Input.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
-import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 
 const emit = defineEmits(['remove']);
 const { t } = useI18n();
@@ -63,12 +62,12 @@ defineExpose({ validate });
 <template>
   <li class="list-none">
     <div
-      class="flex items-start gap-2 p-3 rounded-lg border border-n-weak bg-n-alpha-2"
+      class="flex items-start gap-2 rounded-lg border border-n-weak bg-n-alpha-2 p-3"
       :class="{
         'animate-wiggle border-n-ruby-9': showErrors && validationError,
       }"
     >
-      <div class="flex flex-col flex-1 gap-3">
+      <div class="flex flex-1 flex-col gap-3">
         <div class="grid grid-cols-3 gap-2">
           <Input
             v-model="name"
@@ -88,24 +87,25 @@ defineExpose({ validate });
             t('CAPTAIN.CUSTOM_TOOLS.FORM.PARAM_DESCRIPTION.PLACEHOLDER')
           "
         />
-        <label class="flex items-center gap-2 cursor-pointer">
-          <Checkbox v-model="required" />
+        <label class="flex cursor-pointer items-center gap-2">
+          <RelayCheckbox v-model="required" />
           <span class="text-sm text-n-slate-11">
             {{ t('CAPTAIN.CUSTOM_TOOLS.FORM.PARAM_REQUIRED.LABEL') }}
           </span>
         </label>
       </div>
-      <Button
-        solid
-        slate
-        icon="i-lucide-trash"
-        class="flex-shrink-0"
+      <RelayButton
+        variant="ghost"
+        size="icon"
+        class="size-9 shrink-0 text-n-slate-11 hover:text-n-ruby-9"
         @click.stop="emit('remove')"
-      />
+      >
+        <span class="i-lucide-trash size-3.5" />
+      </RelayButton>
     </div>
     <span
       v-if="showErrors && validationError"
-      class="block mt-1 text-sm text-n-ruby-11"
+      class="mt-1 block text-sm text-n-ruby-11"
     >
       {{ t(`CAPTAIN.CUSTOM_TOOLS.FORM.ERRORS.${validationError}`) }}
     </span>

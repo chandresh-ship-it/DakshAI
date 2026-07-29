@@ -5,7 +5,7 @@ import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
 import { useMapGetter } from 'dashboard/composables/store';
 
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 
 const props = defineProps({
@@ -94,22 +94,22 @@ const handleSubmit = async () => {
       />
     </div>
 
-    <div class="flex items-center justify-between w-full gap-3">
-      <Button
+    <div class="flex w-full items-center justify-between gap-3">
+      <RelayButton
         type="button"
-        variant="faded"
-        color="slate"
-        :label="t('CAPTAIN.FORM.CANCEL')"
-        class="w-full bg-n-alpha-2 text-n-blue-11 hover:bg-n-alpha-3"
-        @click="handleCancel"
-      />
-      <Button
-        type="submit"
-        :label="t('CAPTAIN.FORM.CREATE')"
+        variant="secondary"
         class="w-full"
-        :is-loading="isLoading"
-        :disabled="isLoading"
-      />
+        @click="handleCancel"
+      >
+        {{ t('CAPTAIN.FORM.CANCEL') }}
+      </RelayButton>
+      <RelayButton type="submit" class="w-full" :disabled="isLoading">
+        <span
+          v-if="isLoading"
+          class="i-lucide-loader-circle size-4 animate-spin"
+        />
+        {{ t('CAPTAIN.FORM.CREATE') }}
+      </RelayButton>
     </div>
   </form>
 </template>

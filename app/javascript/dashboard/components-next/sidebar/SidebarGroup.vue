@@ -221,7 +221,7 @@ watch(
     :permissions="resolvePermissions(to)"
     :feature-flag="resolveFeatureFlag(to)"
     as="li"
-    class="grid gap-1 text-sm cursor-pointer select-none min-w-0"
+    class="grid gap-0 text-sm cursor-pointer select-none min-w-0"
   >
     <!-- Collapsed State -->
     <template v-if="isCollapsed">
@@ -235,10 +235,11 @@ watch(
           ref="triggerRef"
           :to="to && !hasChildren ? to : undefined"
           type="button"
-          class="flex items-center justify-center size-10 rounded-lg"
+          class="flex size-10 items-center justify-center rounded-md transition-colors"
           :class="{
-            'text-n-slate-12 bg-n-alpha-2': isActive || hasActiveChild,
-            'text-n-slate-11 hover:bg-n-alpha-2': !isActive && !hasActiveChild,
+            'bg-n-brand/10 text-n-brand': isActive || hasActiveChild,
+            'text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12':
+              !isActive && !hasActiveChild,
           }"
           :title="label"
           @click="hasChildren ? handleCollapsedClick() : undefined"
@@ -274,7 +275,7 @@ watch(
       <ul
         v-if="hasChildren"
         v-show="isExpanded || hasActiveChild"
-        class="grid m-0 list-none sidebar-group-children min-w-0"
+        class="mx-3.5 mt-0.5 flex min-w-0 list-none flex-col gap-1 border-l border-n-weak py-0.5 ltr:translate-x-px ltr:pl-5 ltr:pr-2 rtl:-translate-x-px rtl:pr-5 rtl:pl-2"
       >
         <template v-for="child in children" :key="child.name">
           <SidebarSubGroup
@@ -299,59 +300,3 @@ watch(
     </template>
   </Policy>
 </template>
-
-<style>
-.sidebar-group-children .child-item::before {
-  content: '';
-  position: absolute;
-  width: 0.125rem;
-  /* 0.5px */
-  height: 100%;
-}
-
-.sidebar-group-children .child-item:first-child::before {
-  border-radius: 4px 4px 0 0;
-}
-
-/* This selects the last child in a group */
-/* https://codepen.io/scmmishra/pen/yLmKNLW */
-.sidebar-group-children > .child-item:last-child::before,
-.sidebar-group-children
-  > *:last-child
-  > *:last-child
-  > .child-item:last-child::before {
-  height: 20%;
-}
-
-.sidebar-group-children > .child-item:last-child::after,
-.sidebar-group-children
-  > *:last-child
-  > *:last-child
-  > .child-item:last-child::after {
-  content: '';
-  position: absolute;
-  width: 10px;
-  height: 12px;
-  bottom: calc(50% - 2px);
-  border-bottom-width: 0.125rem;
-  border-left-width: 0.125rem;
-  border-right-width: 0px;
-  border-top-width: 0px;
-  border-radius: 0 0 0 4px;
-  left: 0;
-}
-
-#app[dir='rtl'] .sidebar-group-children > .child-item:last-child::after,
-#app[dir='rtl']
-  .sidebar-group-children
-  > *:last-child
-  > *:last-child
-  > .child-item:last-child::after {
-  right: 0;
-  border-bottom-width: 0.125rem;
-  border-right-width: 0.125rem;
-  border-left-width: 0px;
-  border-top-width: 0px;
-  border-radius: 0 0 4px 0px;
-}
-</style>

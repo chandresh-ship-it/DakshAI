@@ -8,7 +8,7 @@ import CustomToolsAPI from 'dashboard/api/captain/customTools';
 
 import Input from 'dashboard/components-next/input/Input.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import ParamRow from './ParamRow.vue';
 import AuthConfig from './AuthConfig.vue';
@@ -253,15 +253,16 @@ const handleTest = async () => {
           @remove="removeParam(index)"
         />
       </ul>
-      <Button
+      <RelayButton
         type="button"
-        sm
-        ghost
-        blue
-        icon="i-lucide-plus"
-        :label="t('CAPTAIN.CUSTOM_TOOLS.FORM.ADD_PARAMETER')"
+        variant="ghost"
+        size="sm"
+        class="text-n-brand hover:bg-transparent hover:text-n-brand/80"
         @click="addParam"
-      />
+      >
+        <span class="i-lucide-plus size-4" />
+        {{ t('CAPTAIN.CUSTOM_TOOLS.FORM.ADD_PARAMETER') }}
+      </RelayButton>
     </div>
 
     <TextArea
@@ -284,22 +285,26 @@ const handleTest = async () => {
     />
 
     <div class="flex flex-col gap-2">
-      <Button
+      <RelayButton
         type="button"
-        variant="faded"
-        color="slate"
-        icon="i-lucide-play"
-        :label="t('CAPTAIN.CUSTOM_TOOLS.TEST.BUTTON')"
-        :is-loading="isTesting"
+        variant="outline"
+        class="w-full"
         :disabled="isTesting || !state.endpoint_url || isTestDisabled"
         @click="handleTest"
-      />
+      >
+        <span
+          v-if="isTesting"
+          class="i-lucide-loader-circle size-4 animate-spin"
+        />
+        <span v-else class="i-lucide-play size-3.5" />
+        {{ t('CAPTAIN.CUSTOM_TOOLS.TEST.BUTTON') }}
+      </RelayButton>
       <p v-if="isTestDisabled" class="text-xs text-n-slate-11">
         {{ t('CAPTAIN.CUSTOM_TOOLS.TEST.DISABLED_HINT') }}
       </p>
       <div
         v-if="testResult"
-        class="flex items-center gap-2 px-3 py-2 text-xs rounded-lg"
+        class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
         :class="
           testResult.success
             ? 'bg-n-teal-2 text-n-teal-11'
@@ -322,24 +327,22 @@ const handleTest = async () => {
       </div>
     </div>
 
-    <div class="flex gap-3 justify-between items-center w-full">
-      <Button
+    <div class="flex w-full items-center justify-between gap-3">
+      <RelayButton
         type="button"
-        variant="faded"
-        color="slate"
-        :label="t('CAPTAIN.FORM.CANCEL')"
-        class="w-full bg-n-alpha-2 text-n-blue-11 hover:bg-n-alpha-3"
-        @click="handleCancel"
-      />
-      <Button
-        type="submit"
-        :label="
-          t(mode === 'edit' ? 'CAPTAIN.FORM.EDIT' : 'CAPTAIN.FORM.CREATE')
-        "
+        variant="secondary"
         class="w-full"
-        :is-loading="isLoading"
-        :disabled="isLoading"
-      />
+        @click="handleCancel"
+      >
+        {{ t('CAPTAIN.FORM.CANCEL') }}
+      </RelayButton>
+      <RelayButton type="submit" class="w-full" :disabled="isLoading">
+        <span
+          v-if="isLoading"
+          class="i-lucide-loader-circle size-4 animate-spin"
+        />
+        {{ t(mode === 'edit' ? 'CAPTAIN.FORM.EDIT' : 'CAPTAIN.FORM.CREATE') }}
+      </RelayButton>
     </div>
   </form>
 </template>

@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store.js';
 import { usePolicy } from 'dashboard/composables/usePolicy';
 import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import BackButton from 'dashboard/components/widgets/BackButton.vue';
 import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
@@ -115,13 +116,13 @@ const handleCreateAssistant = () => {
 </script>
 
 <template>
-  <section class="flex flex-col w-full h-full overflow-hidden bg-n-surface-1">
-    <header class="sticky top-0 z-10 px-6">
-      <div class="w-full max-w-5xl mx-auto">
+  <section class="flex h-full w-full flex-col overflow-hidden bg-n-background">
+    <header class="z-10 shrink-0 border-b border-n-weak bg-n-background px-6">
+      <div class="mx-auto w-full max-w-5xl">
         <div
-          class="flex items-start lg:items-center justify-between w-full py-6 lg:py-0 lg:h-20 gap-4 lg:gap-2 flex-col lg:flex-row"
+          class="flex min-h-14 w-full flex-col items-start justify-between gap-3 py-3 lg:h-14 lg:flex-row lg:items-center lg:gap-2 lg:py-0"
         >
-          <div class="flex gap-3 items-center">
+          <div class="flex items-center gap-3">
             <BackButton v-if="backUrl" :back-url="backUrl" />
             <div
               v-if="showAssistantSwitcher && !showPaywall"
@@ -130,7 +131,7 @@ const handleCreateAssistant = () => {
               <div class="flex items-center gap-2">
                 <span
                   v-if="!isFetchingAssistants"
-                  class="text-xl font-medium truncate text-n-slate-12"
+                  class="truncate text-base font-medium text-n-slate-12"
                 >
                   {{ activeAssistantName }}
                 </span>
@@ -161,14 +162,14 @@ const handleCreateAssistant = () => {
                 </div>
               </div>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
               <div
                 v-if="showAssistantSwitcher && !showPaywall && headerTitle"
-                class="w-0.5 h-4 rounded-2xl bg-n-weak"
+                class="h-4 w-0.5 rounded-2xl bg-n-weak"
               />
               <span
                 v-if="headerTitle"
-                class="text-xl font-medium text-n-slate-12"
+                class="text-base font-medium text-n-slate-12"
               >
                 {{ headerTitle }}
               </span>
@@ -176,7 +177,7 @@ const handleCreateAssistant = () => {
                 v-if="!isEmpty && showKnowMore"
                 class="flex items-center gap-2"
               >
-                <div class="w-0.5 h-4 rounded-2xl bg-n-weak" />
+                <div class="h-4 w-0.5 rounded-2xl bg-n-weak" />
                 <slot name="knowMore" />
               </div>
             </div>
@@ -190,13 +191,14 @@ const handleCreateAssistant = () => {
               class="relative group/captain-button"
             >
               <Policy :permissions="buttonPolicy">
-                <Button
-                  :label="buttonLabel"
-                  icon="i-lucide-plus"
+                <RelayButton
                   size="sm"
                   class="group-hover/captain-button:brightness-110"
                   @click="handleButtonClick"
-                />
+                >
+                  <span class="i-lucide-plus size-4" />
+                  {{ buttonLabel }}
+                </RelayButton>
               </Policy>
               <slot name="action" />
             </div>
@@ -205,8 +207,8 @@ const handleCreateAssistant = () => {
         <slot name="subHeader" />
       </div>
     </header>
-    <main class="flex-1 px-6 overflow-y-auto">
-      <div class="w-full max-w-5xl h-full mx-auto py-4">
+    <main class="flex-1 overflow-y-auto px-6">
+      <div class="mx-auto h-full w-full max-w-5xl py-4">
         <slot v-if="!showPaywall" name="controls" />
         <div
           v-if="isFetching"

@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { vOnClickOutside } from '@vueuse/components';
 
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 
 const props = defineProps({
@@ -119,16 +119,17 @@ const handleMenuAction = ({ action, value }) => {
     class="inline-flex flex-wrap items-center gap-2 pt-2 w-fit"
   >
     <div v-for="menu in filterMenus" :key="menu.key" class="relative">
-      <Button
-        :icon="menu.selected.icon"
-        slate
+      <RelayButton
+        variant="ghost"
         size="sm"
+        class="text-n-slate-12"
         :class="{ 'bg-n-slate-9/10': openMenu === menu.key }"
         @click="toggleMenu(menu.key)"
       >
+        <span class="size-4 shrink-0" :class="[menu.selected.icon]" />
         <span class="min-w-0 truncate">{{ menu.selected.label }}</span>
-        <Icon icon="i-lucide-chevron-down" class="shrink-0 size-4" />
-      </Button>
+        <Icon icon="i-lucide-chevron-down" class="size-4 shrink-0" />
+      </RelayButton>
       <DropdownMenu
         v-if="openMenu === menu.key"
         :menu-items="menu.items"

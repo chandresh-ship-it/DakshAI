@@ -5,7 +5,6 @@ import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import ButtonNext from 'next/button/Button.vue';
 import Icon from 'next/icon/Icon.vue';
-import Logo from 'next/icon/Logo.vue';
 
 import {
   DropdownContainer,
@@ -94,15 +93,15 @@ const emitNewAccount = () => {
 <template>
   <DropdownContainer>
     <template #trigger="{ toggle, isOpen }">
-      <!-- Collapsed view: Logo trigger -->
+      <!-- Collapsed view: Brand initial trigger -->
       <button
         v-if="isCollapsed"
-        class="grid flex-shrink-0 place-content-center p-2 rounded-lg cursor-pointer hover:bg-n-alpha-1"
-        :class="{ 'bg-n-alpha-1': isOpen }"
+        class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-n-brand text-sm font-bold text-white hover:opacity-90"
+        :class="{ 'ring-2 ring-n-brand/40': isOpen }"
         :title="currentAccount.name"
         @click="toggle"
       >
-        <Logo class="size-7" />
+        {{ (currentAccount.name || 'N').charAt(0).toUpperCase() }}
       </button>
       <!-- Expanded view: Account name trigger -->
       <button
@@ -121,7 +120,7 @@ const emitNewAccount = () => {
         @click="() => showAccountSwitcher && toggle()"
       >
         <span
-          class="text-sm font-medium leading-5 text-n-slate-12 truncate"
+          class="truncate text-sm font-semibold leading-tight text-n-slate-12"
           aria-live="polite"
         >
           {{ currentAccount.name }}

@@ -32,8 +32,8 @@ const FEATURE_OPTIONS = [
   { value: 'custom_domain', label: 'Custom Domain' },
   { value: 'api_access', label: 'API Access' },
   { value: 'advanced_search', label: 'Advanced Search' },
-  { value: 'captain_integration', label: 'Captain AI' },
-  { value: 'custom_tools', label: 'Captain Custom Tools' },
+  { value: 'captain_integration', label: 'Relay AI' },
+  { value: 'custom_tools', label: 'Relay AI Custom Tools' },
   { value: 'reseller_dashboard', label: 'Reseller Dashboard' },
 ];
 

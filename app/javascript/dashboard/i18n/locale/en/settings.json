@@ -299,9 +299,20 @@
     "CURRENTLY_VIEWING_ACCOUNT": "Currently viewing:",
     "SWITCH": "Switch",
     "INBOX_VIEW": "Inbox View",
+    "CUSTOMER_ENGAGEMENT": "Customer Engagement",
+    "CRM_AND_SALES": "CRM & Sales",
+    "MARKETING": "Marketing",
+    "ANALYTICS": "Analytics",
+    "KNOWLEDGE_BASE": "Knowledge Base",
     "CONVERSATIONS": "Conversations",
-    "INBOX": "My Inbox",
+    "INBOX": "Inbox",
     "ALL_CONVERSATIONS": "All Conversations",
+    "REPUTATION_OVERVIEW": "Overview",
+    "REPUTATION_REVIEWS": "Reviews",
+    "REPUTATION_VIDEO": "Video Testimonials",
+    "REPUTATION_LISTINGS": "Listings",
+    "REPUTATION_FEEDBACK": "Feedback",
+    "REPUTATION_SETTINGS": "Settings",
     "MENTIONED_CONVERSATIONS": "Mentions",
     "PARTICIPATING_CONVERSATIONS": "Participating",
     "UNATTENDED_CONVERSATIONS": "Unattended",
@@ -311,7 +322,7 @@
     "ACTIVE": "Active",
     "COMPANIES": "Companies",
     "ALL_COMPANIES": "All Companies",
-    "CAPTAIN": "Captain",
+    "CAPTAIN": "Relay AI",
     "REPUTATION": "Reputation",
     "CAPTAIN_ASSISTANTS": "Assistants",
     "CAPTAIN_DOCUMENTS": "Documents",
@@ -327,6 +338,9 @@
     "AUDIT_LOGS": "Audit Logs",
     "INBOXES": "Inboxes",
     "NOTIFICATIONS": "Notifications",
+    "TOGGLE_SIDEBAR": "Toggle sidebar",
+    "COLLAPSE_SIDEBAR": "Collapse sidebar",
+    "EXPAND_SIDEBAR": "Expand sidebar",
     "CANNED_RESPONSES": "Canned Responses",
     "INTEGRATIONS": "Integrations",
     "PROFILE_SETTINGS": "Profile Settings",
@@ -383,15 +397,15 @@
     },
     "DOCS": "Read docs",
     "SECURITY": "Security",
-    "CAPTAIN_AI": "Captain",
+    "CAPTAIN_AI": "Relay AI",
     "CONVERSATION_WORKFLOW": "Conversation Workflow"
   },
   "CAPTAIN_SETTINGS": {
-    "TITLE": "Captain Settings",
-    "DESCRIPTION": "Configure your AI models and features for Captain. Captain follows a credit based billing, you will be charged credits for every action Captain takes based on the model selected.",
-    "LOADING": "Loading Captain configuration...",
-    "LINK_TEXT": "Learn more about Captain Credits",
-    "NOT_ENABLED": "Captain is not enabled for your account. Please upgrade your plan to access Captain features.",
+    "TITLE": "Relay AI Settings",
+    "DESCRIPTION": "Configure your AI models and features for Relay AI. Relay AI follows a credit based billing, you will be charged credits for every action Relay AI takes based on the model selected.",
+    "LOADING": "Loading Relay AI configuration...",
+    "LINK_TEXT": "Learn more about Relay AI Credits",
+    "NOT_ENABLED": "Relay AI is not enabled for your account. Please upgrade your plan to access Relay AI features.",
     "MODEL_CONFIG": {
       "TITLE": "Model Configuration",
       "DESCRIPTION": "Select AI models for different features.",
@@ -430,8 +444,8 @@
       }
     },
     "API": {
-      "SUCCESS": "Captain settings updated successfully.",
-      "ERROR": "Failed to update Captain settings. Please try again."
+      "SUCCESS": "Relay AI settings updated successfully.",
+      "ERROR": "Failed to update Relay AI settings. Please try again."
     }
   },
   "BILLING_SETTINGS": {
@@ -566,12 +580,12 @@
       "BUTTON_TXT": "Go to the billing portal"
     },
     "CAPTAIN": {
-      "TITLE": "Captain",
-      "DESCRIPTION": "Manage usage and credits for Captain AI.",
+      "TITLE": "Relay AI",
+      "DESCRIPTION": "Manage usage and credits for Relay AI.",
       "BUTTON_TXT": "Buy more credits",
       "DOCUMENTS": "Documents",
       "RESPONSES": "Credits",
-      "UPGRADE": "Captain is not available on the free plan, upgrade now to get access to assistants, copilot and more.",
+      "UPGRADE": "Relay AI is not available on the free plan, upgrade now to get access to assistants, copilot and more.",
       "REFRESH_CREDITS": "Refresh"
     },
     "TRANSACTIONS": {
@@ -597,7 +611,7 @@
     "TOPUP": {
       "BUY_CREDITS": "Buy more credits",
       "MODAL_TITLE": "Buy AI Credits",
-      "MODAL_DESCRIPTION": "Purchase additional credits for Captain AI.",
+      "MODAL_DESCRIPTION": "Purchase additional credits for Relay AI.",
       "CREDITS": "CREDITS",
       "ONE_TIME": "one-time",
       "POPULAR": "Most Popular",

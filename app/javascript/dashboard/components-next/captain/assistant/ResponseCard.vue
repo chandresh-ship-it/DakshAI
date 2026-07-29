@@ -6,8 +6,7 @@ import { dynamicTime } from 'shared/helpers/timeHelper';
 
 import CardLayout from 'dashboard/components-next/CardLayout.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
-import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
+import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
 import Policy from 'dashboard/components/policy.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 
@@ -127,31 +126,35 @@ const handleDocumentableClick = () => {
 <template>
   <CardLayout
     selectable
-    class="relative"
-    :class="{ 'rounded-md': compact }"
+    class="relative transition-colors"
+    :class="{
+      'rounded-md': compact,
+      'outline-n-brand/50 bg-n-brand/5': isSelected,
+    }"
     @mouseenter="emit('hover', true)"
     @mouseleave="emit('hover', false)"
   >
     <div v-show="selectable" class="absolute top-7 ltr:left-3 rtl:right-3">
-      <Checkbox v-model="modelValue" />
+      <RelayCheckbox v-model="modelValue" />
     </div>
-    <div class="flex relative justify-between w-full gap-1">
-      <span class="text-base text-n-slate-12 line-clamp-1">
+    <div class="relative flex w-full justify-between gap-1">
+      <span class="line-clamp-1 text-[15px] font-medium text-n-slate-12">
         {{ question }}
       </span>
       <div v-if="!compact && showMenu" class="flex items-center gap-2">
         <Policy
           v-on-clickaway="() => toggleDropdown(false)"
           :permissions="['administrator']"
-          class="relative flex items-center group"
+          class="group relative flex items-center opacity-0 transition-opacity group-hover/cardLayout:opacity-100 focus-within:opacity-100"
         >
-          <Button
-            icon="i-lucide-ellipsis-vertical"
-            color="slate"
-            size="xs"
-            class="rounded-md group-hover:bg-n-alpha-2"
+          <RelayButton
+            variant="ghost"
+            size="icon"
+            class="size-8 rounded-md text-n-slate-11 hover:bg-n-alpha-2"
             @click="toggleDropdown()"
-          />
+          >
+            <span class="i-lucide-ellipsis-vertical size-4" />
+          </RelayButton>
           <DropdownMenu
             v-if="showActionsDropdown"
             :menu-items="menuItems"
@@ -161,68 +164,69 @@ const handleDocumentableClick = () => {
         </Policy>
       </div>
     </div>
-    <span class="text-n-slate-11 text-sm line-clamp-5">
+    <span class="line-clamp-5 text-sm text-n-slate-11">
       {{ answer }}
     </span>
     <div
       v-if="!compact"
-      class="flex items-start justify-between flex-col-reverse md:flex-row gap-3"
+      class="flex flex-col-reverse items-start justify-between gap-3 md:flex-row"
     >
       <Policy v-if="showActions" :permissions="['administrator']">
-        <div class="flex items-center gap-2 sm:gap-5 w-full">
-          <Button
+        <div class="flex w-full items-center gap-2 sm:gap-5">
+          <RelayButton
             v-if="status === 'pending'"
-            :label="$t('CAPTAIN.RESPONSES.OPTIONS.APPROVE')"
-            icon="i-lucide-circle-check-big"
-            sm
-            link
+            variant="link"
+            size="sm"
             class="hover:!no-underline"
             @click="
               handleAssistantAction({ action: 'approve', value: 'approve' })
             "
-          />
-          <Button
-            :label="$t('CAPTAIN.RESPONSES.OPTIONS.EDIT_RESPONSE')"
-            icon="i-lucide-pencil-line"
-            sm
-            slate
-            link
-            class="hover:!no-underline"
+          >
+            <span class="i-lucide-circle-check-big size-4" />
+            {{ $t('CAPTAIN.RESPONSES.OPTIONS.APPROVE') }}
+          </RelayButton>
+          <RelayButton
+            variant="link"
+            size="sm"
+            class="text-n-slate-11 hover:!no-underline"
             @click="
               handleAssistantAction({
                 action: 'edit',
                 value: 'edit',
               })
             "
-          />
-          <Button
-            :label="$t('CAPTAIN.RESPONSES.OPTIONS.DELETE_RESPONSE')"
-            icon="i-lucide-trash"
-            sm
-            ruby
-            link
-            class="hover:!no-underline"
+          >
+            <span class="i-lucide-pencil-line size-4" />
+            {{ $t('CAPTAIN.RESPONSES.OPTIONS.EDIT_RESPONSE') }}
+          </RelayButton>
+          <RelayButton
+            variant="link"
+            size="sm"
+            class="text-n-ruby-11 hover:!no-underline"
             @click="
               handleAssistantAction({ action: 'delete', value: 'delete' })
             "
-          />
+          >
+            <span class="i-lucide-trash size-4" />
+            {{ $t('CAPTAIN.RESPONSES.OPTIONS.DELETE_RESPONSE') }}
+          </RelayButton>
         </div>
       </Policy>
       <div
         class="flex items-center gap-3"
-        :class="{ 'justify-between w-full': !showActions }"
+        :class="{ 'w-full justify-between': !showActions }"
       >
-        <div class="inline-flex items-center gap-3 min-w-0">
+        <div class="inline-flex min-w-0 items-center gap-3">
           <span
             v-if="status === 'approved'"
-            class="text-sm shrink-0 truncate text-n-slate-11 inline-flex items-center gap-1"
+            class="inline-flex shrink-0 items-center gap-1 truncate text-sm text-n-slate-11"
           >
             <Icon icon="i-woot-captain" class="size-3.5" />
             {{ assistant?.name || '' }}
           </span>
           <div
             v-if="documentable"
-            class="text-sm text-n-slate-11 grid grid-cols-[auto_1fr] items-center gap-1 min-w-0"
+            class="grid min-w-0 grid-cols-[auto_1fr] items-center gap-1 text-sm text-n-slate-11"
           >
             <Icon
               v-if="documentable.type === 'Captain::Document'"
@@ -255,7 +259,7 @@ const handleDocumentableClick = () => {
             </span>
             <span
               v-else-if="documentable.type === 'Conversation'"
-              class="hover:underline truncate cursor-pointer"
+              class="cursor-pointer truncate hover:underline"
               role="button"
               @click="handleDocumentableClick"
             >
@@ -268,7 +272,7 @@ const handleDocumentableClick = () => {
           </div>
         </div>
         <div
-          class="shrink-0 text-sm text-n-slate-11 line-clamp-1 inline-flex items-center gap-1"
+          class="inline-flex shrink-0 items-center gap-1 text-sm text-n-slate-11 line-clamp-1"
         >
           <Icon icon="i-ph-calendar-dot" class="size-3.5" />
           {{ timestamp }}

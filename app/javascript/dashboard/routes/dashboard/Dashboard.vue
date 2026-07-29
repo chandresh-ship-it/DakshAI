@@ -2,6 +2,7 @@
 import { defineAsyncComponent, ref, computed, watch } from 'vue';
 
 import NextSidebar from 'next/sidebar/Sidebar.vue';
+import RelayHeader from 'dashboard/components-next/relay/layout/RelayHeader.vue';
 import WootKeyShortcutModal from 'dashboard/components/widgets/modal/WootKeyShortcutModal.vue';
 import AddAccountModal from 'dashboard/components/app/AddAccountModal.vue';
 import UpgradePage from 'dashboard/routes/dashboard/upgrade/UpgradePage.vue';
@@ -10,6 +11,7 @@ import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useWindowSize } from '@vueuse/core';
 import { useMapGetter } from 'dashboard/composables/store';
+import { useI18n } from 'vue-i18n';
 
 import wootConstants from 'dashboard/constants/globals';
 
@@ -30,6 +32,7 @@ import { useCallsStore } from 'dashboard/stores/calls';
 export default {
   components: {
     NextSidebar,
+    RelayHeader,
     CommandBar,
     WootKeyShortcutModal,
     AddAccountModal,
@@ -47,6 +50,7 @@ export default {
     const callsStore = useCallsStore();
     const getAccount = useMapGetter('accounts/getAccount');
     const globalConfig = useMapGetter('globalConfig/get');
+    const { t } = useI18n();
 
     const activeLayout = computed(() => {
       if (!accountId.value) return 'classic';
@@ -83,6 +87,9 @@ export default {
       upgradePageRef,
       windowWidth,
       activeLayout,
+      activeBrandName,
+      globalConfig,
+      t,
       hasActiveCall: computed(() => callsStore.hasActiveCall),
       hasIncomingCall: computed(() => callsStore.hasIncomingCall),
     };
@@ -116,6 +123,64 @@ export default {
       } = this.uiSettings;
       return conversationDisplayType;
     },
+    headerTitle() {
+      const routeName = this.$route.name || '';
+      if (String(routeName).startsWith('captain')) {
+        return this.t('SIDEBAR.CAPTAIN');
+      }
+      if (
+        [
+          'home',
+          'inbox_conversation',
+          'conversation_mentions',
+          'conversation_participating',
+          'conversation_unattended',
+          'folder_conversations',
+          'team_conversations',
+          'inbox_dashboard',
+          'label_conversations',
+          'inbox_view',
+          'inbox_view_conversation',
+        ].includes(routeName)
+      ) {
+        return this.t('SIDEBAR.CUSTOMER_ENGAGEMENT');
+      }
+      if (
+        String(routeName).includes('contact') ||
+        String(routeName).includes('compan')
+      ) {
+        return this.t('SIDEBAR.CRM_AND_SALES');
+      }
+      if (String(routeName).includes('campaign')) {
+        return this.t('SIDEBAR.MARKETING');
+      }
+      if (
+        String(routeName).includes('report') ||
+        String(routeName).includes('csat')
+      ) {
+        return this.t('SIDEBAR.ANALYTICS');
+      }
+      if (
+        String(routeName).includes('portal') ||
+        String(routeName).includes('help')
+      ) {
+        return this.t('SIDEBAR.KNOWLEDGE_BASE');
+      }
+      if (String(routeName).includes('reputation')) {
+        return this.t('SIDEBAR.REPUTATION');
+      }
+      if (
+        String(routeName).includes('settings') ||
+        String(routeName).includes('agent_list')
+      ) {
+        return this.t('SIDEBAR.SETTINGS');
+      }
+      return (
+        this.activeBrandName ||
+        this.globalConfig?.installationName ||
+        'newrelay'
+      );
+    },
   },
   watch: {
     isSmallScreen: {
@@ -141,6 +206,9 @@ export default {
     closeMobileSidebar() {
       this.isMobileSidebarOpen = false;
     },
+    toggleSidebarCollapse() {
+      this.$refs.sidebar?.toggleSidebarCollapse?.();
+    },
     openCreateAccountModal() {
       this.showAccountModal = false;
       this.showCreateAccountModal = true;
@@ -157,22 +225,26 @@ export default {
     closeKeyShortcutModal() {
       this.showShortcutModal = false;
     },
+    openSearch() {
+      this.$router.push({ name: 'search' });
+    },
   },
 };
 </script>
 
 <template>
   <div
-    class="flex flex-grow overflow-hidden text-n-slate-12"
+    class="flex h-full min-h-0 w-full flex-grow overflow-hidden bg-n-background text-n-slate-12"
     :class="{
-      'bg-n-slate-3 p-4 gap-4 flex-row-reverse':
+      'flex-row-reverse gap-4 bg-n-slate-3 p-4':
         activeLayout === 'documentation',
     }"
   >
     <NextSidebar
+      ref="sidebar"
       :is-mobile-sidebar-open="isMobileSidebarOpen"
       :class="{
-        'rounded-2xl border border-n-weak shadow-md overflow-hidden bg-n-background':
+        'overflow-hidden rounded-2xl border border-n-weak bg-n-solid-1 shadow-md':
           activeLayout === 'documentation',
         '!border-l-0 ltr:!border-r-0 rtl:!border-l-0':
           activeLayout === 'documentation',
@@ -184,43 +256,53 @@ export default {
       @close-mobile-sidebar="closeMobileSidebar"
     />
 
-    <main
-      class="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1"
+    <div
+      class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       :class="{
-        'rounded-2xl border border-n-weak shadow-md':
+        'rounded-2xl border border-n-weak bg-n-surface-1 shadow-md':
           activeLayout === 'documentation',
       }"
     >
-      <UpgradePage
-        v-show="showUpgradePage"
-        ref="upgradePageRef"
-        :bypass-upgrade-page="bypassUpgradePage"
-      >
-        <MobileSidebarLauncher
-          :is-mobile-sidebar-open="isMobileSidebarOpen"
-          @toggle="toggleMobileSidebar"
-        />
-      </UpgradePage>
-      <template v-if="!showUpgradePage">
-        <router-view />
-        <CommandBar />
-        <CopilotLauncher />
-        <MobileSidebarLauncher
-          :is-mobile-sidebar-open="isMobileSidebarOpen"
-          @toggle="toggleMobileSidebar"
-        />
-        <CopilotContainer />
-        <FloatingCallWidget v-if="hasActiveCall || hasIncomingCall" />
-      </template>
-      <AddAccountModal
-        :show="showCreateAccountModal"
-        @close-account-create-modal="closeCreateAccountModal"
+      <RelayHeader
+        :title="headerTitle"
+        show-desktop-toggle
+        @toggle-sidebar="toggleMobileSidebar"
+        @toggle-collapse="toggleSidebarCollapse"
+        @open-search="openSearch"
       />
-      <WootKeyShortcutModal
-        v-model:show="showShortcutModal"
-        @close="closeKeyShortcutModal"
-        @clickaway="closeKeyShortcutModal"
-      />
-    </main>
+
+      <main class="flex min-h-0 w-full flex-1 overflow-hidden bg-n-background">
+        <UpgradePage
+          v-show="showUpgradePage"
+          ref="upgradePageRef"
+          :bypass-upgrade-page="bypassUpgradePage"
+        >
+          <MobileSidebarLauncher
+            :is-mobile-sidebar-open="isMobileSidebarOpen"
+            @toggle="toggleMobileSidebar"
+          />
+        </UpgradePage>
+        <template v-if="!showUpgradePage">
+          <router-view />
+          <CommandBar />
+          <CopilotLauncher />
+          <MobileSidebarLauncher
+            :is-mobile-sidebar-open="isMobileSidebarOpen"
+            @toggle="toggleMobileSidebar"
+          />
+          <CopilotContainer />
+          <FloatingCallWidget v-if="hasActiveCall || hasIncomingCall" />
+        </template>
+        <AddAccountModal
+          :show="showCreateAccountModal"
+          @close-account-create-modal="closeCreateAccountModal"
+        />
+        <WootKeyShortcutModal
+          v-model:show="showShortcutModal"
+          @close="closeKeyShortcutModal"
+          @clickaway="closeKeyShortcutModal"
+        />
+      </main>
+    </div>
   </div>
 </template>

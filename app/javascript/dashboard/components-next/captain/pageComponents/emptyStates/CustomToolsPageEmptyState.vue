@@ -2,7 +2,7 @@
 import { useAccount } from 'dashboard/composables/useAccount';
 import EmptyStateLayout from 'dashboard/components-next/EmptyStateLayout.vue';
 import FeatureSpotlight from 'dashboard/components-next/feature-spotlight/FeatureSpotlight.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const emit = defineEmits(['click']);
 const { isOnChatwootCloud } = useAccount();
@@ -31,11 +31,10 @@ const onClick = () => {
       <div class="min-h-[600px]" />
     </template>
     <template #actions>
-      <Button
-        :label="$t('CAPTAIN.CUSTOM_TOOLS.ADD_NEW')"
-        icon="i-lucide-plus"
-        @click="onClick"
-      />
+      <RelayButton @click="onClick">
+        <span class="i-lucide-plus size-4" />
+        {{ $t('CAPTAIN.CUSTOM_TOOLS.ADD_NEW') }}
+      </RelayButton>
     </template>
   </EmptyStateLayout>
 </template>

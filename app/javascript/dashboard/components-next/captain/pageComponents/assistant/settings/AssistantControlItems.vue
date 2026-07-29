@@ -1,6 +1,5 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import Button from 'dashboard/components-next/button/Button.vue';
 
 defineProps({
   controlItem: {
@@ -19,24 +18,20 @@ const onClick = name => {
 <template>
   <div
     :key="controlItem.name"
-    class="pt-3 ltr:pl-4 rtl:pr-4 ltr:pr-2 rtl:pl-2 pb-5 gap-2 flex flex-col w-full shadow outline-1 outline outline-n-container rounded-2xl bg-n-solid-2 cursor-pointer"
+    class="group flex w-full cursor-pointer flex-col gap-2 rounded-2xl border border-n-weak bg-n-solid-2 p-5 transition-all hover:border-n-brand/40 hover:shadow-sm"
     @click="onClick(controlItem.routeName)"
   >
-    <div class="flex items-center justify-between w-full gap-1 h-8">
-      <span class="text-sm font-medium text-n-slate-12 line-clamp-1">
+    <div class="flex h-8 w-full items-center justify-between gap-1">
+      <span
+        class="line-clamp-1 text-[14.5px] font-semibold text-n-slate-12 transition-colors group-hover:text-n-brand"
+      >
         {{ controlItem.name }}
       </span>
-      <div class="flex items-center gap-2">
-        <Button
-          icon="i-lucide-chevron-right"
-          slate
-          ghost
-          xs
-          @click="onClick(controlItem.routeName)"
-        />
-      </div>
+      <span
+        class="i-lucide-chevron-right size-4 text-n-slate-11 transition-transform group-hover:translate-x-0.5"
+      />
     </div>
-    <span class="text-n-slate-11 text-sm leading-[21px] line-clamp-5">
+    <span class="line-clamp-5 text-sm leading-[21px] text-n-slate-11">
       {{ controlItem.description }}
     </span>
   </div>

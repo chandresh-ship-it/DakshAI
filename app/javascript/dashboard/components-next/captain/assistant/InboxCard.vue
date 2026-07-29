@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 
 import CardLayout from 'dashboard/components-next/CardLayout.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Policy from 'dashboard/components/policy.vue';
 import { INBOX_TYPES, getInboxIconByType } from 'dashboard/helper/inbox';
 
@@ -70,9 +70,9 @@ const handleAction = ({ action, value }) => {
 
 <template>
   <CardLayout>
-    <div class="flex justify-between w-full gap-1">
+    <div class="flex w-full justify-between gap-1">
       <span
-        class="text-base text-n-slate-12 line-clamp-1 flex items-center gap-2"
+        class="flex items-center gap-2 text-[15px] font-medium text-n-slate-12 line-clamp-1"
       >
         <span :class="icon" />
         {{ inboxName }}
@@ -81,19 +81,20 @@ const handleAction = ({ action, value }) => {
         <Policy
           v-on-clickaway="() => toggleDropdown(false)"
           :permissions="['administrator']"
-          class="relative flex items-center group"
+          class="group relative flex items-center opacity-0 transition-opacity group-hover/cardLayout:opacity-100 focus-within:opacity-100"
         >
-          <Button
-            icon="i-lucide-ellipsis-vertical"
-            color="slate"
-            size="xs"
-            class="rounded-md group-hover:bg-n-alpha-2"
+          <RelayButton
+            variant="ghost"
+            size="icon"
+            class="size-8 rounded-md text-n-slate-11 hover:bg-n-alpha-2"
             @click="toggleDropdown()"
-          />
+          >
+            <span class="i-lucide-ellipsis-vertical size-4" />
+          </RelayButton>
           <DropdownMenu
             v-if="showActionsDropdown"
             :menu-items="menuItems"
-            class="mt-1 ltr:right-0 rtl:left-0 top-full"
+            class="top-full mt-1 ltr:right-0 rtl:left-0"
             @action="handleAction($event)"
           />
         </Policy>

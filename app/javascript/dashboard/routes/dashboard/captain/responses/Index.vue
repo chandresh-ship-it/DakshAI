@@ -8,7 +8,7 @@ import { debounce } from '@chatwoot/utils';
 import { useAccount } from 'dashboard/composables/useAccount';
 
 import Banner from 'dashboard/components-next/banner/Banner.vue';
-import Input from 'dashboard/components-next/input/Input.vue';
+import { RelayInput } from 'dashboard/components-next/relay';
 import BulkSelectBar from 'dashboard/components-next/captain/assistant/BulkSelectBar.vue';
 import DeleteDialog from 'dashboard/components-next/captain/pageComponents/DeleteDialog.vue';
 import BulkDeleteDialog from 'dashboard/components-next/captain/pageComponents/BulkDeleteDialog.vue';
@@ -229,16 +229,15 @@ onMounted(() => {
     </template>
 
     <template #search>
-      <div
-        v-if="bulkSelectedIds.size === 0"
-        class="flex gap-3 justify-between w-full items-center"
-      >
-        <Input
+      <div v-if="bulkSelectedIds.size === 0" class="relative w-full sm:w-64">
+        <span
+          class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-n-slate-11"
+        />
+        <RelayInput
           v-model="searchQuery"
           :placeholder="$t('CAPTAIN.RESPONSES.SEARCH_PLACEHOLDER')"
-          class="w-64"
-          size="sm"
           type="search"
+          class-name="pl-9"
           autofocus
           @input="debouncedSearch"
         />
@@ -293,7 +292,7 @@ onMounted(() => {
           :created-at="response.created_at"
           :updated-at="response.updated_at"
           :is-selected="bulkSelectedIds.has(response.id)"
-          :selectable="hoveredCard === response.id || bulkSelectedIds.size > 0"
+          selectable
           :show-menu="!bulkSelectedIds.has(response.id)"
           :show-actions="false"
           @action="handleAction"

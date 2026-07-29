@@ -6,10 +6,13 @@ import { useVuelidate } from '@vuelidate/core';
 import { vOnClickOutside } from '@vueuse/components';
 import { required, minLength } from '@vuelidate/validators';
 
-import Input from 'dashboard/components-next/input/Input.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 
 const emit = defineEmits(['add']);
 
@@ -76,34 +79,41 @@ const onClickCancel = () => {
 <template>
   <div
     v-on-click-outside="() => togglePopover(false)"
-    class="inline-flex relative"
+    class="relative inline-flex"
   >
-    <Button
-      :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.CREATE')"
-      sm
-      slate
+    <RelayButton
+      size="sm"
       class="flex-shrink-0"
       @click="togglePopover(!showPopover)"
-    />
+    >
+      <span class="i-lucide-plus size-4" />
+      {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.CREATE') }}
+    </RelayButton>
 
     <div
       v-if="showPopover"
-      class="w-[31.25rem] absolute top-10 ltr:left-0 rtl:right-0 bg-n-alpha-3 backdrop-blur-[100px] p-6 rounded-xl border border-n-weak shadow-md flex flex-col gap-6 z-50"
+      class="absolute top-10 z-50 flex w-[31.25rem] flex-col gap-6 rounded-xl border border-n-weak bg-n-solid-2 p-6 shadow-md backdrop-blur-[100px] ltr:left-0 rtl:right-0"
     >
       <h3 class="text-base font-medium text-n-slate-12">
         {{ t(`CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.TITLE`) }}
       </h3>
 
       <div class="flex flex-col gap-4">
-        <Input
-          v-model="state.title"
-          :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.LABEL')"
-          :placeholder="
-            t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.PLACEHOLDER')
-          "
-          :message="titleError"
-          :message-type="titleError ? 'error' : 'info'"
-        />
+        <div class="flex flex-col gap-2">
+          <RelayLabel html-for="new-scenario-title">
+            {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.LABEL') }}
+          </RelayLabel>
+          <RelayInput
+            id="new-scenario-title"
+            v-model="state.title"
+            :placeholder="
+              t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.PLACEHOLDER')
+            "
+          />
+          <p v-if="titleError" class="text-xs text-n-ruby-11">
+            {{ titleError }}
+          </p>
+        </div>
 
         <TextArea
           v-model="state.description"
@@ -136,19 +146,13 @@ const onClickCancel = () => {
         />
       </div>
 
-      <div class="flex items-center justify-between w-full gap-3">
-        <Button
-          variant="faded"
-          color="slate"
-          :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.CANCEL')"
-          class="w-full bg-n-alpha-2 !text-n-blue-11 hover:bg-n-alpha-3"
-          @click="onClickCancel"
-        />
-        <Button
-          :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.CREATE')"
-          class="w-full"
-          @click="onClickAdd"
-        />
+      <div class="flex w-full items-center justify-between gap-3">
+        <RelayButton variant="secondary" class="w-full" @click="onClickCancel">
+          {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.CANCEL') }}
+        </RelayButton>
+        <RelayButton class="w-full" @click="onClickAdd">
+          {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.CREATE') }}
+        </RelayButton>
       </div>
     </div>
   </div>

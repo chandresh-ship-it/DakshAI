@@ -1,6 +1,6 @@
 <script setup>
 import EmptyStateLayout from 'dashboard/components-next/EmptyStateLayout.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import InboxCard from 'dashboard/components-next/captain/assistant/InboxCard.vue';
 import { inboxes } from 'dashboard/components-next/captain/pageComponents/emptyStates/captainEmptyStateContent.js';
 
@@ -18,7 +18,7 @@ const onClick = () => {
     :action-perms="['administrator']"
   >
     <template #empty-state-item>
-      <div class="grid grid-cols-1 gap-4 p-px overflow-hidden">
+      <div class="grid grid-cols-1 gap-4 overflow-hidden p-px">
         <InboxCard
           v-for="(inbox, index) in inboxes.slice(0, 5)"
           :id="inbox.id"
@@ -28,11 +28,10 @@ const onClick = () => {
       </div>
     </template>
     <template #actions>
-      <Button
-        :label="$t('CAPTAIN.INBOXES.ADD_NEW')"
-        icon="i-lucide-plus"
-        @click="onClick"
-      />
+      <RelayButton @click="onClick">
+        <span class="i-lucide-plus size-4" />
+        {{ $t('CAPTAIN.INBOXES.ADD_NEW') }}
+      </RelayButton>
     </template>
   </EmptyStateLayout>
 </template>
