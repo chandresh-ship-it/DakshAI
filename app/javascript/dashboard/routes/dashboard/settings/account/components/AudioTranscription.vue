@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useAlert } from 'dashboard/composables';
 import SectionLayout from './SectionLayout.vue';
-import Switch from 'next/switch/Switch.vue';
+import { RelaySwitch } from 'dashboard/components-next/relay';
 
 const { t } = useI18n();
 const isEnabled = ref(false);
@@ -38,15 +38,26 @@ const toggleAudioTranscription = async () => {
 
 <template>
   <SectionLayout
-    :title="t('GENERAL_SETTINGS.FORM.AUDIO_TRANSCRIPTION.TITLE')"
-    :description="t('GENERAL_SETTINGS.FORM.AUDIO_TRANSCRIPTION.NOTE')"
+    :title="t('GENERAL_SETTINGS.FORM.PREFERENCES_SECTION.TITLE')"
+    :description="t('GENERAL_SETTINGS.FORM.PREFERENCES_SECTION.NOTE')"
+    icon="i-lucide-sliders-horizontal"
     as-card
-    hide-content
   >
-    <template #headerActions>
-      <div class="flex justify-end">
-        <Switch v-model="isEnabled" @change="toggleAudioTranscription" />
+    <div class="flex flex-row items-start justify-between gap-8">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-foreground">
+          {{ t('GENERAL_SETTINGS.FORM.AUDIO_TRANSCRIPTION.TITLE') }}
+        </label>
+        <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+          {{ t('GENERAL_SETTINGS.FORM.AUDIO_TRANSCRIPTION.NOTE') }}
+        </p>
       </div>
-    </template>
+      <div class="mt-1 shrink-0">
+        <RelaySwitch
+          v-model="isEnabled"
+          @update:model-value="toggleAudioTranscription"
+        />
+      </div>
+    </div>
   </SectionLayout>
 </template>

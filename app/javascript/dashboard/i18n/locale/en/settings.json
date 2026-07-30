@@ -355,7 +355,8 @@
     "INTEGRATIONS": "Integrations",
     "PROFILE_SETTINGS": "Profile Settings",
     "ACCOUNT_SETTINGS": "Account Settings",
-    "BRANDING": "Branding & Custom Domain",
+    "BRANDING": "Branding",
+    "CUSTOM_DOMAIN": "Custom Domain",
     "APPLICATIONS": "Applications",
     "LABELS": "Labels",
     "CUSTOM_ATTRIBUTES": "Custom Attributes",
@@ -1111,31 +1112,54 @@
   },
   "BRANDING_SETTINGS": {
     "TITLE": "Branding",
+    "DESCRIPTION": "Customize your brand identity for emails, widgets and portals.",
+    "BRAND_IDENTITY": {
+      "TITLE": "Brand Identity",
+      "DESCRIPTION": "Update your company details and logos."
+    },
+    "COMPANY_NAME": {
+      "LABEL": "Company Name",
+      "PLACEHOLDER": "Acme Inc."
+    },
     "CUSTOM_DOMAIN": {
+      "PAGE_TITLE": "Custom Domain",
+      "PAGE_DESCRIPTION": "Configure custom domains and whitelabeling.",
+      "EXPERIENCE_TITLE": "Customer Experience",
+      "EXPERIENCE_DESCRIPTION": "Configure how your brand appears to customers.",
       "TITLE": "Custom domain",
       "DESCRIPTION": "Configure CNAME or TXT validation to map your custom domain to your workspace.",
       "LABEL": "Custom Domain",
-      "PLACEHOLDER": "support.client.com",
+      "PLACEHOLDER": "e.g. support.acme.com",
       "VERIFY": "Verify",
       "VERIFIED": "Verified",
       "PENDING": "Pending",
+      "REMOVE": "Remove",
       "AUTO_CONNECT_LABEL": "Domain connects automatically once verified — no separate save needed.",
       "OPTION_1_TITLE": "Option 1: CNAME (Recommended for subdomains)",
       "CNAME_INSTRUCTION": "Add this record with your DNS provider. It may take up to 24 hours to propagate.",
       "OPTION_2_TITLE": "Option 2: TXT Record (Required for root domains)",
+      "ROOT_RECORDS_TITLE": "TXT & A/AAAA Records (Required for root domains)",
       "TXT_INSTRUCTION": "If your DNS provider blocks CNAME records on root domains (like yoursite.com), add this TXT record instead, along with an A record pointing to our server IP.",
       "TYPE": "Type",
       "NAME": "Name",
       "TARGET": "Target",
-      "VALUE": "Value"
+      "VALUE": "Value",
+      "SAVE_SUCCESS": "Custom domain settings saved successfully.",
+      "SAVE_ERROR": "Failed to save custom domain settings. Please try again.",
+      "WHITE_LABEL": {
+        "TITLE": "White-label",
+        "DESCRIPTION": "Remove newrelay branding from customer-facing pages. This is enabled by your plan (disable branding) and cannot be toggled here."
+      }
     },
     "BRAND_NAME": {
       "TITLE": "Brand name",
+      "LABEL": "Brand Name",
       "DESCRIPTION": "Customize the brand name displayed across the system to replace newrelay.",
       "PLACEHOLDER": "Enter brand name (e.g. MyBrand)"
     },
     "MAGIC_AI": {
       "BUTTON": "Magic AI generation",
+      "GENERATE_FROM_WEBSITE": "Generate from website",
       "TITLE": "Generate Magic Branding",
       "TABS": {
         "URL": "From URL",
@@ -1152,27 +1176,28 @@
       "ERROR": "Failed to generate palettes. Please try again."
     },
     "THEME_SETTINGS": {
-      "TITLE": "Appearance settings",
-      "DESCRIPTION": "Select the default interface style for your dashboard.",
+      "TITLE": "Theme Preset",
+      "DESCRIPTION": "Quickly apply a professionally designed color scheme to your portal.",
       "LIGHT": {
-        "TITLE": "Light mode",
+        "TITLE": "Light",
         "DESCRIPTION": "Clean, light styling"
       },
       "DARK": {
-        "TITLE": "Dark mode",
+        "TITLE": "Dark",
         "DESCRIPTION": "Sleek, dark styling"
       },
       "CUSTOM": {
-        "TITLE": "Custom branding",
+        "TITLE": "Custom",
         "DESCRIPTION": "Apply custom color palette below"
       }
     },
     "COLOR_SETTINGS": {
-      "TITLE": "Color customization",
-      "DESCRIPTION": "Brand your customer-facing widgets and portals.",
-      "PRIMARY": "Primary color",
-      "TEXT": "Text color",
-      "BACKGROUND": "Background color",
+      "TITLE": "Brand Colors",
+      "DESCRIPTION": "Define your brand color palette.",
+      "PRIMARY": "Primary",
+      "TEXT": "Text",
+      "BACKGROUND": "Background",
+      "RESET": "Reset to default",
       "LOW_CONTRAST_WARNING": "Low contrast between text and background colors — text may be hard to read.",
       "LIVE_PREVIEW": "Live Preview",
       "PREVIEW_TEXT": "Hi, how can we help?",
@@ -1180,28 +1205,27 @@
       "PREVIEW_NOTE": "Updates instantly as you edit colors"
     },
     "LOGO_SETTINGS": {
-      "TITLE": "Upload logos",
+      "TITLE": "Logos",
       "DESCRIPTION": "Upload logos for light and dark surfaces, plus a favicon for the browser tab.",
       "LIGHT_LOGO": {
-        "TITLE": "Light logo",
-        "NOTE": "For light backgrounds",
+        "TITLE": "Logo (Light)",
+        "NOTE": "Recommended 512x512px",
         "LIMIT": "max 500kb"
       },
       "DARK_LOGO": {
-        "TITLE": "Dark logo",
-        "NOTE": "For dark backgrounds",
+        "TITLE": "Logo (Dark)",
+        "NOTE": "Recommended 512x512px",
         "LIMIT": "max 500kb"
       },
       "FAVICON": {
         "TITLE": "Favicon",
-        "NOTE": "Browser tab icon",
+        "NOTE": "Browser tab icon 16x16 or 32x32px",
         "LIMIT": "16x16 or 32x32px"
       },
-      "CHOOSE_FILE": "Choose file",
+      "CHOOSE_FILE": "Choose File",
       "REMOVE": "Remove",
       "UPLOAD": "Upload"
     },
-    "DESCRIPTION": "Configure your workspace branding including custom domain, logos, and color scheme.",
     "CANCEL": "Cancel",
     "SAVE": "Save changes",
     "SAVE_SUCCESS": "Branding settings saved successfully.",

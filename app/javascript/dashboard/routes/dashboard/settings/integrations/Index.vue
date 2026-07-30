@@ -50,14 +50,11 @@ onMounted(() => {
       <div class="flex-grow flex-shrink overflow-auto">
         <span
           v-if="!filteredIntegrationList.length && searchQuery"
-          class="flex-1 flex items-center justify-center py-20 text-center text-body-main !text-base text-n-slate-11"
+          class="flex flex-1 items-center justify-center py-20 text-center text-base text-muted-foreground"
         >
           {{ $t('INTEGRATION_SETTINGS.NO_RESULTS') }}
         </span>
-        <div
-          v-else
-          class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-        >
+        <div v-else class="mt-2 grid grid-cols-1 gap-5 xl:grid-cols-2">
           <IntegrationItem
             v-for="item in filteredIntegrationList"
             :id="item.id"

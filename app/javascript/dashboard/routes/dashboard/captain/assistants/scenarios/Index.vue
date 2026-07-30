@@ -1,26 +1,21 @@
 <script setup>
-import { computed, h, ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { picoSearch } from '@scmmishra/pico-search';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
-import { useUISettings } from 'dashboard/composables/useUISettings';
-import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 
 import PageLayout from 'dashboard/components-next/captain/PageLayout.vue';
-import SettingsHeader from 'dashboard/components-next/captain/pageComponents/settings/SettingsHeader.vue';
-import SuggestedScenarios from 'dashboard/components-next/captain/assistant/SuggestedRules.vue';
 import ScenariosCard from 'dashboard/components-next/captain/assistant/ScenariosCard.vue';
 import BulkSelectBar from 'dashboard/components-next/captain/assistant/BulkSelectBar.vue';
 import AddNewScenariosDialog from 'dashboard/components-next/captain/assistant/AddNewScenariosDialog.vue';
+import ScenariosPageEmptyState from 'dashboard/components-next/captain/pageComponents/emptyStates/ScenariosPageEmptyState.vue';
 
 const { t } = useI18n();
 const route = useRoute();
 const store = useStore();
-const { uiSettings, updateUISettings } = useUISettings();
-const { formatMessage } = useMessageFormatter();
 const assistantId = computed(() => Number(route.params.assistantId));
 
 const uiFlags = useMapGetter('captainScenarios/getUIFlags');
@@ -28,15 +23,8 @@ const isFetching = computed(() => uiFlags.value.fetchingList);
 const scenarios = useMapGetter('captainScenarios/getRecords');
 
 const searchQuery = ref('');
-
-const LINK_INSTRUCTION_CLASS =
-  '[&_a[href^="tool://"]]:text-primary [&_a:not([href^="tool://"])]:text-foreground [&_a]:pointer-events-none [&_a]:cursor-default';
-
-const renderInstruction = instruction => () =>
-  h('span', {
-    class: `min-w-0 break-words py-4 text-sm text-foreground prose prose-sm ${LINK_INSTRUCTION_CLASS}`,
-    innerHTML: instruction,
-  });
+const isCreating = ref(false);
+const bulkSelectedIds = ref(new Set());
 
 const scenariosExample = [
   {
@@ -57,15 +45,9 @@ const filteredScenarios = computed(() => {
   return picoSearch(source, query, ['title', 'description', 'instruction']);
 });
 
-const shouldShowSuggestedRules = computed(() => {
-  return uiSettings.value?.show_scenarios_suggestions !== false;
-});
-
-const closeSuggestedRules = () => {
-  updateUISettings({ show_scenarios_suggestions: false });
-};
-
-const bulkSelectedIds = ref(new Set());
+const isEmpty = computed(
+  () => !scenarios.value.length && !isCreating.value && !searchQuery.value
+);
 
 const handleRuleSelect = id => {
   const selected = new Set(bulkSelectedIds.value);
@@ -93,6 +75,15 @@ const getToolsFromInstruction = instruction => [
   ),
 ];
 
+const startCreate = () => {
+  isCreating.value = true;
+  bulkSelectedIds.value = new Set();
+};
+
+const cancelCreate = () => {
+  isCreating.value = false;
+};
+
 const updateScenario = async scenario => {
   try {
     await store.dispatch('captainScenarios/update', {
@@ -116,6 +107,9 @@ const deleteScenario = async id => {
       id,
       assistantId: assistantId.value,
     });
+    bulkSelectedIds.value = new Set(
+      [...bulkSelectedIds.value].filter(selectedId => selectedId !== id)
+    );
     useAlert(t('CAPTAIN.ASSISTANTS.SCENARIOS.API.DELETE.SUCCESS'));
   } catch (error) {
     const errorMessage =
@@ -146,6 +140,7 @@ const addScenario = async scenario => {
       ...scenario,
       tools: getToolsFromInstruction(scenario.instruction),
     });
+    isCreating.value = false;
     useAlert(t('CAPTAIN.ASSISTANTS.SCENARIOS.API.ADD.SUCCESS'));
   } catch (error) {
     const errorMessage =
@@ -157,12 +152,14 @@ const addScenario = async scenario => {
 
 const addAllExampleScenarios = async () => {
   try {
-    scenariosExample.forEach(async scenario => {
-      await store.dispatch('captainScenarios/create', {
-        assistantId: assistantId.value,
-        ...scenario,
-      });
-    });
+    await Promise.all(
+      scenariosExample.map(scenario =>
+        store.dispatch('captainScenarios/create', {
+          assistantId: assistantId.value,
+          ...scenario,
+        })
+      )
+    );
     useAlert(t('CAPTAIN.ASSISTANTS.SCENARIOS.API.ADD.SUCCESS'));
   } catch (error) {
     const errorMessage =
@@ -184,111 +181,94 @@ onMounted(() => {
   <PageLayout
     :header-title="$t('CAPTAIN.ASSISTANTS.SCENARIOS.TITLE')"
     :is-fetching="isFetching"
+    :is-empty="isEmpty"
     :show-know-more="false"
     :show-pagination-footer="false"
   >
-    <template #body>
-      <SettingsHeader
-        :heading="$t('CAPTAIN.ASSISTANTS.SCENARIOS.TITLE')"
-        :description="$t('CAPTAIN.ASSISTANTS.SCENARIOS.DESCRIPTION')"
+    <template #subHeader>
+      <BulkSelectBar
+        v-if="bulkSelectedIds.size > 0 && !isCreating"
+        v-model="bulkSelectedIds"
+        :all-items="scenarios"
+        :select-all-label="buildSelectedCountLabel"
+        :selected-count-label="selectedCountLabel"
+        :delete-label="
+          $t('CAPTAIN.ASSISTANTS.SCENARIOS.BULK_ACTION.BULK_DELETE_BUTTON')
+        "
+        @bulk-delete="bulkDeleteScenarios"
       />
-      <div v-if="shouldShowSuggestedRules" class="mt-7 flex flex-col gap-4">
-        <SuggestedScenarios
-          :title="$t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.SUGGESTED.TITLE')"
-          :items="scenariosExample"
-          @close="closeSuggestedRules"
-          @add="addAllExampleScenarios"
+      <div
+        v-else-if="scenarios.length > 0 || isCreating"
+        class="mb-6 flex items-center justify-between gap-4"
+      >
+        <RelayButton
+          v-if="!isCreating"
+          variant="outline"
+          class="shrink-0 border-border/80 bg-background shadow-sm"
+          @click="startCreate"
         >
-          <template #default="{ item }">
-            <div class="flex items-center justify-between gap-3">
-              <span class="text-sm text-foreground">
-                {{ item.title }}
-              </span>
-              <RelayButton
-                variant="ghost"
-                size="sm"
-                class="!text-sm text-muted-foreground"
-                @click="addScenario(item)"
-              >
-                {{
-                  $t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.SUGGESTED.ADD_SINGLE')
-                }}
-              </RelayButton>
-            </div>
-            <div class="flex flex-col">
-              <span class="mt-2 text-sm text-muted-foreground">
-                {{ item.description }}
-              </span>
-              <component
-                :is="renderInstruction(formatMessage(item.instruction, false))"
-              />
-              <span class="mb-1 text-sm font-medium text-muted-foreground">
-                {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.SUGGESTED.TOOLS_USED') }}
-                {{ item.tools?.map(tool => `@${tool}`).join(', ') }}
-              </span>
-            </div>
-          </template>
-        </SuggestedScenarios>
-      </div>
-      <div class="mt-7 flex flex-col gap-4">
-        <div class="flex items-center justify-between gap-3">
-          <BulkSelectBar
-            v-model="bulkSelectedIds"
-            :all-items="scenarios"
-            :select-all-label="buildSelectedCountLabel"
-            :selected-count-label="selectedCountLabel"
-            :delete-label="
-              $t('CAPTAIN.ASSISTANTS.SCENARIOS.BULK_ACTION.BULK_DELETE_BUTTON')
+          <span class="i-lucide-plus mr-1.5 size-4" />
+          {{ $t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.CREATE') }}
+        </RelayButton>
+        <div v-else class="flex-1" />
+
+        <div class="relative w-full sm:w-64">
+          <span
+            class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground"
+          />
+          <RelayInput
+            v-model="searchQuery"
+            :placeholder="
+              t('CAPTAIN.ASSISTANTS.SCENARIOS.LIST.SEARCH_PLACEHOLDER')
             "
-            @bulk-delete="bulkDeleteScenarios"
-          >
-            <template #default-actions>
-              <AddNewScenariosDialog @add="addScenario" />
-            </template>
-          </BulkSelectBar>
-          <div
-            v-if="scenarios.length && bulkSelectedIds.size === 0"
-            class="relative w-full min-w-0 max-w-[16rem]"
-          >
-            <span
-              class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground"
-            />
-            <RelayInput
-              v-model="searchQuery"
-              :placeholder="
-                t('CAPTAIN.ASSISTANTS.SCENARIOS.LIST.SEARCH_PLACEHOLDER')
-              "
-              type="search"
-              class-name="h-9 bg-background pl-9"
-            />
-          </div>
-        </div>
-        <div v-if="scenarios.length === 0" class="mb-2 mt-1">
-          <span class="text-sm text-muted-foreground">
-            {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.EMPTY_MESSAGE') }}
-          </span>
-        </div>
-        <div v-else-if="filteredScenarios.length === 0" class="mb-2 mt-1">
-          <span class="text-sm text-muted-foreground">
-            {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.SEARCH_EMPTY_MESSAGE') }}
-          </span>
-        </div>
-        <div v-else class="space-y-4">
-          <ScenariosCard
-            v-for="scenario in filteredScenarios"
-            :id="scenario.id"
-            :key="scenario.id"
-            :title="scenario.title"
-            :description="scenario.description"
-            :instruction="scenario.instruction"
-            :tools="scenario.tools"
-            :is-selected="bulkSelectedIds.has(scenario.id)"
-            selectable
-            @select="handleRuleSelect"
-            @delete="deleteScenario(scenario.id)"
-            @update="updateScenario"
+            type="search"
+            class-name="h-9 bg-background pl-9"
           />
         </div>
+      </div>
+    </template>
+
+    <template #emptyState>
+      <ScenariosPageEmptyState
+        @click="startCreate"
+        @load-example="addAllExampleScenarios"
+      />
+    </template>
+
+    <template #body>
+      <AddNewScenariosDialog
+        :open="isCreating"
+        @update:open="isCreating = $event"
+        @add="addScenario"
+        @cancel="cancelCreate"
+      />
+
+      <div
+        v-if="
+          scenarios.length > 0 && !isCreating && filteredScenarios.length === 0
+        "
+        class="mb-2 mt-1"
+      >
+        <span class="text-sm text-muted-foreground">
+          {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.SEARCH_EMPTY_MESSAGE') }}
+        </span>
+      </div>
+
+      <div v-else-if="scenarios.length > 0 && !isCreating" class="space-y-4">
+        <ScenariosCard
+          v-for="scenario in filteredScenarios"
+          :id="scenario.id"
+          :key="scenario.id"
+          :title="scenario.title"
+          :description="scenario.description"
+          :instruction="scenario.instruction"
+          :tools="scenario.tools"
+          :is-selected="bulkSelectedIds.has(scenario.id)"
+          selectable
+          @select="handleRuleSelect"
+          @delete="deleteScenario(scenario.id)"
+          @update="updateScenario"
+        />
       </div>
     </template>
   </PageLayout>

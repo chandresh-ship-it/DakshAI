@@ -675,7 +675,7 @@
         "TITLE": "Scenarios",
         "DESCRIPTION": "Give your assistant some context—like “what to do when a user is stuck,” or “how to act during a refund request.”",
         "BULK_ACTION": {
-          "SELECTED": "{count} item selected | {count} items selected",
+          "SELECTED": "{count} selected",
           "SELECT_ALL": "Select all ({count})",
           "UNSELECT_ALL": "Unselect all ({count})",
           "BULK_DELETE_BUTTON": "Delete"
@@ -693,17 +693,17 @@
             "FORM": {
               "TITLE": {
                 "LABEL": "Title",
-                "PLACEHOLDER": "Enter a name for the scenario",
+                "PLACEHOLDER": "e.g. Prospective Buyer",
                 "ERROR": "Scenario name is required"
               },
               "DESCRIPTION": {
                 "LABEL": "Description",
-                "PLACEHOLDER": "Describe how and where this scenario will be used",
+                "PLACEHOLDER": "e.g. Handle customers who are showing interest in purchasing a license",
                 "ERROR": "Scenario description is required"
               },
               "INSTRUCTION": {
                 "LABEL": "How to handle",
-                "PLACEHOLDER": "Describe how and where this scenario will be handled",
+                "PLACEHOLDER": "Instructions...",
                 "ERROR": "Scenario content is required"
               },
               "CREATE": "Create",
@@ -716,10 +716,15 @@
           "UPDATE": "Update changes"
         },
         "LIST": {
-          "SEARCH_PLACEHOLDER": "Search..."
+          "SEARCH_PLACEHOLDER": "Search scenarios..."
         },
         "EMPTY_MESSAGE": "No scenarios found. Create or add examples to begin.",
         "SEARCH_EMPTY_MESSAGE": "No scenarios found for this search.",
+        "EMPTY_STATE": {
+          "TITLE": "No Scenarios Created",
+          "SUBTITLE": "Scenarios give Relay AI specific guidelines for handling unique customer interactions—like \"what to do when a user is stuck\" or \"how to handle refund requests.\"",
+          "LOAD_EXAMPLE": "Load example scenario"
+        },
         "API": {
           "ADD": {
             "SUCCESS": "Scenarios added successfully",

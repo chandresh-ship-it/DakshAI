@@ -7,6 +7,8 @@ import Avatar from 'next/avatar/Avatar.vue';
 import { useAdmin } from 'dashboard/composables/useAdmin';
 import SettingsLayout from '../SettingsLayout.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
+import SettingsListCard from '../components/SettingsListCard.vue';
+import SettingsListRow from '../components/SettingsListRow.vue';
 import {
   useMapGetter,
   useStoreGetters,
@@ -14,7 +16,8 @@ import {
 } from 'dashboard/composables/store';
 import ChannelName from './components/ChannelName.vue';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const getters = useStoreGetters();
 const store = useStore();
@@ -96,34 +99,35 @@ const openDelete = inbox => {
         feature-name="inboxes"
       >
         <template v-if="inboxesList?.length" #count>
-          <span class="text-body-main text-n-slate-11">
+          <span class="text-sm text-muted-foreground">
             {{ $t('INBOX_MGMT.COUNT', { n: inboxesList.length }) }}
           </span>
         </template>
         <template #actions>
           <router-link v-if="isAdmin" :to="{ name: 'settings_inbox_new' }">
-            <Button :label="$t('SETTINGS.INBOXES.NEW_INBOX')" size="sm" />
+            <RelayButton size="sm">
+              {{ $t('SETTINGS.INBOXES.NEW_INBOX') }}
+            </RelayButton>
           </router-link>
         </template>
       </BaseSettingsHeader>
     </template>
     <template #body>
-      <span
-        v-if="!filteredInboxesList.length && searchQuery"
-        class="flex-1 flex items-center justify-center py-20 text-center text-body-main !text-base text-n-slate-11"
+      <SettingsListCard
+        :details-label="$t('INBOX_MGMT.LIST.DETAILS')"
+        :actions-label="$t('INBOX_MGMT.LIST.ACTIONS')"
+        :show-column-headers="!!filteredInboxesList.length"
       >
-        {{ $t('INBOX_MGMT.NO_RESULTS') }}
-      </span>
-      <div v-else class="divide-y divide-n-weak border-t border-n-weak">
-        <div
-          v-for="inbox in filteredInboxesList"
-          :key="inbox.id"
-          class="flex justify-between flex-row items-start gap-4 py-4"
-        >
-          <div class="flex items-center gap-4">
+        <template v-if="!filteredInboxesList.length && searchQuery" #empty>
+          <p class="text-center text-sm text-muted-foreground">
+            {{ $t('INBOX_MGMT.NO_RESULTS') }}
+          </p>
+        </template>
+        <SettingsListRow v-for="inbox in filteredInboxesList" :key="inbox.id">
+          <template #leading>
             <div
               v-if="inbox.avatar_url"
-              class="bg-n-alpha-3 rounded-xl size-10 ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center"
+              class="grid size-10 place-items-center rounded-xl border border-border/60 bg-background shadow-xs"
             >
               <Avatar
                 :src="inbox.avatar_url"
@@ -134,49 +138,53 @@ const openDelete = inbox => {
             </div>
             <div
               v-else
-              class="size-10 justify-center bg-n-alpha-3 rounded-xl ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center"
+              class="grid size-10 place-items-center rounded-xl border border-border/60 bg-background shadow-xs"
             >
-              <ChannelIcon class="size-6 text-n-slate-10" :inbox="inbox" />
-            </div>
-            <div class="flex flex-col items-start gap-1">
-              <span class="block text-heading-3 text-n-slate-12 capitalize">
-                {{ inbox.name }}
-              </span>
-              <ChannelName
-                :channel-type="inbox.channel_type"
-                :medium="inbox.medium"
-                :voice-enabled="inbox.voice_enabled"
-                class="text-body-main text-n-slate-11"
+              <ChannelIcon
+                class="size-4 text-muted-foreground"
+                :inbox="inbox"
               />
             </div>
-          </div>
-          <div class="flex gap-3 justify-end">
+          </template>
+          <span class="text-sm font-medium capitalize text-foreground">
+            {{ inbox.name }}
+          </span>
+          <ChannelName
+            :channel-type="inbox.channel_type"
+            :medium="inbox.medium"
+            :voice-enabled="inbox.voice_enabled"
+            class="mt-0.5 text-xs text-muted-foreground"
+          />
+          <template #actions>
             <router-link
               :to="{
                 name: 'settings_inbox_show',
                 params: { inboxId: inbox.id },
               }"
             >
-              <Button
+              <RelayButton
                 v-if="isAdmin"
                 v-tooltip.top="$t('INBOX_MGMT.SETTINGS')"
-                icon="i-woot-settings"
-                slate
-                sm
-              />
+                variant="ghost"
+                size="icon"
+                class="size-8 border border-transparent text-muted-foreground shadow-xs hover:border-border hover:bg-background hover:text-foreground"
+              >
+                <Icon icon="i-lucide-sliders-horizontal" class="size-3.5" />
+              </RelayButton>
             </router-link>
-            <Button
+            <RelayButton
               v-if="isAdmin"
               v-tooltip.top="$t('INBOX_MGMT.DELETE.BUTTON_TEXT')"
-              icon="i-woot-bin"
-              slate
-              sm
-              class="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"
+              variant="ghost"
+              size="icon"
+              class="size-8 border border-transparent text-muted-foreground shadow-xs hover:border-red-100 hover:bg-red-50 hover:text-red-600"
               @click="openDelete(inbox)"
-            />
-          </div>
-        </div>
-      </div>
+            >
+              <Icon icon="i-lucide-trash-2" class="size-3.5" />
+            </RelayButton>
+          </template>
+        </SettingsListRow>
+      </SettingsListCard>
     </template>
 
     <woot-confirm-delete-modal

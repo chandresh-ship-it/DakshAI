@@ -157,26 +157,44 @@ watch(
         {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.TITLE') }}
       </legend>
 
-      <label class="flex cursor-pointer items-center gap-3 select-none">
-        <RelayCheckbox v-model="state.featureFaq" />
-        <span class="text-sm font-medium text-n-slate-12">
+      <div class="flex items-center gap-3">
+        <RelayCheckbox
+          id="captain-create-feature-faqs"
+          v-model="state.featureFaq"
+        />
+        <label
+          for="captain-create-feature-faqs"
+          class="cursor-pointer select-none text-[13.5px] font-medium leading-none text-foreground"
+        >
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_CONVERSATION_FAQS') }}
-        </span>
-      </label>
+        </label>
+      </div>
 
-      <label class="flex cursor-pointer items-center gap-3 select-none">
-        <RelayCheckbox v-model="state.featureMemory" />
-        <span class="text-sm font-medium text-n-slate-12">
+      <div class="flex items-center gap-3">
+        <RelayCheckbox
+          id="captain-create-feature-memories"
+          v-model="state.featureMemory"
+        />
+        <label
+          for="captain-create-feature-memories"
+          class="cursor-pointer select-none text-[13.5px] font-medium leading-none text-foreground"
+        >
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_MEMORIES') }}
-        </span>
-      </label>
+        </label>
+      </div>
 
-      <label class="flex cursor-pointer items-center gap-3 select-none">
-        <RelayCheckbox v-model="state.featureCitation" />
-        <span class="text-sm font-medium text-n-slate-12">
+      <div class="flex items-center gap-3">
+        <RelayCheckbox
+          id="captain-create-feature-citations"
+          v-model="state.featureCitation"
+        />
+        <label
+          for="captain-create-feature-citations"
+          class="cursor-pointer select-none text-[13.5px] font-medium leading-none text-foreground"
+        >
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_CITATIONS') }}
-        </span>
-      </label>
+        </label>
+      </div>
     </fieldset>
 
     <div class="flex w-full items-center justify-between gap-3">

@@ -1,5 +1,6 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 defineProps({
   title: { type: String, required: true },
@@ -8,6 +9,8 @@ defineProps({
   hideContent: { type: Boolean, default: false },
   beta: { type: Boolean, default: false },
   asCard: { type: Boolean, default: false },
+  icon: { type: String, default: '' },
+  inlineHeader: { type: Boolean, default: false },
 });
 const { t } = useI18n();
 </script>
@@ -23,14 +26,27 @@ const { t } = useI18n();
     }"
   >
     <header
-      class="grid grid-cols-4"
-      :class="{ 'border-b border-border/40 p-4 sm:p-6': asCard }"
+      :class="{
+        'border-b border-border/40 p-4 sm:p-6': asCard && !inlineHeader,
+        'p-4 sm:p-6': asCard && inlineHeader,
+        'flex flex-col justify-between gap-6 md:flex-row md:items-center':
+          inlineHeader,
+        'flex gap-4': !!icon && !inlineHeader,
+        'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between':
+          !icon && !inlineHeader,
+      }"
     >
+      <div
+        v-if="icon"
+        class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10"
+      >
+        <Icon :icon="icon" class="size-5 text-primary" />
+      </div>
       <div
         v-if="
           title || beta || $slots.title || description || $slots.description
         "
-        class="col-span-3"
+        class="min-w-0 flex-1"
       >
         <h4
           v-if="title || beta || $slots.title"
@@ -52,7 +68,7 @@ const { t } = useI18n();
           <slot name="description">{{ description }}</slot>
         </p>
       </div>
-      <div class="col-span-1">
+      <div class="flex shrink-0 items-center gap-3">
         <slot name="headerActions" />
       </div>
     </header>
@@ -61,7 +77,8 @@ const { t } = useI18n();
       :class="{
         'overflow-hidden h-0': hideContent,
         'h-auto': !hideContent,
-        'p-4 sm:p-6': asCard && !hideContent,
+        'p-4 sm:p-6': asCard && !hideContent && !inlineHeader,
+        hidden: inlineHeader && hideContent,
       }"
     >
       <slot />

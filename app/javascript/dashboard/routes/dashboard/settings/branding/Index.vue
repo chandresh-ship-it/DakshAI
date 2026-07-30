@@ -19,32 +19,26 @@ import {
 } from 'dashboard/helper/colorHelper';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SectionLayout from '../account/components/SectionLayout.vue';
-import WithLabel from 'v3/components/Form/WithLabel.vue';
-import NextInput from 'next/input/Input.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 import MagicBrandingModal from './components/MagicBrandingModal.vue';
-import { FEATURE_FLAGS } from 'dashboard/featureFlags';
+
+const DEFAULT_PRIMARY = '#1F93FF';
+const DEFAULT_TEXT = '#FFFFFF';
+const DEFAULT_BACKGROUND = '#1A1E29';
 
 const store = useStore();
 const { t } = useI18n();
 const { accountId } = useAccount();
 
-const isFeatureEnabledonAccount = useMapGetter(
-  'accounts/isFeatureEnabledonAccount'
-);
-const isCustomDomainEnabled = computed(() =>
-  isFeatureEnabledonAccount.value(accountId.value, FEATURE_FLAGS.CUSTOM_DOMAIN)
-);
-
 const getAccount = useMapGetter('accounts/getAccount');
 const uiFlags = useMapGetter('accounts/getUIFlags');
 const isUpdating = computed(() => uiFlags.value.isUpdating);
 
-const customDomain = ref('');
+const companyName = ref('');
 const brandName = ref('');
-const primaryColor = ref('#1F93FF');
-const textColor = ref('#FFFFFF');
-const backgroundColor = ref('#1A1E29');
+const primaryColor = ref(DEFAULT_PRIMARY);
+const textColor = ref(DEFAULT_TEXT);
+const backgroundColor = ref(DEFAULT_BACKGROUND);
 const activeLayout = ref('classic');
 
 const lightLogoInput = ref(null);
@@ -76,62 +70,6 @@ const faviconPreview = computed(() => {
 });
 
 const activeAccount = computed(() => getAccount.value(accountId.value));
-
-const domainStatus = computed(() => {
-  return activeAccount.value?.ssl_settings?.cf_status || 'not_configured';
-});
-
-const isDomainUnchanged = computed(() => {
-  return customDomain.value === activeAccount.value?.custom_domain;
-});
-
-const isVerified = computed(
-  () => isDomainUnchanged.value && domainStatus.value === 'active'
-);
-const isPending = computed(
-  () =>
-    isDomainUnchanged.value &&
-    ['pending_validation', 'pending_issuance', 'pending_deployment'].includes(
-      domainStatus.value
-    )
-);
-const cnameTarget = computed(() => {
-  const hostURL =
-    window.chatwootConfig?.hostURL || 'https://domains.newrelay.com';
-  try {
-    return new URL(hostURL).hostname;
-  } catch (e) {
-    return hostURL.replace(/^(https?:\/\/)/, '').replace(/\/$/, '');
-  }
-});
-
-const txtVerificationRecord = computed(() => {
-  return activeAccount.value?.ssl_settings?.cf_verification_body || '';
-});
-
-const txtVerificationName = computed(() => {
-  if (!customDomain.value) return '';
-  return `_cf-custom-hostname.${customDomain.value}`;
-});
-
-const serverIp = computed(() => {
-  return activeAccount.value?.server_ip || '';
-});
-
-const routingRecordType = computed(() => {
-  if (!serverIp.value) return 'A';
-  return serverIp.value.includes(':') ? 'AAAA' : 'A';
-});
-
-const isRootDomain = computed(() => {
-  if (!customDomain.value) return false;
-  const parts = customDomain.value.split('.');
-  return (
-    parts.length <= 2 ||
-    (parts.length === 3 &&
-      ['co', 'com', 'org', 'net', 'edu', 'gov'].includes(parts[1]))
-  );
-});
 
 let isWatcherEnabled = false;
 
@@ -192,22 +130,23 @@ const setTheme = theme => {
   }
   window.dispatchEvent(new CustomEvent('theme-changed'));
 };
+
 let skipNextAccountSync = false;
 const initFromAccount = () => {
   if (skipNextAccountSync) {
     skipNextAccountSync = false;
     return;
-  } 
+  }
   if (!activeAccount.value) return;
   isWatcherEnabled = false;
-  customDomain.value = activeAccount.value.custom_domain || '';
 
+  companyName.value = activeAccount.value.name || '';
   const colors = activeAccount.value.custom_attributes?.brand_colors || {};
-  primaryColor.value = colors.primary || '#1F93FF';
-  textColor.value = colors.text || '#FFFFFF';
-  backgroundColor.value = colors.background || '#1A1E29';
+  primaryColor.value = colors.primary || DEFAULT_PRIMARY;
+  textColor.value = colors.text || DEFAULT_TEXT;
+  backgroundColor.value = colors.background || DEFAULT_BACKGROUND;
   activeLayout.value = colors.layout || 'classic';
-  brandName.value = colors.brand_name || '';
+  brandName.value = activeAccount.value.brand_name || colors.brand_name || '';
 
   if (colors.primary || colors.text || colors.background) {
     activeTheme.value = 'custom';
@@ -231,16 +170,21 @@ const handleCancel = () => {
   faviconFile.value = null;
 };
 
-const handleSave = async (shouldReload = true, isVerifyAction = false) => {
+const handleResetColors = () => {
+  primaryColor.value = DEFAULT_PRIMARY;
+  textColor.value = DEFAULT_TEXT;
+  backgroundColor.value = DEFAULT_BACKGROUND;
+  setTheme('light');
+};
+
+const handleSave = async (shouldReload = true) => {
   try {
     const formData = new FormData();
-    formData.append('custom_domain', customDomain.value || '');
-    if (isVerifyAction) formData.append('force_verify', 'true');
+    formData.append('name', companyName.value || '');
     if (lightLogoFile.value) formData.append('logo', lightLogoFile.value);
     if (darkLogoFile.value) formData.append('dark_logo', darkLogoFile.value);
     if (faviconFile.value) formData.append('favicon', faviconFile.value);
 
-    // Send brand colors as nested hash
     if (activeTheme.value === 'custom') {
       formData.append('brand_colors[primary]', primaryColor.value);
       formData.append('brand_colors[text]', textColor.value);
@@ -252,15 +196,12 @@ const handleSave = async (shouldReload = true, isVerifyAction = false) => {
     }
     formData.append('brand_colors[layout]', activeLayout.value);
     formData.append('brand_colors[brand_name]', brandName.value);
+    formData.append('brand_name', brandName.value);
 
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: true });
     const response = await AccountAPI.update(formData);
 
-    // Set localStorage BEFORE committing to Vuex, so that when
-    // App.vue's accountBrandColors watcher fires synchronously,
-    // it reads the correct color_scheme from localStorage.
     LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, activeTheme.value);
- console.log(LOCAL_STORAGE_KEYS.COLOR_SCHEME);
     skipNextAccountSync = true;
     store.commit('accounts/EDIT_ACCOUNT', response.data);
     lightLogoFile.value = null;
@@ -268,12 +209,10 @@ const handleSave = async (shouldReload = true, isVerifyAction = false) => {
     faviconFile.value = null;
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
 
-    // Re-apply colors after the store commit to ensure CSS vars survive
-    // any watcher cascade that may have cleared them.
     const isOSOnDarkMode = window.matchMedia(
       '(prefers-color-scheme: dark)'
     ).matches;
-    
+
     if (activeTheme.value === 'custom') {
       applyLivePreview();
       setColorTheme(isOSOnDarkMode, {
@@ -299,10 +238,6 @@ const handleSave = async (shouldReload = true, isVerifyAction = false) => {
   }
 };
 
-const handleVerify = () => {
-  handleSave(false, true);
-};
-
 const onLightLogoChange = event => {
   const [file] = event.target.files;
   if (file) lightLogoFile.value = file;
@@ -317,8 +252,6 @@ const onFaviconChange = event => {
   const [file] = event.target.files;
   if (file) faviconFile.value = file;
 };
-
-
 
 const buttonTextColor = computed(() => {
   try {
@@ -356,523 +289,352 @@ const handleMagicPaletteApplied = palette => {
   if (palette.text) textColor.value = palette.text;
   if (palette.background) backgroundColor.value = palette.background;
 };
+
+const themeOptions = computed(() => [
+  {
+    id: 'light',
+    icon: 'i-lucide-sun',
+    label: t('BRANDING_SETTINGS.THEME_SETTINGS.LIGHT.TITLE'),
+  },
+  {
+    id: 'dark',
+    icon: 'i-lucide-moon',
+    label: t('BRANDING_SETTINGS.THEME_SETTINGS.DARK.TITLE'),
+  },
+  {
+    id: 'custom',
+    icon: 'i-lucide-palette',
+    label: t('BRANDING_SETTINGS.THEME_SETTINGS.CUSTOM.TITLE'),
+  },
+]);
 </script>
 
 <template>
-  <div class="grid max-w-2xl ltr:mr-auto rtl:ml-auto">
+  <div class="flex w-full max-w-3xl flex-col gap-8 ltr:mr-auto rtl:ml-auto">
     <BaseSettingsHeader
       :title="$t('BRANDING_SETTINGS.TITLE')"
       :description="$t('BRANDING_SETTINGS.DESCRIPTION')"
       feature-name="branding"
     />
 
-    <div class="flex flex-col w-full mt-3">
-      <div class="flex flex-col w-full max-w-2xl">
-        <!-- Custom Domain -->
-        <SectionLayout
-          v-if="isCustomDomainEnabled"
-          :title="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TITLE')"
-          :description="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.DESCRIPTION')"
-          class="!pt-0"
-        >
-          <WithLabel name="custom-domain">
-            <div class="flex items-center gap-3 w-full">
-              <NextInput
-                v-model="customDomain"
-                type="text"
-                class="flex-1 min-w-0"
-                :placeholder="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PLACEHOLDER')"
-              />
-              <NextButton
-                v-if="!isVerified"
-                type="button"
-                class="shrink-0"
-                blue
-                :is-loading="isUpdating"
-                :disabled="isUpdating"
-                @click="handleVerify"
-              >
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VERIFY') }}
-              </NextButton>
-              <span
-                v-if="isVerified"
-                class="text-emerald-500 font-semibold text-sm shrink-0"
-              >
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VERIFIED') }}
-              </span>
-              <span
-                v-else-if="customDomain && isPending"
-                class="text-amber-500 font-semibold text-sm shrink-0"
-              >
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PENDING') }}
-              </span>
-            </div>
-
-            <p v-if="!isVerified" class="text-xs text-n-slate-11 mt-3">
-              {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.AUTO_CONNECT_LABEL') }}
-            </p>
-          </WithLabel>
-
-          <div
-            v-if="customDomain && !isVerified"
-            class="mt-3 flex flex-col gap-5 p-4 bg-n-surface-2 border border-n-strong rounded-xl"
-          >
-            <!-- Option 1: CNAME (Only shown for subdomains) -->
-            <div v-if="!isRootDomain" class="flex flex-col gap-3">
-              <p class="text-xs text-n-slate-12 font-semibold">
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_1_TITLE') }}
-              </p>
-              <p class="text-xs text-n-slate-11">
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
-              </p>
-              <div
-                class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 text-xs p-3 bg-n-surface-1 rounded-lg border border-n-strong"
-              >
-                <span class="text-n-slate-10">{{
-                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
-                }}</span>
-                <span class="font-mono text-n-slate-12 font-semibold">{{
-                  'CNAME'
-                }}</span>
-
-                <span class="text-n-slate-10">{{
-                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.NAME')
-                }}</span>
-                <code
-                  class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
-                  >{{ customDomain }}</code
-                >
-
-                <span class="text-n-slate-10">{{
-                  $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TARGET')
-                }}</span>
-                <code
-                  class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
-                  >{{ cnameTarget }}</code
-                >
-              </div>
-            </div>
-
-            <hr
-              v-if="txtVerificationRecord && !isRootDomain"
-              class="border-n-strong"
+    <!-- Brand Identity -->
+    <SectionLayout
+      as-card
+      icon="i-lucide-paintbrush"
+      :title="$t('BRANDING_SETTINGS.BRAND_IDENTITY.TITLE')"
+      :description="$t('BRANDING_SETTINGS.BRAND_IDENTITY.DESCRIPTION')"
+    >
+      <div class="space-y-8">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-foreground">
+              {{ $t('BRANDING_SETTINGS.COMPANY_NAME.LABEL') }}
+            </label>
+            <RelayInput
+              v-model="companyName"
+              class-name="h-10 bg-background transition-colors hover:bg-accent/30 focus:bg-background"
+              :placeholder="$t('BRANDING_SETTINGS.COMPANY_NAME.PLACEHOLDER')"
             />
-
-            <!-- Option 2: TXT & A/AAAA -->
-            <div v-if="txtVerificationRecord" class="flex flex-col gap-3">
-              <p class="text-xs text-n-slate-12 font-semibold">
-                {{
-                  isRootDomain
-                    ? 'TXT & A/AAAA Records (Required for root domains)'
-                    : $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_2_TITLE')
-                }}
-              </p>
-              <p class="text-xs text-n-slate-11">
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TXT_INSTRUCTION') }}
-              </p>
-              <div
-                class="flex flex-col gap-3 p-3 bg-n-surface-1 rounded-lg border border-n-strong"
-              >
-                <!-- TXT Record -->
-                <div
-                  class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 text-xs pb-3 border-b border-n-strong"
-                >
-                  <span class="text-n-slate-10">{{
-                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
-                  }}</span>
-                  <span class="font-mono text-n-slate-12 font-semibold">{{
-                    'TXT'
-                  }}</span>
-
-                  <span class="text-n-slate-10">{{
-                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.NAME')
-                  }}</span>
-                  <code
-                    class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
-                    >{{ txtVerificationName }}</code
-                  >
-
-                  <span class="text-n-slate-10">{{
-                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VALUE')
-                  }}</span>
-                  <code
-                    class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
-                    >{{ txtVerificationRecord }}</code
-                  >
-                </div>
-
-                <!-- A / AAAA Routing Record (only if serverIp is set) -->
-                <div
-                  v-if="serverIp"
-                  class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 text-xs pt-1"
-                >
-                  <span class="text-n-slate-10">{{
-                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
-                  }}</span>
-                  <span class="font-mono text-n-slate-12 font-semibold">{{
-                    routingRecordType
-                  }}</span>
-
-                  <span class="text-n-slate-10">{{
-                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.NAME')
-                  }}</span>
-                  <code
-                    class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
-                    >{{ '@' }}</code
-                  >
-
-                  <span class="text-n-slate-10">{{
-                    $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VALUE')
-                  }}</span>
-                  <code
-                    class="font-mono text-n-slate-12 font-semibold bg-transparent p-0 select-all"
-                    >{{ serverIp }}</code
-                  >
-                </div>
-              </div>
-            </div>
           </div>
-        </SectionLayout>
-
-        <!-- Brand Name -->
-        <SectionLayout
-          with-border
-          :title="$t('BRANDING_SETTINGS.BRAND_NAME.TITLE')"
-          :description="$t('BRANDING_SETTINGS.BRAND_NAME.DESCRIPTION')"
-        >
-          <WithLabel name="brand-name">
-            <NextInput
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-foreground">
+              {{ $t('BRANDING_SETTINGS.BRAND_NAME.LABEL') }}
+            </label>
+            <RelayInput
               v-model="brandName"
-              type="text"
-              class="w-full"
+              class-name="h-10 bg-background transition-colors hover:bg-accent/30 focus:bg-background"
               :placeholder="$t('BRANDING_SETTINGS.BRAND_NAME.PLACEHOLDER')"
             />
-          </WithLabel>
-        </SectionLayout>
+          </div>
+        </div>
 
-        <!-- Logo Upload -->
-        <SectionLayout
-          with-border
-          :title="$t('BRANDING_SETTINGS.LOGO_SETTINGS.TITLE')"
-          :description="$t('BRANDING_SETTINGS.LOGO_SETTINGS.DESCRIPTION')"
-        >
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div>
+          <label class="mb-4 block text-sm font-medium text-foreground">
+            {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.TITLE') }}
+          </label>
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <!-- Light Logo -->
             <div
-              class="flex flex-col items-center p-4 border border-dashed border-n-strong rounded-xl bg-n-surface-2 text-center"
+              class="group flex cursor-pointer flex-col items-center rounded-xl border border-border/60 bg-card p-5 text-center shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-accent/50 hover:shadow-md"
+              @click="lightLogoInput?.click()"
             >
-              <span class="text-sm font-semibold text-n-slate-12 mb-1">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.TITLE') }}
-              </span>
-              <span class="text-xs text-n-slate-11 mb-4">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.NOTE') }}
-              </span>
               <div
-                class="w-16 h-16 rounded-lg bg-white border border-n-strong flex items-center justify-center mb-4 overflow-hidden"
+                class="my-3 flex size-16 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border/80 bg-muted/40 transition-all duration-300 group-hover:scale-105 group-hover:border-primary/40 group-hover:bg-primary/5"
               >
                 <img
                   v-if="lightLogoPreview"
                   :src="lightLogoPreview"
-                  class="w-full h-full object-contain"
+                  class="size-full object-contain"
                   :alt="$t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.TITLE')"
                 />
-                <span v-else class="i-lucide-image text-slate-400 size-6" />
-              </div>
-              <div class="flex flex-col gap-2 w-full">
-                <input
-                  ref="lightLogoInput"
-                  type="file"
-                  accept="image/*"
-                  class="hidden"
-                  @change="onLightLogoChange"
+                <span
+                  v-else
+                  class="i-lucide-sun size-6 text-muted-foreground/60 transition-colors group-hover:text-primary/80"
                 />
-                <NextButton
-                  class="w-full"
-                  blue
-                  size="small"
-                  type="button"
-                  @click="lightLogoInput.click()"
-                >
-                  {{
-                    lightLogoFile
-                      ? lightLogoFile.name
-                      : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
-                  }}
-                </NextButton>
-                <span class="text-xs text-n-slate-11">
-                  {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.LIMIT') }}
-                </span>
               </div>
+              <h4 class="text-sm font-medium text-foreground">
+                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.TITLE') }}
+              </h4>
+              <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.NOTE') }}
+              </p>
+              <input
+                ref="lightLogoInput"
+                type="file"
+                accept="image/*"
+                class="hidden"
+                @change="onLightLogoChange"
+                @click.stop
+              />
+              <RelayButton
+                variant="outline"
+                size="sm"
+                class="mt-5 h-8 w-full bg-background text-xs font-medium shadow-none transition-colors group-hover:border-transparent group-hover:bg-primary group-hover:text-primary-foreground"
+                type="button"
+                @click.stop="lightLogoInput?.click()"
+              >
+                {{
+                  lightLogoFile
+                    ? lightLogoFile.name
+                    : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
+                }}
+              </RelayButton>
             </div>
 
             <!-- Dark Logo -->
             <div
-              class="flex flex-col items-center p-4 border border-dashed border-n-strong rounded-xl bg-n-surface-2 text-center"
+              class="group flex cursor-pointer flex-col items-center rounded-xl border border-border/60 bg-card p-5 text-center shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-accent/50 hover:shadow-md"
+              @click="darkLogoInput?.click()"
             >
-              <span class="text-sm font-semibold text-n-slate-12 mb-1">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.TITLE') }}
-              </span>
-              <span class="text-xs text-n-slate-11 mb-4">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.NOTE') }}
-              </span>
               <div
-                class="w-16 h-16 rounded-lg bg-n-surface-1 border border-n-strong flex items-center justify-center mb-4 overflow-hidden"
+                class="my-3 flex size-16 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border/80 bg-muted/40 transition-all duration-300 group-hover:scale-105 group-hover:border-primary/40 group-hover:bg-primary/5"
               >
                 <img
                   v-if="darkLogoPreview"
                   :src="darkLogoPreview"
-                  class="w-full h-full object-contain"
+                  class="size-full object-contain"
                   :alt="$t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.TITLE')"
                 />
-                <span v-else class="i-lucide-image text-slate-400 size-6" />
-              </div>
-              <div class="flex flex-col gap-2 w-full">
-                <input
-                  ref="darkLogoInput"
-                  type="file"
-                  accept="image/*"
-                  class="hidden"
-                  @change="onDarkLogoChange"
+                <span
+                  v-else
+                  class="i-lucide-moon size-6 text-muted-foreground/60 transition-colors group-hover:text-primary/80"
                 />
-                <NextButton
-                  class="w-full"
-                  blue
-                  size="small"
-                  type="button"
-                  @click="darkLogoInput.click()"
-                >
-                  {{
-                    darkLogoFile
-                      ? darkLogoFile.name
-                      : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
-                  }}
-                </NextButton>
-                <span class="text-xs text-n-slate-11">
-                  {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.LIMIT') }}
-                </span>
               </div>
+              <h4 class="text-sm font-medium text-foreground">
+                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.TITLE') }}
+              </h4>
+              <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.NOTE') }}
+              </p>
+              <input
+                ref="darkLogoInput"
+                type="file"
+                accept="image/*"
+                class="hidden"
+                @change="onDarkLogoChange"
+                @click.stop
+              />
+              <RelayButton
+                variant="outline"
+                size="sm"
+                class="mt-5 h-8 w-full bg-background text-xs font-medium shadow-none transition-colors group-hover:border-transparent group-hover:bg-primary group-hover:text-primary-foreground"
+                type="button"
+                @click.stop="darkLogoInput?.click()"
+              >
+                {{
+                  darkLogoFile
+                    ? darkLogoFile.name
+                    : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
+                }}
+              </RelayButton>
             </div>
 
             <!-- Favicon -->
             <div
-              class="flex flex-col items-center p-4 border border-dashed border-n-strong rounded-xl bg-n-surface-2 text-center"
+              class="group flex cursor-pointer flex-col items-center rounded-xl border border-border/60 bg-card p-5 text-center shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-accent/50 hover:shadow-md"
+              @click="faviconInput?.click()"
             >
-              <span class="text-sm font-semibold text-n-slate-12 mb-1">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.TITLE') }}
-              </span>
-              <span class="text-xs text-n-slate-11 mb-4">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.NOTE') }}
-              </span>
               <div
-                class="w-16 h-16 rounded-lg bg-n-surface-1 border border-n-strong flex items-center justify-center mb-4 overflow-hidden"
+                class="my-5 flex size-12 items-center justify-center overflow-hidden rounded-xl border border-dashed border-border/80 bg-muted/40 transition-all duration-300 group-hover:scale-105 group-hover:border-primary/40 group-hover:bg-primary/5"
               >
                 <img
                   v-if="faviconPreview"
                   :src="faviconPreview"
-                  class="w-full h-full object-contain"
+                  class="size-full object-contain"
                   :alt="$t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.TITLE')"
                 />
-                <span v-else class="i-lucide-globe text-n-slate-11 size-6" />
-              </div>
-              <div class="flex flex-col gap-2 w-full">
-                <input
-                  ref="faviconInput"
-                  type="file"
-                  accept="image/x-icon,image/png,image/svg+xml"
-                  class="hidden"
-                  @change="onFaviconChange"
+                <span
+                  v-else
+                  class="i-lucide-globe size-5 text-muted-foreground/60 transition-colors group-hover:text-primary/80"
                 />
-                <NextButton
-                  class="w-full"
-                  blue
-                  size="small"
-                  type="button"
-                  @click="faviconInput.click()"
-                >
-                  {{
-                    faviconFile
-                      ? faviconFile.name
-                      : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
-                  }}
-                </NextButton>
-                <span class="text-xs text-n-slate-11">
-                  {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.LIMIT') }}
-                </span>
               </div>
+              <h4 class="text-sm font-medium text-foreground">
+                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.TITLE') }}
+              </h4>
+              <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.NOTE') }}
+              </p>
+              <input
+                ref="faviconInput"
+                type="file"
+                accept="image/x-icon,image/png,image/svg+xml"
+                class="hidden"
+                @change="onFaviconChange"
+                @click.stop
+              />
+              <RelayButton
+                variant="outline"
+                size="sm"
+                class="mt-5 h-8 w-full bg-background text-xs font-medium shadow-none transition-colors group-hover:border-transparent group-hover:bg-primary group-hover:text-primary-foreground"
+                type="button"
+                @click.stop="faviconInput?.click()"
+              >
+                {{
+                  faviconFile
+                    ? faviconFile.name
+                    : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
+                }}
+              </RelayButton>
             </div>
           </div>
-        </SectionLayout>
+        </div>
 
-        <!-- Appearance Settings -->
-        <SectionLayout
-          with-border
-          :title="$t('BRANDING_SETTINGS.THEME_SETTINGS.TITLE')"
-          :description="$t('BRANDING_SETTINGS.THEME_SETTINGS.DESCRIPTION')"
+        <!-- Theme Preset -->
+        <div
+          class="flex flex-col justify-between gap-4 border-t border-border/40 pt-6 md:flex-row md:items-center"
         >
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <!-- Light -->
-            <button
-              type="button"
-              class="flex flex-col items-center p-4 border rounded-xl bg-n-surface-2 hover:bg-n-surface-3 transition-all text-center cursor-pointer"
-              :class="
-                activeTheme === 'light'
-                  ? 'border-n-brand ring-2 ring-n-brand/20'
-                  : 'border-n-strong'
-              "
-              @click="setTheme('light')"
+          <div>
+            <label
+              class="flex items-center gap-2 text-sm font-medium text-foreground"
             >
-              <span class="i-lucide-sun text-amber-500 size-6 mb-2" />
-              <span class="text-sm font-semibold text-n-slate-12">
-                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.LIGHT.TITLE') }}
-              </span>
-              <span class="text-xs text-n-slate-11 mt-1">
-                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.LIGHT.DESCRIPTION') }}
-              </span>
-            </button>
-
-            <!-- Dark -->
-            <button
-              type="button"
-              class="flex flex-col items-center p-4 border rounded-xl bg-n-surface-2 hover:bg-n-surface-3 transition-all text-center cursor-pointer"
-              :class="
-                activeTheme === 'dark'
-                  ? 'border-n-brand ring-2 ring-n-brand/20'
-                  : 'border-n-strong'
-              "
-              @click="setTheme('dark')"
-            >
-              <span class="i-lucide-moon text-blue-500 size-6 mb-2" />
-              <span class="text-sm font-semibold text-n-slate-12">
-                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.DARK.TITLE') }}
-              </span>
-              <span class="text-xs text-n-slate-11 mt-1">
-                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.DARK.DESCRIPTION') }}
-              </span>
-            </button>
-
-            <!-- Custom -->
-            <button
-              type="button"
-              class="flex flex-col items-center p-4 border rounded-xl bg-n-surface-2 hover:bg-n-surface-3 transition-all text-center cursor-pointer"
-              :class="
-                activeTheme === 'custom'
-                  ? 'border-n-brand ring-2 ring-n-brand/20'
-                  : 'border-n-strong'
-              "
-              @click="setTheme('custom')"
-            >
-              <span class="i-lucide-palette text-emerald-500 size-6 mb-2" />
-              <span class="text-sm font-semibold text-n-slate-12">
-                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.CUSTOM.TITLE') }}
-              </span>
-              <span class="text-xs text-n-slate-11 mt-1">
-                {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.CUSTOM.DESCRIPTION') }}
-              </span>
-            </button>
+              <span class="i-lucide-palette size-4 text-muted-foreground" />
+              {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.TITLE') }}
+            </label>
+            <p class="mt-1 text-sm text-muted-foreground">
+              {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.DESCRIPTION') }}
+            </p>
           </div>
-        </SectionLayout>
-
-        <!-- Color Customization -->
-        <SectionLayout
-          v-if="activeTheme === 'custom'"
-          with-border
-          :title="$t('BRANDING_SETTINGS.COLOR_SETTINGS.TITLE')"
-          :description="$t('BRANDING_SETTINGS.COLOR_SETTINGS.DESCRIPTION')"
-        >
-          <template #headerActions>
-            <NextButton
-              type="button"
-              blue
-              size="small"
-              class="w-full sm:w-auto mt-2 sm:mt-0"
-              @click="isMagicModalOpen = true"
-            >
-              <span class="i-lucide-sparkles size-4" />
-              {{ $t('BRANDING_SETTINGS.MAGIC_AI.BUTTON') }}
-            </NextButton>
-          </template>
-
-
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div class="flex flex-col gap-4">
-              <div
-                class="flex items-center justify-between p-3 border border-n-strong rounded-xl bg-n-surface-2"
-              >
-                <span class="text-sm font-semibold text-n-slate-12">
-                  {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PRIMARY') }}
-                </span>
-                <ColorPicker v-model="primaryColor" />
-              </div>
-
-              <div
-                class="flex items-center justify-between p-3 border border-n-strong rounded-xl bg-n-surface-2"
-              >
-                <span class="text-sm font-semibold text-n-slate-12">
-                  {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.TEXT') }}
-                </span>
-                <ColorPicker v-model="textColor" />
-              </div>
-
-              <div
-                class="flex items-center justify-between p-3 border border-n-strong rounded-xl bg-n-surface-2"
-              >
-                <span class="text-sm font-semibold text-n-slate-12">
-                  {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.BACKGROUND') }}
-                </span>
-                <ColorPicker v-model="backgroundColor" />
-              </div>
-            </div>
-
-            <!-- Live Preview -->
-            <div class="flex flex-col gap-2">
-              <span
-                class="text-xs font-semibold text-n-slate-10 uppercase tracking-wider mb-1"
-              >
-                {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.LIVE_PREVIEW') }}
-              </span>
-              <div
-                class="p-6 rounded-xl flex flex-col gap-4 items-center justify-center border border-n-strong transition-all duration-300 min-h-[140px]"
-                :style="{ backgroundColor: backgroundColor }"
-              >
-                <p
-                  class="text-sm font-medium transition-all duration-300"
-                  :style="{ color: textColor }"
-                >
-                  {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PREVIEW_TEXT') }}
-                </p>
-                <button
-                  class="px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition-all duration-300"
-                  :style="{
-                    backgroundColor: primaryColor,
-                    color: buttonTextColor,
-                  }"
-                >
-                  {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PREVIEW_BUTTON') }}
-                </button>
-              </div>
-              <span class="text-xs text-n-slate-11 text-center">
-                {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PREVIEW_NOTE') }}
-              </span>
-            </div>
-          </div>
-        </SectionLayout>
-
-        <!-- Action Buttons -->
-        <div class="flex items-center justify-end gap-3 mt-6 pb-8">
-          <NextButton type="button" clear @click="handleCancel">
-            {{ $t('BRANDING_SETTINGS.CANCEL') }}
-          </NextButton>
-          <NextButton
-            type="button"
-            blue
-            :is-loading="isUpdating"
-            @click="handleSave"
+          <div
+            class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-background p-1 shadow-xs"
           >
-            {{ $t('BRANDING_SETTINGS.SAVE') }}
-          </NextButton>
+            <button
+              v-for="option in themeOptions"
+              :key="option.id"
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors"
+              :class="
+                activeTheme === option.id
+                  ? 'bg-muted text-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+              "
+              @click="setTheme(option.id)"
+            >
+              <span class="size-3.5" :class="[option.icon]" />
+              {{ option.label }}
+            </button>
+          </div>
         </div>
       </div>
+    </SectionLayout>
+
+    <!-- Brand Colors -->
+    <SectionLayout
+      as-card
+      :title="$t('BRANDING_SETTINGS.COLOR_SETTINGS.TITLE')"
+      :description="$t('BRANDING_SETTINGS.COLOR_SETTINGS.DESCRIPTION')"
+    >
+      <template #headerActions>
+        <div class="flex flex-wrap gap-2">
+          <RelayButton
+            variant="outline"
+            class="h-9 gap-2 text-[13px] shadow-none"
+            type="button"
+            @click="isMagicModalOpen = true"
+          >
+            <span class="i-lucide-globe size-3.5" />
+            {{ $t('BRANDING_SETTINGS.MAGIC_AI.GENERATE_FROM_WEBSITE') }}
+          </RelayButton>
+          <RelayButton
+            variant="outline"
+            class="h-9 text-[13px] shadow-none"
+            type="button"
+            @click="handleResetColors"
+          >
+            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.RESET') }}
+          </RelayButton>
+        </div>
+      </template>
+
+      <div class="flex flex-col gap-6">
+        <div class="flex flex-wrap items-center gap-8">
+          <div>
+            <span class="mb-3 block text-xs font-medium text-muted-foreground">
+              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PRIMARY') }}
+            </span>
+            <ColorPicker v-model="primaryColor" />
+          </div>
+          <div>
+            <span class="mb-3 block text-xs font-medium text-muted-foreground">
+              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.TEXT') }}
+            </span>
+            <ColorPicker v-model="textColor" />
+          </div>
+          <div>
+            <span class="mb-3 block text-xs font-medium text-muted-foreground">
+              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.BACKGROUND') }}
+            </span>
+            <ColorPicker v-model="backgroundColor" />
+          </div>
+        </div>
+
+        <div v-if="activeTheme === 'custom'" class="flex flex-col gap-2">
+          <span
+            class="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+          >
+            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.LIVE_PREVIEW') }}
+          </span>
+          <div
+            class="flex min-h-[140px] flex-col items-center justify-center gap-4 rounded-xl border border-border p-6 transition-all duration-300"
+            :style="{ backgroundColor: backgroundColor }"
+          >
+            <p
+              class="text-sm font-medium transition-all duration-300"
+              :style="{ color: textColor }"
+            >
+              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PREVIEW_TEXT') }}
+            </p>
+            <button
+              type="button"
+              class="rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-all duration-300"
+              :style="{
+                backgroundColor: primaryColor,
+                color: buttonTextColor,
+              }"
+            >
+              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PREVIEW_BUTTON') }}
+            </button>
+          </div>
+          <span class="text-center text-xs text-muted-foreground">
+            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PREVIEW_NOTE') }}
+          </span>
+        </div>
+      </div>
+    </SectionLayout>
+
+    <div
+      class="mt-2 flex items-center justify-end gap-3 border-t border-border/40 pb-2 pt-6"
+    >
+      <RelayButton variant="outline" type="button" @click="handleCancel">
+        {{ $t('BRANDING_SETTINGS.CANCEL') }}
+      </RelayButton>
+      <RelayButton
+        type="button"
+        class="shadow-sm"
+        :disabled="isUpdating"
+        @click="handleSave"
+      >
+        {{ $t('BRANDING_SETTINGS.SAVE') }}
+      </RelayButton>
     </div>
 
     <MagicBrandingModal

@@ -10,7 +10,7 @@ import { useStoreGetters, useStore } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const store = useStore();
 const { t } = useI18n();
@@ -96,75 +96,79 @@ const confirmPlaceHolderText = computed(() =>
         feature-name="team_management"
       >
         <template v-if="teamsList?.length" #count>
-          <span class="text-body-main text-n-slate-11">
+          <span class="text-sm text-muted-foreground">
             {{ $t('TEAMS_SETTINGS.COUNT', { n: teamsList.length }) }}
           </span>
         </template>
         <template #actions>
           <router-link v-if="isAdmin" :to="{ name: 'settings_teams_new' }">
-            <Button :label="$t('TEAMS_SETTINGS.NEW_TEAM')" size="sm" />
+            <RelayButton size="sm">
+              {{ $t('TEAMS_SETTINGS.NEW_TEAM') }}
+            </RelayButton>
           </router-link>
         </template>
       </BaseSettingsHeader>
     </template>
     <template #body>
-      <span
-        v-if="!filteredTeamsList.length && searchQuery"
-        class="flex-1 flex items-center justify-center py-20 text-center text-body-main !text-base text-n-slate-11"
-      >
-        {{ $t('TEAMS_SETTINGS.NO_RESULTS') }}
-      </span>
-
-      <div v-else class="divide-y divide-n-weak border-t border-n-weak">
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <template v-if="!filteredTeamsList.length && searchQuery">
+          <p
+            class="col-span-full py-20 text-center text-sm text-muted-foreground"
+          >
+            {{ $t('TEAMS_SETTINGS.NO_RESULTS') }}
+          </p>
+        </template>
         <div
           v-for="team in filteredTeamsList"
           :key="team.id"
-          class="flex justify-between flex-row items-start gap-4 py-4"
+          class="group flex h-full flex-col gap-5 rounded-xl border border-border/80 bg-card p-5 shadow-xs transition-colors hover:border-border"
         >
-          <div class="flex items-start gap-4">
+          <div class="flex w-full flex-col items-start gap-4">
             <div
-              class="flex items-center flex-shrink-0 size-10 justify-center rounded-xl outline outline-1 outline-n-weak -outline-offset-1"
+              class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10"
             >
-              <Icon
-                icon="i-lucide-users-round"
-                class="size-4 text-n-slate-11"
-              />
+              <Icon icon="i-lucide-users-round" class="size-6 text-primary" />
             </div>
-            <div class="flex flex-col items-start gap-1">
-              <span class="block text-heading-3 text-n-slate-12 capitalize">
+            <div>
+              <h3 class="text-base font-semibold text-foreground">
                 {{ team.name }}
-              </span>
-              <p class="mb-0 text-n-slate-11 text-body-main">
+              </h3>
+              <p
+                class="mt-1 pr-4 text-[13px] leading-relaxed text-muted-foreground"
+              >
                 {{ team.description }}
               </p>
             </div>
           </div>
-          <div class="flex justify-end gap-3">
+          <div
+            class="mt-auto flex items-center justify-between gap-3 border-t border-border/40 pt-4"
+          >
             <router-link
               :to="{
                 name: 'settings_teams_edit',
                 params: { teamId: team.id },
               }"
             >
-              <Button
+              <RelayButton
                 v-if="isAdmin"
-                v-tooltip.top="$t('TEAMS_SETTINGS.LIST.EDIT_TEAM')"
-                icon="i-woot-settings"
-                slate
-                sm
-              />
+                variant="outline"
+                size="sm"
+                class="h-9 border-border/80 bg-background px-4 text-[13px] font-medium shadow-xs"
+              >
+                {{ $t('TEAMS_SETTINGS.LIST.VIEW_TEAM') }}
+              </RelayButton>
             </router-link>
-
-            <Button
+            <RelayButton
               v-if="isAdmin"
               v-tooltip.top="$t('TEAMS_SETTINGS.DELETE.BUTTON_TEXT')"
-              icon="i-woot-bin"
-              slate
-              sm
-              class="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"
-              :is-loading="loading[team.id]"
+              variant="outline"
+              size="icon"
+              class="size-9 border-border/80 bg-background text-muted-foreground shadow-xs hover:bg-muted hover:text-foreground"
+              :disabled="loading[team.id]"
               @click="openDelete(team)"
-            />
+            >
+              <Icon icon="i-lucide-trash-2" class="size-4" />
+            </RelayButton>
           </div>
         </div>
       </div>

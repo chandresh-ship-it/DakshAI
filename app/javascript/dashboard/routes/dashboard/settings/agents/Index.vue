@@ -14,7 +14,10 @@ import AddAgent from './AddAgent.vue';
 import EditAgent from './EditAgent.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import SettingsListCard from '../components/SettingsListCard.vue';
+import SettingsListRow from '../components/SettingsListRow.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const getters = useStoreGetters();
 const store = useStore();
@@ -161,33 +164,33 @@ const confirmDeletion = () => {
         feature-name="agents"
       >
         <template v-if="agentList?.length" #count>
-          <span class="text-body-main text-n-slate-11">
+          <span class="text-sm text-muted-foreground">
             {{ $t('AGENT_MGMT.COUNT', { n: agentList.length }) }}
           </span>
         </template>
         <template #actions>
-          <Button
-            :label="$t('AGENT_MGMT.HEADER_BTN_TXT')"
-            size="sm"
-            @click="openAddPopup"
-          />
+          <RelayButton size="sm" @click="openAddPopup">
+            {{ $t('AGENT_MGMT.HEADER_BTN_TXT') }}
+          </RelayButton>
         </template>
       </BaseSettingsHeader>
     </template>
     <template #body>
-      <span
-        v-if="!filteredAgentList.length && searchQuery"
-        class="flex-1 flex items-center justify-center py-20 text-center text-body-main !text-base text-n-slate-11"
+      <SettingsListCard
+        :details-label="$t('AGENT_MGMT.LIST.DETAILS')"
+        :actions-label="$t('AGENT_MGMT.LIST.ACTIONS')"
+        :show-column-headers="!!filteredAgentList.length"
       >
-        {{ $t('AGENT_MGMT.NO_RESULTS') }}
-      </span>
-      <div v-else class="divide-y divide-n-weak border-t border-n-weak">
-        <div
+        <template v-if="!filteredAgentList.length && searchQuery" #empty>
+          <p class="text-center text-sm text-muted-foreground">
+            {{ $t('AGENT_MGMT.NO_RESULTS') }}
+          </p>
+        </template>
+        <SettingsListRow
           v-for="(agent, index) in filteredAgentList"
           :key="agent.email"
-          class="flex justify-between flex-row items-start gap-4 py-4"
         >
-          <div class="flex items-center gap-4">
+          <template #leading>
             <Avatar
               :src="agent.thumbnail"
               :name="agent.name"
@@ -195,86 +198,80 @@ const confirmDeletion = () => {
               :size="40"
               hide-offline-status
             />
-            <div class="flex flex-col gap-1.5 items-start">
-              <span class="block text-heading-3 text-n-slate-12 capitalize">
-                {{ agent.name }}
-              </span>
-              <div class="flex items-center gap-2">
-                <span class="text-body-main text-n-slate-11">
-                  {{ agent.email }}
-                </span>
-                <div class="w-px h-3 bg-n-strong rounded-lg" />
-                <span
-                  class="block w-fit text-body-main text-n-slate-11 relative"
-                  :class="{
-                    'hover:text-n-slate-12 group cursor-pointer':
-                      agent.custom_role_id,
-                  }"
-                >
-                  {{ getAgentRoleName(agent) }}
-
-                  <div
-                    class="absolute ltr:left-0 rtl:right-0 z-10 hidden w-[300px] bg-n-alpha-3 backdrop-blur-[100px] rounded-xl outline outline-1 outline-n-container shadow-lg top-14 md:top-12"
-                    :class="{ 'group-hover:block': agent.custom_role_id }"
-                  >
-                    <div class="flex flex-col gap-1 p-4">
-                      <span class="text-heading-3 text-n-slate-12">
-                        {{ $t('AGENT_MGMT.LIST.AVAILABLE_CUSTOM_ROLE') }}
-                      </span>
-                      <ul class="ltr:pl-4 rtl:pr-4 mb-0 list-disc">
-                        <li
-                          v-for="permission in getAgentRolePermissions(agent)"
-                          :key="permission"
-                          class="text-body-main text-n-slate-11"
-                        >
-                          {{
-                            $t(
-                              `CUSTOM_ROLE.PERMISSIONS.${permission.toUpperCase()}`
-                            )
-                          }}
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </span>
-                <div class="w-px h-3 bg-n-strong rounded-lg" />
-                <span
-                  v-if="agent.confirmed"
-                  class="text-body-main text-n-slate-11"
-                >
-                  {{ $t('AGENT_MGMT.LIST.VERIFIED') }}
-                </span>
-                <span
-                  v-if="!agent.confirmed"
-                  class="text-body-main text-n-slate-11"
-                >
-                  {{ $t('AGENT_MGMT.LIST.VERIFICATION_PENDING') }}
-                </span>
+          </template>
+          <span class="text-sm font-medium capitalize text-foreground">
+            {{ agent.name }}
+          </span>
+          <div
+            class="mt-1 flex flex-wrap items-center gap-3.5 text-[13px] text-muted-foreground"
+          >
+            <span>{{ agent.email }}</span>
+            <div class="size-1 rounded-full bg-muted-foreground/40" />
+            <span
+              class="relative"
+              :class="{
+                'group/role cursor-pointer hover:text-foreground':
+                  agent.custom_role_id,
+              }"
+            >
+              {{ getAgentRoleName(agent) }}
+              <div
+                class="absolute top-14 z-10 hidden w-[300px] rounded-xl border border-border bg-card p-4 shadow-lg backdrop-blur-[100px] ltr:left-0 rtl:right-0 md:top-12"
+                :class="{ 'group-hover/role:block': agent.custom_role_id }"
+              >
+                <div class="flex flex-col gap-1">
+                  <span class="text-sm font-medium text-foreground">
+                    {{ $t('AGENT_MGMT.LIST.AVAILABLE_CUSTOM_ROLE') }}
+                  </span>
+                  <ul class="mb-0 list-disc ltr:pl-4 rtl:pr-4">
+                    <li
+                      v-for="permission in getAgentRolePermissions(agent)"
+                      :key="permission"
+                      class="text-[13px] text-muted-foreground"
+                    >
+                      {{
+                        $t(
+                          `CUSTOM_ROLE.PERMISSIONS.${permission.toUpperCase()}`
+                        )
+                      }}
+                    </li>
+                  </ul>
+                </div>
               </div>
-            </div>
+            </span>
+            <div class="size-1 rounded-full bg-muted-foreground/40" />
+            <span v-if="agent.confirmed">
+              {{ $t('AGENT_MGMT.LIST.VERIFIED') }}
+            </span>
+            <span v-else>
+              {{ $t('AGENT_MGMT.LIST.VERIFICATION_PENDING') }}
+            </span>
           </div>
-          <div class="flex justify-end gap-3">
-            <Button
+          <template #actions>
+            <RelayButton
               v-if="showEditAction(agent)"
               v-tooltip.top="$t('AGENT_MGMT.EDIT.BUTTON_TEXT')"
-              icon="i-woot-edit-pen"
-              slate
-              sm
+              variant="ghost"
+              size="icon"
+              class="size-8 border border-transparent text-muted-foreground shadow-xs hover:border-border hover:bg-background hover:text-foreground"
               @click="openEditPopup(agent)"
-            />
-            <Button
+            >
+              <Icon icon="i-lucide-pencil" class="size-3.5" />
+            </RelayButton>
+            <RelayButton
               v-if="showDeleteAction(agent)"
               v-tooltip.top="$t('AGENT_MGMT.DELETE.BUTTON_TEXT')"
-              icon="i-woot-bin"
-              slate
-              sm
-              class="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"
-              :is-loading="loading[agent.id]"
+              variant="ghost"
+              size="icon"
+              class="size-8 border border-transparent text-muted-foreground shadow-xs hover:border-red-100 hover:bg-red-50 hover:text-red-600"
+              :disabled="loading[agent.id]"
               @click="openDeletePopup(agent, index)"
-            />
-          </div>
-        </div>
-      </div>
+            >
+              <Icon icon="i-lucide-trash-2" class="size-3.5" />
+            </RelayButton>
+          </template>
+        </SettingsListRow>
+      </SettingsListCard>
     </template>
 
     <woot-modal v-model:show="showAddPopup" :on-close="hideAddPopup">

@@ -205,9 +205,9 @@ export default {
 </script>
 
 <template>
-  <div class="grid max-w-2xl ltr:mr-auto rtl:ml-auto">
+  <div class="grid max-w-2xl gap-8 ltr:mr-auto rtl:ml-auto">
     <BaseSettingsHeader :title="$t('PROFILE_SETTINGS.TITLE')" description="" />
-    <SectionLayout title="" description="" class="!pt-0">
+    <SectionLayout title="" description="" as-card class="!pt-0">
       <div class="flex flex-col gap-6">
         <UserProfilePicture
           :src="avatarUrl"
@@ -225,7 +225,7 @@ export default {
       </div>
     </SectionLayout>
     <SectionLayout
-      with-border
+      as-card
       :title="$t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.TITLE')"
       :description="
         replaceInstallationName(
@@ -233,7 +233,7 @@ export default {
         )
       "
     >
-      <div class="flex flex-col gap-6 items-start">
+      <div class="flex flex-col items-start gap-6">
         <FontSize
           :value="currentFontSize"
           :label="$t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.FONT_SIZE.TITLE')"
@@ -251,7 +251,7 @@ export default {
       </div>
     </SectionLayout>
     <SectionLayout
-      with-border
+      as-card
       :title="$t('PROFILE_SETTINGS.FORM.MESSAGE_SIGNATURE_SECTION.TITLE')"
       :description="$t('PROFILE_SETTINGS.FORM.MESSAGE_SIGNATURE_SECTION.NOTE')"
     >
@@ -261,12 +261,12 @@ export default {
       />
     </SectionLayout>
     <SectionLayout
-      with-border
+      as-card
       :title="$t('PROFILE_SETTINGS.FORM.SEND_MESSAGE.TITLE')"
       :description="$t('PROFILE_SETTINGS.FORM.SEND_MESSAGE.NOTE')"
     >
       <div
-        class="flex flex-col justify-between w-full gap-5 sm:gap-4 sm:flex-row"
+        class="flex w-full flex-col justify-between gap-5 sm:flex-row sm:gap-4"
       >
         <RadioCard
           v-for="hotKey in hotKeys"
@@ -281,19 +281,19 @@ export default {
           <img
             :src="hotKey.lightImage"
             :alt="`Light themed image for ${hotKey.title}`"
-            class="block object-cover w-full dark:hidden"
+            class="block w-full object-cover dark:hidden"
           />
           <img
             :src="hotKey.darkImage"
             :alt="`Dark themed image for ${hotKey.title}`"
-            class="hidden object-cover w-full dark:block"
+            class="hidden w-full object-cover dark:block"
           />
         </RadioCard>
       </div>
     </SectionLayout>
     <SectionLayout
       v-if="!globalConfig.disableUserProfileUpdate"
-      with-border
+      as-card
       :title="$t('PROFILE_SETTINGS.FORM.PASSWORD_SECTION.TITLE')"
       description=""
     >
@@ -301,7 +301,7 @@ export default {
     </SectionLayout>
     <SectionLayout
       v-if="isMfaEnabled"
-      with-border
+      as-card
       :title="$t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.TITLE')"
       :description="$t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.NOTE')"
     >
@@ -309,7 +309,7 @@ export default {
     </SectionLayout>
     <Policy :permissions="audioNotificationPermissions">
       <SectionLayout
-        with-border
+        as-card
         :title="$t('PROFILE_SETTINGS.FORM.AUDIO_NOTIFICATIONS_SECTION.TITLE')"
         :description="
           $t('PROFILE_SETTINGS.FORM.AUDIO_NOTIFICATIONS_SECTION.NOTE')
@@ -320,7 +320,7 @@ export default {
     </Policy>
     <Policy :permissions="notificationPermissions">
       <SectionLayout
-        with-border
+        as-card
         :title="$t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.TITLE')"
         description=""
       >
@@ -328,7 +328,7 @@ export default {
       </SectionLayout>
     </Policy>
     <SectionLayout
-      with-border
+      as-card
       :title="$t('PROFILE_SETTINGS.FORM.ACCESS_TOKEN.TITLE')"
       :description="
         replaceInstallationName($t('PROFILE_SETTINGS.FORM.ACCESS_TOKEN.NOTE'))

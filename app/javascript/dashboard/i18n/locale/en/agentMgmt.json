@@ -17,6 +17,7 @@
       "NAME": "Name",
       "EMAIL": "EMAIL",
       "STATUS": "Status",
+      "DETAILS": "Agent Details",
       "ACTIONS": "Actions",
       "VERIFIED": "Verified",
       "VERIFICATION_PENDING": "Verification Pending",

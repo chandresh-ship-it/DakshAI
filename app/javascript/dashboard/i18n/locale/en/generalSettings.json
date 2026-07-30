@@ -12,7 +12,8 @@
       "NON_ADMIN": "Please contact your administrator to upgrade the plan and continue using all features."
     },
     "TITLE": "Account settings",
-    "SUBMIT": "Update settings",
+    "SUBMIT": "Save Changes",
+    "CANCEL": "Cancel",
     "BACK": "Back",
     "DISMISS": "Dismiss",
     "UPDATE": {
@@ -20,9 +21,9 @@
       "SUCCESS": "Successfully updated account settings"
     },
     "ACCOUNT_DELETE_SECTION": {
-      "TITLE": "Delete your Account",
-      "NOTE": "Once you delete your account, all your data will be deleted.",
-      "BUTTON_TEXT": "Delete Your Account",
+      "TITLE": "Remove Account",
+      "NOTE": "You can do 'Disable account' to take a break from panel.",
+      "BUTTON_TEXT": "Delete Account",
       "CONFIRM": {
         "TITLE": "Delete Account",
         "MESSAGE": "Deleting your Account is irreversible. Enter your account name below to confirm you want to permanently delete it.",
@@ -42,12 +43,22 @@
     "FORM": {
       "ERROR": "Please fix form errors",
       "GENERAL_SECTION": {
-        "TITLE": "General settings",
-        "NOTE": ""
+        "TITLE": "Basic Information",
+        "NOTE": "Update your account details and language preferences."
       },
       "ACCOUNT_ID": {
         "TITLE": "Account ID",
-        "NOTE": "This ID is required if you are building an API based integration"
+        "NOTE": "This ID is required if you are building an API based integration.",
+        "COPY": "Copy",
+        "COPIED": "Copied!"
+      },
+      "DEVELOPER_SECTION": {
+        "TITLE": "Developer",
+        "NOTE": "Information for developers and API integrations."
+      },
+      "PREFERENCES_SECTION": {
+        "TITLE": "Preferences",
+        "NOTE": "Configure additional preferences for your account."
       },
       "AUTO_RESOLVE": {
         "TITLE": "Auto-resolve conversations",
@@ -84,8 +95,9 @@
       },
       "LANGUAGE": {
         "LABEL": "Site language",
-        "PLACEHOLDER": "Your account name",
-        "ERROR": ""
+        "PLACEHOLDER": "Select a language",
+        "SEARCH_PLACEHOLDER": "Search languages...",
+        "ERROR": "Please select a language"
       },
       "DOMAIN": {
         "LABEL": "Incoming Email Domain",

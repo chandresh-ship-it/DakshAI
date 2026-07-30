@@ -721,7 +721,6 @@ const administrationMenuItems = computed(() => [
 const navSections = computed(() => [
   { items: primaryMenuItems.value },
   {
-    label: t('SIDEBAR.ADMINISTRATION'),
     items: administrationMenuItems.value,
   },
 ]);
@@ -816,7 +815,7 @@ const logoutMenuItem = computed(() => ({
           v-if="section.label && !isEffectivelyCollapsed"
           class="mb-2 px-2 text-xs font-medium text-muted-foreground"
         >
-          {{ section.label }}
+          {{ section.label }} {{ 'sss' }}
         </p>
         <ul
           class="m-0 flex w-full min-w-0 list-none flex-col gap-3"

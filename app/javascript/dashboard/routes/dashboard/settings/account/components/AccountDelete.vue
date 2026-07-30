@@ -6,7 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { useToggle } from '@vueuse/core';
 import { useAlert } from 'dashboard/composables';
 import WootConfirmDeleteModal from 'dashboard/components/widgets/modal/ConfirmDeleteModal.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import SectionLayout from './SectionLayout.vue';
 
 const { t } = useI18n();
@@ -70,27 +70,22 @@ function handleDeletionError(error) {
 async function markAccountForDeletion() {
   toggleDeletePopup(false);
   try {
-    // Use the enterprise API to toggle deletion with delete action
     await store.dispatch('accounts/toggleDeletion', {
       action_type: 'delete',
     });
-    // Refresh account data
     await store.dispatch('accounts/get');
     useAlert(t('GENERAL_SETTINGS.ACCOUNT_DELETE_SECTION.SUCCESS'));
   } catch (error) {
-    // Handle error message
     handleDeletionError(error);
   }
 }
 
 async function clearDeletionMark() {
   try {
-    // Use the enterprise API to toggle deletion with undelete action
     await store.dispatch('accounts/toggleDeletion', {
       action_type: 'undelete',
     });
 
-    // Refresh account data
     await store.dispatch('accounts/get');
     useAlert(t('GENERAL_SETTINGS.UPDATE.SUCCESS'));
   } catch (error) {
@@ -104,31 +99,36 @@ async function clearDeletionMark() {
     :title="t('GENERAL_SETTINGS.ACCOUNT_DELETE_SECTION.TITLE')"
     :description="t('GENERAL_SETTINGS.ACCOUNT_DELETE_SECTION.NOTE')"
     as-card
+    inline-header
+    hide-content
   >
-    <div v-if="isMarkedForDeletion">
-      <div class="p-4 flex-grow-0 flex-shrink-0 flex-[50%] bg-n-ruby-4 rounded">
-        <p class="mb-4">
+    <template #headerActions>
+      <div v-if="isMarkedForDeletion" class="flex flex-col gap-3">
+        <p class="max-w-sm text-sm text-muted-foreground">
           {{ markedForDeletionMessage }}
         </p>
-        <NextButton
-          :label="
+        <RelayButton
+          variant="outline"
+          class="border-red-200 bg-background text-red-500 shadow-xs hover:bg-red-50 hover:text-red-600"
+          :disabled="uiFlags.isUpdating"
+          @click="clearDeletionMark"
+        >
+          {{
             $t(
               'GENERAL_SETTINGS.ACCOUNT_DELETE_SECTION.SCHEDULED_DELETION.CLEAR_BUTTON'
             )
-          "
-          color="ruby"
-          :is-loading="uiFlags.isUpdating"
-          @click="clearDeletionMark"
-        />
+          }}
+        </RelayButton>
       </div>
-    </div>
-    <div v-if="!isMarkedForDeletion">
-      <NextButton
-        :label="$t('GENERAL_SETTINGS.ACCOUNT_DELETE_SECTION.BUTTON_TEXT')"
-        color="ruby"
+      <RelayButton
+        v-else
+        variant="destructive"
+        class="shadow-xs"
         @click="toggleDeletePopup(true)"
-      />
-    </div>
+      >
+        {{ $t('GENERAL_SETTINGS.ACCOUNT_DELETE_SECTION.BUTTON_TEXT') }}
+      </RelayButton>
+    </template>
   </SectionLayout>
   <WootConfirmDeleteModal
     v-if="showDeletePopup"

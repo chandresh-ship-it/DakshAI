@@ -11,6 +11,7 @@ import WithLabel from 'v3/components/Form/WithLabel.vue';
 import NextInput from 'next/input/Input.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import { RelayButton } from 'dashboard/components-next/relay';
+import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import AccountId from './components/AccountId.vue';
 import BuildInfo from './components/BuildInfo.vue';
 import AccountDelete from './components/AccountDelete.vue';
@@ -21,6 +22,7 @@ export default {
   components: {
     BaseSettingsHeader,
     RelayButton,
+    ComboBox,
     AccountId,
     BuildInfo,
     AccountDelete,
@@ -74,6 +76,12 @@ export default {
         l1.iso_639_1_code.localeCompare(l2.iso_639_1_code)
       );
     },
+    languageOptions() {
+      return this.languagesSortedByCode.map(lang => ({
+        value: lang.iso_639_1_code,
+        label: lang.name,
+      }));
+    },
     isUpdating() {
       return this.uiFlags.isUpdating;
     },
@@ -118,6 +126,10 @@ export default {
       }
     },
 
+    handleCancel() {
+      this.initializeAccount();
+    },
+
     async updateAccount() {
       this.v$.$touch();
       if (this.v$.$invalid) {
@@ -142,6 +154,12 @@ export default {
         useAlert(this.$t('GENERAL_SETTINGS.UPDATE.ERROR'));
       }
     },
+    onLocaleChange(value) {
+      // ComboBox clears on re-select; keep required locale set
+      if (value) {
+        this.locale = value;
+      }
+    },
   },
 };
 </script>
@@ -149,102 +167,120 @@ export default {
 <template>
   <div class="flex w-full max-w-3xl flex-col gap-8 ltr:mr-auto rtl:ml-auto">
     <BaseSettingsHeader :title="$t('GENERAL_SETTINGS.TITLE')" />
-    <div class="min-w-0 flex-grow flex-shrink space-y-8">
+    <form
+      v-if="!uiFlags.isFetchingItem"
+      class="flex min-w-0 flex-col gap-8"
+      @submit.prevent="updateAccount"
+    >
       <SectionLayout
         :title="$t('GENERAL_SETTINGS.FORM.GENERAL_SECTION.TITLE')"
         :description="$t('GENERAL_SETTINGS.FORM.GENERAL_SECTION.NOTE')"
+        icon="i-lucide-clipboard-list"
         as-card
       >
-        <form
-          v-if="!uiFlags.isFetchingItem"
-          class="grid gap-6"
-          @submit.prevent="updateAccount"
-        >
-          <WithLabel
-            name="account-name"
-            :has-error="v$.name.$error"
-            :label="$t('GENERAL_SETTINGS.FORM.NAME.LABEL')"
-            :error-message="$t('GENERAL_SETTINGS.FORM.NAME.ERROR')"
-          >
-            <NextInput
-              v-model="name"
-              type="text"
-              class="w-full"
-              :placeholder="$t('GENERAL_SETTINGS.FORM.NAME.PLACEHOLDER')"
-              @blur="v$.name.$touch"
-            />
-          </WithLabel>
-          <WithLabel
-            name="site-language"
-            :has-error="v$.locale.$error"
-            :label="$t('GENERAL_SETTINGS.FORM.LANGUAGE.LABEL')"
-            :error-message="$t('GENERAL_SETTINGS.FORM.LANGUAGE.ERROR')"
-          >
-            <select
-              v-model="locale"
-              class="!mb-0 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs"
+        <div class="grid gap-8">
+          <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <WithLabel
+              name="account-name"
+              :has-error="v$.name.$error"
+              :label="$t('GENERAL_SETTINGS.FORM.NAME.LABEL')"
+              :error-message="$t('GENERAL_SETTINGS.FORM.NAME.ERROR')"
             >
-              <option
-                v-for="lang in languagesSortedByCode"
-                :key="lang.iso_639_1_code"
-                :value="lang.iso_639_1_code"
-              >
-                {{ lang.name }}
-              </option>
-            </select>
-          </WithLabel>
-          <WithLabel
-            v-if="featureCustomReplyDomainEnabled"
-            name="custom-domain"
-            :label="$t('GENERAL_SETTINGS.FORM.DOMAIN.LABEL')"
-          >
-            <NextInput
-              v-model="domain"
-              type="text"
-              class="w-full"
-              :placeholder="$t('GENERAL_SETTINGS.FORM.DOMAIN.PLACEHOLDER')"
-            />
-            <template #help>
-              {{
-                featureInboundEmailEnabled &&
-                $t('GENERAL_SETTINGS.FORM.FEATURES.INBOUND_EMAIL_ENABLED')
-              }}
-
-              {{
-                featureCustomReplyDomainEnabled &&
-                $t('GENERAL_SETTINGS.FORM.FEATURES.CUSTOM_EMAIL_DOMAIN_ENABLED')
-              }}
-            </template>
-          </WithLabel>
-          <WithLabel
-            v-if="featureCustomReplyEmailEnabled"
-            name="support-email"
-            :label="$t('GENERAL_SETTINGS.FORM.SUPPORT_EMAIL.LABEL')"
-          >
-            <NextInput
-              v-model="supportEmail"
-              type="text"
-              class="w-full"
-              :placeholder="
-                $t('GENERAL_SETTINGS.FORM.SUPPORT_EMAIL.PLACEHOLDER')
-              "
-            />
-          </WithLabel>
-          <div>
-            <RelayButton :disabled="isUpdating" type="submit">
-              {{ $t('GENERAL_SETTINGS.SUBMIT') }}
-            </RelayButton>
+              <NextInput
+                v-model="name"
+                type="text"
+                class="w-full"
+                :placeholder="$t('GENERAL_SETTINGS.FORM.NAME.PLACEHOLDER')"
+                @blur="v$.name.$touch"
+              />
+            </WithLabel>
+            <WithLabel
+              name="site-language"
+              :has-error="v$.locale.$error"
+              :label="$t('GENERAL_SETTINGS.FORM.LANGUAGE.LABEL')"
+              :error-message="$t('GENERAL_SETTINGS.FORM.LANGUAGE.ERROR')"
+            >
+              <ComboBox
+                :model-value="locale"
+                :options="languageOptions"
+                :placeholder="$t('GENERAL_SETTINGS.FORM.LANGUAGE.PLACEHOLDER')"
+                :search-placeholder="
+                  $t('GENERAL_SETTINGS.FORM.LANGUAGE.SEARCH_PLACEHOLDER')
+                "
+                :has-error="v$.locale.$error"
+                class="w-full [&>div>button]:!h-10 [&>div>button]:!rounded-md [&>div>button]:!border-input [&>div>button]:!bg-background [&>div>button]:!shadow-xs [&>div>button]:!text-foreground [&>div>button]:font-normal"
+                @update:model-value="onLocaleChange"
+              />
+            </WithLabel>
           </div>
-        </form>
+          <div
+            v-if="
+              featureCustomReplyDomainEnabled || featureCustomReplyEmailEnabled
+            "
+            class="grid grid-cols-1 gap-8 md:grid-cols-2"
+          >
+            <WithLabel
+              v-if="featureCustomReplyDomainEnabled"
+              name="custom-domain"
+              :label="$t('GENERAL_SETTINGS.FORM.DOMAIN.LABEL')"
+            >
+              <NextInput
+                v-model="domain"
+                type="text"
+                class="w-full"
+                :placeholder="$t('GENERAL_SETTINGS.FORM.DOMAIN.PLACEHOLDER')"
+              />
+              <template #help>
+                {{
+                  featureInboundEmailEnabled &&
+                  $t('GENERAL_SETTINGS.FORM.FEATURES.INBOUND_EMAIL_ENABLED')
+                }}
+
+                {{
+                  featureCustomReplyDomainEnabled &&
+                  $t(
+                    'GENERAL_SETTINGS.FORM.FEATURES.CUSTOM_EMAIL_DOMAIN_ENABLED'
+                  )
+                }}
+              </template>
+            </WithLabel>
+            <WithLabel
+              v-if="featureCustomReplyEmailEnabled"
+              name="support-email"
+              :label="$t('GENERAL_SETTINGS.FORM.SUPPORT_EMAIL.LABEL')"
+            >
+              <NextInput
+                v-model="supportEmail"
+                type="text"
+                class="w-full"
+                :placeholder="
+                  $t('GENERAL_SETTINGS.FORM.SUPPORT_EMAIL.PLACEHOLDER')
+                "
+              />
+            </WithLabel>
+          </div>
+        </div>
       </SectionLayout>
 
-      <woot-loading-state v-if="uiFlags.isFetchingItem" />
-    </div>
-    <AudioTranscription v-if="showAudioTranscriptionConfig" />
-    <AccountId />
-    <div v-if="!uiFlags.isFetchingItem && isOnChatwootCloud">
-      <AccountDelete />
-    </div>
+      <AudioTranscription v-if="showAudioTranscriptionConfig" />
+      <AccountId />
+      <AccountDelete v-if="isOnChatwootCloud" />
+
+      <div class="flex justify-end gap-3 border-t border-border/40 pb-2 pt-8">
+        <RelayButton
+          variant="outline"
+          type="button"
+          :disabled="isUpdating"
+          @click="handleCancel"
+        >
+          {{ $t('GENERAL_SETTINGS.CANCEL') }}
+        </RelayButton>
+        <RelayButton :disabled="isUpdating" type="submit" class="shadow-sm">
+          {{ $t('GENERAL_SETTINGS.SUBMIT') }}
+        </RelayButton>
+      </div>
+    </form>
+    <woot-loading-state v-if="uiFlags.isFetchingItem" />
     <BuildInfo />
   </div>
 </template>

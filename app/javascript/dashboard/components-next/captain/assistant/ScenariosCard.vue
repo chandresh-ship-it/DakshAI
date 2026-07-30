@@ -50,11 +50,6 @@ const emit = defineEmits(['select', 'hover', 'delete', 'update']);
 const { t } = useI18n();
 const { formatMessage } = useMessageFormatter();
 
-const modelValue = computed({
-  get: () => props.isSelected,
-  set: () => emit('select', props.id),
-});
-
 const state = reactive({
   id: '',
   title: '',
@@ -66,6 +61,11 @@ const instructionContentRef = ref();
 
 const [isEditing, toggleEditing] = useToggle();
 const [isInstructionExpanded, toggleInstructionExpanded] = useToggle();
+
+const toggleSelect = () => {
+  if (!props.selectable || isEditing.value) return;
+  emit('select', props.id);
+};
 
 const { height: contentHeight } = useElementSize(instructionContentRef);
 const needsOverlay = computed(() => contentHeight.value > 160);
@@ -119,7 +119,7 @@ const LINK_INSTRUCTION_CLASS =
 
 const renderInstruction = instruction => () =>
   h('p', {
-    class: `mb-0 max-w-none min-w-0 break-words py-4 text-sm text-foreground prose prose-sm ${LINK_INSTRUCTION_CLASS}`,
+    class: `mb-0 max-w-none min-w-0 break-words py-4 text-[14px] leading-relaxed text-foreground/90 prose prose-sm ${LINK_INSTRUCTION_CLASS}`,
     innerHTML: instruction,
   });
 </script>
@@ -137,30 +137,25 @@ const renderInstruction = instruction => () =>
   >
     <div
       class="flex w-full gap-4 p-5"
-      :class="isEditing ? 'flex-col' : 'items-start'"
+      :class="isEditing ? 'flex-col' : 'cursor-pointer select-none items-start'"
+      @click="!isEditing && toggleSelect()"
     >
       <div
         v-if="selectable && !isEditing"
-        class="mt-0.5 flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full border transition-colors"
+        class="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors"
         :class="
           isSelected
             ? 'border-primary bg-primary text-primary-foreground shadow-xs'
             : 'border-border/80 bg-background/50'
         "
-        @click="modelValue = !modelValue"
       >
         <span v-if="isSelected" class="i-lucide-check size-3 stroke-[3]" />
       </div>
 
       <div v-if="!isEditing" class="min-w-0 flex-1">
-        <div class="mb-2 flex w-full items-start justify-between gap-2">
-          <div class="flex min-w-0 flex-col items-start">
-            <h3 class="text-[15px] font-medium text-foreground">{{ title }}</h3>
-            <p class="mt-2 text-[14px] text-muted-foreground">
-              {{ description }}
-            </p>
-          </div>
-          <div class="flex shrink-0 items-center gap-1">
+        <div class="mb-2 flex w-full items-center justify-between gap-2">
+          <h3 class="text-[15px] font-medium text-foreground">{{ title }}</h3>
+          <div class="flex shrink-0 items-center gap-1" @click.stop>
             <RelayButton
               variant="ghost"
               size="icon"
@@ -180,13 +175,17 @@ const renderInstruction = instruction => () =>
           </div>
         </div>
 
+        <p class="mb-4 text-[14px] text-muted-foreground">
+          {{ description }}
+        </p>
+
         <div
           class="group/expandable relative overflow-hidden rounded-lg border border-border/50 bg-background/50 transition-all duration-300 ease-in-out"
           :class="{ 'cursor-pointer': needsOverlay }"
           :style="{
             maxHeight: isInstructionExpanded ? `${contentHeight}px` : '10rem',
           }"
-          @click="needsOverlay ? toggleInstructionExpanded() : null"
+          @click.stop="needsOverlay ? toggleInstructionExpanded() : null"
         >
           <div ref="instructionContentRef" class="px-4">
             <component
@@ -215,9 +214,12 @@ const renderInstruction = instruction => () =>
           {{ tools?.map(tool => `@${tool}`).join(', ') }}
         </span>
       </div>
-      <div v-else class="flex w-full flex-col gap-4 overflow-hidden">
-        <div class="flex flex-col gap-2">
-          <RelayLabel html-for="scenario-title">
+      <div v-else class="flex w-full flex-col gap-6 overflow-hidden">
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="scenario-title"
+            class="text-[13.5px] font-medium text-foreground"
+          >
             {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.LABEL') }}
           </RelayLabel>
           <RelayInput
@@ -226,6 +228,7 @@ const renderInstruction = instruction => () =>
             :placeholder="
               t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.PLACEHOLDER')
             "
+            class-name="rounded-md border-border/80 bg-background text-[14px] shadow-sm"
           />
           <p v-if="titleError" class="text-xs text-destructive">
             {{ titleError }}
@@ -261,15 +264,15 @@ const renderInstruction = instruction => () =>
           :show-character-count="false"
           enable-captain-tools
         />
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
           <RelayButton
-            variant="secondary"
-            size="sm"
+            variant="outline"
+            class="h-9 px-4"
             @click="toggleEditing(false)"
           >
             {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.UPDATE.CANCEL') }}
           </RelayButton>
-          <RelayButton size="sm" @click="onClickUpdate">
+          <RelayButton class="h-9 px-6" @click="onClickUpdate">
             {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.UPDATE.UPDATE') }}
           </RelayButton>
         </div>

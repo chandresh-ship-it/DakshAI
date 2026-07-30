@@ -1,9 +1,7 @@
 <script setup>
-import { computed, reactive } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useToggle } from '@vueuse/core';
 import { useVuelidate } from '@vuelidate/core';
-import { vOnClickOutside } from '@vueuse/components';
 import { required, minLength } from '@vuelidate/validators';
 
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
@@ -14,11 +12,16 @@ import {
   RelayLabel,
 } from 'dashboard/components-next/relay';
 
-const emit = defineEmits(['add']);
+const props = defineProps({
+  open: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const emit = defineEmits(['add', 'cancel', 'update:open']);
 
 const { t } = useI18n();
-
-const [showPopover, togglePopover] = useToggle();
 
 const state = reactive({
   id: '',
@@ -60,47 +63,46 @@ const resetState = () => {
     description: '',
     instruction: '',
   });
+  v$.value.$reset();
 };
+
+watch(
+  () => props.open,
+  isOpen => {
+    if (isOpen) {
+      resetState();
+    }
+  }
+);
 
 const onClickAdd = async () => {
   v$.value.$touch();
   if (v$.value.$invalid) return;
 
-  await emit('add', state);
+  await emit('add', { ...state });
   resetState();
-  togglePopover(false);
+  emit('update:open', false);
 };
 
 const onClickCancel = () => {
-  togglePopover(false);
+  resetState();
+  emit('cancel');
+  emit('update:open', false);
 };
 </script>
 
 <template>
-  <div
-    v-on-click-outside="() => togglePopover(false)"
-    class="relative inline-flex"
-  >
-    <RelayButton
-      size="sm"
-      class="flex-shrink-0"
-      @click="togglePopover(!showPopover)"
-    >
-      <span class="i-lucide-plus size-4" />
-      {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.CREATE') }}
-    </RelayButton>
-
+  <div>
     <div
-      v-if="showPopover"
-      class="absolute top-10 z-50 flex w-[31.25rem] flex-col gap-6 rounded-xl border border-border bg-background p-6 shadow-xl ltr:left-0 rtl:right-0"
+      v-if="open"
+      class="mb-6 rounded-xl border border-border bg-card p-6 shadow-sm"
     >
-      <h3 class="text-base font-medium text-foreground">
-        {{ t(`CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.TITLE`) }}
-      </h3>
-
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <RelayLabel html-for="new-scenario-title">
+      <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="new-scenario-title"
+            class="text-[13.5px] font-medium text-foreground"
+          >
             {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.LABEL') }}
           </RelayLabel>
           <RelayInput
@@ -109,6 +111,7 @@ const onClickCancel = () => {
             :placeholder="
               t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.PLACEHOLDER')
             "
+            class-name="rounded-md border-border/80 bg-background text-[14px] shadow-sm"
           />
           <p v-if="titleError" class="text-xs text-destructive">
             {{ titleError }}
@@ -144,15 +147,23 @@ const onClickCancel = () => {
           :show-character-count="false"
           enable-captain-tools
         />
-      </div>
 
-      <div class="flex w-full items-center justify-between gap-3">
-        <RelayButton variant="secondary" class="w-full" @click="onClickCancel">
-          {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.CANCEL') }}
-        </RelayButton>
-        <RelayButton class="w-full" @click="onClickAdd">
-          {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.CREATE') }}
-        </RelayButton>
+        <div class="flex items-center gap-2">
+          <RelayButton
+            variant="outline"
+            class="h-9 px-4"
+            @click="onClickCancel"
+          >
+            {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.CANCEL') }}
+          </RelayButton>
+          <RelayButton
+            class="h-9 px-6"
+            :disabled="!state.title"
+            @click="onClickAdd"
+          >
+            {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.CREATE') }}
+          </RelayButton>
+        </div>
       </div>
     </div>
   </div>

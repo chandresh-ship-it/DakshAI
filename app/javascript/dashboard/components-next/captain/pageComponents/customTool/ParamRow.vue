@@ -90,11 +90,11 @@ defineExpose({ validate });
             t('CAPTAIN.CUSTOM_TOOLS.FORM.PARAM_DESCRIPTION.PLACEHOLDER')
           "
         />
-        <label class="flex cursor-pointer items-center gap-2">
+        <label
+          class="flex cursor-pointer items-center gap-3 select-none text-[13.5px] font-medium leading-none text-foreground"
+        >
           <RelayCheckbox v-model="required" />
-          <span class="text-sm text-n-slate-11">
-            {{ t('CAPTAIN.CUSTOM_TOOLS.FORM.PARAM_REQUIRED.LABEL') }}
-          </span>
+          {{ t('CAPTAIN.CUSTOM_TOOLS.FORM.PARAM_REQUIRED.LABEL') }}
         </label>
       </div>
       <RelayButton

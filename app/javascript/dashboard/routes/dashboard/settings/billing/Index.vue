@@ -734,7 +734,7 @@ onMounted(() => {
           <div class="px-5 pb-5">
             <template v-if="activePlanPrice">
               <div
-                class="grid sm:grid-cols-2 gap-2 divide-x divide-n-weak mb-4"
+                class="grid sm:grid-cols-2 gap-2 divide-x divide-border mb-4"
               >
                 <DetailItem
                   :label="$t('BILLING_SETTINGS.RESELLER.TOTAL_PRICE')"
@@ -750,7 +750,7 @@ onMounted(() => {
                 {{ $t('BILLING_SETTINGS.CLIENT.SUBSCRIBE_BTN') }}
               </ButtonV4>
             </template>
-            <p v-else class="text-n-slate-11 text-sm">
+            <p v-else class="text-muted-foreground text-sm">
               {{ $t('BILLING_SETTINGS.CLIENT.NO_ACTIVE_PRICE') }}
             </p>
           </div>
@@ -769,8 +769,8 @@ onMounted(() => {
                 class="text-sm font-medium"
                 :class="
                   marketplaceData.connected_account?.charges_enabled
-                    ? 'text-n-teal-10'
-                    : 'text-n-amber-10'
+                    ? 'text-emerald-600'
+                    : 'text-amber-600'
                 "
               >
                 {{
@@ -791,13 +791,13 @@ onMounted(() => {
             </div>
             <p
               v-if="!marketplaceData.connected_account?.charges_enabled"
-              class="text-n-slate-11 text-sm"
+              class="text-muted-foreground text-sm"
             >
               {{ $t('BILLING_SETTINGS.RESELLER.CONNECT_DESC') }}
             </p>
 
             <template v-if="marketplaceData.connected_account?.charges_enabled">
-              <h4 class="text-sm font-medium text-n-slate-12">
+              <h4 class="text-sm font-medium text-foreground">
                 {{ $t('BILLING_SETTINGS.RESELLER.SET_PRICE') }}
               </h4>
               <div class="grid sm:grid-cols-3 gap-4">
@@ -863,7 +863,7 @@ onMounted(() => {
           </template>
           <p
             v-if="lockedPaymentProvider"
-            class="px-4 pt-4 text-xs text-n-slate-11"
+            class="px-4 pt-4 text-xs text-muted-foreground"
           >
             {{
               $t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_LOCKED_HINT', {
@@ -891,13 +891,13 @@ onMounted(() => {
             <div
               v-for="plan in selectablePlans"
               :key="plan"
-              class="border border-n-weak rounded-xl p-6 bg-n-background shadow-sm flex flex-col justify-between gap-4"
+              class="border border-border rounded-xl p-6 bg-background shadow-sm flex flex-col justify-between gap-4"
             >
               <div>
-                <div class="text-xl font-bold text-center text-n-slate-12">
+                <div class="text-xl font-bold text-center text-foreground">
                   {{ $t('BILLING_SETTINGS.SELECT_PLAN.PLAN_LABEL', { plan }) }}
                 </div>
-                <div class="text-sm text-center text-n-slate-11 mt-1">
+                <div class="text-sm text-center text-muted-foreground mt-1">
                   {{ planPriceLabel(plan) }}
                 </div>
               </div>
@@ -954,19 +954,19 @@ onMounted(() => {
           <div class="px-5 pb-2">
             <p
               v-if="cancellationScheduledLabel"
-              class="text-sm text-n-amber-11 mb-4"
+              class="text-sm text-amber-600 mb-4"
             >
               {{ cancellationScheduledLabel }}
             </p>
             <p
               v-if="isSubscriptionPaymentPending"
-              class="text-sm text-n-ruby-11 mb-4"
+              class="text-sm text-destructive mb-4"
             >
               {{ $t('BILLING_SETTINGS.SUBSCRIPTION.PAYMENT_FAILED_HINT') }}
             </p>
           </div>
           <div
-            class="grid lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-4 divide-x divide-n-weak"
+            class="grid lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-4 divide-x divide-border"
           >
             <DetailItem
               :label="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
@@ -1005,9 +1005,9 @@ onMounted(() => {
 
           <div
             v-if="lastPayment"
-            class="mx-5 mt-4 mb-5 rounded-lg border border-n-weak bg-n-solid-1 p-4"
+            class="mx-5 mt-4 mb-5 rounded-lg border border-border bg-muted/30 p-4"
           >
-            <p class="text-sm font-medium text-n-slate-12 mb-3">
+            <p class="text-sm font-medium text-foreground mb-3">
               {{ $t('BILLING_SETTINGS.SUBSCRIPTION.LAST_PAYMENT') }}
             </p>
             <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1041,7 +1041,7 @@ onMounted(() => {
               :href="lastPayment.hosted_invoice_url"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-block mt-3 text-sm text-n-blue-11 hover:underline"
+              class="inline-block mt-3 text-sm text-primary hover:underline"
             >
               {{ $t('BILLING_SETTINGS.TRANSACTIONS.VIEW') }}
             </a>
@@ -1152,19 +1152,21 @@ onMounted(() => {
           <div class="px-5 pb-5 overflow-x-auto">
             <p
               v-if="isFetchingTransactions"
-              class="text-sm text-n-slate-11 py-2"
+              class="text-sm text-muted-foreground py-2"
             >
               {{ $t('BILLING_SETTINGS.TRANSACTIONS.LOADING') }}
             </p>
             <p
               v-else-if="!transactions.length"
-              class="text-sm text-n-slate-11 py-2"
+              class="text-sm text-muted-foreground py-2"
             >
               {{ $t('BILLING_SETTINGS.TRANSACTIONS.EMPTY') }}
             </p>
             <table v-else class="w-full text-sm">
               <thead>
-                <tr class="text-left text-n-slate-11 border-b border-n-weak">
+                <tr
+                  class="text-left text-muted-foreground border-b border-border"
+                >
                   <th class="py-2 pr-4 font-medium">
                     {{ $t('BILLING_SETTINGS.TRANSACTIONS.DATE') }}
                   </th>
@@ -1186,19 +1188,19 @@ onMounted(() => {
                 <tr
                   v-for="transaction in transactions"
                   :key="transaction.id"
-                  class="border-b border-n-weak last:border-0"
+                  class="border-b border-border last:border-0"
                 >
-                  <td class="py-2 pr-4 text-n-slate-12 whitespace-nowrap">
+                  <td class="py-2 pr-4 text-foreground whitespace-nowrap">
                     {{
                       formatTransactionDate(
                         transaction.paid_at || transaction.created_at
                       )
                     }}
                   </td>
-                  <td class="py-2 pr-4 text-n-slate-12">
+                  <td class="py-2 pr-4 text-foreground">
                     {{ transaction.description || '—' }}
                   </td>
-                  <td class="py-2 pr-4 text-n-slate-12 whitespace-nowrap">
+                  <td class="py-2 pr-4 text-foreground whitespace-nowrap">
                     {{ formatTransactionAmount(transaction) }}
                   </td>
                   <td class="py-2 pr-4">
@@ -1206,8 +1208,8 @@ onMounted(() => {
                       class="px-2 py-0.5 rounded-full text-xs font-medium"
                       :class="
                         transaction.status === 'succeeded'
-                          ? 'bg-n-teal-3 text-n-teal-11'
-                          : 'bg-n-ruby-3 text-n-ruby-11'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-red-100 text-destructive'
                       "
                     >
                       {{
@@ -1223,7 +1225,7 @@ onMounted(() => {
                       :href="transaction.hosted_invoice_url"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-n-blue-11 hover:underline"
+                      class="text-primary hover:underline"
                     >
                       {{ $t('BILLING_SETTINGS.TRANSACTIONS.VIEW') }}
                     </a>

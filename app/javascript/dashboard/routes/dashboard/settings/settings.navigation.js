@@ -19,6 +19,11 @@ export const SETTINGS_NAV_SECTIONS = [
         routeName: 'branding_settings_index',
       },
       {
+        key: 'custom_domain',
+        labelKey: 'SIDEBAR.CUSTOM_DOMAIN',
+        routeName: 'custom_domain_settings_index',
+      },
+      {
         key: 'billing',
         labelKey: 'SIDEBAR.BILLING',
         routeName: 'billing_settings_index',

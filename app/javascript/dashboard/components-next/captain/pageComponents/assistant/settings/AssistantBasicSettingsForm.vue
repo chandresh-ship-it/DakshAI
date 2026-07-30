@@ -140,25 +140,55 @@ watch(
       class="z-0"
     />
 
-    <div class="flex flex-col gap-2">
-      <RelayLabel>
+    <div class="space-y-3 pt-2">
+      <RelayLabel class="text-[13.5px]">
         {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.TITLE') }}
       </RelayLabel>
-      <div class="flex flex-col gap-3">
-        <label class="flex cursor-pointer items-center gap-3 select-none">
-          <RelayCheckbox v-model="state.features.conversationFaqs" />
+      <div class="flex items-center gap-3">
+        <RelayCheckbox
+          id="captain-assistant-feature-faqs"
+          v-model="state.features.conversationFaqs"
+        />
+        <label
+          for="captain-assistant-feature-faqs"
+          class="cursor-pointer select-none text-[13.5px] font-medium leading-none text-foreground"
+        >
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_CONVERSATION_FAQS') }}
         </label>
-        <label class="flex cursor-pointer items-center gap-3 select-none">
-          <RelayCheckbox v-model="state.features.memories" />
+      </div>
+      <div class="flex items-center gap-3">
+        <RelayCheckbox
+          id="captain-assistant-feature-memories"
+          v-model="state.features.memories"
+        />
+        <label
+          for="captain-assistant-feature-memories"
+          class="cursor-pointer select-none text-[13.5px] font-medium leading-none text-foreground"
+        >
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_MEMORIES') }}
         </label>
-        <label class="flex cursor-pointer items-center gap-3 select-none">
-          <RelayCheckbox v-model="state.features.citations" />
+      </div>
+      <div class="flex items-center gap-3">
+        <RelayCheckbox
+          id="captain-assistant-feature-citations"
+          v-model="state.features.citations"
+        />
+        <label
+          for="captain-assistant-feature-citations"
+          class="cursor-pointer select-none text-[13.5px] font-medium leading-none text-foreground"
+        >
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_CITATIONS') }}
         </label>
-        <label class="flex cursor-pointer items-center gap-3 select-none">
-          <RelayCheckbox v-model="state.features.contactAttributes" />
+      </div>
+      <div class="flex items-center gap-3">
+        <RelayCheckbox
+          id="captain-assistant-feature-contact-attributes"
+          v-model="state.features.contactAttributes"
+        />
+        <label
+          for="captain-assistant-feature-contact-attributes"
+          class="cursor-pointer select-none text-[13.5px] font-medium leading-none text-foreground"
+        >
           {{ t('CAPTAIN.ASSISTANTS.FORM.FEATURES.ALLOW_CONTACT_ATTRIBUTES') }}
         </label>
       </div>

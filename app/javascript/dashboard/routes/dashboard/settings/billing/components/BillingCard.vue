@@ -15,9 +15,9 @@ defineProps({
 
 <template>
   <div
-    class="rounded-xl shadow-sm border border-n-weak bg-n-solid-2 py-5 space-y-5"
+    class="space-y-5 overflow-hidden rounded-xl border border-border/60 bg-card py-5 shadow-xs"
   >
-    <BillingHeader :title :description class="px-5">
+    <BillingHeader :title :description class="px-5 sm:px-6">
       <slot name="action" />
     </BillingHeader>
     <slot />

@@ -1,15 +1,9 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
-
-import {
-  DropdownContainer,
-  DropdownBody,
-  DropdownSeparator,
-  DropdownItem,
-} from 'next/dropdown-menu/base';
+import { vOnClickOutside } from '@vueuse/components';
 
 const emit = defineEmits(['showCreateAccountModal']);
 
@@ -17,6 +11,8 @@ const { t } = useI18n();
 const { accountId, currentAccount } = useAccount();
 const currentUser = useMapGetter('getCurrentUser');
 const globalConfig = useMapGetter('globalConfig/get');
+
+const isOpen = ref(false);
 
 const isAdmin = computed(() => {
   if (currentUser.value.type === 'SuperAdmin') return true;
@@ -80,41 +76,53 @@ const availableWorkspaces = computed(() =>
 
 const accountInitial = name => (name || 'W').charAt(0).toUpperCase();
 
+const closeMenu = () => {
+  isOpen.value = false;
+};
+
+const toggleMenu = () => {
+  isOpen.value = !isOpen.value;
+};
+
 const onChangeAccount = newId => {
+  closeMenu();
   window.location.href = `/app/accounts/${newId}/dashboard`;
 };
 
 const onAddWorkspace = () => {
+  closeMenu();
   emit('showCreateAccountModal');
 };
 </script>
 
 <template>
-  <DropdownContainer>
-    <template #trigger="{ toggle, isOpen }">
-      <button
-        type="button"
-        class="flex items-center gap-2 rounded-full border border-input bg-background py-1 pl-1 pr-2 text-left text-sm shadow-xs transition-colors hover:border-transparent hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        :class="{ 'bg-accent': isOpen }"
-        @click="toggle"
+  <div v-on-click-outside="closeMenu" class="relative">
+    <button
+      type="button"
+      class="flex items-center gap-2 rounded-full border border-input bg-background py-1 pl-1 pr-2 text-left text-sm shadow-xs transition-colors hover:border-transparent hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      :class="{ 'bg-accent': isOpen }"
+      :aria-expanded="isOpen"
+      @click="toggleMenu"
+    >
+      <span
+        class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground"
       >
+        {{ brandInitial }}
+      </span>
+      <span class="hidden min-w-0 items-center gap-1.5 md:flex">
+        <span class="max-w-28 truncate text-sm font-medium text-foreground">
+          {{ currentAccount.name }}
+        </span>
         <span
-          class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground"
-        >
-          {{ brandInitial }}
-        </span>
-        <span class="hidden min-w-0 items-center gap-1.5 md:flex">
-          <span class="max-w-28 truncate text-sm font-medium text-foreground">
-            {{ currentAccount.name }}
-          </span>
-          <span
-            class="i-lucide-chevron-down size-3.5 shrink-0 text-muted-foreground"
-          />
-        </span>
-      </button>
-    </template>
+          class="i-lucide-chevron-down size-3.5 shrink-0 text-muted-foreground"
+        />
+      </span>
+    </button>
 
-    <DropdownBody class="top-full z-50 mt-1 w-64 p-2 ltr:right-0 rtl:left-0">
+    <div
+      v-if="isOpen"
+      class="absolute top-full z-50 mt-1 w-64 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-sm ltr:right-0 rtl:left-0"
+    >
       <div class="mb-2 rounded-md bg-muted px-2 py-2">
         <div class="flex items-center gap-3">
           <span
@@ -133,9 +141,9 @@ const onAddWorkspace = () => {
         </div>
       </div>
 
-      <DropdownSeparator />
+      <div class="my-2 h-px bg-border" />
 
-      <p class="px-2 pb-2 pt-2 text-xs font-semibold text-muted-foreground">
+      <p class="px-2 pb-2 pt-1 text-xs font-semibold text-muted-foreground">
         {{ t('SIDEBAR_ITEMS.AVAILABLE_WORKSPACES') }}
       </p>
 
@@ -143,52 +151,53 @@ const onAddWorkspace = () => {
         v-if="availableWorkspaces.length"
         class="mb-1 max-h-48 overflow-y-auto"
       >
-        <DropdownItem
+        <button
           v-for="account in availableWorkspaces"
           :id="`workspace-${account.id}`"
           :key="account.id"
-          class="cursor-pointer rounded-md p-2"
+          type="button"
+          class="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-accent"
           @click="onChangeAccount(account.id)"
         >
-          <template #label>
-            <div class="flex w-full items-center gap-2">
-              <span
-                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground"
-              >
-                {{ accountInitial(account.name) }}
-              </span>
-              <span
-                class="truncate text-sm text-foreground"
-                :class="{ 'pl-2 text-muted-foreground': account.isChild }"
-              >
-                {{ account.name }}
-              </span>
-            </div>
-          </template>
-        </DropdownItem>
+          <span
+            class="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground"
+          >
+            {{ accountInitial(account.name) }}
+          </span>
+          <span
+            class="truncate text-sm text-foreground"
+            :class="{ 'pl-2 text-muted-foreground': account.isChild }"
+          >
+            {{ account.name }}
+          </span>
+        </button>
       </div>
       <p v-else class="px-2 pb-2 text-xs text-muted-foreground">
         {{ t('SIDEBAR_ITEMS.NO_OTHER_WORKSPACES') }}
       </p>
 
-      <DropdownSeparator />
+      <div class="my-2 h-px bg-border" />
 
-      <DropdownItem
+      <button
         v-if="canCreateWorkspace"
-        class="cursor-pointer rounded-md p-2 text-muted-foreground"
-        :label="t('SIDEBAR_ITEMS.ADD_NEW_WORKSPACE')"
-        icon="i-lucide-plus"
-        :click="onAddWorkspace"
-      />
+        type="button"
+        class="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        @click="onAddWorkspace"
+      >
+        <span class="i-lucide-plus size-4 shrink-0" />
+        <span>{{ t('SIDEBAR_ITEMS.ADD_NEW_WORKSPACE') }}</span>
+      </button>
 
-      <DropdownSeparator v-if="canCreateWorkspace" />
+      <div v-if="canCreateWorkspace" class="my-1 h-px bg-border" />
 
-      <DropdownItem
-        class="cursor-pointer rounded-md p-2 text-muted-foreground"
-        :label="t('SIDEBAR_ITEMS.PROFILE_SETTING')"
-        icon="i-lucide-user"
-        :link="{ name: 'profile_settings_index' }"
-      />
-    </DropdownBody>
-  </DropdownContainer>
+      <router-link
+        :to="{ name: 'profile_settings_index' }"
+        class="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        @click="closeMenu"
+      >
+        <span class="i-lucide-user size-4 shrink-0" />
+        <span>{{ t('SIDEBAR_ITEMS.PROFILE_SETTING') }}</span>
+      </router-link>
+    </div>
+  </div>
 </template>
