@@ -82,12 +82,6 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
                ).create_checkout_session(credits: params[:credits].to_i).merge(provider: 'stripe')
              end
 
-    log_billing_success(
-      'topup_checkout',
-      "Checkout session created for #{params[:credits]} credits",
-      payment_provider: provider,
-      metadata: { checkout_id: result[:id] || result[:subscription_id], credits: params[:credits].to_i }
-    )
     render json: result
   rescue Enterprise::Billing::PaymentGatewayRegistry::UnsupportedCountryError => e
     render_payment_failure('topup_checkout', e.message, error_class: e.class.name, payment_provider: checkout_payment_provider)
@@ -152,12 +146,6 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
       coupon_code: params[:coupon_code].presence
     ).perform
 
-    log_billing_success(
-      'validate_coupon',
-      params[:coupon_code].present? ? "Coupon applied for #{params[:plan_name]} plan" : "Pricing loaded for #{params[:plan_name]} plan",
-      payment_provider: locked_provider || provider_for_country(country),
-      metadata: { plan_name: params[:plan_name], country: country, coupon_code: params[:coupon_code].presence }
-    )
     render json: result
   rescue Enterprise::Billing::PaymentGatewayRegistry::UnsupportedCountryError => e
     render_payment_failure('validate_coupon', e.message, error_class: e.class.name, payment_provider: locked_payment_provider)
@@ -215,17 +203,6 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
                Enterprise::Billing::PlanCheckoutService.new(**checkout_args).perform.merge(provider: 'stripe')
              end
 
-    log_billing_success(
-      'plan_checkout',
-      "Checkout session created for #{params[:plan_name]} plan",
-      payment_provider: provider,
-      metadata: {
-        plan_name: params[:plan_name],
-        country: country,
-        checkout_id: result[:id] || result[:subscription_id],
-        coupon_code: params[:coupon_code].presence
-      }.compact
-    )
     render json: result
   rescue Enterprise::Billing::PaymentGatewayRegistry::UnsupportedCountryError => e
     render_payment_failure('plan_checkout', e.message, error_class: e.class.name)

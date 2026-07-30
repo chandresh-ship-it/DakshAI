@@ -22,7 +22,10 @@ import ButtonV4 from 'next/button/Button.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import EnterpriseAccountAPI from 'dashboard/api/enterprise/account';
-import { useBillingCheckoutReturn } from 'dashboard/composables/useBillingCheckoutReturn';
+import {
+  useBillingCheckoutReturn,
+  markCheckoutRedirected,
+} from 'dashboard/composables/useBillingCheckoutReturn';
 import countries from 'shared/constants/countries.js';
 
 const router = useRouter();
@@ -505,9 +508,8 @@ const handleSubscribe = async () => {
       marketplaceData.value.connected_account?.payment_provider === 'razorpay'
         ? 'inr'
         : 'usd';
-    const { successUrl, cancelUrl } = buildCheckoutReturnUrls(
-      'marketplace_checkout'
-    );
+    const { successUrl, cancelUrl, checkoutRef, checkoutType } =
+      buildCheckoutReturnUrls('marketplace_checkout');
     const response = await window.axios.post(
       `/enterprise/api/v1/accounts/${currentAccount.value.id}/marketplace_checkout`,
       {
@@ -517,6 +519,7 @@ const handleSubscribe = async () => {
       }
     );
     if (response.data.checkout_url) {
+      markCheckoutRedirected({ checkoutRef, checkoutType });
       window.location.href = response.data.checkout_url;
     }
   } catch (error) {
@@ -622,7 +625,8 @@ const handlePlanCheckoutProceed = async ({
   isCheckingOut.value = true;
   planCheckoutModalRef.value?.setProceeding(true);
   try {
-    const { successUrl, cancelUrl } = buildCheckoutReturnUrls('plan_checkout');
+    const { successUrl, cancelUrl, checkoutRef, checkoutType } =
+      buildCheckoutReturnUrls('plan_checkout');
     const response = await EnterpriseAccountAPI.planCheckout({
       planName: selectedPlanName,
       country,
@@ -638,6 +642,7 @@ const handlePlanCheckoutProceed = async ({
         );
         return;
       }
+      markCheckoutRedirected({ checkoutRef, checkoutType });
       window.location.href = checkoutUrl;
       return;
     }

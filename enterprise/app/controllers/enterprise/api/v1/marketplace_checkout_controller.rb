@@ -17,13 +17,6 @@ class Enterprise::Api::V1::MarketplaceCheckoutController < Api::BaseController
     )
 
     result = service.perform
-    provider = @account.parent&.connected_account&.payment_provider
-    log_billing_success(
-      'marketplace_checkout',
-      "Marketplace checkout session created (#{currency.upcase})",
-      payment_provider: provider,
-      metadata: { currency: currency, checkout_id: result[:id] || result[:checkout_url] }
-    )
     render json: result
   rescue StandardError => e
     provider = @account.parent&.connected_account&.payment_provider

@@ -6,7 +6,10 @@ import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import CreditPackageCard from './CreditPackageCard.vue';
 import EnterpriseAccountAPI from 'dashboard/api/enterprise/account';
-import { buildCheckoutReturnUrls } from 'dashboard/composables/useBillingCheckoutReturn';
+import {
+  buildCheckoutReturnUrls,
+  markCheckoutRedirected,
+} from 'dashboard/composables/useBillingCheckoutReturn';
 
 const props = defineProps({
   paymentProvider: {
@@ -121,7 +124,8 @@ const handlePurchase = async () => {
 
   isLoading.value = true;
   try {
-    const { successUrl, cancelUrl } = buildCheckoutReturnUrls('topup_checkout');
+    const { successUrl, cancelUrl, checkoutRef, checkoutType } =
+      buildCheckoutReturnUrls('topup_checkout');
     const response = await EnterpriseAccountAPI.createTopupCheckout(
       selectedOption.value.credits,
       {
@@ -131,6 +135,7 @@ const handlePurchase = async () => {
     );
 
     if (response.data.checkout_url) {
+      markCheckoutRedirected({ checkoutRef, checkoutType });
       window.location.href = response.data.checkout_url;
       return;
     }
