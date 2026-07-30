@@ -194,13 +194,13 @@ const addAllExample = () => {
         >
           <template #default="{ item }">
             <div class="flex items-center justify-between w-full">
-              <span class="text-sm text-n-slate-12">
+              <span class="text-sm text-foreground">
                 {{ item.content }}
               </span>
               <RelayButton
                 variant="link"
                 size="sm"
-                class="flex-shrink-0 !text-sm text-n-slate-11"
+                class="flex-shrink-0 !text-sm text-muted-foreground"
                 @click="addGuardrail(item.content)"
               >
                 {{
@@ -251,27 +251,31 @@ const addAllExample = () => {
           </BulkSelectBar>
           <div
             v-if="displayGuardrails.length && bulkSelectedIds.size === 0"
-            class="max-w-[22.5rem] w-full min-w-0"
+            class="relative w-full min-w-0 max-w-[16rem]"
           >
+            <span
+              class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground"
+            />
             <RelayInput
               v-model="searchQuery"
               :placeholder="
                 t('CAPTAIN.ASSISTANTS.GUARDRAILS.LIST.SEARCH_PLACEHOLDER')
               "
+              class-name="h-9 bg-background pl-9"
             />
           </div>
         </div>
-        <div v-if="displayGuardrails.length === 0" class="mt-1 mb-2">
-          <span class="text-n-slate-11 text-sm">
+        <div v-if="displayGuardrails.length === 0" class="mb-2 mt-1">
+          <span class="text-sm text-muted-foreground">
             {{ t('CAPTAIN.ASSISTANTS.GUARDRAILS.EMPTY_MESSAGE') }}
           </span>
         </div>
-        <div v-else-if="filteredGuardrails.length === 0" class="mt-1 mb-2">
-          <span class="text-n-slate-11 text-sm">
+        <div v-else-if="filteredGuardrails.length === 0" class="mb-2 mt-1">
+          <span class="text-sm text-muted-foreground">
             {{ t('CAPTAIN.ASSISTANTS.GUARDRAILS.SEARCH_EMPTY_MESSAGE') }}
           </span>
         </div>
-        <div v-else class="flex flex-col gap-2">
+        <div v-else class="space-y-3">
           <RuleCard
             v-for="guardrail in filteredGuardrails"
             :id="guardrail.id"

@@ -116,19 +116,25 @@ const handleMenuAction = ({ action, value }) => {
 <template>
   <div
     v-on-click-outside="closeMenu"
-    class="inline-flex flex-wrap items-center gap-2 pt-2 w-fit"
+    class="mb-6 inline-flex h-10 w-fit flex-wrap items-center gap-4"
   >
     <div v-for="menu in filterMenus" :key="menu.key" class="relative">
       <RelayButton
-        variant="ghost"
+        variant="outline"
         size="sm"
-        class="text-n-slate-12"
-        :class="{ 'bg-n-slate-9/10': openMenu === menu.key }"
+        class="h-8 border-border/60 text-[13px] text-foreground"
+        :class="{ 'bg-muted/50': openMenu === menu.key }"
         @click="toggleMenu(menu.key)"
       >
-        <span class="size-4 shrink-0" :class="[menu.selected.icon]" />
+        <span
+          class="size-3.5 shrink-0 opacity-70"
+          :class="[menu.selected.icon]"
+        />
         <span class="min-w-0 truncate">{{ menu.selected.label }}</span>
-        <Icon icon="i-lucide-chevron-down" class="size-4 shrink-0" />
+        <Icon
+          icon="i-lucide-chevron-down"
+          class="size-3.5 shrink-0 opacity-50"
+        />
       </RelayButton>
       <DropdownMenu
         v-if="openMenu === menu.key"

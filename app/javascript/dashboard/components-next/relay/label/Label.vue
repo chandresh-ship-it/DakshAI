@@ -11,7 +11,7 @@ defineProps({
     :for="htmlFor"
     :class="
       cn(
-        'text-sm font-medium leading-none text-n-slate-12',
+        'text-sm font-medium leading-none text-foreground',
         'peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
       )
     "

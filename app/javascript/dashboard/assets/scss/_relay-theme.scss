@@ -1,0 +1,201 @@
+// new-ui design tokens (ported from Downloads/new-ui/src/style.css)
+// Visual source of truth for the dashboard Relay shell and primitives.
+
+:root {
+  --accent: #edf0ff;
+  --accent-foreground: #30327a;
+  --background: #ffffff;
+  --border: #e4e7ee;
+  --card: #ffffff;
+  --card-foreground: #141822;
+  --chart-1: #6d74f5;
+  --chart-2: #6c50e9;
+  --chart-3: #4f46e5;
+  --chart-4: #7290fa;
+  --chart-5: #4435bc;
+  --destructive: #e11d48;
+  --destructive-foreground: #f8fafc;
+  --font-mono: 'Geist Mono', 'SFMono-Regular', ui-monospace, Menlo, Monaco,
+    Consolas, monospace;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --foreground: #141822;
+  --input: #e4e7ee;
+  --muted: #f2f4f9;
+  --muted-foreground: #6c727e;
+  --popover: #ffffff;
+  --popover-foreground: #141822;
+  --primary: #4f46e5;
+  --primary-foreground: #fafafa;
+  --priority-1: #e11d48;
+  --priority-2: #f27000;
+  --priority-3: #dca600;
+  --priority-4: #737373;
+  --radius: 0.75rem;
+  --ring: #4f46e5;
+  --secondary: #f2f4f9;
+  --secondary-foreground: #222938;
+  --sidebar: #f9fafd;
+  --sidebar-accent: #edf0ff;
+  --sidebar-accent-foreground: #30327a;
+  --sidebar-border: #e4e7ee;
+  --sidebar-foreground: #141822;
+  --sidebar-primary: #4f46e5;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-ring: #4f46e5;
+  --success: #00884b;
+  --warning: #dca600;
+}
+
+.dark {
+  --accent: #2c304c;
+  --accent-foreground: #e2e7fc;
+  --background: #10141d;
+  --border: #ffffff1a;
+  --card: #181d27;
+  --card-foreground: #fafafa;
+  --chart-1: #7f8aff;
+  --chart-2: #7f68ff;
+  --chart-3: #819eff;
+  --chart-4: #5e55ed;
+  --chart-5: #5a47cf;
+  --destructive: #ff6568;
+  --destructive-foreground: #f8fafc;
+  --foreground: #fafafa;
+  --input: #ffffff26;
+  --muted: #242933;
+  --muted-foreground: #9ba2ae;
+  --popover: #181d27;
+  --popover-foreground: #fafafa;
+  --primary: #6f71fb;
+  --primary-foreground: #fafafa;
+  --priority-1: #ff6568;
+  --priority-2: #ff8b41;
+  --priority-3: #e9b928;
+  --priority-4: #a1a1a1;
+  --ring: #6f71fb;
+  --secondary: #242933;
+  --secondary-foreground: #fafafa;
+  --sidebar: #181d27;
+  --sidebar-accent: #2c304c;
+  --sidebar-accent-foreground: #e2e7fc;
+  --sidebar-border: #ffffff1a;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #6f71fb;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-ring: #6f71fb;
+  --success: #2ec18c;
+  --warning: #e9b928;
+
+  // #10141d / #6f71fb / #fafafa / #ffffff1a ≈ 24 29 39 surfaces
+  [data-relay] {
+    --background-color: 16 20 29;
+    --border-strong: 36 41 51;
+    --border-weak: 36 41 51;
+    --card-color: 24 29 39;
+    --label-background: 16 20 29;
+    --slate-12: 250 250 250;
+    --solid-1: 24 29 39;
+    --solid-2: 36 41 51;
+    --solid-3: 44 48 76;
+    --surface-1: 24 29 39;
+    --surface-2: 24 29 39;
+    --woot-brand: 111 113 251;
+  }
+}
+
+// Relay shell: Geist + new-ui surface defaults.
+// Bridge Chatwoot legacy RGB vars so nested pages using n-background / n-brand
+// follow the same dark/light surfaces as new-ui inside the Relay shell.
+[data-relay] {
+  --background-color: 255 255 255;
+  --border-strong: 228 231 238;
+  --border-weak: 228 231 238;
+  --card-color: 255 255 255;
+  --slate-12: 20 24 34;
+  --solid-1: 255 255 255;
+  --solid-2: 255 255 255;
+  --solid-3: 242 244 249;
+  --surface-1: 249 250 253;
+  --surface-2: 255 255 255;
+  --woot-brand: 79 70 229;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+}
+
+// Match new-ui `@layer base { * { border-color: var(--border) } }` so
+// `border-b` / `border` utilities get the design-token color in both themes.
+// Must stay in @layer base so utilities like `border-input` can override.
+@layer base {
+  [data-relay],
+  [data-relay] * {
+    border-color: var(--border);
+  }
+}
+
+@keyframes anim-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes anim-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes anim-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes anim-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.anim-pop {
+  transform-origin: var(--reka-popper-transform-origin, center);
+}
+
+.anim-pop[data-state='open'] {
+  animation: anim-pop-in 0.15s ease-out;
+}
+
+.anim-pop[data-state='closed'] {
+  animation: anim-pop-out 0.12s ease-in;
+}
+
+.anim-overlay[data-state='open'] {
+  animation: anim-fade-in 0.15s ease-out;
+}
+
+.anim-overlay[data-state='closed'] {
+  animation: anim-fade-out 0.15s ease-in;
+}

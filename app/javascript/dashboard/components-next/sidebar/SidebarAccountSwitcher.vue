@@ -96,8 +96,8 @@ const emitNewAccount = () => {
       <!-- Collapsed view: Brand initial trigger -->
       <button
         v-if="isCollapsed"
-        class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-n-brand text-sm font-bold text-white hover:opacity-90"
-        :class="{ 'ring-2 ring-n-brand/40': isOpen }"
+        class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground hover:opacity-90"
+        :class="{ 'ring-2 ring-sidebar-primary/40': isOpen }"
         :title="currentAccount.name"
         @click="toggle"
       >
@@ -110,17 +110,17 @@ const emitNewAccount = () => {
         :data-account-id="accountId"
         aria-haspopup="listbox"
         aria-controls="account-options"
-        class="flex items-center gap-2 justify-between w-full rounded-lg px-2"
+        class="flex items-center gap-2 justify-between w-full rounded-md px-2"
         :class="[
-          isOpen && 'bg-n-alpha-1',
+          isOpen && 'bg-sidebar-accent',
           showAccountSwitcher
-            ? 'hover:bg-n-alpha-1 cursor-pointer'
+            ? 'hover:bg-sidebar-accent cursor-pointer'
             : 'cursor-default',
         ]"
         @click="() => showAccountSwitcher && toggle()"
       >
         <span
-          class="truncate text-sm font-semibold leading-tight text-n-slate-12"
+          class="truncate text-sm font-semibold leading-tight text-sidebar-foreground"
           aria-live="polite"
         >
           {{ currentAccount.name }}
@@ -129,7 +129,7 @@ const emitNewAccount = () => {
         <span
           v-if="showAccountSwitcher"
           aria-hidden="true"
-          class="i-lucide-chevron-down size-4 text-n-slate-10 flex-shrink-0"
+          class="i-lucide-chevron-down size-4 text-muted-foreground flex-shrink-0"
         />
       </button>
     </template>
@@ -149,22 +149,22 @@ const emitNewAccount = () => {
             <div
               :for="account.name"
               class="text-left rtl:text-right flex gap-2 items-center"
-              :class="{ 'pl-5 text-n-slate-11': account.isChild }"
+              :class="{ 'pl-5 text-muted-foreground': account.isChild }"
             >
               <span
                 v-if="account.isChild"
-                class="text-n-slate-9 mr-1 before:content-['\u21b3']"
+                class="text-muted-foreground mr-1 before:content-['\u21b3']"
               />
               <span
-                class="text-n-slate-12 max-w-36 truncate min-w-0"
+                class="text-foreground max-w-36 truncate min-w-0"
                 :title="account.name"
-                :class="{ '!text-n-slate-11': account.isChild }"
+                :class="{ '!text-muted-foreground': account.isChild }"
               >
                 {{ account.name }}
               </span>
-              <div class="flex-shrink-0 w-px h-3 bg-n-strong" />
+              <div class="flex-shrink-0 w-px h-3 bg-border" />
               <span
-                class="text-n-slate-11 max-w-24 truncate capitalize"
+                class="text-muted-foreground max-w-24 truncate capitalize"
                 :title="account.name"
               >
                 {{
@@ -177,7 +177,7 @@ const emitNewAccount = () => {
             <Icon
               v-show="account.id === accountId"
               icon="i-lucide-check"
-              class="text-n-teal-11 size-5"
+              class="text-success size-5"
             />
           </template>
         </DropdownItem>

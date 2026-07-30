@@ -92,9 +92,9 @@ const onClickCancel = () => {
 
     <div
       v-if="showPopover"
-      class="absolute top-10 z-50 flex w-[31.25rem] flex-col gap-6 rounded-xl border border-n-weak bg-n-solid-2 p-6 shadow-md backdrop-blur-[100px] ltr:left-0 rtl:right-0"
+      class="absolute top-10 z-50 flex w-[31.25rem] flex-col gap-6 rounded-xl border border-border bg-background p-6 shadow-xl ltr:left-0 rtl:right-0"
     >
-      <h3 class="text-base font-medium text-n-slate-12">
+      <h3 class="text-base font-medium text-foreground">
         {{ t(`CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.TITLE`) }}
       </h3>
 
@@ -110,7 +110,7 @@ const onClickCancel = () => {
               t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.TITLE.PLACEHOLDER')
             "
           />
-          <p v-if="titleError" class="text-xs text-n-ruby-11">
+          <p v-if="titleError" class="text-xs text-destructive">
             {{ titleError }}
           </p>
         </div>

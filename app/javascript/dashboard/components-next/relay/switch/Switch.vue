@@ -23,10 +23,10 @@ const toggle = () => {
     :disabled="disabled"
     :class="
       cn(
-        'peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent shadow-sm transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-n-brand focus-visible:ring-offset-2 focus-visible:ring-offset-n-background',
+        'peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent shadow-xs transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        modelValue ? 'bg-n-brand' : 'bg-n-slate-6'
+        modelValue ? 'bg-primary' : 'bg-input'
       )
     "
     @click="toggle"
@@ -34,7 +34,7 @@ const toggle = () => {
     <span
       :class="
         cn(
-          'pointer-events-none block size-4 rounded-full bg-n-background shadow-lg ring-0 transition-transform',
+          'pointer-events-none block size-4 rounded-full bg-background shadow-lg ring-0 transition-transform',
           modelValue ? 'translate-x-4' : 'translate-x-0'
         )
       "

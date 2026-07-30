@@ -40,7 +40,8 @@ const toggleAudioTranscription = async () => {
   <SectionLayout
     :title="t('GENERAL_SETTINGS.FORM.AUDIO_TRANSCRIPTION.TITLE')"
     :description="t('GENERAL_SETTINGS.FORM.AUDIO_TRANSCRIPTION.NOTE')"
-    with-border
+    as-card
+    hide-content
   >
     <template #headerActions>
       <div class="flex justify-end">

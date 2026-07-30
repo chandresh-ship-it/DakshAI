@@ -10,10 +10,8 @@ import {
   getDocumentDisplayPath,
 } from 'shared/helpers/documentHelper';
 
-import Icon from 'dashboard/components-next/icon/Icon.vue';
-import CardLayout from 'dashboard/components-next/CardLayout.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
-import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
+import { RelayButton } from 'dashboard/components-next/relay';
 import DocumentSyncStatus from 'dashboard/components-next/captain/assistant/DocumentSyncStatus.vue';
 
 const props = defineProps({
@@ -89,10 +87,6 @@ const { checkPermissions } = usePolicy();
 const { t } = useI18n();
 
 const [showActionsDropdown, toggleDropdown] = useToggle();
-const modelValue = computed({
-  get: () => props.isSelected,
-  set: () => emit('select', props.id),
-});
 
 const isPdf = computed(() => props.pdfDocument);
 const hasSafeLink = computed(() => isSafeHttpLink(props.externalLink));
@@ -114,7 +108,7 @@ const menuItems = computed(() => {
       label: t('CAPTAIN.DOCUMENTS.OPTIONS.VIEW_RELATED_RESPONSES'),
       value: 'viewRelatedQuestions',
       action: 'viewRelatedQuestions',
-      icon: 'i-ph-tree-view-duotone',
+      icon: 'i-lucide-file-text',
     },
   ];
 
@@ -149,7 +143,7 @@ const displayLink = computed(() =>
     : getDocumentDisplayPath(props.externalLink)
 );
 const linkIcon = computed(() =>
-  isPdf.value ? 'i-ph-file-pdf' : 'i-ph-link-simple'
+  isPdf.value ? 'i-lucide-file-text' : 'i-lucide-link'
 );
 
 const handleAction = ({ action, value }) => {
@@ -160,75 +154,71 @@ const handleAction = ({ action, value }) => {
 const handleRetry = () => {
   emit('action', { action: 'sync', id: props.id });
 };
+
+const handleCardClick = () => {
+  if (props.selectable) {
+    emit('select', props.id);
+  }
+};
 </script>
 
 <template>
-  <CardLayout
-    :selectable="selectable"
-    class="relative transition-colors"
-    :class="{ 'outline-n-brand/50 bg-n-brand/5': isSelected }"
+  <div
+    class="group flex cursor-pointer select-none flex-col justify-between rounded-xl border bg-card p-4 transition-all hover:shadow-sm sm:flex-row sm:items-center"
+    :class="
+      isSelected
+        ? 'border-primary/50 bg-primary/[0.02]'
+        : 'border-border hover:border-border'
+    "
+    @click="handleCardClick"
     @mouseenter="emit('hover', true)"
     @mouseleave="emit('hover', false)"
   >
-    <div
-      v-show="showSelectionControl"
-      class="absolute top-7 ltr:left-3 rtl:right-3"
-    >
-      <RelayCheckbox v-model="modelValue" />
-    </div>
-    <div class="flex w-full justify-between gap-1">
-      <span class="line-clamp-1 text-[15px] font-medium text-n-slate-12">
-        {{ name }}
-      </span>
-      <div v-if="showMenu" class="flex items-center gap-2">
+    <div class="flex min-w-0 flex-1 items-center gap-4 pr-4">
+      <div
+        v-if="showSelectionControl"
+        class="flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors"
+        :class="
+          isSelected
+            ? 'border-primary bg-primary text-primary-foreground shadow-xs'
+            : 'border-border/80 bg-background/50'
+        "
+      >
+        <span v-if="isSelected" class="i-lucide-check size-3 stroke-[3]" />
+      </div>
+
+      <div class="min-w-0 flex-1">
+        <h3 class="mb-1 truncate text-[14.5px] font-medium text-foreground">
+          {{ name }}
+        </h3>
         <div
-          v-on-clickaway="() => toggleDropdown(false)"
-          class="group relative flex items-center opacity-0 transition-opacity group-hover/cardLayout:opacity-100 focus-within:opacity-100"
+          class="flex flex-wrap items-center gap-4 text-[12px] text-muted-foreground"
         >
-          <RelayButton
-            variant="ghost"
-            size="icon"
-            class="size-8 rounded-md text-n-slate-11 hover:bg-n-alpha-2"
-            @click="toggleDropdown()"
+          <div class="flex items-center gap-1.5">
+            <span class="i-lucide-brain-circuit size-3.5" />
+            {{ assistant?.name || '' }}
+          </div>
+          <a
+            v-if="!isPdf && hasSafeLink"
+            :href="externalLink"
+            :title="externalLink"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex max-w-[200px] items-center gap-1.5 truncate hover:text-foreground hover:underline"
+            @click.stop
           >
-            <span class="i-lucide-ellipsis-vertical size-4" />
-          </RelayButton>
-          <DropdownMenu
-            v-if="showActionsDropdown"
-            :menu-items="menuItems"
-            class="top-full mt-1 ltr:right-0 rtl:left-0 xl:ltr:right-0 xl:rtl:left-0"
-            @action="handleAction($event)"
-          />
+            <span class="size-3.5 shrink-0" :class="[linkIcon]" />
+            <span class="truncate">{{ displayLink }}</span>
+          </a>
+          <div v-else class="flex max-w-[200px] items-center gap-1.5 truncate">
+            <span class="size-3.5 shrink-0" :class="[linkIcon]" />
+            <span class="truncate">{{ displayLink }}</span>
+          </div>
         </div>
       </div>
     </div>
-    <div class="flex w-full items-center justify-between gap-4">
-      <span
-        class="flex shrink-0 items-center gap-1 truncate text-sm text-n-slate-11"
-      >
-        <Icon icon="i-woot-captain" />
-        {{ assistant?.name || '' }}
-      </span>
-      <a
-        v-if="!isPdf && hasSafeLink"
-        :href="externalLink"
-        :title="externalLink"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="flex flex-1 items-center justify-start gap-1 truncate text-sm text-n-slate-11 hover:text-n-slate-12 hover:underline"
-        @click.stop
-      >
-        <Icon :icon="linkIcon" class="shrink-0" />
-        <span class="truncate">{{ displayLink }}</span>
-        <Icon icon="i-lucide-external-link size-3 shrink-0 opacity-70" />
-      </a>
-      <span
-        v-else
-        class="flex flex-1 items-center justify-start gap-1 truncate text-sm text-n-slate-11"
-      >
-        <Icon :icon="linkIcon" class="shrink-0" />
-        <span class="truncate">{{ displayLink }}</span>
-      </span>
+
+    <div class="mt-4 flex shrink-0 items-center gap-4 sm:mt-0" @click.stop>
       <DocumentSyncStatus
         v-if="showSyncStatus"
         :status="syncStatus"
@@ -239,9 +229,30 @@ const handleRetry = () => {
         :show-retry="canSync && isRetryableSync"
         @retry="handleRetry"
       />
-      <div v-else class="shrink-0 text-sm text-n-slate-11 line-clamp-1">
+      <div v-else class="text-[12px] text-muted-foreground/60">
         {{ createdAtLabel }}
       </div>
+
+      <div
+        v-if="showMenu"
+        v-on-clickaway="() => toggleDropdown(false)"
+        class="relative"
+      >
+        <RelayButton
+          variant="ghost"
+          size="icon"
+          class="size-8 rounded-md text-muted-foreground opacity-0 hover:bg-muted hover:text-foreground group-hover:opacity-100 focus:opacity-100"
+          @click="toggleDropdown()"
+        >
+          <span class="i-lucide-ellipsis-vertical size-4" />
+        </RelayButton>
+        <DropdownMenu
+          v-if="showActionsDropdown"
+          :menu-items="menuItems"
+          class="top-full mt-1 ltr:right-0 rtl:left-0"
+          @action="handleAction($event)"
+        />
+      </div>
     </div>
-  </CardLayout>
+  </div>
 </template>

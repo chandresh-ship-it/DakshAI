@@ -59,7 +59,7 @@ const onClickCancel = () => {
     </RelayButton>
     <div
       v-if="showPopover"
-      class="absolute top-9 z-50 flex w-[26.5rem] flex-col gap-5 rounded-xl border border-n-weak bg-n-alpha-3 p-4 shadow-md backdrop-blur-[100px] ltr:left-0 rtl:right-0"
+      class="absolute top-9 z-50 flex w-[26.5rem] flex-col gap-5 rounded-xl border border-border bg-background p-4 shadow-xl ltr:left-0 rtl:right-0"
     >
       <InlineInput
         v-model="modelValue"

@@ -1,10 +1,15 @@
 <script setup>
 import EmptyStateLayout from 'dashboard/components-next/EmptyStateLayout.vue';
 import { RelayButton } from 'dashboard/components-next/relay';
-import InboxCard from 'dashboard/components-next/captain/assistant/InboxCard.vue';
-import { inboxes } from 'dashboard/components-next/captain/pageComponents/emptyStates/captainEmptyStateContent.js';
 
 const emit = defineEmits(['click']);
+
+const mockInboxes = [
+  { name: 'Email Support (support@company.com)', icon: 'i-lucide-mail' },
+  { name: 'Website Chat', icon: 'i-lucide-message-square' },
+  { name: 'Facebook Support', icon: 'i-lucide-message-square' },
+  { name: 'SMS Service (MGxxxxxx)', icon: 'i-lucide-phone' },
+];
 
 const onClick = () => {
   emit('click');
@@ -18,18 +23,27 @@ const onClick = () => {
     :action-perms="['administrator']"
   >
     <template #empty-state-item>
-      <div class="grid grid-cols-1 gap-4 overflow-hidden p-px">
-        <InboxCard
-          v-for="(inbox, index) in inboxes.slice(0, 5)"
-          :id="inbox.id"
-          :key="`inbox-${index}`"
-          :inbox="inbox"
-        />
+      <div
+        v-for="(inbox, index) in mockInboxes"
+        :key="`mock-inbox-${index}`"
+        class="flex items-center justify-between rounded-xl border border-border bg-card p-4 opacity-20"
+      >
+        <div class="flex items-center gap-3">
+          <span class="size-4 text-muted-foreground" :class="[inbox.icon]" />
+          <span class="text-[14px] font-medium text-foreground">
+            {{ inbox.name }}
+          </span>
+        </div>
+        <span class="i-lucide-ellipsis-vertical size-4 text-muted-foreground" />
       </div>
     </template>
     <template #actions>
-      <RelayButton @click="onClick">
-        <span class="i-lucide-plus size-4" />
+      <RelayButton
+        size="lg"
+        class="shadow-md transition-all hover:shadow-lg"
+        @click="onClick"
+      >
+        <span class="i-lucide-plus mr-1.5 size-4" />
         {{ $t('CAPTAIN.INBOXES.ADD_NEW') }}
       </RelayButton>
     </template>

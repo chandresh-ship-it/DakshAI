@@ -5,9 +5,13 @@
 
 @import 'shared/assets/fonts/InterDisplay/inter-display';
 @import 'shared/assets/fonts/inter';
+@import 'shared/assets/fonts/geist';
 
-// Next Colors
+// Next Colors (legacy Chatwoot tokens — still used by settings/inbox pages)
 @import 'next-colors';
+
+// new-ui design tokens (Relay shell + primitives)
+@import 'relay-theme';
 
 // Base styles for elements
 @import 'base';

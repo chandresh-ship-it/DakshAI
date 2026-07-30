@@ -30,9 +30,12 @@ const onClickAdd = () => {
 
 <template>
   <div
-    class="flex h-16 items-center gap-3 rounded-xl bg-n-solid-2 py-3 outline outline-1 outline-n-container ltr:pl-3 ltr:pr-4 rtl:pl-4 rtl:pr-3"
+    class="flex h-16 items-center gap-3 rounded-xl border border-border bg-card py-3 ltr:pl-3 ltr:pr-4 rtl:pl-4 rtl:pr-3"
   >
-    <Icon icon="i-lucide-plus" class="size-5 flex-shrink-0 text-n-slate-10" />
+    <Icon
+      icon="i-lucide-plus"
+      class="size-5 flex-shrink-0 text-muted-foreground"
+    />
 
     <InlineInput
       v-model="modelValue"

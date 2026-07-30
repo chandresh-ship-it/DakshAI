@@ -22,11 +22,11 @@ const isActive = computed(() => activeValue?.value === props.value);
     :class="
       cn(
         'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-n-brand',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-background',
         'disabled:pointer-events-none disabled:opacity-50',
         isActive
-          ? 'bg-n-background text-n-slate-12 shadow-sm'
-          : 'text-n-slate-11 hover:text-n-slate-12'
+          ? 'bg-background text-foreground shadow-sm'
+          : 'text-muted-foreground hover:text-foreground'
       )
     "
     @click="setValue?.(value)"

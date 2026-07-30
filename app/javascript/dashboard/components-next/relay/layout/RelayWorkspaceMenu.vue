@@ -94,39 +94,39 @@ const onAddWorkspace = () => {
     <template #trigger="{ toggle, isOpen }">
       <button
         type="button"
-        class="flex items-center gap-2 rounded-full border border-n-weak bg-n-background py-1 pl-1 pr-2 text-left text-sm shadow-sm transition-colors hover:bg-n-alpha-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-n-brand"
-        :class="{ 'bg-n-alpha-2': isOpen }"
+        class="flex items-center gap-2 rounded-full border border-input bg-background py-1 pl-1 pr-2 text-left text-sm shadow-xs transition-colors hover:border-transparent hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        :class="{ 'bg-accent': isOpen }"
         @click="toggle"
       >
         <span
-          class="flex size-8 shrink-0 items-center justify-center rounded-full bg-n-brand text-sm font-bold text-white"
+          class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground"
         >
           {{ brandInitial }}
         </span>
         <span class="hidden min-w-0 items-center gap-1.5 md:flex">
-          <span class="max-w-28 truncate font-medium text-n-slate-12">
+          <span class="max-w-28 truncate text-sm font-medium text-foreground">
             {{ currentAccount.name }}
           </span>
           <span
-            class="i-lucide-chevron-down size-3.5 shrink-0 text-n-slate-11"
+            class="i-lucide-chevron-down size-3.5 shrink-0 text-muted-foreground"
           />
         </span>
       </button>
     </template>
 
     <DropdownBody class="top-full z-50 mt-1 w-64 p-2 ltr:right-0 rtl:left-0">
-      <div class="mb-2 rounded-md bg-n-alpha-2 px-2 py-2">
+      <div class="mb-2 rounded-md bg-muted px-2 py-2">
         <div class="flex items-center gap-3">
           <span
-            class="flex size-8 shrink-0 items-center justify-center rounded-full bg-n-brand text-sm font-bold text-white"
+            class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground"
           >
             {{ brandInitial }}
           </span>
           <div class="grid min-w-0 flex-1 text-left text-sm leading-tight">
-            <span class="truncate font-semibold text-n-slate-12">
+            <span class="truncate font-semibold text-foreground">
               {{ currentAccount.name }}
             </span>
-            <span class="truncate text-xs font-normal text-n-slate-11">
+            <span class="truncate text-xs font-normal text-muted-foreground">
               {{ brandSubtitle }}
             </span>
           </div>
@@ -135,7 +135,7 @@ const onAddWorkspace = () => {
 
       <DropdownSeparator />
 
-      <p class="px-2 pb-2 pt-2 text-xs font-semibold text-n-slate-11">
+      <p class="px-2 pb-2 pt-2 text-xs font-semibold text-muted-foreground">
         {{ t('SIDEBAR_ITEMS.AVAILABLE_WORKSPACES') }}
       </p>
 
@@ -153,13 +153,13 @@ const onAddWorkspace = () => {
           <template #label>
             <div class="flex w-full items-center gap-2">
               <span
-                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-n-alpha-2 text-xs font-bold text-n-slate-12"
+                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground"
               >
                 {{ accountInitial(account.name) }}
               </span>
               <span
-                class="truncate text-sm text-n-slate-12"
-                :class="{ 'pl-2 text-n-slate-11': account.isChild }"
+                class="truncate text-sm text-foreground"
+                :class="{ 'pl-2 text-muted-foreground': account.isChild }"
               >
                 {{ account.name }}
               </span>
@@ -167,7 +167,7 @@ const onAddWorkspace = () => {
           </template>
         </DropdownItem>
       </div>
-      <p v-else class="px-2 pb-2 text-xs text-n-slate-11">
+      <p v-else class="px-2 pb-2 text-xs text-muted-foreground">
         {{ t('SIDEBAR_ITEMS.NO_OTHER_WORKSPACES') }}
       </p>
 
@@ -175,7 +175,7 @@ const onAddWorkspace = () => {
 
       <DropdownItem
         v-if="canCreateWorkspace"
-        class="cursor-pointer rounded-md p-2 text-n-slate-11"
+        class="cursor-pointer rounded-md p-2 text-muted-foreground"
         :label="t('SIDEBAR_ITEMS.ADD_NEW_WORKSPACE')"
         icon="i-lucide-plus"
         :click="onAddWorkspace"
@@ -184,7 +184,7 @@ const onAddWorkspace = () => {
       <DropdownSeparator v-if="canCreateWorkspace" />
 
       <DropdownItem
-        class="cursor-pointer rounded-md p-2 text-n-slate-11"
+        class="cursor-pointer rounded-md p-2 text-muted-foreground"
         :label="t('SIDEBAR_ITEMS.PROFILE_SETTING')"
         icon="i-lucide-user"
         :link="{ name: 'profile_settings_index' }"

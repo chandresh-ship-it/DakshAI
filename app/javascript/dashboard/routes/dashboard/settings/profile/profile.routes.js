@@ -14,6 +14,9 @@ export default {
         permissions: ['administrator', 'agent', 'custom_role'],
       },
       component: SettingsWrapper,
+      props: {
+        hideSideMenu: true,
+      },
       children: [
         {
           path: 'settings',

@@ -87,26 +87,26 @@ const openCreateAssistantDialog = () => {
 
 <template>
   <div
-    class="absolute z-50 flex w-[17.5rem] flex-col gap-1 rounded-xl bg-n-alpha-3 pt-2 pb-2 shadow-md outline outline-1 outline-n-container backdrop-blur-[100px]"
+    class="absolute z-50 flex w-[14.375rem] flex-col gap-1 rounded-xl border border-border bg-background py-2 shadow-xl"
   >
     <div
-      class="mb-1 flex items-start justify-between gap-2 border-b border-n-weak px-3 pb-2"
+      class="mb-1 flex items-start justify-between gap-2 border-b border-border/40 px-3 pb-2"
     >
-      <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-        <h2 class="text-sm font-semibold text-n-slate-12">
+      <div class="min-w-0 flex-1">
+        <p class="text-[13px] font-semibold text-foreground">
           {{ t('CAPTAIN.ASSISTANT_SWITCHER.ASSISTANTS') }}
-        </h2>
-        <p class="text-xs leading-snug text-n-slate-11">
+        </p>
+        <p class="mt-0.5 text-[12.5px] leading-snug text-muted-foreground">
           {{ t('CAPTAIN.ASSISTANT_SWITCHER.SWITCH_ASSISTANT') }}
         </p>
       </div>
       <RelayButton
         variant="outline"
         size="sm"
-        class="h-7 shrink-0 rounded-full px-3 text-xs"
+        class="h-7 shrink-0 rounded-full border-border px-3 text-[12px] hover:bg-muted"
         @click="openCreateAssistantDialog"
       >
-        <span class="i-lucide-plus size-3" />
+        <span class="i-lucide-plus mr-1 size-3" />
         {{ t('CAPTAIN.ASSISTANT_SWITCHER.NEW_ASSISTANT') }}
       </RelayButton>
     </div>
@@ -116,28 +116,28 @@ const openCreateAssistantDialog = () => {
         :key="assistant.id"
         variant="ghost"
         size="sm"
-        class="h-9 w-full justify-start gap-2 !px-2 !py-2 hover:bg-n-alpha-2"
+        class="h-9 w-full justify-start gap-2 !px-2 !py-2 hover:bg-muted/60"
         @click="handleAssistantChange(assistant)"
       >
         <span
           class="i-lucide-brain-circuit size-4 shrink-0"
           :class="
-            isAssistantActive(assistant) ? 'text-n-brand' : 'text-n-slate-11'
+            isAssistantActive(assistant) ? 'text-primary' : 'text-foreground'
           "
         />
         <span
-          class="min-w-0 flex-1 truncate text-start text-sm font-medium text-n-slate-12"
+          class="min-w-0 flex-1 truncate text-start text-[13.5px] font-medium text-foreground"
         >
           {{ assistant.name || '' }}
         </span>
         <span
           v-if="isAssistantActive(assistant)"
-          class="i-lucide-check size-4 shrink-0 text-n-brand"
+          class="i-lucide-check size-4 shrink-0 text-primary"
         />
       </RelayButton>
     </div>
     <div v-else class="flex flex-col items-center gap-2 px-4 py-3">
-      <p class="text-sm text-n-slate-11">
+      <p class="text-sm text-muted-foreground">
         {{ t('CAPTAIN.ASSISTANT_SWITCHER.EMPTY_LIST') }}
       </p>
     </div>

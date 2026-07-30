@@ -4,7 +4,6 @@ import { useTimeoutPoll } from '@vueuse/core';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import { useRoute } from 'vue-router';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
-import { useAccount } from 'dashboard/composables/useAccount';
 import { useAlert } from 'dashboard/composables';
 import { usePolicy } from 'dashboard/composables/usePolicy';
 import { debounce } from '@chatwoot/utils';
@@ -20,7 +19,6 @@ import CaptainPaywall from 'dashboard/components-next/captain/pageComponents/Pay
 import RelatedResponses from 'dashboard/components-next/captain/pageComponents/document/RelatedResponses.vue';
 import CreateDocumentDialog from 'dashboard/components-next/captain/pageComponents/document/CreateDocumentDialog.vue';
 import DocumentPageEmptyState from 'dashboard/components-next/captain/pageComponents/emptyStates/DocumentPageEmptyState.vue';
-import FeatureSpotlightPopover from 'dashboard/components-next/feature-spotlight/FeatureSpotlightPopover.vue';
 import LimitBanner from 'dashboard/components-next/captain/pageComponents/document/LimitBanner.vue';
 import CaptainDocumentAPI from 'dashboard/api/captain/document';
 import { useI18n } from 'vue-i18n';
@@ -33,7 +31,6 @@ const { checkPermissions } = usePolicy();
 const SYNC_POLL_INTERVAL_MS = 5000;
 const SYNC_POLL_MAX_DURATION_MS = 15 * 60 * 1000;
 
-const { isOnChatwootCloud } = useAccount();
 const uiFlags = useMapGetter('captainDocuments/getUIFlags');
 const documents = useMapGetter('captainDocuments/getRecords');
 const isFetching = computed(() => uiFlags.value.fetchingList);
@@ -322,20 +319,24 @@ onUnmounted(() => {
     :show-pagination-footer="!isFetching && !!documents.length"
     :is-fetching="isFetching"
     :is-empty="!documents.length && !hasActiveDocumentFilters"
+    :show-know-more="false"
     :feature-flag="FEATURE_FLAGS.CAPTAIN"
     @update:current-page="onPageChange"
     @click="handleCreateDocument"
   >
     <template #search>
-      <div v-if="bulkSelectedIds.size === 0" class="relative w-full sm:w-64">
+      <div
+        v-if="documents.length && bulkSelectedIds.size === 0"
+        class="relative w-full sm:w-64"
+      >
         <span
-          class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-n-slate-11"
+          class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground"
         />
         <RelayInput
           v-model="searchQuery"
           :placeholder="$t('CAPTAIN.DOCUMENTS.FILTERS.SEARCH_PLACEHOLDER')"
           type="search"
-          class-name="pl-9"
+          class-name="h-9 bg-background pl-9"
           @input="debouncedSearch"
         />
       </div>
@@ -351,21 +352,10 @@ onUnmounted(() => {
         />
       </Policy>
       <DocumentFilter
-        v-show="!bulkSelectedIds.size"
+        v-show="documents.length && !bulkSelectedIds.size"
         ref="documentFilter"
         class="mb-2"
         @change="onFiltersChanged"
-      />
-    </template>
-    <template #knowMore>
-      <FeatureSpotlightPopover
-        :button-label="$t('CAPTAIN.HEADER_KNOW_MORE')"
-        :title="$t('CAPTAIN.DOCUMENTS.EMPTY_STATE.FEATURE_SPOTLIGHT.TITLE')"
-        :note="$t('CAPTAIN.DOCUMENTS.EMPTY_STATE.FEATURE_SPOTLIGHT.NOTE')"
-        :hide-actions="!isOnChatwootCloud"
-        fallback-thumbnail="/assets/images/dashboard/captain/document-popover-light.svg"
-        fallback-thumbnail-dark="/assets/images/dashboard/captain/document-popover-dark.svg"
-        learn-more-url="https://newrelay.com/captain-document"
       />
     </template>
 
@@ -382,17 +372,17 @@ onUnmounted(() => {
 
       <div
         v-if="!documents.length && hasActiveDocumentFilters"
-        class="flex flex-col items-center justify-center min-h-80 gap-2 text-center"
+        class="flex min-h-80 flex-col items-center justify-center gap-2 text-center"
       >
-        <span class="text-base font-medium text-n-slate-12">
+        <span class="text-base font-medium text-foreground">
           {{ $t('CAPTAIN.DOCUMENTS.EMPTY_STATE.FILTERED_TITLE') }}
         </span>
-        <span class="max-w-md text-sm text-n-slate-11">
+        <span class="max-w-md text-sm text-muted-foreground">
           {{ $t('CAPTAIN.DOCUMENTS.EMPTY_STATE.FILTERED_SUBTITLE') }}
         </span>
       </div>
 
-      <div v-else class="flex flex-col gap-4">
+      <div v-else class="space-y-4">
         <DocumentCard
           v-for="doc in documents"
           :id="doc.id"

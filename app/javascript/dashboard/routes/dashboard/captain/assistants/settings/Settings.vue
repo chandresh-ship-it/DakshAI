@@ -77,13 +77,11 @@ const handleDelete = () => {
 };
 
 const handleDeleteSuccess = () => {
-  // Get remaining assistants after deletion
   const remainingAssistants = assistants.value.filter(
     a => a.id !== assistantId.value
   );
 
   if (remainingAssistants.length > 0) {
-    // Navigate to the first available assistant's settings
     const nextAssistant = remainingAssistants[0];
     router.push({
       name: 'captain_assistants_settings_index',
@@ -93,7 +91,6 @@ const handleDeleteSuccess = () => {
       },
     });
   } else {
-    // No assistants left, redirect to create assistant page
     router.push({
       name: 'captain_assistants_create_index',
       params: { accountId: route.params.accountId },
@@ -108,18 +105,20 @@ const handleDeleteSuccess = () => {
     :is-fetching="isFetching"
     :show-pagination-footer="false"
     :show-know-more="false"
-    :class="{
-      '[&>header>div]:max-w-[80rem] [&>main>div]:max-w-[80rem]':
-        isCaptainV2Enabled,
-    }"
   >
     <template #body>
       <div
-        class="gap-6 lg:gap-16 pb-8"
-        :class="{ 'grid grid-cols-2': isCaptainV2Enabled }"
+        class="items-start gap-8 pb-8"
+        :class="{
+          'grid grid-cols-1 lg:grid-cols-12': isCaptainV2Enabled,
+          'space-y-10': !isCaptainV2Enabled,
+        }"
       >
-        <div class="flex flex-col gap-6">
-          <div class="flex flex-col gap-6">
+        <div
+          class="space-y-10"
+          :class="{ 'lg:col-span-7': isCaptainV2Enabled }"
+        >
+          <div class="space-y-5">
             <SettingsHeader
               :heading="t('CAPTAIN.ASSISTANTS.SETTINGS.BASIC_SETTINGS.TITLE')"
               :description="
@@ -131,8 +130,8 @@ const handleDeleteSuccess = () => {
               @submit="handleSubmit"
             />
           </div>
-          <span class="h-px w-full bg-n-weak mt-2" />
-          <div class="flex flex-col gap-6">
+          <hr class="border-border/40" />
+          <div class="space-y-5">
             <SettingsHeader
               :heading="t('CAPTAIN.ASSISTANTS.SETTINGS.SYSTEM_SETTINGS.TITLE')"
               :description="
@@ -144,35 +143,37 @@ const handleDeleteSuccess = () => {
               @submit="handleSubmit"
             />
           </div>
-          <span class="h-px w-full bg-n-weak mt-2" />
-          <div class="flex items-end justify-between w-full gap-4">
-            <div class="flex flex-col gap-2">
-              <h6 class="text-n-slate-12 text-base font-medium">
+          <hr class="border-border/40" />
+          <div class="space-y-3 pt-2">
+            <div>
+              <h2
+                class="text-base font-semibold tracking-tight text-foreground"
+              >
                 {{ t('CAPTAIN.ASSISTANTS.SETTINGS.DELETE.TITLE') }}
-              </h6>
-              <span class="text-n-slate-11 text-sm">
+              </h2>
+              <p
+                class="mt-1 text-[13.5px] leading-relaxed text-muted-foreground"
+              >
                 {{ t('CAPTAIN.ASSISTANTS.SETTINGS.DELETE.DESCRIPTION') }}
-              </span>
+              </p>
             </div>
-            <div class="flex-shrink-0">
-              <RelayButton variant="destructive" @click="handleDelete">
-                {{
-                  t('CAPTAIN.ASSISTANTS.SETTINGS.DELETE.BUTTON_TEXT', {
-                    assistantName: assistant.name,
-                  })
-                }}
-              </RelayButton>
-            </div>
+            <RelayButton variant="destructive" @click="handleDelete">
+              {{
+                t('CAPTAIN.ASSISTANTS.SETTINGS.DELETE.BUTTON_TEXT', {
+                  assistantName: assistant.name,
+                })
+              }}
+            </RelayButton>
           </div>
         </div>
-        <div v-if="isCaptainV2Enabled" class="flex flex-col gap-6">
+        <div v-if="isCaptainV2Enabled" class="space-y-4 lg:col-span-5">
           <SettingsHeader
             :heading="t('CAPTAIN.ASSISTANTS.SETTINGS.CONTROL_ITEMS.TITLE')"
             :description="
               t('CAPTAIN.ASSISTANTS.SETTINGS.CONTROL_ITEMS.DESCRIPTION')
             "
           />
-          <div class="flex flex-col gap-6">
+          <div class="flex flex-col gap-4">
             <AssistantControlItems
               v-for="item in controlItems"
               :key="item.name"

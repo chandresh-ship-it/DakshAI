@@ -18,6 +18,7 @@ const props = defineProps({
   activeOn: { type: Array, default: () => [] },
   children: { type: Array, default: undefined },
   getterKeys: { type: Object, default: () => ({}) },
+  click: { type: Function, default: null },
 });
 
 const {
@@ -176,16 +177,18 @@ const handleCollapsedClick = () => {
   }
 };
 
-const toggleTrigger = () => {
-  if (
-    hasAccessibleChildren.value &&
-    !isExpanded.value &&
-    !hasActiveChild.value
-  ) {
-    // if not already expanded, navigate to the first child
-    const firstItem = accessibleItems.value[0];
-    router.push(firstItem.to);
+const handleLeafClick = () => {
+  if (props.click) {
+    props.click();
   }
+};
+
+const toggleTrigger = () => {
+  if (props.click) {
+    props.click();
+    return;
+  }
+  // Match AppSidebar: accordion toggle only (no auto-navigate on expand)
   setExpandedItem(props.name);
 };
 
@@ -210,7 +213,7 @@ watch(
       setExpandedItem(props.name);
     }
   },
-  { once: true }
+  { immediate: true }
 );
 </script>
 
@@ -235,16 +238,27 @@ watch(
           ref="triggerRef"
           :to="to && !hasChildren ? to : undefined"
           type="button"
-          class="flex size-10 items-center justify-center rounded-md transition-colors"
+          class="peer/menu-button relative mx-auto flex size-10 items-center justify-center rounded-md p-2 transition-colors"
           :class="{
-            'bg-n-brand/10 text-n-brand': isActive || hasActiveChild,
-            'text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12':
+            'bg-sidebar-primary/10 font-medium text-sidebar-primary before:absolute before:inset-y-1.5 before:w-[3px] before:rounded-r-md before:bg-sidebar-primary ltr:before:-left-3 rtl:before:-right-3':
+              isActive || hasActiveChild,
+            'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground':
               !isActive && !hasActiveChild,
           }"
           :title="label"
-          @click="hasChildren ? handleCollapsedClick() : undefined"
+          @click="hasChildren ? handleCollapsedClick() : handleLeafClick()"
         >
-          <Icon v-if="icon" :icon="icon" class="size-4" />
+          <Icon
+            v-if="icon"
+            :icon="icon"
+            class="size-5 shrink-0"
+            :class="
+              isActive || hasActiveChild
+                ? 'text-sidebar-primary'
+                : 'text-muted-foreground'
+            "
+          />
+          <span class="sr-only">{{ label }}</span>
         </component>
         <SidebarCollapsedPopover
           v-if="hasChildren && isPopoverOpen"
@@ -272,28 +286,33 @@ watch(
         :is-expanded="isExpanded"
         @toggle="toggleTrigger"
       />
-      <ul
+      <div
         v-if="hasChildren"
-        v-show="isExpanded || hasActiveChild"
-        class="mx-3.5 mt-0.5 flex min-w-0 list-none flex-col gap-1 border-l border-n-weak py-0.5 ltr:translate-x-px ltr:pl-5 ltr:pr-2 rtl:-translate-x-px rtl:pr-5 rtl:pl-2"
+        class="grid transition-[grid-template-rows] duration-200 ease-out"
+        :class="isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
       >
-        <template v-for="child in children" :key="child.name">
-          <SidebarSubGroup
-            v-if="child.children"
-            :label="child.label"
-            :icon="child.icon"
-            :children="child.children"
-            :is-expanded="isExpanded"
-            :active-child="activeChild"
-          />
-          <SidebarGroupLeaf
-            v-else-if="isAllowed(child.to)"
-            v-show="isExpanded || activeChild?.name === child.name"
-            v-bind="child"
-            :active="activeChild?.name === child.name"
-          />
-        </template>
-      </ul>
+        <div class="overflow-hidden">
+          <ul
+            class="mx-3.5 flex min-w-0 list-none flex-col gap-1 border-l border-sidebar-border py-0.5 ltr:translate-x-px ltr:pl-5 ltr:pr-2 rtl:-translate-x-px rtl:pr-5 rtl:pl-2"
+          >
+            <template v-for="child in children" :key="child.name">
+              <SidebarSubGroup
+                v-if="child.children"
+                :label="child.label"
+                :icon="child.icon"
+                :children="child.children"
+                :is-expanded="isExpanded"
+                :active-child="activeChild"
+              />
+              <SidebarGroupLeaf
+                v-else-if="isAllowed(child.to)"
+                v-bind="child"
+                :active="activeChild?.name === child.name"
+              />
+            </template>
+          </ul>
+        </div>
+      </div>
       <ul v-else-if="isExpandable && isExpanded">
         <SidebarGroupEmptyLeaf />
       </ul>

@@ -20,7 +20,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full gap-4 font-inter">
+  <div class="flex h-full w-full flex-col gap-4">
     <slot name="header" />
     <!-- Added to render any templates that should be rendered before body -->
     <main>
@@ -30,7 +30,7 @@ defineProps({
       </slot>
       <p
         v-else-if="noRecordsFound"
-        class="flex-1 py-20 text-n-slate-12 flex items-center justify-center text-base"
+        class="text-muted-foreground flex flex-1 items-center justify-center py-20 text-base"
       >
         {{ noRecordsMessage }}
       </p>

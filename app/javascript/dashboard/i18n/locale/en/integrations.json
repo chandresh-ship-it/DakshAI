@@ -986,6 +986,7 @@
     },
     "RESPONSES": {
       "HEADER": "FAQs",
+      "SUBTITLE": "All your FAQs in one place",
       "PENDING_FAQS": "Pending FAQs",
       "ADD_NEW": "Create new FAQ",
       "DOCUMENTABLE": {

@@ -89,55 +89,59 @@ const handleEnterKey = event => {
 
 <template>
   <div
-    class="flex h-full flex-col rounded-xl border border-n-weak bg-n-solid-2 py-6 text-n-slate-11"
+    class="flex h-full min-h-[500px] flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm"
   >
-    <div class="mb-6 px-6">
-      <div class="mb-1 flex items-center justify-between">
-        <h3 class="text-lg font-medium text-n-slate-12">
+    <div
+      class="flex shrink-0 items-start justify-between gap-4 border-b border-border/40 pb-4"
+    >
+      <div class="space-y-1">
+        <h2 class="text-base font-semibold tracking-tight text-foreground">
           {{ t('CAPTAIN.PLAYGROUND.HEADER') }}
-        </h3>
-        <RelayButton
-          variant="ghost"
-          size="icon"
-          class="size-8 text-n-slate-11"
-          :title="t('CAPTAIN.PLAYGROUND.HEADER')"
-          @click="resetConversation"
-        >
-          <span class="i-lucide-rotate-ccw size-4" />
-        </RelayButton>
+        </h2>
+        <p class="text-[13.5px] leading-relaxed text-muted-foreground">
+          {{ t('CAPTAIN.PLAYGROUND.DESCRIPTION') }}
+        </p>
       </div>
-      <p class="text-sm text-n-slate-11">
-        {{ t('CAPTAIN.PLAYGROUND.DESCRIPTION') }}
-      </p>
+      <RelayButton
+        variant="ghost"
+        size="icon"
+        class="size-8 shrink-0 rounded-lg border border-border text-muted-foreground hover:border-transparent hover:text-foreground"
+        :title="t('CAPTAIN.PLAYGROUND.HEADER')"
+        @click="resetConversation"
+      >
+        <span class="i-lucide-rotate-ccw size-4" />
+      </RelayButton>
     </div>
 
     <MessageList :messages="messages" :is-loading="isLoading" />
 
-    <div
-      class="mx-6 flex items-center gap-2 rounded-xl border border-n-weak bg-n-background p-2 shadow-sm"
-    >
-      <input
-        v-model="newMessage"
-        class="mb-0 flex-1 border-none bg-transparent px-2 text-sm text-n-slate-12 placeholder:text-n-slate-11 focus:outline-none"
-        :placeholder="t('CAPTAIN.PLAYGROUND.MESSAGE_PLACEHOLDER')"
-        @keydown.enter.exact="handleEnterKey"
-      />
-      <RelayButton
-        size="icon"
-        class="size-9 shrink-0"
-        :disabled="!newMessage.trim() || isLoading"
-        @click="sendMessage"
+    <div class="shrink-0 space-y-2 border-t border-border/40 pt-4">
+      <div
+        class="relative flex items-center rounded-xl border border-border/80 bg-background p-2 shadow-sm transition-all focus-within:ring-1 focus-within:ring-primary/30"
       >
-        <span
-          v-if="isLoading"
-          class="i-lucide-loader-circle size-4 animate-spin"
+        <input
+          v-model="newMessage"
+          class="mb-0 h-10 flex-1 border-none bg-transparent px-3 text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+          :placeholder="t('CAPTAIN.PLAYGROUND.MESSAGE_PLACEHOLDER')"
+          @keydown.enter.exact="handleEnterKey"
         />
-        <span v-else class="i-lucide-send size-4" />
-      </RelayButton>
-    </div>
+        <RelayButton
+          size="icon"
+          class="ml-2 size-9 shrink-0 rounded-lg"
+          :disabled="!newMessage.trim() || isLoading"
+          @click="sendMessage"
+        >
+          <span
+            v-if="isLoading"
+            class="i-lucide-loader-circle size-4 animate-spin"
+          />
+          <span v-else class="i-lucide-send size-4" />
+        </RelayButton>
+      </div>
 
-    <p class="pt-2 text-center text-xs text-n-slate-11">
-      {{ t('CAPTAIN.PLAYGROUND.CREDIT_NOTE') }}
-    </p>
+      <p class="text-center text-[12px] text-muted-foreground/70">
+        {{ t('CAPTAIN.PLAYGROUND.CREDIT_NOTE') }}
+      </p>
+    </div>
   </div>
 </template>

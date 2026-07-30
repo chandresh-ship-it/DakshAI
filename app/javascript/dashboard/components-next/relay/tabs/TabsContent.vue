@@ -16,7 +16,7 @@ const isActive = computed(() => activeValue?.value === props.value);
     role="tabpanel"
     :class="
       cn(
-        'mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-n-brand'
+        'mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
       )
     "
   >

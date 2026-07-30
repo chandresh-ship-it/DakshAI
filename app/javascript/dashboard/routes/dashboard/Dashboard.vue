@@ -234,17 +234,17 @@ export default {
 
 <template>
   <div
-    class="flex h-full min-h-0 w-full flex-grow overflow-hidden bg-n-background text-n-slate-12"
+    data-relay
+    class="font-geist flex h-full min-h-0 w-full flex-grow overflow-hidden bg-background text-foreground antialiased"
     :class="{
-      'flex-row-reverse gap-4 bg-n-slate-3 p-4':
-        activeLayout === 'documentation',
+      'flex-row-reverse gap-4 bg-muted p-4': activeLayout === 'documentation',
     }"
   >
     <NextSidebar
       ref="sidebar"
       :is-mobile-sidebar-open="isMobileSidebarOpen"
       :class="{
-        'overflow-hidden rounded-2xl border border-n-weak bg-n-solid-1 shadow-md':
+        'overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar shadow-md':
           activeLayout === 'documentation',
         '!border-l-0 ltr:!border-r-0 rtl:!border-l-0':
           activeLayout === 'documentation',
@@ -259,7 +259,7 @@ export default {
     <div
       class="flex min-h-0 min-w-0 flex-1 flex-col"
       :class="{
-        'overflow-hidden rounded-2xl border border-n-weak bg-n-surface-1 shadow-md':
+        'overflow-hidden rounded-2xl border border-border bg-background shadow-md':
           activeLayout === 'documentation',
       }"
     >
@@ -272,7 +272,7 @@ export default {
         @show-create-account-modal="openCreateAccountModal"
       />
 
-      <main class="flex min-h-0 w-full flex-1 overflow-hidden bg-n-background">
+      <main class="flex min-h-0 w-full flex-1 overflow-hidden bg-background">
         <UpgradePage
           v-show="showUpgradePage"
           ref="upgradePageRef"

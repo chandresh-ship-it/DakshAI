@@ -35,8 +35,9 @@ const shouldRenderComponent = computed(() => {
       :title="label"
       class="flex h-8 min-w-0 items-center gap-3 overflow-hidden rounded-md px-2 text-sm outline-none transition-colors"
       :class="{
-        'font-medium text-n-brand': active,
-        'text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12': !active,
+        'font-medium text-sidebar-primary': active,
+        'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground':
+          !active,
       }"
     >
       <component
@@ -45,7 +46,10 @@ const shouldRenderComponent = computed(() => {
         v-bind="{ label, icon, active, badgeCount }"
       />
       <template v-else>
-        <span v-if="icon" class="grid size-4 shrink-0 place-content-center">
+        <span
+          v-if="icon"
+          class="grid size-4 shrink-0 place-content-center text-muted-foreground"
+        >
           <Icon :icon="icon" class="inline-block size-4" />
         </span>
         <div class="min-w-0 flex-1 truncate">{{ label }}</div>

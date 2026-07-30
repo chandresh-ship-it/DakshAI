@@ -4,11 +4,9 @@ import { useToggle } from '@vueuse/core';
 import { useI18n } from 'vue-i18n';
 import { dynamicTime } from 'shared/helpers/timeHelper';
 
-import CardLayout from 'dashboard/components-next/CardLayout.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
-import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Policy from 'dashboard/components/policy.vue';
-import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const props = defineProps({
   id: {
@@ -71,11 +69,6 @@ const { t } = useI18n();
 
 const [showActionsDropdown, toggleDropdown] = useToggle();
 
-const modelValue = computed({
-  get: () => props.isSelected,
-  set: () => emit('select', props.id),
-});
-
 const statusAction = computed(() => {
   if (props.status === 'pending') {
     return [
@@ -121,127 +114,77 @@ const handleDocumentableClick = () => {
     type: props.documentable.type,
   });
 };
+
+const handleCardClick = () => {
+  if (props.selectable) {
+    emit('select', props.id);
+  }
+};
 </script>
 
 <template>
-  <CardLayout
-    selectable
-    class="relative transition-colors"
-    :class="{
-      'rounded-md': compact,
-      'outline-n-brand/50 bg-n-brand/5': isSelected,
-    }"
+  <div
+    class="group flex cursor-pointer select-none flex-col justify-between rounded-xl border bg-card p-5 transition-all hover:shadow-xs sm:flex-row sm:items-start"
+    :class="
+      isSelected
+        ? 'border-primary/50 bg-primary/[0.02]'
+        : 'border-border hover:border-border'
+    "
+    @click="handleCardClick"
     @mouseenter="emit('hover', true)"
     @mouseleave="emit('hover', false)"
   >
-    <div v-show="selectable" class="absolute top-7 ltr:left-3 rtl:right-3">
-      <RelayCheckbox v-model="modelValue" />
-    </div>
-    <div class="relative flex w-full justify-between gap-1">
-      <span class="line-clamp-1 text-[15px] font-medium text-n-slate-12">
-        {{ question }}
-      </span>
-      <div v-if="!compact && showMenu" class="flex items-center gap-2">
-        <Policy
-          v-on-clickaway="() => toggleDropdown(false)"
-          :permissions="['administrator']"
-          class="group relative flex items-center opacity-0 transition-opacity group-hover/cardLayout:opacity-100 focus-within:opacity-100"
-        >
-          <RelayButton
-            variant="ghost"
-            size="icon"
-            class="size-8 rounded-md text-n-slate-11 hover:bg-n-alpha-2"
-            @click="toggleDropdown()"
-          >
-            <span class="i-lucide-ellipsis-vertical size-4" />
-          </RelayButton>
-          <DropdownMenu
-            v-if="showActionsDropdown"
-            :menu-items="menuItems"
-            class="mt-1 ltr:right-0 rtl:right-0 top-full"
-            @action="handleAssistantAction($event)"
-          />
-        </Policy>
-      </div>
-    </div>
-    <span class="line-clamp-5 text-sm text-n-slate-11">
-      {{ answer }}
-    </span>
-    <div
-      v-if="!compact"
-      class="flex flex-col-reverse items-start justify-between gap-3 md:flex-row"
-    >
-      <Policy v-if="showActions" :permissions="['administrator']">
-        <div class="flex w-full items-center gap-2 sm:gap-5">
-          <RelayButton
-            v-if="status === 'pending'"
-            variant="link"
-            size="sm"
-            class="hover:!no-underline"
-            @click="
-              handleAssistantAction({ action: 'approve', value: 'approve' })
-            "
-          >
-            <span class="i-lucide-circle-check-big size-4" />
-            {{ $t('CAPTAIN.RESPONSES.OPTIONS.APPROVE') }}
-          </RelayButton>
-          <RelayButton
-            variant="link"
-            size="sm"
-            class="text-n-slate-11 hover:!no-underline"
-            @click="
-              handleAssistantAction({
-                action: 'edit',
-                value: 'edit',
-              })
-            "
-          >
-            <span class="i-lucide-pencil-line size-4" />
-            {{ $t('CAPTAIN.RESPONSES.OPTIONS.EDIT_RESPONSE') }}
-          </RelayButton>
-          <RelayButton
-            variant="link"
-            size="sm"
-            class="text-n-ruby-11 hover:!no-underline"
-            @click="
-              handleAssistantAction({ action: 'delete', value: 'delete' })
-            "
-          >
-            <span class="i-lucide-trash size-4" />
-            {{ $t('CAPTAIN.RESPONSES.OPTIONS.DELETE_RESPONSE') }}
-          </RelayButton>
-        </div>
-      </Policy>
+    <div class="flex min-w-0 flex-1 items-start gap-4 pr-4">
       <div
-        class="flex items-center gap-3"
-        :class="{ 'w-full justify-between': !showActions }"
+        v-if="selectable"
+        class="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors"
+        :class="
+          isSelected
+            ? 'border-primary bg-primary text-primary-foreground shadow-xs'
+            : 'border-border/80 bg-background/50'
+        "
       >
-        <div class="inline-flex min-w-0 items-center gap-3">
-          <span
-            v-if="status === 'approved'"
-            class="inline-flex shrink-0 items-center gap-1 truncate text-sm text-n-slate-11"
+        <span v-if="isSelected" class="i-lucide-check size-3 stroke-[3]" />
+      </div>
+
+      <div class="min-w-0 flex-1">
+        <h3 class="mb-1.5 text-[15px] font-medium text-foreground">
+          {{ question }}
+        </h3>
+        <p
+          class="mb-4 line-clamp-2 text-[14px] leading-relaxed text-muted-foreground"
+        >
+          {{ answer }}
+        </p>
+
+        <div
+          v-if="!compact"
+          class="flex flex-wrap items-center gap-4 text-[12.5px] text-muted-foreground/80"
+        >
+          <div
+            v-if="status === 'approved' || assistant?.name"
+            class="flex items-center gap-1.5"
           >
-            <Icon icon="i-woot-captain" class="size-3.5" />
+            <span class="i-lucide-brain-circuit size-3.5 text-primary/70" />
             {{ assistant?.name || '' }}
-          </span>
+          </div>
+
           <div
             v-if="documentable"
-            class="grid min-w-0 grid-cols-[auto_1fr] items-center gap-1 text-sm text-n-slate-11"
+            class="flex min-w-0 items-center gap-1.5"
+            @click.stop
           >
-            <Icon
+            <span
               v-if="documentable.type === 'Captain::Document'"
-              icon="i-ph-files-light"
-              class="size-3.5"
+              class="i-ph-files-light size-3.5 opacity-60"
             />
-            <Icon
+            <span
               v-else-if="documentable.type === 'User'"
-              icon="i-ph-user-circle-plus"
-              class="size-3.5"
+              class="i-lucide-user size-3.5 opacity-60"
             />
-            <Icon
+            <span
               v-else-if="documentable.type === 'Conversation'"
-              icon="i-ph-chat-circle-dots"
-              class="size-3.5"
+              class="i-ph-chat-circle-dots size-3.5 opacity-60"
             />
             <span
               v-if="documentable.type === 'Captain::Document'"
@@ -271,13 +214,88 @@ const handleDocumentableClick = () => {
             </span>
           </div>
         </div>
-        <div
-          class="inline-flex shrink-0 items-center gap-1 text-sm text-n-slate-11 line-clamp-1"
+
+        <Policy
+          v-if="!compact && showActions"
+          :permissions="['administrator']"
+          class="mt-4"
         >
-          <Icon icon="i-ph-calendar-dot" class="size-3.5" />
-          {{ timestamp }}
-        </div>
+          <div class="flex w-full items-center gap-2 sm:gap-5" @click.stop>
+            <RelayButton
+              v-if="status === 'pending'"
+              variant="link"
+              size="sm"
+              class="hover:!no-underline"
+              @click="
+                handleAssistantAction({ action: 'approve', value: 'approve' })
+              "
+            >
+              <span class="i-lucide-circle-check-big size-4" />
+              {{ $t('CAPTAIN.RESPONSES.OPTIONS.APPROVE') }}
+            </RelayButton>
+            <RelayButton
+              variant="link"
+              size="sm"
+              class="text-muted-foreground hover:!no-underline"
+              @click="
+                handleAssistantAction({
+                  action: 'edit',
+                  value: 'edit',
+                })
+              "
+            >
+              <span class="i-lucide-pencil-line size-4" />
+              {{ $t('CAPTAIN.RESPONSES.OPTIONS.EDIT_RESPONSE') }}
+            </RelayButton>
+            <RelayButton
+              variant="link"
+              size="sm"
+              class="text-destructive hover:!no-underline"
+              @click="
+                handleAssistantAction({ action: 'delete', value: 'delete' })
+              "
+            >
+              <span class="i-lucide-trash size-4" />
+              {{ $t('CAPTAIN.RESPONSES.OPTIONS.DELETE_RESPONSE') }}
+            </RelayButton>
+          </div>
+        </Policy>
       </div>
     </div>
-  </CardLayout>
+
+    <div
+      v-if="!compact"
+      class="mt-4 flex shrink-0 items-center gap-4 self-end sm:mt-0 sm:self-center"
+      @click.stop
+    >
+      <div
+        class="hidden items-center gap-1 text-[12.5px] text-muted-foreground/70 sm:flex"
+      >
+        <span class="i-lucide-clock size-3.5 opacity-50" />
+        <span>{{ timestamp }}</span>
+      </div>
+
+      <Policy
+        v-if="showMenu"
+        v-on-clickaway="() => toggleDropdown(false)"
+        :permissions="['administrator']"
+        class="relative"
+      >
+        <RelayButton
+          variant="ghost"
+          size="icon"
+          class="size-8 rounded-md border border-border text-muted-foreground opacity-0 hover:border-transparent hover:bg-muted hover:text-foreground group-hover:opacity-100 focus:opacity-100"
+          @click="toggleDropdown()"
+        >
+          <span class="i-lucide-ellipsis-vertical size-4" />
+        </RelayButton>
+        <DropdownMenu
+          v-if="showActionsDropdown"
+          :menu-items="menuItems"
+          class="top-full mt-1 ltr:right-0 rtl:right-0"
+          @action="handleAssistantAction($event)"
+        />
+      </Policy>
+    </div>
+  </div>
 </template>

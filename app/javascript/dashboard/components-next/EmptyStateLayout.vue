@@ -19,50 +19,41 @@ defineProps({
     default: true,
   },
 });
+
+defineOptions({
+  inheritAttrs: false,
+});
 </script>
 
 <template>
   <section
-    class="relative flex flex-col items-center justify-center w-full h-full overflow-hidden"
+    class="relative flex w-full flex-1 flex-col items-center justify-center overflow-hidden py-24 text-center"
   >
     <div
-      class="relative w-full max-w-5xl mx-auto overflow-hidden h-full max-h-[28rem]"
+      v-if="showBackdrop"
+      class="pointer-events-none absolute inset-0 z-0 flex select-none flex-col gap-4 overflow-hidden"
+      aria-hidden="true"
     >
       <div
-        v-if="showBackdrop"
-        class="w-full h-full space-y-4 overflow-y-hidden opacity-50 pointer-events-none"
-      >
+        class="absolute inset-0 z-10 bg-gradient-to-b from-background/40 via-background/90 to-background"
+      />
+      <div class="relative z-0 flex w-full flex-col gap-4">
         <slot name="empty-state-item" />
       </div>
-      <div
-        class="flex flex-col items-center justify-end w-full h-full pb-20"
-        :class="{
-          'absolute inset-x-0 bottom-0 bg-gradient-to-t from-n-surface-1 from-25% to-transparent':
-            showBackdrop,
-        }"
-      >
-        <div
-          class="flex flex-col items-center justify-center gap-6"
-          :class="{
-            'mt-48': !showBackdrop,
-          }"
-        >
-          <div class="flex flex-col items-center justify-center gap-3">
-            <h2 class="text-3xl font-medium text-center text-n-slate-12">
-              {{ title }}
-            </h2>
-            <p
-              v-if="subtitle"
-              class="max-w-xl text-base text-center text-n-slate-11 tracking-[0.3px]"
-            >
-              {{ subtitle }}
-            </p>
-          </div>
-          <Policy :permissions="actionPerms">
-            <slot name="actions" />
-          </Policy>
-        </div>
+    </div>
+
+    <div class="relative z-20 flex flex-col items-center">
+      <h2 class="mb-3 text-[20px] font-semibold text-foreground">
+        {{ title }}
+      </h2>
+      <div v-if="subtitle" class="relative mx-auto mb-8 max-w-md">
+        <p class="text-[15px] leading-relaxed text-muted-foreground">
+          {{ subtitle }}
+        </p>
       </div>
+      <Policy :permissions="actionPerms">
+        <slot name="actions" />
+      </Policy>
     </div>
   </section>
 </template>

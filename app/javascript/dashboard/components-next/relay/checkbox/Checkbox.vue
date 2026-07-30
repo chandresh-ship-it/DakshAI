@@ -36,12 +36,12 @@ const toggle = () => {
     :disabled="disabled"
     :class="
       cn(
-        'peer size-4 shrink-0 rounded-sm border border-n-weak shadow-sm transition-colors',
-        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-n-brand',
+        'peer size-4 shrink-0 rounded-sm border border-input shadow-sm transition-colors',
+        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         'disabled:cursor-not-allowed disabled:opacity-50',
         isChecked
-          ? 'border-n-brand bg-n-brand text-white'
-          : 'bg-n-background text-transparent'
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'bg-background text-transparent'
       )
     "
     @click="toggle"

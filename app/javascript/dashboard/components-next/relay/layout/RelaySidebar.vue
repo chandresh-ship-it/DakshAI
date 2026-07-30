@@ -51,124 +51,136 @@ const widthClass = computed(() => (props.collapsed ? 'w-16' : 'w-60'));
   <aside
     :class="
       cn(
-        'flex h-full flex-col border-r border-n-weak bg-n-solid-1 text-n-slate-12 transition-[width] duration-200 ease-linear',
+        'flex h-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear',
         widthClass
       )
     "
   >
     <div
-      :class="
-        cn(
-          'flex h-14 items-center border-b border-n-weak px-3',
-          collapsed ? 'justify-center' : 'justify-between gap-2'
-        )
-      "
+      :class="cn('flex flex-col gap-2 p-2 pb-6', collapsed && 'items-center')"
     >
       <div
         :class="
-          cn('flex min-w-0 items-center gap-2', collapsed && 'justify-center')
+          cn(
+            'flex h-12 w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm',
+            collapsed && 'justify-center p-1.5'
+          )
         "
       >
         <span
-          class="flex size-8 shrink-0 items-center justify-center rounded-md bg-n-brand text-sm font-semibold text-white"
+          class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground"
         >
           {{ brandName.slice(0, 1).toUpperCase() }}
         </span>
-        <span
+        <div
           v-if="!collapsed"
-          class="truncate text-sm font-medium text-n-slate-12"
+          class="grid min-w-0 flex-1 text-left text-sm leading-tight"
         >
-          {{ brandName }}
-        </span>
+          <span class="truncate font-semibold text-sidebar-foreground">
+            {{ brandName }}
+          </span>
+          <span class="truncate text-xs font-normal text-muted-foreground">
+            {{ t('SIDEBAR.ENTERPRISE_EDITION') }}
+          </span>
+        </div>
       </div>
-      <button
-        v-if="!collapsed"
-        type="button"
-        class="inline-flex size-8 items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12"
-        @click="emit('update:collapsed', true)"
-      >
-        <span class="i-lucide-panel-left size-4" />
-        <span class="sr-only">{{ t('SIDEBAR.COLLAPSE_SIDEBAR') }}</span>
-      </button>
     </div>
 
-    <nav class="flex-1 overflow-y-auto px-2 py-3">
+    <nav class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pt-0">
       <div
         v-for="(section, sectionIndex) in sections"
         :key="section.label || sectionIndex"
-        class="mb-4"
+        :class="
+          cn(
+            'relative flex w-full min-w-0 flex-col p-2 pt-0',
+            sectionIndex > 0 && 'mt-1'
+          )
+        "
       >
         <p
           v-if="section.label && !collapsed"
-          class="mb-1 px-2 text-xs font-medium uppercase tracking-wide text-n-slate-11"
+          class="mb-2 px-2 text-xs font-medium text-muted-foreground"
         >
           {{ section.label }}
         </p>
 
-        <div v-for="item in section.items" :key="item.title" class="mb-0.5">
-          <button
-            type="button"
-            :class="
-              cn(
-                'relative flex w-full items-center gap-3 rounded-md p-2 text-left text-sm transition-colors',
-                'hover:bg-n-alpha-2',
-                collapsed && 'justify-center',
-                itemHasActiveChild(item) && 'font-medium text-n-brand'
-              )
-            "
-            @click="
-              item.children?.length
-                ? toggleGroup(item.title)
-                : onNavigate(item.href)
-            "
-          >
-            <span v-if="item.icon" :class="cn(item.icon, 'size-4 shrink-0')" />
-            <span v-if="!collapsed" class="min-w-0 flex-1 truncate">
-              {{ item.title }}
-            </span>
-            <span
-              v-if="!collapsed && item.children?.length"
-              :class="
-                cn(
-                  'i-lucide-chevron-right size-4 shrink-0 text-n-slate-11 transition-transform',
-                  openGroup === item.title && 'rotate-90'
-                )
-              "
-            />
-          </button>
-
-          <div
-            v-if="
-              !collapsed && item.children?.length && openGroup === item.title
-            "
-            class="ml-2 mt-0.5 space-y-0.5 border-l border-n-weak pl-2"
-          >
+        <div class="flex w-full min-w-0 flex-col gap-3">
+          <div v-for="item in section.items" :key="item.title" class="relative">
             <button
-              v-for="child in item.children"
-              :key="child.href || child.title"
               type="button"
               :class="
                 cn(
-                  'flex h-8 w-full items-center rounded-md px-2 text-left text-sm transition-colors',
-                  'hover:bg-n-alpha-2',
-                  isActive(child.href)
-                    ? 'font-medium text-n-brand'
-                    : 'text-n-slate-11'
+                  'relative flex w-full items-center gap-3 rounded-md p-2 py-2 text-left text-sm outline-none transition-colors',
+                  'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                  collapsed && 'mx-auto h-10 w-10 justify-center',
+                  itemHasActiveChild(item) && 'font-medium text-sidebar-primary'
                 )
               "
-              @click="onNavigate(child.href)"
+              @click="
+                item.children?.length
+                  ? toggleGroup(item.title)
+                  : onNavigate(item.href)
+              "
             >
-              <span class="truncate">{{ child.title }}</span>
+              <span
+                v-if="item.icon"
+                :class="
+                  cn(
+                    item.icon,
+                    'size-4 shrink-0',
+                    itemHasActiveChild(item)
+                      ? 'text-sidebar-primary'
+                      : 'text-muted-foreground'
+                  )
+                "
+              />
+              <span v-if="!collapsed" class="min-w-0 flex-1 truncate">
+                {{ item.title }}
+              </span>
+              <span
+                v-if="!collapsed && item.children?.length"
+                :class="
+                  cn(
+                    'i-lucide-chevron-right ml-auto size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                    openGroup === item.title && 'rotate-90'
+                  )
+                "
+              />
             </button>
+
+            <div
+              v-if="
+                !collapsed && item.children?.length && openGroup === item.title
+              "
+              class="mx-3.5 mt-0.5 flex min-w-0 flex-col gap-1 border-l border-sidebar-border py-0.5 pl-5 pr-2"
+            >
+              <button
+                v-for="child in item.children"
+                :key="child.href || child.title"
+                type="button"
+                :class="
+                  cn(
+                    'flex h-8 w-full items-center rounded-md px-2 text-left text-sm transition-colors',
+                    'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                    isActive(child.href)
+                      ? 'font-medium text-sidebar-primary'
+                      : 'text-sidebar-foreground'
+                  )
+                "
+                @click="onNavigate(child.href)"
+              >
+                <span class="truncate">{{ child.title }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </nav>
 
-    <div v-if="collapsed" class="border-t border-n-weak p-2">
+    <div v-if="collapsed" class="border-t border-sidebar-border p-2">
       <button
         type="button"
-        class="inline-flex size-10 w-full items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
+        class="inline-flex size-10 w-full items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         @click="emit('update:collapsed', false)"
       >
         <span class="i-lucide-panel-left size-4" />

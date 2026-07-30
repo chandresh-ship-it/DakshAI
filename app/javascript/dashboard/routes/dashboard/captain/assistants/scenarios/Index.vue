@@ -30,11 +30,11 @@ const scenarios = useMapGetter('captainScenarios/getRecords');
 const searchQuery = ref('');
 
 const LINK_INSTRUCTION_CLASS =
-  '[&_a[href^="tool://"]]:text-n-iris-11 [&_a:not([href^="tool://"])]:text-n-slate-12 [&_a]:pointer-events-none [&_a]:cursor-default';
+  '[&_a[href^="tool://"]]:text-primary [&_a:not([href^="tool://"])]:text-foreground [&_a]:pointer-events-none [&_a]:cursor-default';
 
 const renderInstruction = instruction => () =>
   h('span', {
-    class: `text-sm text-n-slate-12 py-4 prose prose-sm min-w-0 break-words ${LINK_INSTRUCTION_CLASS}`,
+    class: `min-w-0 break-words py-4 text-sm text-foreground prose prose-sm ${LINK_INSTRUCTION_CLASS}`,
     innerHTML: instruction,
   });
 
@@ -201,13 +201,13 @@ onMounted(() => {
         >
           <template #default="{ item }">
             <div class="flex items-center justify-between gap-3">
-              <span class="text-sm text-n-slate-12">
+              <span class="text-sm text-foreground">
                 {{ item.title }}
               </span>
               <RelayButton
                 variant="ghost"
                 size="sm"
-                class="!text-sm text-n-slate-11"
+                class="!text-sm text-muted-foreground"
                 @click="addScenario(item)"
               >
                 {{
@@ -216,13 +216,13 @@ onMounted(() => {
               </RelayButton>
             </div>
             <div class="flex flex-col">
-              <span class="mt-2 text-sm text-n-slate-11">
+              <span class="mt-2 text-sm text-muted-foreground">
                 {{ item.description }}
               </span>
               <component
                 :is="renderInstruction(formatMessage(item.instruction, false))"
               />
-              <span class="mb-1 text-sm font-medium text-n-slate-11">
+              <span class="mb-1 text-sm font-medium text-muted-foreground">
                 {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.SUGGESTED.TOOLS_USED') }}
                 {{ item.tools?.map(tool => `@${tool}`).join(', ') }}
               </span>
@@ -248,10 +248,10 @@ onMounted(() => {
           </BulkSelectBar>
           <div
             v-if="scenarios.length && bulkSelectedIds.size === 0"
-            class="relative w-full min-w-0 max-w-[22.5rem]"
+            class="relative w-full min-w-0 max-w-[16rem]"
           >
             <span
-              class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-n-slate-11"
+              class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground"
             />
             <RelayInput
               v-model="searchQuery"
@@ -259,21 +259,21 @@ onMounted(() => {
                 t('CAPTAIN.ASSISTANTS.SCENARIOS.LIST.SEARCH_PLACEHOLDER')
               "
               type="search"
-              class-name="pl-9"
+              class-name="h-9 bg-background pl-9"
             />
           </div>
         </div>
         <div v-if="scenarios.length === 0" class="mb-2 mt-1">
-          <span class="text-sm text-n-slate-11">
+          <span class="text-sm text-muted-foreground">
             {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.EMPTY_MESSAGE') }}
           </span>
         </div>
         <div v-else-if="filteredScenarios.length === 0" class="mb-2 mt-1">
-          <span class="text-sm text-n-slate-11">
+          <span class="text-sm text-muted-foreground">
             {{ t('CAPTAIN.ASSISTANTS.SCENARIOS.SEARCH_EMPTY_MESSAGE') }}
           </span>
         </div>
-        <div v-else class="flex flex-col gap-2">
+        <div v-else class="space-y-4">
           <ScenariosCard
             v-for="scenario in filteredScenarios"
             :id="scenario.id"

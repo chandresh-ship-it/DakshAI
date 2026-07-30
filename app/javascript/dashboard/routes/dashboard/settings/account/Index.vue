@@ -10,7 +10,7 @@ import { FEATURE_FLAGS } from '../../../../featureFlags';
 import WithLabel from 'v3/components/Form/WithLabel.vue';
 import NextInput from 'next/input/Input.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import AccountId from './components/AccountId.vue';
 import BuildInfo from './components/BuildInfo.vue';
 import AccountDelete from './components/AccountDelete.vue';
@@ -20,7 +20,7 @@ import SectionLayout from './components/SectionLayout.vue';
 export default {
   components: {
     BaseSettingsHeader,
-    NextButton,
+    RelayButton,
     AccountId,
     BuildInfo,
     AccountDelete,
@@ -147,17 +147,17 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-col w-full max-w-2xl ltr:mr-auto rtl:ml-auto">
+  <div class="flex w-full max-w-3xl flex-col gap-8 ltr:mr-auto rtl:ml-auto">
     <BaseSettingsHeader :title="$t('GENERAL_SETTINGS.TITLE')" />
-    <div class="flex-grow flex-shrink min-w-0 mt-3">
+    <div class="min-w-0 flex-grow flex-shrink space-y-8">
       <SectionLayout
         :title="$t('GENERAL_SETTINGS.FORM.GENERAL_SECTION.TITLE')"
         :description="$t('GENERAL_SETTINGS.FORM.GENERAL_SECTION.NOTE')"
-        class="!pt-0"
+        as-card
       >
         <form
           v-if="!uiFlags.isFetchingItem"
-          class="grid gap-4"
+          class="grid gap-6"
           @submit.prevent="updateAccount"
         >
           <WithLabel
@@ -180,7 +180,10 @@ export default {
             :label="$t('GENERAL_SETTINGS.FORM.LANGUAGE.LABEL')"
             :error-message="$t('GENERAL_SETTINGS.FORM.LANGUAGE.ERROR')"
           >
-            <select v-model="locale" class="!mb-0 text-sm">
+            <select
+              v-model="locale"
+              class="!mb-0 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs"
+            >
               <option
                 v-for="lang in languagesSortedByCode"
                 :key="lang.iso_639_1_code"
@@ -228,9 +231,9 @@ export default {
             />
           </WithLabel>
           <div>
-            <NextButton blue :is-loading="isUpdating" type="submit">
+            <RelayButton :disabled="isUpdating" type="submit">
               {{ $t('GENERAL_SETTINGS.SUBMIT') }}
-            </NextButton>
+            </RelayButton>
           </div>
         </form>
       </SectionLayout>

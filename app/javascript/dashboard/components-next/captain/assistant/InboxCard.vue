@@ -3,7 +3,6 @@ import { computed } from 'vue';
 import { useToggle } from '@vueuse/core';
 import { useI18n } from 'vue-i18n';
 
-import CardLayout from 'dashboard/components-next/CardLayout.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import { RelayButton } from 'dashboard/components-next/relay';
 import Policy from 'dashboard/components/policy.vue';
@@ -69,36 +68,39 @@ const handleAction = ({ action, value }) => {
 </script>
 
 <template>
-  <CardLayout>
-    <div class="flex w-full justify-between gap-1">
-      <span
-        class="flex items-center gap-2 text-[15px] font-medium text-n-slate-12 line-clamp-1"
+  <div
+    class="group flex items-center justify-between rounded-xl border border-border bg-card px-5 py-4 transition-all hover:shadow-sm"
+  >
+    <div class="flex min-w-0 items-center gap-3.5">
+      <div
+        class="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/60 text-foreground"
       >
-        <span :class="icon" />
-        {{ inboxName }}
-      </span>
-      <div class="flex items-center gap-2">
-        <Policy
-          v-on-clickaway="() => toggleDropdown(false)"
-          :permissions="['administrator']"
-          class="group relative flex items-center opacity-0 transition-opacity group-hover/cardLayout:opacity-100 focus-within:opacity-100"
-        >
-          <RelayButton
-            variant="ghost"
-            size="icon"
-            class="size-8 rounded-md text-n-slate-11 hover:bg-n-alpha-2"
-            @click="toggleDropdown()"
-          >
-            <span class="i-lucide-ellipsis-vertical size-4" />
-          </RelayButton>
-          <DropdownMenu
-            v-if="showActionsDropdown"
-            :menu-items="menuItems"
-            class="top-full mt-1 ltr:right-0 rtl:left-0"
-            @action="handleAction($event)"
-          />
-        </Policy>
+        <span class="size-4" :class="[icon]" />
       </div>
+      <h3 class="truncate text-[15px] font-medium text-foreground">
+        {{ inboxName }}
+      </h3>
     </div>
-  </CardLayout>
+
+    <Policy
+      v-on-clickaway="() => toggleDropdown(false)"
+      :permissions="['administrator']"
+      class="relative shrink-0"
+    >
+      <RelayButton
+        variant="ghost"
+        size="icon"
+        class="size-8 rounded-md border border-border text-muted-foreground hover:border-transparent hover:bg-muted hover:text-foreground"
+        @click="toggleDropdown()"
+      >
+        <span class="i-lucide-ellipsis-vertical size-4" />
+      </RelayButton>
+      <DropdownMenu
+        v-if="showActionsDropdown"
+        :menu-items="menuItems"
+        class="top-full mt-1 ltr:right-0 rtl:left-0"
+        @action="handleAction($event)"
+      />
+    </Policy>
+  </div>
 </template>

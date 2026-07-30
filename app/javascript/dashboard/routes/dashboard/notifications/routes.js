@@ -7,6 +7,9 @@ export const routes = [
   {
     path: frontendURL('accounts/:accountId/notifications'),
     component: SettingsWrapper,
+    props: {
+      hideSideMenu: true,
+    },
     children: [
       {
         path: '',

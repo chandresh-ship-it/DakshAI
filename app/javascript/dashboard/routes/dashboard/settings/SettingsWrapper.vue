@@ -1,10 +1,15 @@
 <script setup>
 import { useRoute } from 'vue-router';
+import SettingsSideMenu from './components/SettingsSideMenu.vue';
 
 defineProps({
   keepAlive: {
     type: Boolean,
     default: true,
+  },
+  hideSideMenu: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -13,15 +18,24 @@ const route = useRoute();
 
 <template>
   <div
-    class="flex flex-col w-full h-full m-0 pb-8 pt-4 px-6 overflow-auto bg-n-surface-1"
+    class="flex h-full min-h-0 w-full flex-col overflow-auto bg-background text-foreground"
   >
-    <div class="flex items-start w-full max-w-5xl mx-auto">
-      <router-view v-slot="{ Component }">
-        <keep-alive v-if="keepAlive">
-          <component :is="Component" :key="route.fullPath" />
-        </keep-alive>
-        <component :is="Component" v-else :key="route.fullPath" />
-      </router-view>
+    <div
+      class="mx-auto flex w-full max-w-7xl flex-1 flex-col items-start gap-8 p-4 pb-12 sm:p-6 lg:flex-row lg:gap-12 lg:px-10 lg:py-8"
+    >
+      <SettingsSideMenu v-if="!hideSideMenu" />
+
+      <div
+        class="min-w-0 w-full flex-1"
+        :class="hideSideMenu ? 'max-w-5xl' : 'max-w-4xl'"
+      >
+        <router-view v-slot="{ Component }">
+          <keep-alive v-if="keepAlive">
+            <component :is="Component" :key="route.fullPath" />
+          </keep-alive>
+          <component :is="Component" v-else :key="route.fullPath" />
+        </router-view>
+      </div>
     </div>
   </div>
 </template>

@@ -16,15 +16,15 @@ const model = defineModel({ type: [String, Number], default: '' });
   <input
     :id="id"
     v-model="model"
+    data-slot="input"
     :type="type"
     :placeholder="placeholder"
     :disabled="disabled"
     :class="
       cn(
-        // Escape global `_base.scss` field-base/h-10 (unlayered beats utilities).
-        'reset-base flex h-9 w-full rounded-md border border-n-weak bg-n-background px-3 py-1 text-sm text-n-slate-12 shadow-xs transition-colors',
-        'placeholder:text-n-slate-11',
-        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-n-brand',
+        'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-xs transition-colors',
+        'placeholder:text-muted-foreground',
+        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         'disabled:cursor-not-allowed disabled:opacity-50',
         props.className
       )

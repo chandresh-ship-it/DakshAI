@@ -305,6 +305,7 @@
     "INBOX_VIEW": "Inbox View",
     "CUSTOMER_ENGAGEMENT": "Customer Engagement",
     "ENTERPRISE_EDITION": "Enterprise Edition",
+    "ADMINISTRATION": "Administration",
     "CRM_AND_SALES": "CRM & Sales",
     "MARKETING": "Marketing",
     "ANALYTICS": "Analytics",
@@ -343,6 +344,7 @@
     "AUDIT_LOGS": "Audit Logs",
     "INBOXES": "Inboxes",
     "NOTIFICATIONS": "Notifications",
+    "TOGGLE_THEME": "Toggle theme",
     "TOGGLE_SIDEBAR": "Toggle sidebar",
     "COLLAPSE_SIDEBAR": "Collapse sidebar",
     "EXPAND_SIDEBAR": "Expand sidebar",
@@ -403,7 +405,17 @@
     "DOCS": "Read docs",
     "SECURITY": "Security",
     "CAPTAIN_AI": "Relay AI",
-    "CONVERSATION_WORKFLOW": "Conversation Workflow"
+    "CONVERSATION_WORKFLOW": "Conversation Workflow",
+    "SETTINGS_NAV": "Settings navigation",
+    "SETTINGS_SECTIONS": {
+      "GENERAL": "General",
+      "PEOPLE": "People",
+      "COMMUNICATION": "Communication",
+      "AUTOMATION": "Automation",
+      "CUSTOMER_DATA": "Customer Data",
+      "INTEGRATIONS": "Integrations",
+      "SECURITY": "Security"
+    }
   },
   "CAPTAIN_SETTINGS": {
     "TITLE": "Relay AI Settings",

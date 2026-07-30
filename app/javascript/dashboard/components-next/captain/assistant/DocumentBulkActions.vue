@@ -87,7 +87,6 @@ const handleBulkSync = async () => {
       :selected-count-label="selectedCountLabel"
       :delete-label="$t('CAPTAIN.DOCUMENTS.BULK_DELETE_BUTTON')"
       class="w-fit"
-      :class="{ 'mb-2': selectedIds.size > 0 }"
       @update:model-value="emit('update:selectedIds', $event)"
       @bulk-delete="bulkDeleteDialog.dialogRef.open()"
     >
@@ -95,10 +94,10 @@ const handleBulkSync = async () => {
         <RelayButton
           variant="ghost"
           size="sm"
-          class="!px-1.5 text-n-slate-11"
+          class="h-8 rounded-md px-2 text-[13px] font-medium text-muted-foreground hover:text-foreground"
           @click="handleBulkSync"
         >
-          <span class="i-lucide-refresh-cw size-3.5" />
+          <span class="i-lucide-refresh-cw mr-1.5 size-3.5" />
           {{ $t('CAPTAIN.DOCUMENTS.BULK_SYNC_BUTTON') }}
         </RelayButton>
       </template>

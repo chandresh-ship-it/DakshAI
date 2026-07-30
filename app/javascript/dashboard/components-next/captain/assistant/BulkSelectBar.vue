@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   allItems: {
@@ -46,66 +46,78 @@ const allSelected = computed(
     selectedVisibleCount.value === visibleItemCount.value
 );
 
-const bulkCheckboxState = computed({
-  get: () => allSelected.value,
-  set: shouldSelectAll => {
-    if (!visibleItemCount.value) {
-      return;
-    }
+const toggleSelectAll = () => {
+  if (!visibleItemCount.value) {
+    return;
+  }
 
-    const updatedSelection = new Set(modelValue.value);
-    if (shouldSelectAll) {
-      visibleItemIds.value.forEach(id => updatedSelection.add(id));
-    } else {
-      visibleItemIds.value.forEach(id => updatedSelection.delete(id));
-    }
-    modelValue.value = updatedSelection;
-  },
-});
+  const updatedSelection = new Set(modelValue.value);
+  if (allSelected.value) {
+    visibleItemIds.value.forEach(id => updatedSelection.delete(id));
+  } else {
+    visibleItemIds.value.forEach(id => updatedSelection.add(id));
+  }
+  modelValue.value = updatedSelection;
+};
 </script>
 
 <template>
   <transition
     name="slide-fade"
-    enter-active-class="transition-all duration-300 ease-out"
-    enter-from-class="opacity-0 transform ltr:-translate-x-4 rtl:translate-x-4"
-    enter-to-class="opacity-100 transform translate-x-0"
+    enter-active-class="transition-all duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
     leave-active-class="hidden opacity-0"
   >
     <div
       v-if="hasSelected"
-      class="flex w-full items-center justify-between gap-3 rounded-xl border border-n-weak bg-n-solid-2 px-4 py-3 shadow-sm"
+      class="mb-6 flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 shadow-xs"
     >
       <div class="flex min-w-0 items-center gap-4">
-        <div class="flex min-w-0 items-center gap-2.5">
-          <RelayCheckbox
-            v-model="bulkCheckboxState"
-            :indeterminate="isIndeterminate"
-          />
-          <span
-            class="truncate text-sm font-medium tabular-nums text-n-slate-12"
+        <button
+          type="button"
+          class="flex items-center gap-2.5 text-[13.5px] font-medium text-foreground transition-opacity hover:opacity-80"
+          @click="toggleSelectAll"
+        >
+          <div
+            class="flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors"
+            :class="
+              allSelected
+                ? 'border-primary bg-primary text-primary-foreground shadow-xs'
+                : isIndeterminate
+                  ? 'border-primary bg-primary/20 text-primary'
+                  : 'border-border/80 bg-background/50'
+            "
           >
-            {{ selectAllLabel }}
-          </span>
-        </div>
-        <span class="truncate text-sm tabular-nums text-n-slate-11">
+            <span
+              v-if="isIndeterminate && !allSelected"
+              class="i-lucide-minus size-3 stroke-[3]"
+            />
+            <span
+              v-else-if="allSelected"
+              class="i-lucide-check size-3 stroke-[3]"
+            />
+          </div>
+          <span class="truncate tabular-nums">{{ selectAllLabel }}</span>
+        </button>
+        <span class="truncate text-[13.5px] tabular-nums text-muted-foreground">
           {{ selectedCountLabel }}
         </span>
-        <div v-if="$slots.primaryActions" class="h-4 w-px bg-n-strong" />
+        <div v-if="$slots.primaryActions" class="h-4 w-px bg-border" />
         <slot v-if="$slots.primaryActions" name="primaryActions" />
       </div>
       <div class="flex items-center gap-3">
         <slot v-if="$slots.secondaryActions" name="secondaryActions" />
-        <div v-if="$slots.secondaryActions" class="h-4 w-px bg-n-strong" />
+        <div v-if="$slots.secondaryActions" class="h-4 w-px bg-border" />
         <div class="flex items-center gap-3">
           <slot name="actions" :selected-count="selectedCount">
             <RelayButton
               variant="ghost"
               size="sm"
-              class="border border-n-weak text-n-ruby-11 hover:border-transparent hover:bg-n-ruby-9/10 hover:text-n-ruby-11"
+              class="h-8 rounded-md border border-border px-3 text-[13px] text-destructive hover:border-transparent hover:bg-destructive/10 hover:text-destructive"
               @click="emit('bulkDelete')"
             >
-              <span class="i-lucide-trash size-3.5" />
+              <span class="i-lucide-trash-2 mr-1.5 size-3.5" />
               {{ deleteLabel }}
             </RelayButton>
           </slot>

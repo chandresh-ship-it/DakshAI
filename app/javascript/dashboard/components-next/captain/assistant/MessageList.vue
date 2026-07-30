@@ -1,7 +1,6 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
 import { ref, watch, nextTick } from 'vue';
-import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 
 const props = defineProps({
@@ -22,21 +21,10 @@ const { formatMessage } = useMessageFormatter();
 
 const isUserMessage = sender => sender === 'user';
 
-const getMessageAlignment = sender =>
-  isUserMessage(sender) ? 'justify-end' : 'justify-start';
-
-const getMessageDirection = sender =>
-  isUserMessage(sender) ? 'flex-row-reverse' : 'flex-row';
-
-const getAvatarName = sender =>
+const getAvatarLabel = sender =>
   isUserMessage(sender)
-    ? t('CAPTAIN.PLAYGROUND.USER')
-    : t('CAPTAIN.PLAYGROUND.ASSISTANT');
-
-const getMessageStyle = sender =>
-  isUserMessage(sender)
-    ? 'bg-n-solid-blue text-n-slate-12 rounded-br-sm rounded-bl-xl rounded-t-xl'
-    : 'bg-n-solid-iris text-n-slate-12 rounded-bl-sm rounded-br-xl rounded-t-xl';
+    ? t('CAPTAIN.PLAYGROUND.USER').charAt(0)
+    : t('CAPTAIN.PLAYGROUND.ASSISTANT').charAt(0);
 
 const scrollToBottom = async () => {
   await nextTick();
@@ -46,53 +34,60 @@ const scrollToBottom = async () => {
 };
 
 watch(() => props.messages.length, scrollToBottom);
+watch(() => props.isLoading, scrollToBottom);
 </script>
 
 <template>
-  <div
-    ref="messageContainer"
-    class="flex-1 overflow-y-auto mb-4 px-6 space-y-6"
-  >
-    <div
-      v-for="(message, index) in messages"
-      :key="index"
-      class="flex"
-      :class="getMessageAlignment(message.sender)"
-    >
+  <div ref="messageContainer" class="flex-1 space-y-5 overflow-y-auto py-6">
+    <template v-for="(message, index) in messages" :key="index">
       <div
-        class="flex items-end gap-1.5 max-w-[90%] md:max-w-[60%]"
-        :class="getMessageDirection(message.sender)"
+        v-if="isUserMessage(message.sender)"
+        class="flex items-start justify-end gap-2.5"
       >
-        <Avatar
-          :name="getAvatarName(message.sender)"
-          rounded-full
-          :size="24"
-          class="shrink-0"
-        />
+        <div class="flex max-w-[80%] flex-col items-end">
+          <div
+            class="rounded-2xl rounded-tr-xs border border-primary/20 bg-primary/10 px-4 py-2.5 text-[14px] leading-relaxed text-foreground shadow-xs"
+            v-html="formatMessage(message.content)"
+          />
+        </div>
         <div
-          class="px-4 py-3 text-sm [overflow-wrap:break-word]"
-          :class="getMessageStyle(message.sender)"
+          class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-[11px] font-bold text-emerald-600 shadow-xs dark:text-emerald-400"
         >
-          <div v-html="formatMessage(message.content)" />
+          {{ getAvatarLabel(message.sender) }}
         </div>
       </div>
-    </div>
-    <div v-if="isLoading" class="flex justify-start">
-      <div class="flex items-start gap-1.5">
-        <Avatar :name="getAvatarName('assistant')" rounded-full :size="24" />
+
+      <div v-else class="flex items-start justify-start gap-2.5">
         <div
-          class="max-w-sm rounded-lg p-3 text-sm bg-n-solid-iris text-n-slate-12"
+          class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary shadow-xs"
         >
-          <div class="flex gap-1">
-            <div class="w-2 h-2 rounded-full bg-n-iris-10 animate-bounce" />
-            <div
-              class="w-2 h-2 rounded-full bg-n-iris-10 animate-bounce [animation-delay:0.2s]"
-            />
-            <div
-              class="w-2 h-2 rounded-full bg-n-iris-10 animate-bounce [animation-delay:0.4s]"
-            />
-          </div>
+          {{ getAvatarLabel(message.sender) }}
         </div>
+        <div class="flex max-w-[80%] flex-col items-start">
+          <div
+            class="rounded-2xl rounded-tl-xs border border-border/60 bg-muted/60 px-4 py-2.5 text-[14px] leading-relaxed text-foreground shadow-xs"
+            v-html="formatMessage(message.content)"
+          />
+        </div>
+      </div>
+    </template>
+
+    <div v-if="isLoading" class="flex items-start justify-start gap-2.5">
+      <div
+        class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary shadow-xs"
+      >
+        {{ getAvatarLabel('assistant') }}
+      </div>
+      <div
+        class="flex items-center gap-1.5 rounded-2xl rounded-tl-xs border border-border/60 bg-muted/60 px-4 py-3 shadow-xs"
+      >
+        <span class="size-2 animate-bounce rounded-full bg-primary/70" />
+        <span
+          class="size-2 animate-bounce rounded-full bg-primary/70 [animation-delay:0.2s]"
+        />
+        <span
+          class="size-2 animate-bounce rounded-full bg-primary/70 [animation-delay:0.4s]"
+        />
       </div>
     </div>
   </div>

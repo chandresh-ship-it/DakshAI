@@ -10,13 +10,14 @@ import { vOnClickOutside } from '@vueuse/components';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import { useWindowSize, useEventListener } from '@vueuse/core';
 
+import Auth from 'dashboard/api/auth';
 import ChannelLeaf from './ChannelLeaf.vue';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
-import SidebarProfileMenu from './SidebarProfileMenu.vue';
 import SidebarChangelogCard from './SidebarChangelogCard.vue';
 import SidebarChangelogButton from './SidebarChangelogButton.vue';
 import SidebarGroup from './SidebarGroup.vue';
+import { SETTINGS_ROUTE_NAMES } from 'dashboard/routes/dashboard/settings/settings.navigation';
 
 const props = defineProps({
   isMobileSidebarOpen: {
@@ -45,7 +46,7 @@ const brandInitial = computed(() => {
   const name = globalConfig.value?.installationName || 'N';
   return name.charAt(0).toUpperCase();
 });
-const brandSubtitle = computed(() => 'Enterprise Edition');
+const brandSubtitle = computed(() => t('SIDEBAR.ENTERPRISE_EDITION'));
 
 const { width: windowWidth } = useWindowSize();
 const isMobile = computed(() => windowWidth.value < 768);
@@ -54,13 +55,6 @@ const accountId = useMapGetter('getCurrentAccountId');
 const isFeatureEnabledonAccount = useMapGetter(
   'accounts/isFeatureEnabledonAccount'
 );
-
-const hasAdvancedAssignment = computed(() => {
-  return isFeatureEnabledonAccount.value(
-    accountId.value,
-    FEATURE_FLAGS.ADVANCED_ASSIGNMENT
-  );
-});
 
 const hasConversationUnreadCounts = computed(() => {
   return isFeatureEnabledonAccount.value(
@@ -286,7 +280,7 @@ const newReportRoutes = () => [
 
 const reportRoutes = computed(() => newReportRoutes());
 
-const menuItems = computed(() => {
+const primaryMenuItems = computed(() => {
   return [
     {
       name: 'Customer Engagement',
@@ -625,213 +619,85 @@ const menuItems = computed(() => {
         },
       ],
     },
-    {
-      name: 'Portals',
-      label: t('SIDEBAR.KNOWLEDGE_BASE'),
-      icon: 'i-lucide-library-big',
-      children: [
-        {
-          name: 'Articles',
-          label: t('SIDEBAR.HELP_CENTER.ARTICLES'),
-          activeOn: [
-            'portals_articles_index',
-            'portals_articles_new',
-            'portals_articles_edit',
-          ],
-          to: accountScopedRoute('portals_index', {
-            navigationPath: 'portals_articles_index',
-          }),
-        },
-        {
-          name: 'Categories',
-          label: t('SIDEBAR.HELP_CENTER.CATEGORIES'),
-          activeOn: [
-            'portals_categories_index',
-            'portals_categories_articles_index',
-            'portals_categories_articles_edit',
-          ],
-          to: accountScopedRoute('portals_index', {
-            navigationPath: 'portals_categories_index',
-          }),
-        },
-        {
-          name: 'Locales',
-          label: t('SIDEBAR.HELP_CENTER.LOCALES'),
-          activeOn: ['portals_locales_index'],
-          to: accountScopedRoute('portals_index', {
-            navigationPath: 'portals_locales_index',
-          }),
-        },
-        {
-          name: 'Settings',
-          label: t('SIDEBAR.HELP_CENTER.SETTINGS'),
-          activeOn: ['portals_settings_index'],
-          to: accountScopedRoute('portals_index', {
-            navigationPath: 'portals_settings_index',
-          }),
-        },
-      ],
-    },
-    {
-      name: 'Settings',
-      label: t('SIDEBAR.SETTINGS'),
-      icon: 'i-lucide-settings',
-      children: [
-        {
-          name: 'Settings Account Settings',
-          label: t('SIDEBAR.ACCOUNT_SETTINGS'),
-          icon: 'i-lucide-briefcase',
-          to: accountScopedRoute('general_settings_index'),
-        },
-        {
-          name: 'Settings Branding',
-          label: t('SIDEBAR.BRANDING'),
-          icon: 'i-lucide-palette',
-          to: accountScopedRoute('branding_settings_index'),
-        },
-        // {
-        //   name: 'Settings Captain',
-        //   label: t('SIDEBAR.CAPTAIN_AI'),
-        //   icon: 'i-lucide-brain-circuit',
-        //   to: accountScopedRoute('captain_settings_index'),
-        // },
-        {
-          name: 'Settings Agents',
-          label: t('SIDEBAR.AGENTS'),
-          icon: 'i-lucide-square-user',
-          to: accountScopedRoute('agent_list'),
-        },
-        {
-          name: 'Settings Teams',
-          label: t('SIDEBAR.TEAMS'),
-          icon: 'i-lucide-users',
-          activeOn: [
-            'settings_teams_list',
-            'settings_teams_new',
-            'settings_teams_finish',
-            'settings_teams_add_agents',
-            'settings_teams_show',
-            'settings_teams_edit',
-            'settings_teams_edit_members',
-            'settings_teams_edit_finish',
-          ],
-          to: accountScopedRoute('settings_teams_list'),
-        },
-        ...(hasAdvancedAssignment.value
-          ? [
-              {
-                name: 'Settings Agent Assignment',
-                label: t('SIDEBAR.AGENT_ASSIGNMENT'),
-                icon: 'i-lucide-user-cog',
-                activeOn: [
-                  'assignment_policy_index',
-                  'agent_assignment_policy_index',
-                  'agent_assignment_policy_create',
-                  'agent_assignment_policy_edit',
-                  'agent_capacity_policy_index',
-                  'agent_capacity_policy_create',
-                  'agent_capacity_policy_edit',
-                ],
-                to: accountScopedRoute('assignment_policy_index'),
-              },
-            ]
-          : []),
-        {
-          name: 'Settings Inboxes',
-          label: t('SIDEBAR.INBOXES'),
-          icon: 'i-lucide-inbox',
-          activeOn: [
-            'settings_inbox_list',
-            'settings_inbox_show',
-            'settings_inbox_new',
-            'settings_inbox_finish',
-            'settings_inboxes_page_channel',
-            'settings_inboxes_add_agents',
-          ],
-          to: accountScopedRoute('settings_inbox_list'),
-        },
-        {
-          name: 'Settings Labels',
-          label: t('SIDEBAR.LABELS'),
-          icon: 'i-lucide-tags',
-          to: accountScopedRoute('labels_list'),
-        },
-        {
-          name: 'Settings Custom Attributes',
-          label: t('SIDEBAR.CUSTOM_ATTRIBUTES'),
-          icon: 'i-lucide-code',
-          to: accountScopedRoute('attributes_list'),
-        },
-        {
-          name: 'Settings Automation',
-          label: t('SIDEBAR.AUTOMATION'),
-          icon: 'i-lucide-repeat',
-          to: accountScopedRoute('automation_list'),
-        },
-        {
-          name: 'Settings Agent Bots',
-          label: t('SIDEBAR.AGENT_BOTS'),
-          icon: 'i-lucide-bot',
-          to: accountScopedRoute('agent_bots'),
-        },
-        {
-          name: 'Settings Macros',
-          label: t('SIDEBAR.MACROS'),
-          icon: 'i-lucide-toy-brick',
-          to: accountScopedRoute('macros_wrapper'),
-        },
-        {
-          name: 'Settings Canned Responses',
-          label: t('SIDEBAR.CANNED_RESPONSES'),
-          icon: 'i-lucide-message-square-quote',
-          to: accountScopedRoute('canned_list'),
-        },
-        {
-          name: 'Settings Integrations',
-          label: t('SIDEBAR.INTEGRATIONS'),
-          icon: 'i-lucide-blocks',
-          to: accountScopedRoute('settings_applications'),
-        },
-        {
-          name: 'Settings Audit Logs',
-          label: t('SIDEBAR.AUDIT_LOGS'),
-          icon: 'i-lucide-briefcase',
-          to: accountScopedRoute('auditlogs_list'),
-        },
-        {
-          name: 'Settings Custom Roles',
-          label: t('SIDEBAR.CUSTOM_ROLES'),
-          icon: 'i-lucide-shield-plus',
-          to: accountScopedRoute('custom_roles_list'),
-        },
-        {
-          name: 'Settings Sla',
-          label: t('SIDEBAR.SLA'),
-          icon: 'i-lucide-clock-alert',
-          to: accountScopedRoute('sla_list'),
-        },
-        {
-          name: 'Conversation Workflow',
-          label: t('SIDEBAR.CONVERSATION_WORKFLOW'),
-          icon: 'i-lucide-workflow',
-          to: accountScopedRoute('conversation_workflow_index'),
-        },
-        {
-          name: 'Settings Security',
-          label: t('SIDEBAR.SECURITY'),
-          icon: 'i-lucide-shield',
-          to: accountScopedRoute('security_settings_index'),
-        },
-        {
-          name: 'Settings Billing',
-          label: t('SIDEBAR.BILLING'),
-          icon: 'i-lucide-credit-card',
-          to: accountScopedRoute('billing_settings_index'),
-        },
-      ],
-    },
   ];
 });
+
+const administrationMenuItems = computed(() => [
+  {
+    name: 'Portals',
+    label: t('SIDEBAR.KNOWLEDGE_BASE'),
+    icon: 'i-lucide-help-circle',
+    children: [
+      {
+        name: 'Articles',
+        label: t('SIDEBAR.HELP_CENTER.ARTICLES'),
+        activeOn: [
+          'portals_articles_index',
+          'portals_articles_new',
+          'portals_articles_edit',
+        ],
+        to: accountScopedRoute('portals_index', {
+          navigationPath: 'portals_articles_index',
+        }),
+      },
+      {
+        name: 'Categories',
+        label: t('SIDEBAR.HELP_CENTER.CATEGORIES'),
+        activeOn: [
+          'portals_categories_index',
+          'portals_categories_articles_index',
+          'portals_categories_articles_edit',
+        ],
+        to: accountScopedRoute('portals_index', {
+          navigationPath: 'portals_categories_index',
+        }),
+      },
+      {
+        name: 'Locales',
+        label: t('SIDEBAR.HELP_CENTER.LOCALES'),
+        activeOn: ['portals_locales_index'],
+        to: accountScopedRoute('portals_index', {
+          navigationPath: 'portals_locales_index',
+        }),
+      },
+      {
+        name: 'Settings',
+        label: t('SIDEBAR.HELP_CENTER.SETTINGS'),
+        activeOn: ['portals_settings_index'],
+        to: accountScopedRoute('portals_index', {
+          navigationPath: 'portals_settings_index',
+        }),
+      },
+    ],
+  },
+]);
+
+const navSections = computed(() => [
+  { items: primaryMenuItems.value },
+  {
+    label: t('SIDEBAR.ADMINISTRATION'),
+    items: administrationMenuItems.value,
+  },
+]);
+
+const settingsMenuItem = computed(() => ({
+  name: 'Settings',
+  label: t('SIDEBAR.SETTINGS'),
+  icon: 'i-lucide-settings',
+  to: accountScopedRoute('settings_home'),
+  activeOn: [
+    ...SETTINGS_ROUTE_NAMES,
+    'settings_home',
+    'captain_settings_index',
+  ],
+}));
+
+const logoutMenuItem = computed(() => ({
+  name: 'Logout',
+  label: t('SIDEBAR_ITEMS.LOGOUT'),
+  icon: 'i-lucide-power',
+  click: Auth.logout,
+}));
 </script>
 
 <template>
@@ -846,26 +712,27 @@ const menuItems = computed(() => {
         ],
       },
     ]"
-    class="bg-n-solid-1 flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full z-40 w-60 md:w-auto md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0 ltr:border-r rtl:border-l border-n-weak"
+    class="group bg-sidebar text-sidebar-foreground flex h-full flex-col border-sidebar-border fixed top-0 z-40 w-60 pb-px text-sm ltr:left-0 ltr:border-r rtl:right-0 rtl:border-l md:relative md:w-auto md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0"
     :class="[
       {
         'shadow-lg md:shadow-none': isMobileSidebarOpen,
         'ltr:-translate-x-full rtl:translate-x-full': !isMobileSidebarOpen,
-        'transition-transform duration-200 ease-out md:transition-[width]':
+        'transition-transform duration-200 ease-linear md:transition-[width]':
           !isResizing,
       },
     ]"
+    :data-collapsed="isEffectivelyCollapsed ? 'true' : 'false'"
     :style="isMobile ? undefined : { width: `${sidebarWidth}px` }"
   >
-    <section
-      class="flex flex-col gap-2"
-      :class="isEffectivelyCollapsed ? 'mt-2 mb-4' : 'p-2 pb-4'"
+    <!-- Header / brand -->
+    <div
+      class="flex flex-col gap-2 p-2 pb-6"
+      :class="{ 'items-center': isEffectivelyCollapsed }"
     >
       <div
-        class="flex min-w-0 items-center gap-2"
+        class="flex h-12 w-full min-w-0 items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm transition-[width,height,padding]"
         :class="{
-          'justify-center px-1': isEffectivelyCollapsed,
-          'h-12 overflow-hidden rounded-md p-2': !isEffectivelyCollapsed,
+          'justify-center p-1.5': isEffectivelyCollapsed,
         }"
       >
         <template v-if="isEffectivelyCollapsed">
@@ -876,7 +743,7 @@ const menuItems = computed(() => {
         </template>
         <template v-else>
           <div
-            class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-n-brand text-sm font-bold text-white"
+            class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground"
           >
             {{ brandInitial }}
           </div>
@@ -885,33 +752,47 @@ const menuItems = computed(() => {
               class="min-w-0"
               @show-create-account-modal="emit('showCreateAccountModal')"
             />
-            <span class="truncate px-2 text-xs font-normal text-n-slate-11">
+            <span
+              class="truncate px-2 text-xs font-normal text-muted-foreground/60"
+            >
               {{ brandSubtitle }}
             </span>
           </div>
         </template>
       </div>
-    </section>
-    <nav
-      class="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar pb-4"
-      :class="isEffectivelyCollapsed ? 'px-1' : 'px-2'"
-    >
-      <ul
-        class="m-0 flex list-none flex-col gap-3 min-w-0"
-        :class="{ 'items-center': isEffectivelyCollapsed }"
-      >
-        <SidebarGroup
-          v-for="item in menuItems"
-          :key="item.name"
-          v-bind="item"
-        />
-      </ul>
-    </nav>
-    <section
-      class="flex relative flex-col flex-shrink-0 gap-1 justify-between items-center"
-    >
+    </div>
+
+    <!-- Content -->
+    <nav class="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar">
       <div
-        class="pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t from-n-solid-1 to-transparent"
+        v-for="(section, index) in navSections"
+        :key="section.label || 'main'"
+        class="relative flex w-full min-w-0 flex-col p-2 pt-0"
+        :class="{ 'mt-1': index > 0 }"
+      >
+        <p
+          v-if="section.label && !isEffectivelyCollapsed"
+          class="mb-2 px-2 text-xs font-medium text-muted-foreground"
+        >
+          {{ section.label }}
+        </p>
+        <ul
+          class="m-0 flex w-full min-w-0 list-none flex-col gap-3"
+          :class="{ 'items-center': isEffectivelyCollapsed }"
+        >
+          <SidebarGroup
+            v-for="item in section.items"
+            :key="item.name"
+            v-bind="item"
+          />
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Footer -->
+    <div class="relative mt-auto flex flex-col gap-2 p-2">
+      <div
+        class="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-sidebar to-transparent"
       />
       <SidebarChangelogCard
         v-if="
@@ -927,26 +808,25 @@ const menuItems = computed(() => {
           isEffectivelyCollapsed
         "
       />
-      <div
-        class="px-1 py-1.5 flex-shrink-0 flex w-full z-50 gap-2 items-center border-t border-n-weak shadow-[0px_-2px_4px_0px_rgba(27,28,29,0.02)]"
-        :class="isEffectivelyCollapsed ? 'justify-center' : 'justify-between'"
+      <ul
+        class="m-0 flex w-full min-w-0 list-none flex-col gap-1"
+        :class="{ 'items-center': isEffectivelyCollapsed }"
       >
-        <SidebarProfileMenu
-          :is-collapsed="isEffectivelyCollapsed"
-          @open-key-shortcut-modal="emit('openKeyShortcutModal')"
-        />
-      </div>
-    </section>
+        <SidebarGroup v-bind="settingsMenuItem" />
+        <SidebarGroup v-bind="logoutMenuItem" />
+      </ul>
+    </div>
+
     <!-- Resize Handle (desktop only) -->
     <div
-      class="hidden md:block absolute top-0 h-full w-1 cursor-col-resize z-40 ltr:right-0 rtl:left-0 group"
+      class="absolute top-0 z-40 hidden h-full w-1 cursor-col-resize group md:block ltr:right-0 rtl:left-0"
       @mousedown="onResizeStart"
       @touchstart="onResizeStart"
       @dblclick="onResizeHandleDoubleClick"
     >
       <div
-        class="absolute top-0 h-full w-px ltr:right-0 rtl:left-0 bg-transparent group-hover:bg-n-brand transition-colors"
-        :class="{ 'bg-n-brand': isResizing }"
+        class="absolute top-0 h-full w-px bg-transparent transition-colors group-hover:bg-sidebar-primary ltr:right-0 rtl:left-0"
+        :class="{ 'bg-sidebar-primary': isResizing }"
       />
     </div>
   </aside>

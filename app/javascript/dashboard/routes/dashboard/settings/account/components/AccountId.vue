@@ -15,7 +15,7 @@ const getAccountId = computed(() => currentAccount.value?.id?.toString() || '');
   <SectionLayout
     :title="t('GENERAL_SETTINGS.FORM.ACCOUNT_ID.TITLE')"
     :description="t('GENERAL_SETTINGS.FORM.ACCOUNT_ID.NOTE')"
-    with-border
+    as-card
   >
     <woot-code :script="getAccountId" />
   </SectionLayout>

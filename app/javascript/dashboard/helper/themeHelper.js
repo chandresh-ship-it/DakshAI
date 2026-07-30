@@ -2,24 +2,27 @@ import { LocalStorage } from 'shared/helpers/localStorage';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { clearCustomThemeVariables, isDarkBackground } from './colorHelper';
 
+// layout / empty brand_name alone must not count as color branding
+const brandPalette = colors =>
+  colors && (colors.primary || colors.text || colors.background)
+    ? colors
+    : null;
+
 export const setColorTheme = (isOSOnDarkMode, brandColors) => {
   const selectedColorScheme =
     LocalStorage.get(LOCAL_STORAGE_KEYS.COLOR_SCHEME) || 'auto';
 
   // If we are moving away from custom, ensure inline custom backgrounds are cleared.
   // But skip clearing if BRAND_COLORS are injected by the server (custom domain branding).
-  const hasDomainBranding =
-    window.globalConfig && window.globalConfig.BRAND_COLORS;
+  const hasDomainBranding = Boolean(
+    brandPalette(window.globalConfig && window.globalConfig.BRAND_COLORS)
+  );
 
   const activeBrandColors =
-    brandColors ||
+    brandPalette(brandColors) ||
     (hasDomainBranding ? window.globalConfig.BRAND_COLORS : null);
 
-  const hasActiveColors =
-    activeBrandColors &&
-    (activeBrandColors.primary ||
-      activeBrandColors.text ||
-      activeBrandColors.background);
+  const hasActiveColors = Boolean(activeBrandColors);
 
   // Clear custom variables if the user explicitly selected standard Light or Dark mode,
   // or if there is no brand coloring configured at all.
@@ -43,7 +46,10 @@ export const setColorTheme = (isOSOnDarkMode, brandColors) => {
   // For custom theme or auto-theme with active branding, derive dark/light from the brand colors.
   if (selectedColorScheme === 'custom') {
     isDark = !!isBrandDark;
-  } else if (selectedColorScheme === 'auto' && (hasDomainBranding || hasActiveColors)) {
+  } else if (
+    selectedColorScheme === 'auto' &&
+    (hasDomainBranding || hasActiveColors)
+  ) {
     isDark = !!isBrandDark;
   }
 

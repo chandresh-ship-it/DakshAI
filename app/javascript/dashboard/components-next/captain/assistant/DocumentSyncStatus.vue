@@ -117,9 +117,9 @@ const tone = computed(() => {
 });
 
 const textClass = computed(() => {
-  if (tone.value === 'amber') return 'text-n-amber-11';
-  if (tone.value === 'ruby') return 'text-n-ruby-11';
-  return 'text-n-slate-11';
+  if (tone.value === 'amber') return 'text-amber-500';
+  if (tone.value === 'ruby') return 'text-destructive';
+  return 'text-muted-foreground/60';
 });
 
 const statusIcon = computed(() => {
@@ -132,18 +132,18 @@ const statusIcon = computed(() => {
 
 <template>
   <span
-    class="flex gap-1.5 items-center text-sm truncate shrink-0 tabular-nums"
+    class="flex shrink-0 items-center gap-1.5 truncate text-[12px] tabular-nums"
     :class="textClass"
     :title="fullLabel"
   >
-    <Spinner v-if="isSyncing" class="text-n-amber-11 size-3" />
-    <Icon v-else :icon="statusIcon" class="shrink-0 size-3.5" />
+    <Spinner v-if="isSyncing" class="size-3 text-amber-500" />
+    <Icon v-else :icon="statusIcon" class="size-3.5 shrink-0" />
     <span class="truncate">{{ label }}</span>
     <RelayButton
       v-if="showRetry && canRetry"
       variant="link"
       size="sm"
-      class="ms-1 !gap-1 text-n-ruby-11 hover:!no-underline"
+      class="ms-1 !gap-1 text-primary hover:!no-underline"
       @click.stop="emit('retry')"
     >
       <span class="i-lucide-refresh-cw size-3.5" />

@@ -4,7 +4,7 @@ import CustomBrandPolicyWrapper from 'dashboard/components/CustomBrandPolicyWrap
 import { getHelpUrlForFeature } from '../../../../helper/featureHelper';
 import BackButton from '../../../../components/widgets/BackButton.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import Input from 'dashboard/components-next/input/Input.vue';
+import { RelayInput } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   title: {
@@ -41,7 +41,7 @@ const helpURL = getHelpUrlForFeature(props.featureName);
 </script>
 
 <template>
-  <div class="flex flex-col items-start w-full">
+  <div class="flex w-full flex-col items-start">
     <BackButton
       v-if="backButtonLabel"
       compact
@@ -50,19 +50,19 @@ const helpURL = getHelpUrlForFeature(props.featureName);
     />
     <div
       v-if="title"
-      class="flex items-center justify-between w-full gap-4 min-h-8 mb-2"
+      class="mb-2 flex min-h-8 w-full items-center justify-between gap-4"
     >
-      <h1 class="text-heading-1 text-n-slate-12">
+      <h1 class="text-xl font-semibold tracking-tight text-foreground">
         {{ title }}
       </h1>
     </div>
     <div
       v-if="description || $slots.description || linkText || helpURL"
-      class="flex flex-col w-full gap-1.5 text-n-slate-11"
+      class="flex w-full flex-col gap-1.5 text-muted-foreground"
     >
       <p
         v-if="description || $slots.description"
-        class="mb-0 line-clamp-5 sm:line-clamp-none max-w-3xl text-body-main"
+        class="mb-0 line-clamp-5 max-w-3xl text-sm leading-relaxed sm:line-clamp-none"
       >
         <slot name="description">{{ description }}</slot>
       </p>
@@ -72,12 +72,12 @@ const helpURL = getHelpUrlForFeature(props.featureName);
           :href="helpURL"
           target="_blank"
           rel="noopener noreferrer"
-          class="items-center hidden gap-1 text-sm font-medium sm:inline-flex w-fit text-n-blue-11 hover:underline mb-2"
+          class="mb-2 hidden w-fit items-center gap-1 text-sm font-medium text-primary hover:underline sm:inline-flex"
         >
           {{ linkText }}
           <Icon
             icon="i-lucide-chevron-right"
-            class="flex-shrink-0 text-n-blue-11 size-4"
+            class="size-4 flex-shrink-0 text-primary"
           />
         </a>
       </CustomBrandPolicyWrapper>
@@ -85,7 +85,7 @@ const helpURL = getHelpUrlForFeature(props.featureName);
   </div>
   <div
     v-if="searchPlaceholder || slots.actions || slots.tabs"
-    class="gap-3 flex justify-between sm:mt-4 min-w-0"
+    class="flex min-w-0 justify-between gap-3 sm:mt-4"
   >
     <div
       v-if="slots.tabs || searchPlaceholder"
@@ -95,30 +95,30 @@ const helpURL = getHelpUrlForFeature(props.featureName);
       }"
     >
       <slot name="tabs" />
-      <Input
+      <div
         v-if="searchPlaceholder"
-        v-model="searchQuery"
-        :placeholder="searchPlaceholder"
-        class="group w-56 min-w-0 hidden sm:flex [&>input]:ltr:!pl-8 [&>input]:rtl:!pr-8 [&>input]:!rounded-[0.625rem]"
-        size="sm"
-        type="search"
+        class="relative hidden w-56 min-w-0 sm:block"
       >
-        <template #prefix>
-          <Icon
-            icon="i-lucide-search"
-            class="absolute top-1/2 -translate-y-1/2 text-n-slate-11 group-focus-within:text-n-brand size-3.5 ltr:left-2.5 rtl:right-2.5"
-          />
-        </template>
-      </Input>
+        <Icon
+          icon="i-lucide-search"
+          class="pointer-events-none absolute top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground ltr:left-2.5 rtl:right-2.5"
+        />
+        <RelayInput
+          v-model="searchQuery"
+          :placeholder="searchPlaceholder"
+          type="search"
+          class-name="h-9 w-full ltr:pl-8 rtl:pr-8"
+        />
+      </div>
     </div>
     <div
-      class="flex items-center gap-3 min-w-0"
+      class="flex min-w-0 items-center gap-3"
       :class="{ 'flex-row-reverse sm:flex-row': !slots.tabs }"
     >
       <slot name="count" />
       <div
         v-if="slots.count"
-        class="w-px h-3 rounded-lg bg-n-weak ltr:ml-1 ltr:mr-2 rtl:ml-2 rtl:mr-1 flex-shrink-0"
+        class="mx-1 h-3 w-px flex-shrink-0 rounded-lg bg-border"
       />
       <slot name="actions" />
     </div>

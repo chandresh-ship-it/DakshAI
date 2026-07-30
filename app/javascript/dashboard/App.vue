@@ -97,7 +97,11 @@ export default {
     $route(to, from) {
       // If we are navigating away from the branding settings page,
       // apply the saved brand colors so they are visible on the rest of the dashboard!
-      if (from && from.name === 'branding_settings_index' && to.name !== 'branding_settings_index') {
+      if (
+        from &&
+        from.name === 'branding_settings_index' &&
+        to.name !== 'branding_settings_index'
+      ) {
         if (this.accountBrandColors) {
           this.applyBrandColors(this.accountBrandColors);
         }
@@ -147,10 +151,14 @@ export default {
     applyBrandColors(colors) {
       const selectedColorScheme =
         window.localStorage.getItem('color_scheme') || 'auto';
-      const hasDomainBranding =
-        window.globalConfig && window.globalConfig.BRAND_COLORS;
-      const hasAccountColors =
-        colors && (colors.primary || colors.text || colors.background);
+      const brandPalette = palette =>
+        palette && (palette.primary || palette.text || palette.background)
+          ? palette
+          : null;
+      const hasDomainBranding = Boolean(
+        brandPalette(window.globalConfig && window.globalConfig.BRAND_COLORS)
+      );
+      const hasAccountColors = Boolean(brandPalette(colors));
 
       // If the account has no brand colors at all, or if the user explicitly
       // selected standard Light or Dark mode, clear custom vars and exit.
@@ -164,7 +172,9 @@ export default {
       }
 
       // Use domain branding colors as fallback when account colors are not passed in
-      const resolvedColors = colors || (hasDomainBranding ? window.globalConfig.BRAND_COLORS : null);
+      const resolvedColors =
+        brandPalette(colors) ||
+        (hasDomainBranding ? window.globalConfig.BRAND_COLORS : null);
       if (!resolvedColors) return;
 
       const { primary, text, background } = resolvedColors;
@@ -237,7 +247,7 @@ export default {
   <div
     v-if="!authUIFlags.isFetching"
     id="app"
-    class="flex flex-col w-full h-screen min-h-0 bg-n-background"
+    class="flex flex-col w-full h-screen min-h-0 bg-background text-foreground"
     :dir="isRTL ? 'rtl' : 'ltr'"
   >
     <UpdateBanner :latest-chatwoot-version="latestChatwootVersion" />

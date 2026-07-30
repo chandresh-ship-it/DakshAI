@@ -6,7 +6,6 @@ import { useI18n } from 'vue-i18n';
 import { useRouter, useRoute } from 'vue-router';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import { debounce } from '@chatwoot/utils';
-import { useAccount } from 'dashboard/composables/useAccount';
 
 import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 import BulkSelectBar from 'dashboard/components-next/captain/assistant/BulkSelectBar.vue';
@@ -17,13 +16,11 @@ import CaptainPaywall from 'dashboard/components-next/captain/pageComponents/Pay
 import ResponseCard from 'dashboard/components-next/captain/assistant/ResponseCard.vue';
 import CreateResponseDialog from 'dashboard/components-next/captain/pageComponents/response/CreateResponseDialog.vue';
 import ResponsePageEmptyState from 'dashboard/components-next/captain/pageComponents/emptyStates/ResponsePageEmptyState.vue';
-import FeatureSpotlightPopover from 'dashboard/components-next/feature-spotlight/FeatureSpotlightPopover.vue';
 import LimitBanner from 'dashboard/components-next/captain/pageComponents/response/LimitBanner.vue';
 
 const router = useRouter();
 const route = useRoute();
 const store = useStore();
-const { isOnChatwootCloud } = useAccount();
 const uiFlags = useMapGetter('captainResponses/getUIFlags');
 const responseMeta = useMapGetter('captainResponses/getMeta');
 const responses = useMapGetter('captainResponses/getRecords');
@@ -243,33 +240,25 @@ onMounted(() => {
     :header-title="$t('CAPTAIN.RESPONSES.PENDING_FAQS')"
     :is-fetching="isFetching"
     :is-empty="!filteredResponses.length"
+    :show-know-more="false"
     :show-pagination-footer="!isFetching && !!filteredResponses.length"
     :feature-flag="FEATURE_FLAGS.CAPTAIN"
     :back-url="backUrl"
     @update:current-page="onPageChange"
   >
-    <template #knowMore>
-      <FeatureSpotlightPopover
-        :button-label="$t('CAPTAIN.HEADER_KNOW_MORE')"
-        :title="$t('CAPTAIN.RESPONSES.EMPTY_STATE.FEATURE_SPOTLIGHT.TITLE')"
-        :note="$t('CAPTAIN.RESPONSES.EMPTY_STATE.FEATURE_SPOTLIGHT.NOTE')"
-        :hide-actions="!isOnChatwootCloud"
-        fallback-thumbnail="/assets/images/dashboard/captain/faqs-popover-light.svg"
-        fallback-thumbnail-dark="/assets/images/dashboard/captain/faqs-popover-dark.svg"
-        learn-more-url="https://newrelay.com/captain-faq"
-      />
-    </template>
-
     <template #search>
-      <div v-if="bulkSelectedIds.size === 0" class="relative w-full sm:w-64">
+      <div
+        v-if="filteredResponses.length && bulkSelectedIds.size === 0"
+        class="relative w-full sm:w-64"
+      >
         <span
-          class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-n-slate-11"
+          class="i-lucide-search pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground"
         />
         <RelayInput
           v-model="searchQuery"
           :placeholder="$t('CAPTAIN.RESPONSES.SEARCH_PLACEHOLDER')"
           type="text"
-          class-name="h-9 bg-n-background pl-9"
+          class-name="h-9 bg-background pl-9"
           @update:model-value="debouncedSearch"
         />
       </div>
@@ -283,14 +272,13 @@ onMounted(() => {
         :select-all-label="buildSelectedCountLabel"
         :selected-count-label="selectedCountLabel"
         :delete-label="$t('CAPTAIN.RESPONSES.BULK_DELETE_BUTTON')"
-        class="mb-2 w-fit"
         @bulk-delete="bulkDeleteDialog.dialogRef.open()"
       >
         <template #secondaryActions>
           <RelayButton
             variant="ghost"
             size="sm"
-            class="!px-1.5 text-n-slate-11"
+            class="text-muted-foreground"
             @click="handleBulkApprove"
           >
             <span class="i-lucide-check size-3.5" />
@@ -315,7 +303,7 @@ onMounted(() => {
     <template #body>
       <LimitBanner class="mb-5" />
 
-      <div class="flex flex-col gap-4">
+      <div class="space-y-3.5">
         <ResponseCard
           v-for="response in filteredResponses"
           :id="response.id"

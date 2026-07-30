@@ -111,29 +111,28 @@ onMounted(async () => {
       @mouseleave="emit('mouseleave')"
     >
       <div
-        class="bg-n-alpha-3 backdrop-blur-[100px] outline outline-1 -outline-offset-1 w-56 outline-n-weak rounded-xl shadow-lg py-2 px-2"
+        class="w-48 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md outline-none"
       >
-        <div
-          class="px-2 py-1.5 text-xs font-medium text-n-slate-11 uppercase tracking-wider border-b border-n-weak mb-1"
-        >
+        <div class="px-2 py-1.5 text-sm font-semibold">
           {{ label }}
         </div>
+        <div class="my-1 -mx-1 h-px bg-border" />
         <ul
-          class="m-0 p-0 list-none max-h-[400px] overflow-y-auto no-scrollbar"
+          class="m-0 max-h-[400px] list-none overflow-y-auto p-0 no-scrollbar"
         >
           <template v-for="child in accessibleChildren" :key="child.name">
             <!-- SubGroup with children -->
             <li v-if="child.children" class="py-0.5">
               <button
-                class="flex items-center gap-2 px-2 py-1.5 w-full rounded-lg text-n-slate-11 hover:bg-n-alpha-2 transition-colors duration-150 ease-out text-left rtl:text-right"
+                class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
                 @click="toggleSubGroup(child.name)"
               >
                 <Icon
                   v-if="child.icon"
                   :icon="child.icon"
-                  class="size-4 flex-shrink-0"
+                  class="mr-2 size-4 flex-shrink-0 text-muted-foreground"
                 />
-                <span class="flex-1 truncate text-sm">{{ child.label }}</span>
+                <span class="flex-1 truncate">{{ child.label }}</span>
                 <span
                   class="size-3 transition-transform i-lucide-chevron-down"
                   :class="{
@@ -144,7 +143,7 @@ onMounted(async () => {
               <Transition v-bind="transition">
                 <ul
                   v-if="expandedSubGroup === child.name"
-                  class="m-0 p-0 list-none ltr:pl-4 rtl:pr-4 mt-1 overflow-hidden"
+                  class="mt-1 m-0 list-none overflow-hidden p-0 ltr:pl-3 rtl:pr-3"
                 >
                   <li
                     v-for="subChild in getAccessibleSubChildren(child.children)"
@@ -152,11 +151,10 @@ onMounted(async () => {
                     class="py-0.5"
                   >
                     <button
-                      class="flex items-center gap-2 px-2 py-1.5 w-full rounded-lg text-sm text-left rtl:text-right transition-colors duration-150 ease-out"
+                      class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
                       :class="{
-                        'text-n-slate-12 bg-n-alpha-2': isActive(subChild),
-                        'text-n-slate-11 hover:bg-n-alpha-2':
-                          !isActive(subChild),
+                        'bg-accent font-medium text-accent-foreground':
+                          isActive(subChild),
                       }"
                       @click="navigateAndClose(subChild.to)"
                     >
@@ -164,7 +162,7 @@ onMounted(async () => {
                         :is="renderIcon(subChild.icon).component"
                         v-if="subChild.icon"
                         v-bind="renderIcon(subChild.icon).props"
-                        class="size-4 flex-shrink-0"
+                        class="mr-2 size-4 flex-shrink-0 text-muted-foreground"
                       />
                       <span class="flex-1 truncate">{{ subChild.label }}</span>
                       <SidebarUnreadBadge :count="subChild.badgeCount" />
@@ -176,10 +174,10 @@ onMounted(async () => {
             <!-- Direct child item -->
             <li v-else class="py-0.5">
               <button
-                class="flex items-center gap-2 px-2 py-1.5 w-full rounded-lg text-sm text-left rtl:text-right transition-colors duration-150 ease-out"
+                class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
                 :class="{
-                  'text-n-slate-12 bg-n-alpha-2': isActive(child),
-                  'text-n-slate-11 hover:bg-n-alpha-2': !isActive(child),
+                  'bg-accent font-medium text-accent-foreground':
+                    isActive(child),
                 }"
                 @click="navigateAndClose(child.to)"
               >
@@ -187,7 +185,7 @@ onMounted(async () => {
                   :is="renderIcon(child.icon).component"
                   v-if="child.icon"
                   v-bind="renderIcon(child.icon).props"
-                  class="size-4 flex-shrink-0"
+                  class="mr-2 size-4 flex-shrink-0 text-muted-foreground"
                 />
                 <span class="flex-1 truncate">{{ child.label }}</span>
                 <SidebarUnreadBadge :count="child.badgeCount" />
