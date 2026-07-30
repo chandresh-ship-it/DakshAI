@@ -62,10 +62,17 @@ const accountSubscription = computed(
 const hasActiveSubscription = computed(
   () => !!accountSubscription.value?.active
 );
-const lockedPaymentProvider = computed(() => {
+const subscriptionLocksPaymentProvider = computed(() => {
   const sub = accountSubscription.value;
-  if (!sub) return null;
+  if (!sub) return false;
+  if (sub.active) return true;
 
+  return ['past_due', 'unpaid'].includes(sub.status);
+});
+const lockedPaymentProvider = computed(() => {
+  if (!subscriptionLocksPaymentProvider.value) return null;
+
+  const sub = accountSubscription.value;
   return (
     sub.payment_provider ||
     currentAccount.value?.custom_attributes?.payment_provider ||

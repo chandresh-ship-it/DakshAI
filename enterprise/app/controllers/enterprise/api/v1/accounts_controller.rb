@@ -204,6 +204,11 @@ class Enterprise::Api::V1::AccountsController < Api::BaseController
     }
 
     provider = provider_for_country!(country)
+    Enterprise::Billing::ClearStalePendingCheckoutService.new(
+      account: @account,
+      requested_provider: provider
+    ).perform
+
     result = if provider == 'razorpay'
                Enterprise::Billing::RazorpayPlanCheckoutService.new(**checkout_args).perform
              else
