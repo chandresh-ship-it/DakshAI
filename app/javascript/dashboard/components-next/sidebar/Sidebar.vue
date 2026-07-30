@@ -17,7 +17,6 @@ import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
 import SidebarChangelogCard from './SidebarChangelogCard.vue';
 import SidebarChangelogButton from './SidebarChangelogButton.vue';
 import SidebarGroup from './SidebarGroup.vue';
-import { SETTINGS_ROUTE_NAMES } from 'dashboard/routes/dashboard/settings/settings.navigation';
 
 const props = defineProps({
   isMobileSidebarOpen: {
@@ -624,6 +623,53 @@ const primaryMenuItems = computed(() => {
 
 const administrationMenuItems = computed(() => [
   {
+    name: 'Administration',
+    label: t('SIDEBAR.ADMINISTRATION'),
+    icon: 'i-lucide-shield',
+    children: [
+      {
+        name: 'Team',
+        label: t('SIDEBAR.TEAM'),
+        to: accountScopedRoute('agent_list'),
+      },
+      {
+        name: 'Roles',
+        label: t('SIDEBAR.ROLES'),
+        to: accountScopedRoute('custom_roles_list'),
+      },
+      {
+        name: 'Billing',
+        label: t('SIDEBAR.BILLING'),
+        to: accountScopedRoute('billing_settings_index'),
+      },
+      {
+        name: 'Integrations',
+        label: t('SIDEBAR.INTEGRATIONS'),
+        activeOn: [
+          'settings_applications',
+          'settings_applications_integration',
+          'settings_integrations_dashboard_apps',
+          'settings_integrations_slack',
+          'settings_integrations_linear',
+          'settings_integrations_notion',
+          'settings_integrations_shopify',
+        ],
+        to: accountScopedRoute('settings_applications'),
+      },
+      {
+        name: 'API',
+        label: t('SIDEBAR.API'),
+        activeOn: ['settings_integrations_webhook'],
+        to: accountScopedRoute('settings_integrations_webhook'),
+      },
+      {
+        name: 'Admin Settings',
+        label: t('SIDEBAR.SETTINGS'),
+        to: accountScopedRoute('general_settings_index'),
+      },
+    ],
+  },
+  {
     name: 'Portals',
     label: t('SIDEBAR.KNOWLEDGE_BASE'),
     icon: 'i-lucide-help-circle',
@@ -685,11 +731,7 @@ const settingsMenuItem = computed(() => ({
   label: t('SIDEBAR.SETTINGS'),
   icon: 'i-lucide-settings',
   to: accountScopedRoute('settings_home'),
-  activeOn: [
-    ...SETTINGS_ROUTE_NAMES,
-    'settings_home',
-    'captain_settings_index',
-  ],
+  activeOn: ['settings_home'],
 }));
 
 const logoutMenuItem = computed(() => ({
