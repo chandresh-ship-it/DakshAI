@@ -12,11 +12,10 @@ import {
 
 import AddAgent from './AddAgent.vue';
 import EditAgent from './EditAgent.vue';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import SettingsListCard from '../components/SettingsListCard.vue';
 import SettingsListRow from '../components/SettingsListRow.vue';
-import { RelayButton } from 'dashboard/components-next/relay';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const getters = useStoreGetters();
@@ -75,6 +74,12 @@ const getAgentRolePermissions = agent => {
   }
   const customRole = findCustomRole(agent);
   return customRole?.permissions || [];
+};
+
+const getAvailabilityLabel = agent => {
+  const key = (agent.availability_status || '').toUpperCase();
+  if (!key) return '';
+  return t(`PROFILE_SETTINGS.FORM.AVAILABILITY.STATUS.${key}`);
 };
 
 const verifiedAdministrators = computed(() => {
@@ -151,40 +156,78 @@ const confirmDeletion = () => {
   <SettingsLayout
     :is-loading="uiFlags.isFetching"
     :loading-message="$t('AGENT_MGMT.LOADING')"
-    :no-records-found="!agentList.length"
-    :no-records-message="$t('AGENT_MGMT.LIST.404')"
+    :no-records-found="false"
   >
-    <template #header>
-      <BaseSettingsHeader
-        v-model:search-query="searchQuery"
-        :title="$t('AGENT_MGMT.HEADER')"
-        :description="$t('AGENT_MGMT.DESCRIPTION')"
-        :link-text="$t('AGENT_MGMT.LEARN_MORE')"
-        :search-placeholder="$t('AGENT_MGMT.SEARCH_PLACEHOLDER')"
-        feature-name="agents"
-      >
-        <template v-if="agentList?.length" #count>
-          <span class="text-sm text-muted-foreground">
-            {{ $t('AGENT_MGMT.COUNT', { n: agentList.length }) }}
-          </span>
-        </template>
-        <template #actions>
-          <RelayButton size="sm" @click="openAddPopup">
-            {{ $t('AGENT_MGMT.HEADER_BTN_TXT') }}
-          </RelayButton>
-        </template>
-      </BaseSettingsHeader>
-    </template>
     <template #body>
       <SettingsListCard
         :details-label="$t('AGENT_MGMT.LIST.DETAILS')"
         :actions-label="$t('AGENT_MGMT.LIST.ACTIONS')"
         :show-column-headers="!!filteredAgentList.length"
       >
-        <template v-if="!filteredAgentList.length && searchQuery" #empty>
-          <p class="text-center text-sm text-muted-foreground">
+        <template #toolbar>
+          <div>
+            <h3 class="text-base font-medium text-foreground">
+              {{ $t('AGENT_MGMT.HEADER') }}
+            </h3>
+            <p class="mt-1 text-sm text-muted-foreground">
+              {{ $t('AGENT_MGMT.DESCRIPTION') }}
+            </p>
+          </div>
+          <div
+            class="flex w-full flex-col items-center gap-3 sm:flex-row md:w-auto"
+          >
+            <div class="relative w-full sm:w-64">
+              <Icon
+                icon="i-lucide-search"
+                class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              />
+              <RelayInput
+                v-model="searchQuery"
+                type="search"
+                :placeholder="$t('AGENT_MGMT.SEARCH_PLACEHOLDER')"
+                class-name="h-9 bg-background pl-9 shadow-none"
+              />
+            </div>
+            <RelayButton
+              class="h-9 w-full whitespace-nowrap shadow-sm sm:w-auto"
+              @click="openAddPopup"
+            >
+              {{ $t('AGENT_MGMT.HEADER_BTN_TXT') }}
+            </RelayButton>
+          </div>
+        </template>
+        <template v-if="!filteredAgentList.length" #empty>
+          <div
+            v-if="searchQuery"
+            class="px-6 text-center text-sm text-muted-foreground"
+          >
             {{ $t('AGENT_MGMT.NO_RESULTS') }}
-          </p>
+          </div>
+          <div
+            v-else
+            class="flex flex-col items-center justify-center bg-muted/10 px-6 py-4"
+          >
+            <div
+              class="mb-5 flex size-16 items-center justify-center rounded-full border border-border bg-muted/50"
+            >
+              <Icon
+                icon="i-lucide-users"
+                class="size-7 text-muted-foreground/70"
+              />
+            </div>
+            <h3 class="mb-1.5 text-base font-semibold text-foreground">
+              {{ $t('AGENT_MGMT.LIST.EMPTY_TITLE') }}
+            </h3>
+            <p
+              class="mb-6 max-w-sm text-center text-[13.5px] leading-relaxed text-muted-foreground"
+            >
+              {{ $t('AGENT_MGMT.LIST.EMPTY_DESC') }}
+            </p>
+            <RelayButton class="h-9 shadow-sm" @click="openAddPopup">
+              <Icon icon="i-lucide-plus" class="size-4" />
+              {{ $t('AGENT_MGMT.HEADER_BTN_TXT') }}
+            </RelayButton>
+          </div>
         </template>
         <SettingsListRow
           v-for="(agent, index) in filteredAgentList"
@@ -199,7 +242,7 @@ const confirmDeletion = () => {
               hide-offline-status
             />
           </template>
-          <span class="text-sm font-medium capitalize text-foreground">
+          <span class="text-sm font-medium text-foreground">
             {{ agent.name }}
           </span>
           <div
@@ -240,12 +283,13 @@ const confirmDeletion = () => {
               </div>
             </span>
             <div class="size-1 rounded-full bg-muted-foreground/40" />
-            <span v-if="agent.confirmed">
-              {{ $t('AGENT_MGMT.LIST.VERIFIED') }}
+            <span v-if="getAvailabilityLabel(agent)">
+              {{ getAvailabilityLabel(agent) }}
             </span>
-            <span v-else>
-              {{ $t('AGENT_MGMT.LIST.VERIFICATION_PENDING') }}
-            </span>
+            <template v-if="!agent.confirmed">
+              <div class="size-1 rounded-full bg-muted-foreground/40" />
+              <span>{{ $t('AGENT_MGMT.LIST.VERIFICATION_PENDING') }}</span>
+            </template>
           </div>
           <template #actions>
             <RelayButton

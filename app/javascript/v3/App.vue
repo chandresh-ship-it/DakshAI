@@ -1,8 +1,7 @@
 <script>
 import SnackbarContainer from './components/SnackBar/Container.vue';
 import {
-  hexToRgbSpace,
-  generateThemeVariables,
+  applyBrandColorVariables,
   isDarkBackground,
 } from 'dashboard/helper/colorHelper';
 
@@ -71,33 +70,8 @@ export default {
     },
     applyBrandColors(colors) {
       if (!colors) return;
-      const { primary, text, background } = colors;
-
-      if (primary) {
-        const primaryRgb = hexToRgbSpace(primary);
-        if (primaryRgb) {
-          document.documentElement.style.setProperty(
-            '--woot-brand',
-            primaryRgb
-          );
-        }
-      }
-
-      if (text) {
-        const textRgb = hexToRgbSpace(text);
-        if (textRgb) {
-          document.documentElement.style.setProperty('--slate-12', textRgb);
-        }
-      }
-
-      if (background) {
-        const themeVars = generateThemeVariables(background);
-        if (themeVars) {
-          Object.entries(themeVars).forEach(([key, value]) => {
-            if (value) document.documentElement.style.setProperty(key, value);
-          });
-        }
-      }
+      const isDark = document.documentElement.classList.contains('dark');
+      applyBrandColorVariables(colors, { structural: true, dark: isDark });
     },
   },
 };

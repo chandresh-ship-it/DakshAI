@@ -66,10 +66,6 @@ const isPending = computed(
     )
 );
 
-const showDnsInstructions = computed(
-  () => !!normalizedDomain.value && !isVerified.value
-);
-
 const cnameTarget = computed(() => {
   const hostURL =
     window.chatwootConfig?.hostURL || 'https://domains.newrelay.com';
@@ -110,9 +106,17 @@ const isRootDomain = computed(() => {
 // the TXT token — matching the old branding helper once Verify has run.
 const showTxtOption = computed(
   () =>
-    showDnsInstructions.value &&
+    !!normalizedDomain.value &&
+    !isVerified.value &&
     (txtVerificationRecord.value || hasSavedDomain.value || isPending.value)
 );
+
+// Avoid rendering an empty bordered box (root domains have no CNAME option until TXT is ready).
+const showDnsInstructions = computed(() => {
+  if (!normalizedDomain.value || isVerified.value) return false;
+  if (isRootDomain.value) return showTxtOption.value;
+  return true;
+});
 
 const whiteLabelDescription = computed(() =>
   replaceInstallationName(

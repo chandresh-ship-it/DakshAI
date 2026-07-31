@@ -12,9 +12,7 @@ import { useStore } from 'dashboard/composables/store';
 import WootSnackbarBox from './components/SnackbarContainer.vue';
 import { setColorTheme } from './helper/themeHelper';
 import {
-  hexToRgbSpace,
-  generateThemeVariables,
-  generatePrimaryColorVariables,
+  applyBrandColorVariables,
   clearCustomThemeVariables,
 } from './helper/colorHelper';
 import { isOnOnboardingView } from 'v3/helpers/RouteHelper';
@@ -152,7 +150,14 @@ export default {
       const selectedColorScheme =
         window.localStorage.getItem('color_scheme') || 'auto';
       const brandPalette = palette =>
-        palette && (palette.primary || palette.text || palette.background)
+        palette &&
+        (palette.primary ||
+          palette.secondary ||
+          palette.accent ||
+          palette.text ||
+          palette.background ||
+          palette.theme_preset ||
+          palette.sidebar)
           ? palette
           : null;
       const hasDomainBranding = Boolean(
@@ -160,13 +165,7 @@ export default {
       );
       const hasAccountColors = Boolean(brandPalette(colors));
 
-      // If the account has no brand colors at all, or if the user explicitly
-      // selected standard Light or Dark mode, clear custom vars and exit.
-      if (
-        (!hasAccountColors && !hasDomainBranding) ||
-        selectedColorScheme === 'light' ||
-        selectedColorScheme === 'dark'
-      ) {
+      if (!hasAccountColors && !hasDomainBranding) {
         clearCustomThemeVariables();
         return;
       }
@@ -177,32 +176,15 @@ export default {
         (hasDomainBranding ? window.globalConfig.BRAND_COLORS : null);
       if (!resolvedColors) return;
 
-      const { primary, text, background } = resolvedColors;
-
-      if (primary) {
-        const primaryVars = generatePrimaryColorVariables(primary);
-        if (primaryVars) {
-          Object.entries(primaryVars).forEach(([key, value]) => {
-            if (value) document.documentElement.style.setProperty(key, value);
-          });
-        }
-      }
-
-      if (text) {
-        const textRgb = hexToRgbSpace(text);
-        if (textRgb) {
-          document.documentElement.style.setProperty('--slate-12', textRgb);
-        }
-      }
-
-      if (background) {
-        const themeVars = generateThemeVariables(background);
-        if (themeVars) {
-          Object.entries(themeVars).forEach(([key, value]) => {
-            if (value) document.documentElement.style.setProperty(key, value);
-          });
-        }
-      }
+      // setColorTheme applies full preset light/dark maps; here cover initial paint
+      // before theme helper runs (and custom 4-swatch structural accents).
+      const isDark =
+        document.documentElement.classList.contains('dark') ||
+        selectedColorScheme === 'dark';
+      applyBrandColorVariables(resolvedColors, {
+        structural: true,
+        dark: isDark,
+      });
     },
 
     setLocale(locale) {

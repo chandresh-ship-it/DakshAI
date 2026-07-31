@@ -10,7 +10,6 @@ import { useI18n } from 'vue-i18n';
 
 import BillingMeter from './components/BillingMeter.vue';
 import BillingCard from './components/BillingCard.vue';
-import BillingHeader from './components/BillingHeader.vue';
 import DetailItem from './components/DetailItem.vue';
 import PurchaseCreditsModal from './components/PurchaseCreditsModal.vue';
 import EnterpriseInquiryModal from './components/EnterpriseInquiryModal.vue';
@@ -19,6 +18,7 @@ import PlanCheckoutModal from './components/PlanCheckoutModal.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import ButtonV4 from 'next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Input from 'dashboard/components-next/input/Input.vue';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import EnterpriseAccountAPI from 'dashboard/api/enterprise/account';
@@ -48,6 +48,7 @@ const enterpriseInquiryModalRef = ref(null);
 const downgradeWarningModalRef = ref(null);
 const planCheckoutModalRef = ref(null);
 const showPlanPicker = ref(false);
+const showPlanDetails = ref(false);
 const billingCountry = ref(
   currentAccount.value?.custom_attributes?.billing_country || ''
 );
@@ -338,8 +339,20 @@ const formatTransactionDate = value => {
 };
 
 const formatBillingDate = value => {
-  return value ? format(new Date(value), 'dd MMM, yyyy') : '—';
+  return value ? format(new Date(value), 'd MMM yyyy') : '—';
 };
+
+const isAutoRenewOn = computed(() => {
+  if (!hasActiveSubscription.value) return false;
+  return !accountSubscription.value?.cancel_at_period_end;
+});
+
+const isSubscriptionActiveBadge = computed(() => {
+  const status = accountSubscription.value?.status;
+  return (
+    status === 'active' || status === 'trialing' || hasActiveSubscription.value
+  );
+});
 
 const formatMoneyAmount = (amount, currency) => {
   const code = (currency || 'usd').toUpperCase();
@@ -724,120 +737,112 @@ onMounted(() => {
       />
     </template>
     <template #body>
-      <!-- Marketplace client: subscribes to the pricing their reseller parent
+      <div class="flex w-full max-w-3xl flex-col gap-6 ltr:mr-auto rtl:ml-auto">
+        <!-- Marketplace client: subscribes to the pricing their reseller parent
            published, instead of picking a direct platform plan. -->
-      <section v-if="hasResellerParent" class="grid gap-4">
-        <BillingCard
-          :title="$t('BILLING_SETTINGS.CLIENT.TITLE')"
-          :description="$t('BILLING_SETTINGS.CLIENT.DESCRIPTION')"
-        >
-          <div class="px-5 pb-5">
+        <section v-if="hasResellerParent" class="grid gap-6">
+          <BillingCard
+            :title="$t('BILLING_SETTINGS.CLIENT.TITLE')"
+            :description="$t('BILLING_SETTINGS.CLIENT.DESCRIPTION')"
+          >
             <template v-if="activePlanPrice">
-              <div
-                class="grid sm:grid-cols-2 gap-2 divide-x divide-border mb-4"
-              >
+              <div class="mb-4 grid gap-4 sm:grid-cols-2">
                 <DetailItem
                   :label="$t('BILLING_SETTINGS.RESELLER.TOTAL_PRICE')"
                   :value="`$${activePlanPrice.total_amount}/mo`"
                 />
               </div>
-              <ButtonV4
-                solid
-                blue
-                :is-loading="isCheckingOut"
-                @click="handleSubscribe"
-              >
+              <RelayButton class="shadow-sm" @click="handleSubscribe">
                 {{ $t('BILLING_SETTINGS.CLIENT.SUBSCRIBE_BTN') }}
-              </ButtonV4>
+              </RelayButton>
             </template>
-            <p v-else class="text-muted-foreground text-sm">
+            <p v-else class="text-sm text-muted-foreground">
               {{ $t('BILLING_SETTINGS.CLIENT.NO_ACTIVE_PRICE') }}
             </p>
-          </div>
-        </BillingCard>
-      </section>
+          </BillingCard>
+        </section>
 
-      <!-- Reseller: manage Stripe Connect onboarding and publish client pricing. -->
-      <section v-if="isReseller" class="grid gap-4">
-        <BillingCard
-          :title="$t('BILLING_SETTINGS.RESELLER.TITLE')"
-          :description="$t('BILLING_SETTINGS.RESELLER.DESCRIPTION')"
-        >
-          <div class="px-5 pb-5 space-y-4">
-            <div class="flex items-center justify-between">
-              <span
-                class="text-sm font-medium"
-                :class="
-                  marketplaceData.connected_account?.charges_enabled
-                    ? 'text-emerald-600'
-                    : 'text-amber-600'
-                "
-              >
-                {{
-                  marketplaceData.connected_account?.charges_enabled
-                    ? $t('BILLING_SETTINGS.RESELLER.STATUS_ONBOARDED')
-                    : $t('BILLING_SETTINGS.RESELLER.STATUS_NOT_ONBOARDED')
-                }}
-              </span>
-              <ButtonV4
-                v-if="!marketplaceData.connected_account?.charges_enabled"
-                sm
-                solid
-                blue
-                @click="handleConnectStripe"
-              >
-                {{ $t('BILLING_SETTINGS.RESELLER.CONNECT_STRIPE') }}
-              </ButtonV4>
-            </div>
-            <p
-              v-if="!marketplaceData.connected_account?.charges_enabled"
-              class="text-muted-foreground text-sm"
-            >
-              {{ $t('BILLING_SETTINGS.RESELLER.CONNECT_DESC') }}
-            </p>
-
-            <template v-if="marketplaceData.connected_account?.charges_enabled">
-              <h4 class="text-sm font-medium text-foreground">
-                {{ $t('BILLING_SETTINGS.RESELLER.SET_PRICE') }}
-              </h4>
-              <div class="grid sm:grid-cols-3 gap-4">
-                <Input
-                  v-model="agencyPriceInput"
-                  type="number"
-                  min="1"
-                  :label="$t('BILLING_SETTINGS.RESELLER.AGENCY_PRICE')"
-                />
-                <DetailItem
-                  :label="
-                    $t('BILLING_SETTINGS.RESELLER.COMMISSION', {
-                      percent: commissionPercent,
-                    })
+        <!-- Reseller: manage Stripe Connect onboarding and publish client pricing. -->
+        <section v-if="isReseller" class="grid gap-6">
+          <BillingCard
+            :title="$t('BILLING_SETTINGS.RESELLER.TITLE')"
+            :description="$t('BILLING_SETTINGS.RESELLER.DESCRIPTION')"
+          >
+            <div class="space-y-4">
+              <div class="flex items-center justify-between gap-3">
+                <span
+                  class="text-sm font-medium"
+                  :class="
+                    marketplaceData.connected_account?.charges_enabled
+                      ? 'text-emerald-600'
+                      : 'text-amber-600'
                   "
-                  :value="`$${platformFeeAmount}`"
-                />
-                <DetailItem
-                  :label="$t('BILLING_SETTINGS.RESELLER.TOTAL_PRICE')"
-                  :value="`$${totalClientPrice}`"
-                />
+                >
+                  {{
+                    marketplaceData.connected_account?.charges_enabled
+                      ? $t('BILLING_SETTINGS.RESELLER.STATUS_ONBOARDED')
+                      : $t('BILLING_SETTINGS.RESELLER.STATUS_NOT_ONBOARDED')
+                  }}
+                </span>
+                <RelayButton
+                  v-if="!marketplaceData.connected_account?.charges_enabled"
+                  size="sm"
+                  class="shadow-sm"
+                  @click="handleConnectStripe"
+                >
+                  {{ $t('BILLING_SETTINGS.RESELLER.CONNECT_STRIPE') }}
+                </RelayButton>
               </div>
-              <ButtonV4 solid blue @click="handleSavePricing">
-                {{ $t('BILLING_SETTINGS.RESELLER.SAVE_PRICING') }}
-              </ButtonV4>
-            </template>
-          </div>
-        </BillingCard>
-      </section>
+              <p
+                v-if="!marketplaceData.connected_account?.charges_enabled"
+                class="text-sm text-muted-foreground"
+              >
+                {{ $t('BILLING_SETTINGS.RESELLER.CONNECT_DESC') }}
+              </p>
 
-      <!-- Direct Plan Selection Flow (Replaces Stripe Flows for Testing) -->
-      <!-- Marketplace clients subscribe via their reseller's pricing above, not here. -->
-      <section v-if="hasPendingEnterpriseInquiry" class="grid gap-4">
-        <BillingCard
-          :title="$t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.TITLE')"
-          :description="
-            $t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.PENDING_BANNER')
-          "
-        >
-          <div class="p-4">
+              <template
+                v-if="marketplaceData.connected_account?.charges_enabled"
+              >
+                <h4 class="text-sm font-medium text-foreground">
+                  {{ $t('BILLING_SETTINGS.RESELLER.SET_PRICE') }}
+                </h4>
+                <div class="grid gap-4 sm:grid-cols-3">
+                  <Input
+                    v-model="agencyPriceInput"
+                    type="number"
+                    min="1"
+                    :label="$t('BILLING_SETTINGS.RESELLER.AGENCY_PRICE')"
+                  />
+                  <DetailItem
+                    :label="
+                      $t('BILLING_SETTINGS.RESELLER.COMMISSION', {
+                        percent: commissionPercent,
+                      })
+                    "
+                    :value="`$${platformFeeAmount}`"
+                  />
+                  <DetailItem
+                    :label="$t('BILLING_SETTINGS.RESELLER.TOTAL_PRICE')"
+                    :value="`$${totalClientPrice}`"
+                  />
+                </div>
+                <RelayButton class="shadow-sm" @click="handleSavePricing">
+                  {{ $t('BILLING_SETTINGS.RESELLER.SAVE_PRICING') }}
+                </RelayButton>
+              </template>
+            </div>
+          </BillingCard>
+        </section>
+
+        <!-- Direct Plan Selection Flow (Replaces Stripe Flows for Testing) -->
+        <!-- Marketplace clients subscribe via their reseller's pricing above, not here. -->
+        <section v-if="hasPendingEnterpriseInquiry" class="grid gap-6">
+          <BillingCard
+            :title="$t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.TITLE')"
+            :description="
+              $t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.PENDING_BANNER')
+            "
+          >
             <ButtonV4
               sm
               solid
@@ -847,97 +852,42 @@ onMounted(() => {
             >
               {{ $t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.CANCEL_REQUEST') }}
             </ButtonV4>
-          </div>
-        </BillingCard>
-      </section>
-      <section class="grid gap-4">
-        <BillingCard
-          v-if="!hasResellerParent && (!planName || showPlanPicker)"
-          :title="$t('BILLING_SETTINGS.SELECT_PLAN.TITLE')"
-          :description="$t('BILLING_SETTINGS.SELECT_PLAN.DESCRIPTION')"
-        >
-          <template v-if="planName" #action>
-            <ButtonV4 sm flushed slate @click="showPlanPicker = false">
-              {{ $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_BUTTON') }}
-            </ButtonV4>
-          </template>
-          <p
-            v-if="lockedPaymentProvider"
-            class="px-4 pt-4 text-xs text-muted-foreground"
+          </BillingCard>
+        </section>
+        <section class="grid gap-6">
+          <BillingCard
+            v-if="!hasResellerParent && (!planName || showPlanPicker)"
+            :title="$t('BILLING_SETTINGS.SELECT_PLAN.TITLE')"
+            :description="$t('BILLING_SETTINGS.SELECT_PLAN.DESCRIPTION')"
           >
-            {{
-              $t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_LOCKED_HINT', {
-                provider: paymentProviderLabel,
-              })
-            }}
-          </p>
-          <div
-            v-if="lockedPaymentProvider === 'razorpay' && hasActiveSubscription"
-            class="px-4 pt-2"
-          >
-            <ButtonV4
-              sm
-              solid
-              slate
-              :is-loading="isCancelingSubscription"
-              @click="onCancelRazorpaySubscription"
+            <template v-if="planName" #action>
+              <RelayButton
+                variant="outline"
+                size="sm"
+                @click="showPlanPicker = false"
+              >
+                {{ $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_BUTTON') }}
+              </RelayButton>
+            </template>
+            <p
+              v-if="lockedPaymentProvider"
+              class="mb-2 text-xs text-muted-foreground"
             >
               {{
-                $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_SUBSCRIPTION_BUTTON')
+                $t('BILLING_SETTINGS.SELECT_PLAN.PROVIDER_LOCKED_HINT', {
+                  provider: paymentProviderLabel,
+                })
               }}
-            </ButtonV4>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+            </p>
             <div
-              v-for="plan in selectablePlans"
-              :key="plan"
-              class="border border-border rounded-xl p-6 bg-background shadow-sm flex flex-col justify-between gap-4"
+              v-if="
+                lockedPaymentProvider === 'razorpay' && hasActiveSubscription
+              "
+              class="mb-4"
             >
-              <div>
-                <div class="text-xl font-bold text-center text-foreground">
-                  {{ $t('BILLING_SETTINGS.SELECT_PLAN.PLAN_LABEL', { plan }) }}
-                </div>
-                <div class="text-sm text-center text-muted-foreground mt-1">
-                  {{ planPriceLabel(plan) }}
-                </div>
-              </div>
               <ButtonV4
+                sm
                 solid
-                blue
-                class="w-full justify-center"
-                :is-loading="plan !== 'Enterprise' && isCheckingOut"
-                @click="handlePlanSelection(plan)"
-              >
-                {{
-                  plan === 'Enterprise'
-                    ? $t('BILLING_SETTINGS.SELECT_PLAN.CONTACT_SALES_BUTTON')
-                    : $t('BILLING_SETTINGS.SELECT_PLAN.SELECT_BUTTON')
-                }}
-              </ButtonV4>
-            </div>
-          </div>
-        </BillingCard>
-
-        <BillingCard
-          v-if="!hasResellerParent && planName"
-          :title="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
-          :description="$t('BILLING_SETTINGS.SUBSCRIPTION.DESCRIPTION')"
-        >
-          <template #action>
-            <div class="flex gap-2">
-              <ButtonV4
-                v-if="usesStripePortal && accountSubscription"
-                sm
-                flushed
-                slate
-                @click="onClickBillingPortal"
-              >
-                {{ $t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.BUTTON_TXT') }}
-              </ButtonV4>
-              <ButtonV4
-                v-if="usesRazorpayBilling && hasActiveSubscription"
-                sm
-                flushed
                 slate
                 :is-loading="isCancelingSubscription"
                 @click="onCancelRazorpaySubscription"
@@ -946,334 +896,496 @@ onMounted(() => {
                   $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_SUBSCRIPTION_BUTTON')
                 }}
               </ButtonV4>
-              <ButtonV4 sm solid blue @click="showPlanPicker = true">
-                {{ $t('BILLING_SETTINGS.CURRENT_PLAN.CHANGE_PLAN_BUTTON') }}
-              </ButtonV4>
             </div>
-          </template>
-          <div class="px-5 pb-2">
-            <p
-              v-if="cancellationScheduledLabel"
-              class="text-sm text-amber-600 mb-4"
-            >
-              {{ cancellationScheduledLabel }}
-            </p>
-            <p
-              v-if="isSubscriptionPaymentPending"
-              class="text-sm text-destructive mb-4"
-            >
-              {{ $t('BILLING_SETTINGS.SUBSCRIPTION.PAYMENT_FAILED_HINT') }}
-            </p>
-          </div>
-          <div
-            class="grid lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-4 divide-x divide-border"
-          >
-            <DetailItem
-              :label="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
-              :value="planName || '—'"
-            />
-            <DetailItem
-              :label="$t('BILLING_SETTINGS.SUBSCRIPTION.STATUS')"
-              :value="subscriptionStatusLabel"
-            />
-            <DetailItem
-              :label="$t('BILLING_SETTINGS.SUBSCRIPTION.PLAN_PRICE')"
-              :value="currentPlanPriceLabel"
-            />
-            <DetailItem
-              :label="$t('BILLING_SETTINGS.SUBSCRIPTION.PAYMENT_PROVIDER')"
-              :value="paymentProviderDisplay"
-            />
-            <DetailItem
-              :label="$t('BILLING_SETTINGS.SUBSCRIPTION.PERIOD_START')"
-              :value="subscriptionPeriodStartValue"
-            />
-            <DetailItem
-              :label="subscriptionPeriodEndLabel"
-              :value="subscriptionPeriodEndValue"
-            />
-            <DetailItem
-              v-if="nextPaymentRetryValue"
-              :label="$t('BILLING_SETTINGS.SUBSCRIPTION.NEXT_RETRY')"
-              :value="nextPaymentRetryValue"
-            />
-            <DetailItem
-              :label="$t('BILLING_SETTINGS.CURRENT_PLAN.DATA_RETENTION_LABEL')"
-              :value="dataRetentionLabel"
-            />
-          </div>
-
-          <div
-            v-if="lastPayment"
-            class="mx-5 mt-4 mb-5 rounded-lg border border-border bg-muted/30 p-4"
-          >
-            <p class="text-sm font-medium text-foreground mb-3">
-              {{ $t('BILLING_SETTINGS.SUBSCRIPTION.LAST_PAYMENT') }}
-            </p>
-            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <DetailItem
-                :label="$t('BILLING_SETTINGS.TRANSACTIONS.DATE')"
-                :value="
-                  formatTransactionDate(
-                    lastPayment.paid_at || lastPayment.created_at
-                  )
-                "
-              />
-              <DetailItem
-                :label="$t('BILLING_SETTINGS.TRANSACTIONS.AMOUNT')"
-                :value="formatTransactionAmount(lastPayment)"
-              />
-              <DetailItem
-                :label="$t('BILLING_SETTINGS.TRANSACTIONS.STATUS')"
-                :value="
-                  lastPayment.status === 'succeeded'
-                    ? $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_SUCCEEDED')
-                    : $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_FAILED')
-                "
-              />
-              <DetailItem
-                :label="$t('BILLING_SETTINGS.TRANSACTIONS.DESCRIPTION_COL')"
-                :value="lastPayment.description || '—'"
-              />
-            </div>
-            <a
-              v-if="lastPayment.hosted_invoice_url"
-              :href="lastPayment.hosted_invoice_url"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-block mt-3 text-sm text-primary hover:underline"
-            >
-              {{ $t('BILLING_SETTINGS.TRANSACTIONS.VIEW') }}
-            </a>
-          </div>
-        </BillingCard>
-
-        <!-- Resource Limits -->
-        <BillingCard
-          v-if="hasABillingPlan"
-          :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.TITLE')"
-          :description="$t('BILLING_SETTINGS.RESOURCE_LIMITS.DESCRIPTION')"
-        >
-          <div class="px-5 pb-5 grid gap-4">
-            <BillingMeter
-              v-if="agentLimits"
-              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.SEATS')"
-              v-bind="agentLimits"
-            />
-            <BillingMeter
-              v-if="inboxLimits"
-              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.INBOXES')"
-              v-bind="inboxLimits"
-            />
-            <BillingMeter
-              v-if="contactLimits"
-              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.CONTACTS')"
-              v-bind="contactLimits"
-            />
-            <BillingMeter
-              v-if="conversationLimits"
-              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.CONVERSATIONS')"
-              v-bind="conversationLimits"
-            />
-            <BillingMeter
-              v-if="t3SubaccountLimits"
-              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.T3_SUBACCOUNTS')"
-              v-bind="t3SubaccountLimits"
-            />
-            <BillingMeter
-              v-if="automationLimits"
-              :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.AUTOMATIONS')"
-              v-bind="automationLimits"
-            />
-          </div>
-        </BillingCard>
-
-        <!-- Captain AI Billing -->
-        <BillingCard
-          v-if="captainEnabled"
-          :title="$t('BILLING_SETTINGS.CAPTAIN.TITLE')"
-          :description="$t('BILLING_SETTINGS.CAPTAIN.DESCRIPTION')"
-        >
-          <template #action>
-            <div class="flex gap-2">
-              <ButtonV4
-                sm
-                flushed
-                slate
-                icon="i-lucide-refresh-cw"
-                :is-loading="isFetchingLimits"
-                @click="fetchLimits"
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div
+                v-for="plan in selectablePlans"
+                :key="plan"
+                class="flex flex-col justify-between gap-4 rounded-xl border border-border/60 bg-background p-5 shadow-xs"
               >
-                {{ $t('BILLING_SETTINGS.CAPTAIN.REFRESH_CREDITS') }}
-              </ButtonV4>
-              <ButtonV4
-                v-if="canPurchaseCredits"
-                sm
-                solid
-                blue
-                @click="openPurchaseCreditsModal"
-              >
-                {{ $t('BILLING_SETTINGS.TOPUP.BUY_CREDITS') }}
-              </ButtonV4>
-            </div>
-          </template>
-          <div v-if="captainLimits && responseLimits" class="px-5">
-            <BillingMeter
-              :title="$t('BILLING_SETTINGS.CAPTAIN.RESPONSES')"
-              v-bind="responseLimits"
-            />
-          </div>
-          <div v-if="captainLimits && documentLimits" class="px-5">
-            <BillingMeter
-              :title="$t('BILLING_SETTINGS.CAPTAIN.DOCUMENTS')"
-              v-bind="documentLimits"
-            />
-          </div>
-        </BillingCard>
-
-        <BillingCard
-          v-else
-          :title="$t('BILLING_SETTINGS.CAPTAIN.TITLE')"
-          :description="$t('BILLING_SETTINGS.CAPTAIN.UPGRADE')"
-        >
-          <template #action>
-            <ButtonV4 sm solid slate @click="onClickCaptainUpgrade">
-              {{ $t('CAPTAIN.PAYWALL.UPGRADE_NOW') }}
-            </ButtonV4>
-          </template>
-        </BillingCard>
-
-        <!-- Payment History -->
-        <BillingCard
-          v-if="hasABillingPlan"
-          :title="$t('BILLING_SETTINGS.TRANSACTIONS.TITLE')"
-          :description="$t('BILLING_SETTINGS.TRANSACTIONS.DESCRIPTION')"
-        >
-          <div class="px-5 pb-5 overflow-x-auto">
-            <p
-              v-if="isFetchingTransactions"
-              class="text-sm text-muted-foreground py-2"
-            >
-              {{ $t('BILLING_SETTINGS.TRANSACTIONS.LOADING') }}
-            </p>
-            <p
-              v-else-if="!transactions.length"
-              class="text-sm text-muted-foreground py-2"
-            >
-              {{ $t('BILLING_SETTINGS.TRANSACTIONS.EMPTY') }}
-            </p>
-            <table v-else class="w-full text-sm">
-              <thead>
-                <tr
-                  class="text-left text-muted-foreground border-b border-border"
-                >
-                  <th class="py-2 pr-4 font-medium">
-                    {{ $t('BILLING_SETTINGS.TRANSACTIONS.DATE') }}
-                  </th>
-                  <th class="py-2 pr-4 font-medium">
-                    {{ $t('BILLING_SETTINGS.TRANSACTIONS.DESCRIPTION_COL') }}
-                  </th>
-                  <th class="py-2 pr-4 font-medium">
-                    {{ $t('BILLING_SETTINGS.TRANSACTIONS.AMOUNT') }}
-                  </th>
-                  <th class="py-2 pr-4 font-medium">
-                    {{ $t('BILLING_SETTINGS.TRANSACTIONS.STATUS') }}
-                  </th>
-                  <th class="py-2 font-medium">
-                    {{ $t('BILLING_SETTINGS.TRANSACTIONS.RECEIPT') }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="transaction in transactions"
-                  :key="transaction.id"
-                  class="border-b border-border last:border-0"
-                >
-                  <td class="py-2 pr-4 text-foreground whitespace-nowrap">
+                <div>
+                  <div
+                    class="text-center text-xl font-medium tracking-tight text-foreground"
+                  >
                     {{
-                      formatTransactionDate(
-                        transaction.paid_at || transaction.created_at
-                      )
+                      $t('BILLING_SETTINGS.SELECT_PLAN.PLAN_LABEL', { plan })
                     }}
-                  </td>
-                  <td class="py-2 pr-4 text-foreground">
-                    {{ transaction.description || '—' }}
-                  </td>
-                  <td class="py-2 pr-4 text-foreground whitespace-nowrap">
-                    {{ formatTransactionAmount(transaction) }}
-                  </td>
-                  <td class="py-2 pr-4">
-                    <span
-                      class="px-2 py-0.5 rounded-full text-xs font-medium"
-                      :class="
-                        transaction.status === 'succeeded'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-red-100 text-destructive'
-                      "
-                    >
-                      {{
-                        transaction.status === 'succeeded'
-                          ? $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_SUCCEEDED')
-                          : $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_FAILED')
-                      }}
-                    </span>
-                  </td>
-                  <td class="py-2">
-                    <a
-                      v-if="transaction.hosted_invoice_url"
-                      :href="transaction.hosted_invoice_url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="text-primary hover:underline"
-                    >
-                      {{ $t('BILLING_SETTINGS.TRANSACTIONS.VIEW') }}
-                    </a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </BillingCard>
+                  </div>
+                  <div class="mt-1 text-center text-sm text-muted-foreground">
+                    {{ planPriceLabel(plan) }}
+                  </div>
+                </div>
+                <ButtonV4
+                  solid
+                  blue
+                  class="w-full justify-center"
+                  :is-loading="plan !== 'Enterprise' && isCheckingOut"
+                  @click="handlePlanSelection(plan)"
+                >
+                  {{
+                    plan === 'Enterprise'
+                      ? $t('BILLING_SETTINGS.SELECT_PLAN.CONTACT_SALES_BUTTON')
+                      : $t('BILLING_SETTINGS.SELECT_PLAN.SELECT_BUTTON')
+                  }}
+                </ButtonV4>
+              </div>
+            </div>
+          </BillingCard>
 
-        <BillingHeader
-          class="px-1 mt-5"
-          :title="$t('BILLING_SETTINGS.CHAT_WITH_US.TITLE')"
-          :description="$t('BILLING_SETTINGS.CHAT_WITH_US.DESCRIPTION')"
-        >
-          <ButtonV4
-            sm
-            solid
-            slate
-            icon="i-lucide-life-buoy"
-            @click="onToggleChatWindow"
+          <!-- Current Plan (new-ui hero layout) -->
+          <BillingCard
+            v-if="!hasResellerParent && planName && !showPlanPicker"
+            variant="hero"
+            :title="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
           >
-            {{ $t('BILLING_SETTINGS.CHAT_WITH_US.BUTTON_TXT') }}
-          </ButtonV4>
-        </BillingHeader>
-      </section>
+            <div>
+              <div class="mb-4 flex flex-wrap items-center gap-3">
+                <h2
+                  class="text-[27px] font-medium tracking-tight text-foreground"
+                >
+                  {{ planName }}
+                </h2>
+                <div
+                  v-if="isSubscriptionActiveBadge"
+                  class="rounded-lg bg-primary/10 px-3 py-1 text-[13px] font-semibold leading-none text-primary"
+                >
+                  {{ subscriptionStatusLabel }}
+                </div>
+                <div
+                  v-else-if="accountSubscription"
+                  class="rounded-lg bg-muted px-3 py-1 text-[13px] font-semibold leading-none text-muted-foreground"
+                >
+                  {{ subscriptionStatusLabel }}
+                </div>
+              </div>
 
-      <PurchaseCreditsModal
-        ref="purchaseCreditsModalRef"
-        :payment-provider="topupPaymentProvider"
-      />
-      <EnterpriseInquiryModal
-        ref="enterpriseInquiryModalRef"
-        @success="handleEnterpriseInquirySuccess"
-      />
-      <DowngradePlanWarningModal
-        ref="downgradeWarningModalRef"
-        @confirm="handleDowngradeConfirm"
-      />
-      <PlanCheckoutModal
-        ref="planCheckoutModalRef"
-        :show-country-select="showBillingCountrySelect"
-        :locked-payment-provider="lockedPaymentProvider"
-        :initial-country="billingCountry"
-        :country-options="availableCountryOptions"
-        :payment-gateways="paymentGateways"
-        @proceed="handlePlanCheckoutProceed"
-      />
+              <div
+                v-if="subscriptionPeriodEndValue !== '—'"
+                class="flex flex-wrap items-center gap-1.5 text-[14px] font-medium text-muted-foreground"
+              >
+                <span>{{ subscriptionPeriodEndLabel }}</span>
+                <span
+                  class="i-lucide-calendar mx-0.5 size-4 text-muted-foreground"
+                />
+                <span class="font-semibold text-foreground">
+                  {{ subscriptionPeriodEndValue }}
+                </span>
+                <template v-if="accountSubscription">
+                  <span class="mx-1.5 text-border">•</span>
+                  <span>{{
+                    $t('BILLING_SETTINGS.CURRENT_PLAN.AUTO_RENEW')
+                  }}</span>
+                  <div
+                    class="ml-0.5 rounded-md px-2 py-0.5 text-[12px] font-semibold leading-none"
+                    :class="
+                      isAutoRenewOn
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-muted text-muted-foreground'
+                    "
+                  >
+                    {{
+                      isAutoRenewOn
+                        ? $t('BILLING_SETTINGS.CURRENT_PLAN.AUTO_RENEW_ON')
+                        : $t('BILLING_SETTINGS.CURRENT_PLAN.AUTO_RENEW_OFF')
+                    }}
+                  </div>
+                </template>
+              </div>
+
+              <p
+                v-if="cancellationScheduledLabel"
+                class="mt-3 text-sm text-amber-600"
+              >
+                {{ cancellationScheduledLabel }}
+              </p>
+              <p
+                v-if="isSubscriptionPaymentPending"
+                class="mt-3 text-sm text-destructive"
+              >
+                {{ $t('BILLING_SETTINGS.SUBSCRIPTION.PAYMENT_FAILED_HINT') }}
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <RelayButton
+                variant="outline"
+                class="gap-2 font-medium"
+                @click="showPlanDetails = !showPlanDetails"
+              >
+                {{
+                  showPlanDetails
+                    ? $t('BILLING_SETTINGS.CURRENT_PLAN.HIDE_PLAN_DETAILS')
+                    : $t('BILLING_SETTINGS.CURRENT_PLAN.VIEW_PLAN_DETAILS')
+                }}
+                <span
+                  class="size-4"
+                  :class="
+                    showPlanDetails
+                      ? 'i-lucide-chevron-up'
+                      : 'i-lucide-external-link'
+                  "
+                />
+              </RelayButton>
+              <RelayButton
+                v-if="usesStripePortal && accountSubscription"
+                variant="outline"
+                size="sm"
+                @click="onClickBillingPortal"
+              >
+                {{ $t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.BUTTON_TXT') }}
+              </RelayButton>
+              <ButtonV4
+                v-if="usesRazorpayBilling && hasActiveSubscription"
+                sm
+                outline
+                slate
+                :is-loading="isCancelingSubscription"
+                @click="onCancelRazorpaySubscription"
+              >
+                {{
+                  $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_SUBSCRIPTION_BUTTON')
+                }}
+              </ButtonV4>
+              <RelayButton
+                size="sm"
+                class="shadow-sm"
+                @click="showPlanPicker = true"
+              >
+                {{ $t('BILLING_SETTINGS.CURRENT_PLAN.CHANGE_PLAN_BUTTON') }}
+              </RelayButton>
+            </div>
+
+            <div
+              v-if="showPlanDetails"
+              class="space-y-4 border-t border-border/40 pt-4"
+            >
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <DetailItem
+                  :label="$t('BILLING_SETTINGS.SUBSCRIPTION.STATUS')"
+                  :value="subscriptionStatusLabel"
+                />
+                <DetailItem
+                  :label="$t('BILLING_SETTINGS.SUBSCRIPTION.PLAN_PRICE')"
+                  :value="currentPlanPriceLabel"
+                />
+                <DetailItem
+                  :label="$t('BILLING_SETTINGS.SUBSCRIPTION.PAYMENT_PROVIDER')"
+                  :value="paymentProviderDisplay"
+                />
+                <DetailItem
+                  :label="$t('BILLING_SETTINGS.SUBSCRIPTION.PERIOD_START')"
+                  :value="subscriptionPeriodStartValue"
+                />
+                <DetailItem
+                  v-if="nextPaymentRetryValue"
+                  :label="$t('BILLING_SETTINGS.SUBSCRIPTION.NEXT_RETRY')"
+                  :value="nextPaymentRetryValue"
+                />
+                <DetailItem
+                  :label="
+                    $t('BILLING_SETTINGS.CURRENT_PLAN.DATA_RETENTION_LABEL')
+                  "
+                  :value="dataRetentionLabel"
+                />
+              </div>
+
+              <div
+                v-if="lastPayment"
+                class="rounded-lg border border-border/60 bg-muted/30 p-4"
+              >
+                <p class="mb-3 text-sm font-medium text-foreground">
+                  {{ $t('BILLING_SETTINGS.SUBSCRIPTION.LAST_PAYMENT') }}
+                </p>
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <DetailItem
+                    :label="$t('BILLING_SETTINGS.TRANSACTIONS.DATE')"
+                    :value="
+                      formatTransactionDate(
+                        lastPayment.paid_at || lastPayment.created_at
+                      )
+                    "
+                  />
+                  <DetailItem
+                    :label="$t('BILLING_SETTINGS.TRANSACTIONS.AMOUNT')"
+                    :value="formatTransactionAmount(lastPayment)"
+                  />
+                  <DetailItem
+                    :label="$t('BILLING_SETTINGS.TRANSACTIONS.STATUS')"
+                    :value="
+                      lastPayment.status === 'succeeded'
+                        ? $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_SUCCEEDED')
+                        : $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_FAILED')
+                    "
+                  />
+                  <DetailItem
+                    :label="$t('BILLING_SETTINGS.TRANSACTIONS.DESCRIPTION_COL')"
+                    :value="lastPayment.description || '—'"
+                  />
+                </div>
+                <a
+                  v-if="lastPayment.hosted_invoice_url"
+                  :href="lastPayment.hosted_invoice_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mt-3 inline-block text-sm text-primary hover:underline"
+                >
+                  {{ $t('BILLING_SETTINGS.TRANSACTIONS.VIEW') }}
+                </a>
+              </div>
+            </div>
+          </BillingCard>
+
+          <!-- Resource Limits -->
+          <BillingCard
+            v-if="hasABillingPlan"
+            :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.TITLE')"
+            :description="$t('BILLING_SETTINGS.RESOURCE_LIMITS.DESCRIPTION')"
+          >
+            <div class="flex flex-col gap-1">
+              <BillingMeter
+                v-if="agentLimits"
+                icon="i-lucide-users"
+                :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.SEATS')"
+                v-bind="agentLimits"
+              />
+              <BillingMeter
+                v-if="inboxLimits"
+                icon="i-lucide-inbox"
+                :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.INBOXES')"
+                v-bind="inboxLimits"
+              />
+              <BillingMeter
+                v-if="contactLimits"
+                icon="i-lucide-users-round"
+                :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.CONTACTS')"
+                v-bind="contactLimits"
+              />
+              <BillingMeter
+                v-if="conversationLimits"
+                icon="i-lucide-message-square"
+                :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.CONVERSATIONS')"
+                v-bind="conversationLimits"
+              />
+              <BillingMeter
+                v-if="t3SubaccountLimits"
+                icon="i-lucide-network"
+                :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.T3_SUBACCOUNTS')"
+                v-bind="t3SubaccountLimits"
+              />
+              <BillingMeter
+                v-if="automationLimits"
+                icon="i-lucide-zap"
+                :title="$t('BILLING_SETTINGS.RESOURCE_LIMITS.AUTOMATIONS')"
+                v-bind="automationLimits"
+              />
+            </div>
+          </BillingCard>
+
+          <!-- Captain AI Billing -->
+          <BillingCard
+            v-if="captainEnabled"
+            :title="$t('BILLING_SETTINGS.CAPTAIN.TITLE')"
+            :description="$t('BILLING_SETTINGS.CAPTAIN.DESCRIPTION')"
+          >
+            <template #action>
+              <div class="flex flex-wrap items-center gap-3">
+                <RelayButton
+                  variant="outline"
+                  size="sm"
+                  class="h-9 px-4 text-[14px] font-medium"
+                  :disabled="isFetchingLimits"
+                  @click="fetchLimits"
+                >
+                  <span class="i-lucide-refresh-cw size-4" />
+                  {{ $t('BILLING_SETTINGS.CAPTAIN.REFRESH_CREDITS') }}
+                </RelayButton>
+                <RelayButton
+                  v-if="canPurchaseCredits"
+                  size="sm"
+                  class="h-9 px-4 text-[14px] font-medium shadow-sm"
+                  @click="openPurchaseCreditsModal"
+                >
+                  {{ $t('BILLING_SETTINGS.TOPUP.BUY_CREDITS') }}
+                </RelayButton>
+              </div>
+            </template>
+            <div class="flex flex-col gap-1">
+              <BillingMeter
+                v-if="captainLimits && responseLimits"
+                icon="i-lucide-coins"
+                :title="$t('BILLING_SETTINGS.CAPTAIN.RESPONSES')"
+                v-bind="responseLimits"
+              />
+              <BillingMeter
+                v-if="captainLimits && documentLimits"
+                icon="i-lucide-file-text"
+                :title="$t('BILLING_SETTINGS.CAPTAIN.DOCUMENTS')"
+                v-bind="documentLimits"
+              />
+            </div>
+          </BillingCard>
+
+          <BillingCard
+            v-else
+            :title="$t('BILLING_SETTINGS.CAPTAIN.TITLE')"
+            :description="$t('BILLING_SETTINGS.CAPTAIN.UPGRADE')"
+          >
+            <template #action>
+              <RelayButton
+                variant="outline"
+                size="sm"
+                @click="onClickCaptainUpgrade"
+              >
+                {{ $t('CAPTAIN.PAYWALL.UPGRADE_NOW') }}
+              </RelayButton>
+            </template>
+          </BillingCard>
+
+          <!-- Payment History -->
+          <BillingCard
+            v-if="hasABillingPlan"
+            :title="$t('BILLING_SETTINGS.TRANSACTIONS.TITLE')"
+            :description="$t('BILLING_SETTINGS.TRANSACTIONS.DESCRIPTION')"
+          >
+            <div class="overflow-x-auto">
+              <p
+                v-if="isFetchingTransactions"
+                class="py-2 text-sm text-muted-foreground"
+              >
+                {{ $t('BILLING_SETTINGS.TRANSACTIONS.LOADING') }}
+              </p>
+              <p
+                v-else-if="!transactions.length"
+                class="py-2 text-sm text-muted-foreground"
+              >
+                {{ $t('BILLING_SETTINGS.TRANSACTIONS.EMPTY') }}
+              </p>
+              <table v-else class="w-full text-sm">
+                <thead>
+                  <tr
+                    class="border-b border-border/40 text-left text-muted-foreground"
+                  >
+                    <th
+                      class="py-2 pr-4 text-[11px] font-semibold uppercase tracking-wider"
+                    >
+                      {{ $t('BILLING_SETTINGS.TRANSACTIONS.DATE') }}
+                    </th>
+                    <th
+                      class="py-2 pr-4 text-[11px] font-semibold uppercase tracking-wider"
+                    >
+                      {{ $t('BILLING_SETTINGS.TRANSACTIONS.DESCRIPTION_COL') }}
+                    </th>
+                    <th
+                      class="py-2 pr-4 text-[11px] font-semibold uppercase tracking-wider"
+                    >
+                      {{ $t('BILLING_SETTINGS.TRANSACTIONS.AMOUNT') }}
+                    </th>
+                    <th
+                      class="py-2 pr-4 text-[11px] font-semibold uppercase tracking-wider"
+                    >
+                      {{ $t('BILLING_SETTINGS.TRANSACTIONS.STATUS') }}
+                    </th>
+                    <th
+                      class="py-2 text-[11px] font-semibold uppercase tracking-wider"
+                    >
+                      {{ $t('BILLING_SETTINGS.TRANSACTIONS.RECEIPT') }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="transaction in transactions"
+                    :key="transaction.id"
+                    class="border-b border-border/40 last:border-0"
+                  >
+                    <td class="whitespace-nowrap py-3 pr-4 text-foreground">
+                      {{
+                        formatTransactionDate(
+                          transaction.paid_at || transaction.created_at
+                        )
+                      }}
+                    </td>
+                    <td class="py-3 pr-4 text-foreground">
+                      {{ transaction.description || '—' }}
+                    </td>
+                    <td class="whitespace-nowrap py-3 pr-4 text-foreground">
+                      {{ formatTransactionAmount(transaction) }}
+                    </td>
+                    <td class="py-3 pr-4">
+                      <span
+                        class="rounded-md px-2 py-0.5 text-xs font-medium"
+                        :class="
+                          transaction.status === 'succeeded'
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-destructive/10 text-destructive'
+                        "
+                      >
+                        {{
+                          transaction.status === 'succeeded'
+                            ? $t(
+                                'BILLING_SETTINGS.TRANSACTIONS.STATUS_SUCCEEDED'
+                              )
+                            : $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_FAILED')
+                        }}
+                      </span>
+                    </td>
+                    <td class="py-3">
+                      <a
+                        v-if="transaction.hosted_invoice_url"
+                        :href="transaction.hosted_invoice_url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-primary hover:underline"
+                      >
+                        {{ $t('BILLING_SETTINGS.TRANSACTIONS.VIEW') }}
+                      </a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </BillingCard>
+
+          <div
+            class="flex flex-col justify-between gap-4 py-4 sm:flex-row sm:items-center"
+          >
+            <div>
+              <h3 class="text-base font-medium text-foreground">
+                {{ $t('BILLING_SETTINGS.CHAT_WITH_US.TITLE') }}
+              </h3>
+              <p class="mt-1 text-sm text-muted-foreground">
+                {{ $t('BILLING_SETTINGS.CHAT_WITH_US.DESCRIPTION') }}
+              </p>
+            </div>
+            <RelayButton variant="outline" @click="onToggleChatWindow">
+              <span class="i-lucide-message-square size-4" />
+              {{ $t('BILLING_SETTINGS.CHAT_WITH_US.BUTTON_TXT') }}
+            </RelayButton>
+          </div>
+        </section>
+
+        <PurchaseCreditsModal
+          ref="purchaseCreditsModalRef"
+          :payment-provider="topupPaymentProvider"
+        />
+        <EnterpriseInquiryModal
+          ref="enterpriseInquiryModalRef"
+          @success="handleEnterpriseInquirySuccess"
+        />
+        <DowngradePlanWarningModal
+          ref="downgradeWarningModalRef"
+          @confirm="handleDowngradeConfirm"
+        />
+        <PlanCheckoutModal
+          ref="planCheckoutModalRef"
+          :show-country-select="showBillingCountrySelect"
+          :locked-payment-provider="lockedPaymentProvider"
+          :initial-country="billingCountry"
+          :country-options="availableCountryOptions"
+          :payment-gateways="paymentGateways"
+          @proceed="handlePlanCheckoutProceed"
+        />
+      </div>
     </template>
   </SettingsLayout>
 </template>

@@ -6,25 +6,25 @@ import { useAccount } from 'dashboard/composables/useAccount';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import AccountAPI from 'dashboard/api/account';
-import { LocalStorage } from 'shared/helpers/localStorage';
-import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { setColorTheme } from 'dashboard/helper/themeHelper';
 import ColorPicker from 'dashboard/components-next/colorpicker/ColorPicker.vue';
-import { getContrast } from 'color2k';
-import {
-  generatePrimaryColorVariables,
-  generateThemeVariables,
-  hexToRgbSpace,
-  clearCustomThemeVariables,
-} from 'dashboard/helper/colorHelper';
+import { applyBrandColorVariables } from 'dashboard/helper/colorHelper';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SectionLayout from '../account/components/SectionLayout.vue';
 import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 import MagicBrandingModal from './components/MagicBrandingModal.vue';
+import ThemePresetSwitcher from './components/ThemePresetSwitcher.vue';
+import {
+  DEFAULT_BRAND_PRESET,
+  brandColorsFromPreset,
+  findPresetById,
+} from './brandThemePresets';
 
-const DEFAULT_PRIMARY = '#1F93FF';
-const DEFAULT_TEXT = '#FFFFFF';
-const DEFAULT_BACKGROUND = '#1A1E29';
+const DEFAULT_PRIMARY = DEFAULT_BRAND_PRESET.primary;
+const DEFAULT_SECONDARY = DEFAULT_BRAND_PRESET.secondary;
+const DEFAULT_ACCENT = DEFAULT_BRAND_PRESET.accent;
+const DEFAULT_BACKGROUND = DEFAULT_BRAND_PRESET.background;
+const DEFAULT_TEXT = DEFAULT_BRAND_PRESET.text;
 
 const store = useStore();
 const { t } = useI18n();
@@ -37,9 +37,14 @@ const isUpdating = computed(() => uiFlags.value.isUpdating);
 const companyName = ref('');
 const brandName = ref('');
 const primaryColor = ref(DEFAULT_PRIMARY);
-const textColor = ref(DEFAULT_TEXT);
+const secondaryColor = ref(DEFAULT_SECONDARY);
+const accentColor = ref(DEFAULT_ACCENT);
 const backgroundColor = ref(DEFAULT_BACKGROUND);
+const textColor = ref(DEFAULT_TEXT);
+const themePresetId = ref(DEFAULT_BRAND_PRESET.id);
 const activeLayout = ref('classic');
+/** Full light token map for the active preset (sidebar, card, muted, …) */
+const themeTokenMap = ref(null);
 
 const lightLogoInput = ref(null);
 const darkLogoInput = ref(null);
@@ -73,63 +78,40 @@ const activeAccount = computed(() => getAccount.value(accountId.value));
 
 let isWatcherEnabled = false;
 
+function currentBrandColors() {
+  const base = {
+    primary: primaryColor.value,
+    secondary: secondaryColor.value,
+    accent: accentColor.value,
+    background: backgroundColor.value,
+    text: textColor.value,
+    theme_preset: themePresetId.value || undefined,
+  };
+  if (themeTokenMap.value) {
+    return { ...themeTokenMap.value, ...base };
+  }
+  return base;
+}
+
 function applyLivePreview() {
   const styleNode = document.getElementById('brand-colors');
   if (styleNode) {
     styleNode.remove();
   }
-
-  if (primaryColor.value) {
-    const primaryVars = generatePrimaryColorVariables(primaryColor.value);
-    if (primaryVars) {
-      Object.entries(primaryVars).forEach(([key, value]) => {
-        if (value) document.documentElement.style.setProperty(key, value);
-      });
-    }
-  }
-
-  if (textColor.value) {
-    const textRgb = hexToRgbSpace(textColor.value);
-    if (textRgb) {
-      document.documentElement.style.setProperty('--slate-12', textRgb);
-    }
-  }
-
-  if (backgroundColor.value) {
-    const themeVars = generateThemeVariables(backgroundColor.value);
-    if (themeVars) {
-      Object.entries(themeVars).forEach(([key, value]) => {
-        if (value) document.documentElement.style.setProperty(key, value);
-      });
-    }
-  }
+  const isDark = document.documentElement.classList.contains('dark');
+  applyBrandColorVariables(currentBrandColors(), {
+    structural: true,
+    dark: isDark,
+  });
 }
 
-const activeTheme = ref(
-  LocalStorage.get(LOCAL_STORAGE_KEYS.COLOR_SCHEME) || 'light'
-);
-
-const setTheme = theme => {
-  activeTheme.value = theme;
-  LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, theme);
-
-  const isOSOnDarkMode = window.matchMedia(
-    '(prefers-color-scheme: dark)'
-  ).matches;
-
-  if (theme !== 'custom') {
-    clearCustomThemeVariables();
-    setColorTheme(theme === 'dark', null);
-  } else {
-    applyLivePreview();
-    setColorTheme(isOSOnDarkMode, {
-      primary: primaryColor.value,
-      text: textColor.value,
-      background: backgroundColor.value,
-    });
-  }
-  window.dispatchEvent(new CustomEvent('theme-changed'));
-};
+function applyBrandColorsToDocument() {
+  applyLivePreview();
+  setColorTheme(
+    window.matchMedia('(prefers-color-scheme: dark)').matches,
+    currentBrandColors()
+  );
+}
 
 let skipNextAccountSync = false;
 const initFromAccount = () => {
@@ -143,18 +125,17 @@ const initFromAccount = () => {
   companyName.value = activeAccount.value.name || '';
   const colors = activeAccount.value.custom_attributes?.brand_colors || {};
   primaryColor.value = colors.primary || DEFAULT_PRIMARY;
-  textColor.value = colors.text || DEFAULT_TEXT;
+  secondaryColor.value = colors.secondary || DEFAULT_SECONDARY;
+  accentColor.value = colors.accent || DEFAULT_ACCENT;
   backgroundColor.value = colors.background || DEFAULT_BACKGROUND;
+  textColor.value = colors.text || DEFAULT_TEXT;
+  themePresetId.value = colors.theme_preset || '';
+  const preset = colors.theme_preset
+    ? findPresetById(colors.theme_preset)
+    : null;
+  themeTokenMap.value = preset?.light || (colors.sidebar ? colors : null);
   activeLayout.value = colors.layout || 'classic';
   brandName.value = activeAccount.value.brand_name || colors.brand_name || '';
-
-  if (colors.primary || colors.text || colors.background) {
-    activeTheme.value = 'custom';
-  } else {
-    const storedTheme =
-      LocalStorage.get(LOCAL_STORAGE_KEYS.COLOR_SCHEME) || 'light';
-    activeTheme.value = storedTheme === 'custom' ? 'light' : storedTheme;
-  }
 
   nextTick(() => {
     isWatcherEnabled = true;
@@ -172,9 +153,27 @@ const handleCancel = () => {
 
 const handleResetColors = () => {
   primaryColor.value = DEFAULT_PRIMARY;
-  textColor.value = DEFAULT_TEXT;
+  secondaryColor.value = DEFAULT_SECONDARY;
+  accentColor.value = DEFAULT_ACCENT;
   backgroundColor.value = DEFAULT_BACKGROUND;
-  setTheme('light');
+  textColor.value = DEFAULT_TEXT;
+  themePresetId.value = DEFAULT_BRAND_PRESET.id;
+  themeTokenMap.value = null;
+};
+
+const applyPreset = preset => {
+  isWatcherEnabled = false;
+  primaryColor.value = preset.primary;
+  secondaryColor.value = preset.secondary;
+  accentColor.value = preset.accent;
+  backgroundColor.value = preset.background;
+  textColor.value = preset.text;
+  themePresetId.value = preset.id;
+  themeTokenMap.value = preset.light || null;
+  nextTick(() => {
+    isWatcherEnabled = true;
+    applyLivePreview();
+  });
 };
 
 const handleSave = async (shouldReload = true) => {
@@ -185,23 +184,48 @@ const handleSave = async (shouldReload = true) => {
     if (darkLogoFile.value) formData.append('dark_logo', darkLogoFile.value);
     if (faviconFile.value) formData.append('favicon', faviconFile.value);
 
-    if (activeTheme.value === 'custom') {
-      formData.append('brand_colors[primary]', primaryColor.value);
-      formData.append('brand_colors[text]', textColor.value);
-      formData.append('brand_colors[background]', backgroundColor.value);
-    } else {
-      formData.append('brand_colors[primary]', '');
-      formData.append('brand_colors[text]', '');
-      formData.append('brand_colors[background]', '');
-    }
-    formData.append('brand_colors[layout]', activeLayout.value);
-    formData.append('brand_colors[brand_name]', brandName.value);
+    const colorsToSave = themePresetId.value
+      ? brandColorsFromPreset(
+          findPresetById(themePresetId.value) || {
+            id: themePresetId.value,
+            primary: primaryColor.value,
+            secondary: secondaryColor.value,
+            accent: accentColor.value,
+            background: backgroundColor.value,
+            text: textColor.value,
+            light: themeTokenMap.value,
+          },
+          {
+            layout: activeLayout.value,
+            brand_name: brandName.value,
+            primary: primaryColor.value,
+            secondary: secondaryColor.value,
+            accent: accentColor.value,
+            background: backgroundColor.value,
+            text: textColor.value,
+          }
+        )
+      : {
+          primary: primaryColor.value,
+          secondary: secondaryColor.value,
+          accent: accentColor.value,
+          background: backgroundColor.value,
+          text: textColor.value,
+          layout: activeLayout.value,
+          brand_name: brandName.value,
+        };
+
+    Object.entries(colorsToSave).forEach(([key, value]) => {
+      if (value == null || value === '') return;
+      // Skip nested maps — only flat scalars (Rails brand_colors: {})
+      if (typeof value === 'object') return;
+      formData.append(`brand_colors[${key}]`, value);
+    });
     formData.append('brand_name', brandName.value);
 
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: true });
     const response = await AccountAPI.update(formData);
 
-    LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, activeTheme.value);
     skipNextAccountSync = true;
     store.commit('accounts/EDIT_ACCOUNT', response.data);
     lightLogoFile.value = null;
@@ -209,22 +233,7 @@ const handleSave = async (shouldReload = true) => {
     faviconFile.value = null;
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
 
-    const isOSOnDarkMode = window.matchMedia(
-      '(prefers-color-scheme: dark)'
-    ).matches;
-
-    if (activeTheme.value === 'custom') {
-      applyLivePreview();
-      setColorTheme(isOSOnDarkMode, {
-        primary: primaryColor.value,
-        text: textColor.value,
-        background: backgroundColor.value,
-      });
-    } else {
-      clearCustomThemeVariables();
-      setColorTheme(activeTheme.value === 'dark', null);
-    }
-
+    applyBrandColorsToDocument();
     useAlert(t('BRANDING_SETTINGS.SAVE_SUCCESS'));
 
     if (shouldReload) {
@@ -253,60 +262,26 @@ const onFaviconChange = event => {
   if (file) faviconFile.value = file;
 };
 
-const buttonTextColor = computed(() => {
-  try {
-    const whiteContrast = getContrast(primaryColor.value, '#FFFFFF');
-    const blackContrast = getContrast(primaryColor.value, '#000000');
-    return blackContrast > whiteContrast ? '#000000' : '#FFFFFF';
-  } catch {
-    return '#FFFFFF';
-  }
-});
-
 watch(
-  [primaryColor, textColor, backgroundColor],
+  [primaryColor, secondaryColor, accentColor, backgroundColor, textColor],
   () => {
     if (!isWatcherEnabled) return;
-    if (activeTheme.value !== 'custom') {
-      setTheme('custom');
-    }
+    // Manual swatch edits leave the full preset catalog — treat as custom branding
+    themePresetId.value = '';
+    themeTokenMap.value = null;
     applyLivePreview();
-
-    const isOSOnDarkMode = window.matchMedia(
-      '(prefers-color-scheme: dark)'
-    ).matches;
-    setColorTheme(isOSOnDarkMode, {
-      primary: primaryColor.value,
-      text: textColor.value,
-      background: backgroundColor.value,
-    });
-  },
-  { deep: true }
+  }
 );
 
 const handleMagicPaletteApplied = palette => {
+  themePresetId.value = '';
+  themeTokenMap.value = null;
   if (palette.primary) primaryColor.value = palette.primary;
-  if (palette.text) textColor.value = palette.text;
+  if (palette.secondary) secondaryColor.value = palette.secondary;
+  if (palette.accent) accentColor.value = palette.accent;
   if (palette.background) backgroundColor.value = palette.background;
+  if (palette.text) textColor.value = palette.text;
 };
-
-const themeOptions = computed(() => [
-  {
-    id: 'light',
-    icon: 'i-lucide-sun',
-    label: t('BRANDING_SETTINGS.THEME_SETTINGS.LIGHT.TITLE'),
-  },
-  {
-    id: 'dark',
-    icon: 'i-lucide-moon',
-    label: t('BRANDING_SETTINGS.THEME_SETTINGS.DARK.TITLE'),
-  },
-  {
-    id: 'custom',
-    icon: 'i-lucide-palette',
-    label: t('BRANDING_SETTINGS.THEME_SETTINGS.CUSTOM.TITLE'),
-  },
-]);
 </script>
 
 <template>
@@ -499,7 +474,7 @@ const themeOptions = computed(() => [
           </div>
         </div>
 
-        <!-- Theme Preset -->
+        <!-- Theme Preset (brand colors — light/dark stays in header) -->
         <div
           class="flex flex-col justify-between gap-4 border-t border-border/40 pt-6 md:flex-row md:items-center"
         >
@@ -514,25 +489,14 @@ const themeOptions = computed(() => [
               {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.DESCRIPTION') }}
             </p>
           </div>
-          <div
-            class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-background p-1 shadow-xs"
-          >
-            <button
-              v-for="option in themeOptions"
-              :key="option.id"
-              type="button"
-              class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors"
-              :class="
-                activeTheme === option.id
-                  ? 'bg-muted text-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-              "
-              @click="setTheme(option.id)"
-            >
-              <span class="size-3.5" :class="[option.icon]" />
-              {{ option.label }}
-            </button>
-          </div>
+          <ThemePresetSwitcher
+            :theme-preset="themePresetId"
+            :primary="primaryColor"
+            :secondary="secondaryColor"
+            :accent="accentColor"
+            :background="backgroundColor"
+            @select="applyPreset"
+          />
         </div>
       </div>
     </SectionLayout>
@@ -565,58 +529,30 @@ const themeOptions = computed(() => [
         </div>
       </template>
 
-      <div class="flex flex-col gap-6">
-        <div class="flex flex-wrap items-center gap-8">
-          <div>
-            <span class="mb-3 block text-xs font-medium text-muted-foreground">
-              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PRIMARY') }}
-            </span>
-            <ColorPicker v-model="primaryColor" />
-          </div>
-          <div>
-            <span class="mb-3 block text-xs font-medium text-muted-foreground">
-              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.TEXT') }}
-            </span>
-            <ColorPicker v-model="textColor" />
-          </div>
-          <div>
-            <span class="mb-3 block text-xs font-medium text-muted-foreground">
-              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.BACKGROUND') }}
-            </span>
-            <ColorPicker v-model="backgroundColor" />
-          </div>
+      <div class="flex flex-wrap items-center gap-8">
+        <div>
+          <span class="mb-3 block text-xs font-medium text-muted-foreground">
+            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PRIMARY') }}
+          </span>
+          <ColorPicker v-model="primaryColor" />
         </div>
-
-        <div v-if="activeTheme === 'custom'" class="flex flex-col gap-2">
-          <span
-            class="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-          >
-            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.LIVE_PREVIEW') }}
+        <div>
+          <span class="mb-3 block text-xs font-medium text-muted-foreground">
+            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.SECONDARY') }}
           </span>
-          <div
-            class="flex min-h-[140px] flex-col items-center justify-center gap-4 rounded-xl border border-border p-6 transition-all duration-300"
-            :style="{ backgroundColor: backgroundColor }"
-          >
-            <p
-              class="text-sm font-medium transition-all duration-300"
-              :style="{ color: textColor }"
-            >
-              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PREVIEW_TEXT') }}
-            </p>
-            <button
-              type="button"
-              class="rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-all duration-300"
-              :style="{
-                backgroundColor: primaryColor,
-                color: buttonTextColor,
-              }"
-            >
-              {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PREVIEW_BUTTON') }}
-            </button>
-          </div>
-          <span class="text-center text-xs text-muted-foreground">
-            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PREVIEW_NOTE') }}
+          <ColorPicker v-model="secondaryColor" />
+        </div>
+        <div>
+          <span class="mb-3 block text-xs font-medium text-muted-foreground">
+            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.ACCENT') }}
           </span>
+          <ColorPicker v-model="accentColor" />
+        </div>
+        <div>
+          <span class="mb-3 block text-xs font-medium text-muted-foreground">
+            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.BACKGROUND') }}
+          </span>
+          <ColorPicker v-model="backgroundColor" />
         </div>
       </div>
     </SectionLayout>

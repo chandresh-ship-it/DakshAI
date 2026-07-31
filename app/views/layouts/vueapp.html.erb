@@ -79,13 +79,32 @@
       /* Brand colors injected server-side for custom domain: <%= request.host %> */
       /* Selector covers html/:root (light mode) AND .dark (when body/html gets dark class) */
       html, :root, .dark {
+        <% if @brand_colors['primary'].present? %>
+        --primary: <%= @brand_colors['primary'] %> !important;
+        --ring: <%= @brand_colors['primary'] %> !important;
+        --sidebar-primary: <%= @brand_colors['primary'] %> !important;
         <% if (rgb = hex_to_rgb_space(@brand_colors['primary'])) %>
         --woot-brand: <%= rgb %> !important;
         <% end %>
+        <% end %>
+        <% if @brand_colors['secondary'].present? %>
+        --secondary: <%= @brand_colors['secondary'] %> !important;
+        --muted: <%= @brand_colors['secondary'] %> !important;
+        <% end %>
+        <% if @brand_colors['accent'].present? %>
+        --accent: <%= @brand_colors['accent'] %> !important;
+        --sidebar-accent: <%= @brand_colors['accent'] %> !important;
+        <% end %>
+        <% if @brand_colors['text'].present? %>
+        --foreground: <%= @brand_colors['text'] %> !important;
         <% if (rgb = hex_to_rgb_space(@brand_colors['text'])) %>
         --slate-12: <%= rgb %> !important;
         <% end %>
+        <% end %>
         <% if (bg = @brand_colors['background']).present? %>
+        --background: <%= bg %> !important;
+        --card: <%= bg %> !important;
+        --popover: <%= bg %> !important;
         --background-color: <%= hex_to_rgb_space(bg) %> !important;
         --surface-1: <%= lighten_hex(bg, 0.03) %> !important;
         --surface-2: <%= lighten_hex(bg, 0.05) %> !important;
@@ -97,6 +116,11 @@
         --border-strong: <%= lighten_hex(bg, 0.15) %> !important;
         --border-weak: <%= lighten_hex(bg, 0.08) %> !important;
         --label-background: <%= lighten_hex(bg, 0.04) %> !important;
+        <% end %>
+        <% brand_theme_token_keys.each do |key| %>
+          <% if (val = @brand_colors[key]).present? %>
+        --<%= key %>: <%= val %> !important;
+          <% end %>
         <% end %>
       }
     </style>

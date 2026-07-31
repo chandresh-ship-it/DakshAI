@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import CreditPackageCard from './CreditPackageCard.vue';
 import EnterpriseAccountAPI from 'dashboard/api/enterprise/account';
 import { buildCheckoutReturnUrls } from 'dashboard/composables/useBillingCheckoutReturn';
@@ -159,7 +159,7 @@ defineExpose({ open, close });
     @close="handleClose"
   >
     <template v-if="currentStep === 'select'">
-      <div class="grid grid-cols-2 gap-4">
+      <div class="mb-6 grid grid-cols-2 gap-4">
         <CreditPackageCard
           v-for="option in TOPUP_OPTIONS"
           :key="option.credits"
@@ -173,9 +173,11 @@ defineExpose({ open, close });
         />
       </div>
 
-      <div class="p-4 mt-6 rounded-lg bg-n-solid-2 border border-n-weak">
-        <p class="text-sm text-n-slate-11">
-          <span class="font-semibold text-n-slate-12">{{
+      <div
+        class="mb-2 rounded-lg border border-border/60 bg-muted/20 p-4 text-[13.5px] leading-relaxed text-muted-foreground shadow-xs"
+      >
+        <p>
+          <span class="font-bold text-foreground">{{
             $t('BILLING_SETTINGS.TOPUP.NOTE_TITLE')
           }}</span>
           {{ $t('BILLING_SETTINGS.TOPUP.NOTE_DESCRIPTION') }}
@@ -185,7 +187,7 @@ defineExpose({ open, close });
 
     <template v-else>
       <div class="flex flex-col gap-4">
-        <p class="text-sm text-n-slate-11">
+        <p class="text-[14px] leading-relaxed text-foreground">
           {{
             $t('BILLING_SETTINGS.TOPUP.CONFIRM.DESCRIPTION', {
               credits: formattedCredits,
@@ -193,40 +195,49 @@ defineExpose({ open, close });
             })
           }}
         </p>
+        <div
+          class="rounded-lg border border-destructive/20 bg-destructive/10 p-4 shadow-xs"
+        >
+          <p class="text-[13px] font-medium leading-relaxed text-destructive">
+            {{ $t('BILLING_SETTINGS.TOPUP.CONFIRM.INSTANT_DEDUCTION_NOTE') }}
+          </p>
+        </div>
       </div>
     </template>
 
     <template #footer>
-      <div class="flex justify-end gap-2 w-full">
+      <div class="flex w-full items-center gap-3 sm:gap-4">
         <template v-if="currentStep === 'select'">
-          <Button
-            slate
-            faded
-            :label="$t('BILLING_SETTINGS.TOPUP.CANCEL')"
+          <RelayButton
+            variant="outline"
+            class="h-11 flex-1 border-transparent bg-muted/50 shadow-none hover:bg-muted"
             @click="close"
-          />
-          <Button
-            solid
-            blue
-            :label="$t('BILLING_SETTINGS.TOPUP.CONFIRM.CONFIRM_PURCHASE')"
+          >
+            {{ $t('BILLING_SETTINGS.TOPUP.CANCEL') }}
+          </RelayButton>
+          <RelayButton
+            class="h-11 flex-1 shadow-sm"
             :disabled="!selectedOption"
             @click="goToConfirmStep"
-          />
+          >
+            {{ $t('BILLING_SETTINGS.TOPUP.CONFIRM.CONFIRM_PURCHASE') }}
+          </RelayButton>
         </template>
         <template v-else>
-          <Button
-            slate
-            faded
-            :label="$t('BILLING_SETTINGS.TOPUP.CONFIRM.GO_BACK')"
+          <RelayButton
+            variant="outline"
+            class="h-10 flex-1 border-transparent bg-muted/50 shadow-none hover:bg-muted"
             @click="goBackToSelectStep"
-          />
-          <Button
-            solid
-            blue
-            :label="$t('BILLING_SETTINGS.TOPUP.PURCHASE')"
-            :is-loading="isLoading"
+          >
+            {{ $t('BILLING_SETTINGS.TOPUP.CONFIRM.GO_BACK') }}
+          </RelayButton>
+          <RelayButton
+            class="h-10 flex-1 shadow-sm"
+            :disabled="isLoading"
             @click="handlePurchase"
-          />
+          >
+            {{ $t('BILLING_SETTINGS.TOPUP.PURCHASE') }}
+          </RelayButton>
         </template>
       </div>
     </template>

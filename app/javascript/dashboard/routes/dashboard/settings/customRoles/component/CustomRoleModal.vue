@@ -12,7 +12,13 @@ import {
   CONVERSATION_PARTICIPATING_PERMISSIONS,
 } from 'dashboard/constants/permissions.js';
 
-import Button from 'dashboard/components-next/button/Button.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+  RelayCheckbox,
+} from 'dashboard/components-next/relay';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const props = defineProps({
   mode: {
@@ -34,8 +40,6 @@ const { t } = useI18n();
 const name = ref('');
 const description = ref('');
 const selectedPermissions = ref([]);
-
-const nameInput = ref(null);
 
 const addCustomRole = reactive({
   showLoading: false,
@@ -66,7 +70,6 @@ const populateEditForm = () => {
 watch(
   selectedPermissions,
   (newValue, oldValue) => {
-    // Check if manage all conversation permission is added or removed
     const hasAddedManageAllConversation =
       newValue.includes(MANAGE_ALL_CONVERSATION_PERMISSIONS) &&
       !oldValue.includes(MANAGE_ALL_CONVERSATION_PERMISSIONS);
@@ -75,8 +78,6 @@ watch(
       !newValue.includes(MANAGE_ALL_CONVERSATION_PERMISSIONS);
 
     if (hasAddedManageAllConversation) {
-      // If manage all conversation permission is added,
-      // then add unassigned and participating permissions automatically
       selectedPermissions.value = [
         ...new Set([
           ...selectedPermissions.value,
@@ -85,8 +86,6 @@ watch(
         ]),
       ];
     } else if (hasRemovedManageAllConversation) {
-      // If manage all conversation permission is removed,
-      // then only remove manage all conversation permission
       selectedPermissions.value = selectedPermissions.value.filter(
         p => p !== MANAGE_ALL_CONVERSATION_PERMISSIONS
       );
@@ -99,8 +98,6 @@ onMounted(() => {
   if (props.mode === 'edit') {
     populateEditForm();
   }
-  // Focus the name input when mounted
-  nameInput.value?.focus();
 });
 
 const getTranslationKey = base => {
@@ -112,6 +109,22 @@ const getTranslationKey = base => {
 const modalTitle = computed(() => t(getTranslationKey('TITLE')));
 const modalDescription = computed(() => t(getTranslationKey('DESC')));
 const submitButtonText = computed(() => t(getTranslationKey('SUBMIT')));
+
+const isPermissionChecked = permission =>
+  selectedPermissions.value.includes(permission);
+
+const setPermission = (permission, checked) => {
+  if (checked) {
+    if (!selectedPermissions.value.includes(permission)) {
+      selectedPermissions.value = [...selectedPermissions.value, permission];
+    }
+  } else {
+    selectedPermissions.value = selectedPermissions.value.filter(
+      p => p !== permission
+    );
+  }
+  v$.value.selectedPermissions.$touch();
+};
 
 const handleCustomRole = async () => {
   v$.value.$touch();
@@ -153,77 +166,107 @@ const isSubmitDisabled = computed(
 </script>
 
 <template>
-  <div class="flex flex-col h-auto overflow-auto">
-    <woot-modal-header
-      :header-title="modalTitle"
-      :header-content="modalDescription"
-    />
-    <form class="flex flex-col w-full" @submit.prevent="handleCustomRole">
-      <div class="w-full">
-        <label :class="{ error: v$.name.$error }">
-          {{ $t('CUSTOM_ROLE.FORM.NAME.LABEL') }}
-          <input
-            ref="nameInput"
-            v-model.trim="name"
+  <div class="flex flex-col overflow-auto p-1">
+    <div class="relative mb-8">
+      <h3 class="text-base font-medium text-foreground">
+        {{ modalTitle }}
+      </h3>
+      <p class="mt-1.5 pr-8 text-[14px] leading-relaxed text-muted-foreground">
+        {{ modalDescription }}
+      </p>
+    </div>
+
+    <form class="flex w-full flex-col" @submit.prevent="handleCustomRole">
+      <div class="space-y-6">
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="custom-role-name"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('CUSTOM_ROLE.FORM.NAME.LABEL') }}
+          </RelayLabel>
+          <RelayInput
+            id="custom-role-name"
+            v-model="name"
             type="text"
             :placeholder="$t('CUSTOM_ROLE.FORM.NAME.PLACEHOLDER')"
+            class-name="h-10 px-4 text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
             @blur="v$.name.$touch"
           />
-        </label>
-      </div>
+          <p v-if="v$.name.$error" class="text-xs text-destructive">
+            {{ $t('CUSTOM_ROLE.FORM.NAME.ERROR') }}
+          </p>
+        </div>
 
-      <div class="w-full">
-        <label :class="{ error: v$.description.$error }">
-          {{ $t('CUSTOM_ROLE.FORM.DESCRIPTION.LABEL') }}
-
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="custom-role-description"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('CUSTOM_ROLE.FORM.DESCRIPTION.LABEL') }}
+          </RelayLabel>
           <textarea
+            id="custom-role-description"
             v-model="description"
-            :rows="3"
+            rows="3"
             :placeholder="$t('CUSTOM_ROLE.FORM.DESCRIPTION.PLACEHOLDER')"
+            class="min-h-[90px] w-full resize-none rounded-md border border-border/80 bg-background p-3 text-[14px] text-foreground shadow-sm outline-none focus:ring-1 focus:ring-primary/30"
             @blur="v$.description.$touch"
           />
-        </label>
-      </div>
+          <p v-if="v$.description.$error" class="text-xs text-destructive">
+            {{ $t('CUSTOM_ROLE.FORM.DESCRIPTION.ERROR') }}
+          </p>
+        </div>
 
-      <div class="w-full">
-        <label :class="{ 'text-n-ruby-9': v$.selectedPermissions.$error }">
-          {{ $t('CUSTOM_ROLE.FORM.PERMISSIONS.LABEL') }}
-        </label>
-        <div class="flex flex-col gap-2.5 mb-4 mt-2">
-          <div
-            v-for="permission in AVAILABLE_CUSTOM_ROLE_PERMISSIONS"
-            :key="permission"
-            class="flex items-center"
-          >
-            <input
-              :id="permission"
-              v-model="selectedPermissions"
-              type="checkbox"
-              :value="permission"
-              name="permissions"
-              class="ltr:mr-2 rtl:ml-2"
-            />
-            <label :for="permission" class="text-sm font-normal">
-              {{ $t(`CUSTOM_ROLE.PERMISSIONS.${permission.toUpperCase()}`) }}
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel class="text-[13.5px] font-medium text-foreground">
+            {{ $t('CUSTOM_ROLE.FORM.PERMISSIONS.LABEL') }}
+          </RelayLabel>
+          <div class="mt-2 flex flex-col gap-2.5">
+            <label
+              v-for="permission in AVAILABLE_CUSTOM_ROLE_PERMISSIONS"
+              :key="permission"
+              class="flex cursor-pointer items-center gap-2.5"
+            >
+              <RelayCheckbox
+                :model-value="isPermissionChecked(permission)"
+                @update:model-value="
+                  checked => setPermission(permission, checked)
+                "
+              />
+              <span class="text-sm font-normal text-foreground">
+                {{ $t(`CUSTOM_ROLE.PERMISSIONS.${permission.toUpperCase()}`) }}
+              </span>
             </label>
           </div>
+          <p
+            v-if="v$.selectedPermissions.$error"
+            class="text-xs text-destructive"
+          >
+            {{ $t('CUSTOM_ROLE.FORM.PERMISSIONS.ERROR') }}
+          </p>
         </div>
       </div>
 
-      <div class="flex flex-row justify-end w-full gap-2 px-0 py-2">
-        <Button
-          faded
-          slate
-          type="reset"
-          :label="$t('CUSTOM_ROLE.FORM.CANCEL_BUTTON_TEXT')"
-          @click.prevent="emit('close')"
-        />
-        <Button
+      <div
+        class="mt-10 flex items-center justify-end gap-3 border-t border-border/40 pt-6"
+      >
+        <RelayButton
+          type="button"
+          variant="ghost"
+          class="h-10 rounded-md border border-border/40 px-5 text-[14px] font-semibold text-muted-foreground hover:border-transparent hover:bg-muted"
+          @click="emit('close')"
+        >
+          {{ $t('CUSTOM_ROLE.FORM.CANCEL_BUTTON_TEXT') }}
+        </RelayButton>
+        <RelayButton
           type="submit"
-          :label="submitButtonText"
+          class="h-10 rounded-md px-6 text-[14px] font-semibold shadow-sm"
           :disabled="isSubmitDisabled"
-          :is-loading="addCustomRole.showLoading"
-        />
+        >
+          {{ submitButtonText }}
+          <Icon icon="i-lucide-arrow-right" class="size-4" />
+        </RelayButton>
       </div>
     </form>
   </div>

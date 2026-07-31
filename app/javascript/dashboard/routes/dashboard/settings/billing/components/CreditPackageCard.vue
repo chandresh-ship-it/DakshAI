@@ -43,10 +43,12 @@ const formatAmount = (amount, currency) => {
 
 <template>
   <label
-    class="relative flex flex-col p-6 border-2 rounded-xl transition-all cursor-pointer bg-n-solid-1 hover:bg-n-solid-2"
-    :class="[
-      isSelected ? 'border-woot-500' : 'border-n-weak hover:border-n-strong',
-    ]"
+    class="relative flex cursor-pointer flex-col rounded-xl border p-5 transition-all duration-200"
+    :class="
+      isSelected
+        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+        : 'border-border bg-card hover:border-border/80 hover:bg-muted/30'
+    "
   >
     <input
       type="radio"
@@ -58,44 +60,31 @@ const formatAmount = (amount, currency) => {
     />
     <span
       v-if="isPopular"
-      class="absolute -top-3 left-4 px-3 py-1 text-xs font-medium rounded"
-      :class="
-        isSelected ? 'bg-woot-500 text-white' : 'bg-n-solid-3 text-n-slate-11'
-      "
+      class="absolute -top-3 left-4 rounded bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground shadow-sm"
     >
       {{ $t('BILLING_SETTINGS.TOPUP.POPULAR') }}
     </span>
-    <div
+    <span
       v-if="isSelected"
-      class="absolute top-4 right-4 flex items-center justify-center w-6 h-6 rounded-full bg-woot-500"
+      class="i-lucide-circle-check-big absolute right-3 top-3 size-5 text-primary"
+    />
+    <span
+      class="mb-1.5 text-[28px] font-normal leading-none tracking-tight text-foreground"
     >
-      <svg
-        class="w-4 h-4 text-white"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M5 13l4 4L19 7"
-        />
-      </svg>
-    </div>
-    <span class="text-3xl font-normal text-n-slate-12 mb-2 tracking-tighter">
       {{ formatCredits(credits) }}
     </span>
     <span
-      class="text-xs font-normal text-n-slate-11 uppercase tracking-tight mb-6"
+      class="mb-6 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
     >
       {{ $t('BILLING_SETTINGS.TOPUP.CREDITS') }}
     </span>
-    <span class="text-2xl font-normal text-n-slate-12 tracking-tight">
-      {{ formatAmount(amount, currency) }}
-      <span class="text-sm text-n-slate-11 ml-0.5">{{
-        $t('BILLING_SETTINGS.TOPUP.ONE_TIME')
-      }}</span>
+    <span class="flex items-baseline gap-1.5">
+      <span class="text-[22px] font-normal text-foreground">
+        {{ formatAmount(amount, currency) }}
+      </span>
+      <span class="text-[13px] font-medium text-muted-foreground">
+        {{ $t('BILLING_SETTINGS.TOPUP.ONE_TIME') }}
+      </span>
     </span>
   </label>
 </template>

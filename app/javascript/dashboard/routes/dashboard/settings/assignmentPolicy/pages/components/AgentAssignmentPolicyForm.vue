@@ -3,13 +3,15 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
-import BaseInfo from 'dashboard/components-next/AssignmentPolicy/components/BaseInfo.vue';
-import RadioCard from 'dashboard/components-next/radioCard/RadioCard.vue';
 import FairDistribution from 'dashboard/components-next/AssignmentPolicy/components/FairDistribution.vue';
 import DataTable from 'dashboard/components-next/AssignmentPolicy/components/DataTable.vue';
 import AddDataDropdown from 'dashboard/components-next/AssignmentPolicy/components/AddDataDropdown.vue';
-import WithLabel from 'v3/components/Form/WithLabel.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 import {
   OPTIONS,
   ROUND_ROBIN,
@@ -59,10 +61,10 @@ const props = defineProps({
 
 const emit = defineEmits([
   'submit',
+  'cancel',
   'addInbox',
   'deleteInbox',
   'navigateToInbox',
-  'validationChange',
 ]);
 
 const { t } = useI18n();
@@ -75,6 +77,13 @@ const isFeatureEnabledonAccount = useMapGetter(
 
 const BASE_KEY = 'ASSIGNMENT_POLICY.AGENT_ASSIGNMENT_POLICY';
 
+const OPTION_ICONS = {
+  round_robin: 'i-lucide-chevron-right',
+  balanced: 'i-lucide-scale',
+  earliest_created: 'i-lucide-check',
+  longest_waiting: 'i-lucide-filter',
+};
+
 const state = reactive({
   name: '',
   description: '',
@@ -85,9 +94,9 @@ const state = reactive({
   fairDistributionWindow: DEFAULT_FAIR_DISTRIBUTION_WINDOW,
 });
 
-const validationState = ref({
-  isValid: false,
-});
+const nameTouched = ref(false);
+
+const isNameValid = computed(() => state.name.trim().length > 0);
 
 const createOption = (
   type,
@@ -98,6 +107,7 @@ const createOption = (
   disabledLabel = ''
 ) => ({
   key,
+  icon: OPTION_ICONS[key],
   label: t(`${BASE_KEY}.FORM.${type}.${key.toUpperCase()}.LABEL`),
   description: t(`${BASE_KEY}.FORM.${type}.${key.toUpperCase()}.DESCRIPTION`),
   isActive: state[stateKey] === key,
@@ -115,20 +125,17 @@ const assignmentOrderOptions = computed(() => {
   return OPTIONS.ORDER.map(key => {
     const isBalanced = key === 'balanced';
     const disabled = isBalanced && !hasAdvancedAssignment;
-    const disabledMessage = disabled
-      ? t(`${BASE_KEY}.FORM.ASSIGNMENT_ORDER.BALANCED.PREMIUM_MESSAGE`)
-      : '';
-    const disabledLabel = disabled
-      ? t(`${BASE_KEY}.FORM.ASSIGNMENT_ORDER.BALANCED.PREMIUM_BADGE`)
-      : '';
-
     return createOption(
       'ASSIGNMENT_ORDER',
       key,
       'assignmentOrder',
       disabled,
-      disabledMessage,
-      disabledLabel
+      disabled
+        ? t(`${BASE_KEY}.FORM.ASSIGNMENT_ORDER.BALANCED.PREMIUM_MESSAGE`)
+        : '',
+      disabled
+        ? t(`${BASE_KEY}.FORM.ASSIGNMENT_ORDER.BALANCED.PREMIUM_BADGE`)
+        : ''
     );
   });
 });
@@ -156,9 +163,17 @@ const buttonLabel = computed(() =>
   t(`${BASE_KEY}.${props.mode.toUpperCase()}.${props.mode}_BUTTON`)
 );
 
-const handleValidationChange = validation => {
-  validationState.value = validation;
-  emit('validationChange', validation);
+const optionCardClass = option => [
+  'flex flex-col text-left p-4 rounded-xl border transition-all',
+  option.isActive
+    ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+    : 'border-border/60 bg-background hover:border-primary/40 shadow-sm',
+  option.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+];
+
+const selectOption = (sectionKey, option) => {
+  if (option.disabled) return;
+  state[sectionKey] = option.key;
 };
 
 const resetForm = () => {
@@ -171,9 +186,12 @@ const resetForm = () => {
     fairDistributionLimit: DEFAULT_FAIR_DISTRIBUTION_LIMIT,
     fairDistributionWindow: DEFAULT_FAIR_DISTRIBUTION_WINDOW,
   });
+  nameTouched.value = false;
 };
 
 const handleSubmit = () => {
+  nameTouched.value = true;
+  if (!isNameValid.value) return;
   emit('submit', { ...state });
 };
 
@@ -191,81 +209,142 @@ defineExpose({
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit">
-    <div class="flex flex-col gap-4 divide-y divide-n-weak mb-4">
-      <BaseInfo
-        v-model:policy-name="state.name"
-        v-model:description="state.description"
-        :name-label="t(`${BASE_KEY}.FORM.NAME.LABEL`)"
-        :name-placeholder="t(`${BASE_KEY}.FORM.NAME.PLACEHOLDER`)"
-        :description-label="t(`${BASE_KEY}.FORM.DESCRIPTION.LABEL`)"
-        :description-placeholder="t(`${BASE_KEY}.FORM.DESCRIPTION.PLACEHOLDER`)"
-        @validation-change="handleValidationChange"
-      />
-
-      <div class="flex flex-col items-center">
-        <div
-          v-for="section in radioSections"
-          :key="section.key"
-          class="py-4 flex flex-col items-start gap-3 w-full"
+  <form class="flex w-full flex-col" @submit.prevent="handleSubmit">
+    <div class="space-y-6">
+      <div class="flex flex-col gap-1.5">
+        <RelayLabel
+          html-for="assignment-policy-name"
+          class="text-[13.5px] font-medium text-foreground"
         >
-          <WithLabel
-            :label="section.label"
-            name="assignmentPolicy"
-            class="w-full flex items-start flex-col gap-3"
+          {{ t(`${BASE_KEY}.FORM.NAME.LABEL`) }}
+        </RelayLabel>
+        <RelayInput
+          id="assignment-policy-name"
+          v-model="state.name"
+          type="text"
+          :placeholder="t(`${BASE_KEY}.FORM.NAME.PLACEHOLDER`)"
+          class-name="h-10 px-4 text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
+          @blur="nameTouched = true"
+        />
+        <p v-if="nameTouched && !isNameValid" class="text-xs text-destructive">
+          {{ t(`${BASE_KEY}.FORM.NAME.ERROR`) }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <RelayLabel
+          html-for="assignment-policy-description"
+          class="text-[13.5px] font-medium text-foreground"
+        >
+          {{ t(`${BASE_KEY}.FORM.DESCRIPTION.LABEL`) }}
+          <span class="font-normal text-muted-foreground">
+            {{ t(`${BASE_KEY}.FORM.DESCRIPTION.OPTIONAL`) }}
+          </span>
+        </RelayLabel>
+        <RelayInput
+          id="assignment-policy-description"
+          v-model="state.description"
+          type="text"
+          :placeholder="t(`${BASE_KEY}.FORM.DESCRIPTION.PLACEHOLDER`)"
+          class-name="h-10 px-4 text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
+        />
+      </div>
+
+      <div
+        v-for="section in radioSections"
+        :key="section.key"
+        class="space-y-3 pt-2"
+      >
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ section.label }}
+        </label>
+        <div class="grid grid-cols-1 gap-3 xs:grid-cols-2">
+          <button
+            v-for="option in section.options"
+            :key="option.key"
+            type="button"
+            :disabled="option.disabled"
+            :class="optionCardClass(option)"
+            @click="selectOption(section.key, option)"
           >
-            <div class="grid grid-cols-1 xs:grid-cols-2 gap-4 w-full">
-              <RadioCard
-                v-for="option in section.options"
-                :id="option.key"
-                :key="option.key"
-                :label="option.label"
-                :description="option.description"
-                :is-active="option.isActive"
-                :disabled="option.disabled"
-                :disabled-label="option.disabledLabel"
-                :disabled-message="option.disabledMessage"
-                @select="state[section.key] = $event"
-              />
+            <div
+              class="mb-3 flex size-8 items-center justify-center rounded-lg"
+              :class="
+                option.isActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-muted text-foreground'
+              "
+            >
+              <Icon :icon="option.icon" class="size-4" />
             </div>
-          </WithLabel>
+            <div class="mb-1 flex items-center gap-2">
+              <span class="text-[14px] font-semibold text-foreground">
+                {{ option.label }}
+              </span>
+              <span
+                v-if="option.disabledLabel"
+                class="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700"
+              >
+                {{ option.disabledLabel }}
+              </span>
+            </div>
+            <span class="text-[12px] leading-relaxed text-muted-foreground">
+              {{
+                option.disabled && option.disabledMessage
+                  ? option.disabledMessage
+                  : option.description
+              }}
+            </span>
+          </button>
         </div>
       </div>
 
-      <div class="pt-4 pb-2 flex-col flex gap-4">
-        <div class="flex flex-col items-start gap-1 py-1">
-          <label class="text-sm font-medium text-n-slate-12 py-1">
+      <div class="space-y-4 border-t border-border/40 pt-4">
+        <div>
+          <h4 class="text-[14px] font-semibold text-foreground">
             {{ t(`${BASE_KEY}.FORM.FAIR_DISTRIBUTION.LABEL`) }}
-          </label>
-          <p class="mb-0 text-n-slate-11 text-sm">
+          </h4>
+          <p class="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
             {{ t(`${BASE_KEY}.FORM.FAIR_DISTRIBUTION.DESCRIPTION`) }}
           </p>
         </div>
         <FairDistribution
           v-model:fair-distribution-limit="state.fairDistributionLimit"
           v-model:fair-distribution-window="state.fairDistributionWindow"
-          v-model:window-unit="state.windowUnit"
         />
       </div>
     </div>
 
-    <Button
-      type="submit"
-      :label="buttonLabel"
-      :disabled="!validationState.isValid || isLoading"
-      :is-loading="isLoading"
-    />
+    <div
+      class="mt-8 flex items-center justify-end gap-3 border-t border-border/40 pt-5"
+    >
+      <RelayButton
+        type="button"
+        variant="ghost"
+        class="h-10 rounded-md border border-border/40 px-5 text-[14px] font-semibold text-muted-foreground hover:border-transparent hover:bg-muted"
+        @click="emit('cancel')"
+      >
+        {{ t(`${BASE_KEY}.FORM.CANCEL_BUTTON`) }}
+      </RelayButton>
+      <RelayButton
+        type="submit"
+        class="h-10 rounded-md px-6 text-[14px] font-semibold shadow-sm"
+        :disabled="!isNameValid || isLoading"
+      >
+        {{ buttonLabel }}
+      </RelayButton>
+    </div>
 
     <div
       v-if="showInboxSection"
-      class="py-4 flex-col flex gap-4 border-t border-n-weak mt-6"
+      class="mt-6 flex flex-col gap-4 border-t border-border/40 pt-4"
     >
-      <div class="flex items-end gap-4 w-full justify-between">
+      <div class="flex w-full items-end justify-between gap-4">
         <div class="flex flex-col items-start gap-1 py-1">
-          <label class="text-sm font-medium text-n-slate-12 py-1">
+          <label class="py-1 text-sm font-medium text-foreground">
             {{ t(`${BASE_KEY}.FORM.INBOXES.LABEL`) }}
           </label>
-          <p class="mb-0 text-n-slate-11 text-sm">
+          <p class="mb-0 text-sm text-muted-foreground">
             {{ t(`${BASE_KEY}.FORM.INBOXES.DESCRIPTION`) }}
           </p>
         </div>

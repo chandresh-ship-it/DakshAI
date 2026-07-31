@@ -1,11 +1,11 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter, useRoute } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
-import AssignmentCard from 'dashboard/components-next/AssignmentPolicy/AssignmentCard/AssignmentCard.vue';
+import AgentAssignmentIndexPage from './pages/AgentAssignmentIndexPage.vue';
+import AgentCapacityIndexPage from './pages/AgentCapacityIndexPage.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -16,31 +16,7 @@ const isFeatureEnabledonAccount = useMapGetter(
   'accounts/isFeatureEnabledonAccount'
 );
 
-const agentAssignments = computed(() => {
-  const assignments = [
-    {
-      key: 'agent_assignment_policy_index',
-      title: t('ASSIGNMENT_POLICY.INDEX.ASSIGNMENT_POLICY.TITLE'),
-      description: t('ASSIGNMENT_POLICY.INDEX.ASSIGNMENT_POLICY.DESCRIPTION'),
-      features: [
-        {
-          icon: 'i-lucide-circle-fading-arrow-up',
-          label: t('ASSIGNMENT_POLICY.INDEX.ASSIGNMENT_POLICY.FEATURES.0'),
-        },
-        {
-          icon: 'i-lucide-scale',
-          label: t('ASSIGNMENT_POLICY.INDEX.ASSIGNMENT_POLICY.FEATURES.1'),
-        },
-        {
-          icon: 'i-lucide-inbox',
-          label: t('ASSIGNMENT_POLICY.INDEX.ASSIGNMENT_POLICY.FEATURES.2'),
-        },
-      ],
-    },
-  ];
-
-  // Only show Agent Capacity if BOTH assignment_v2 AND advanced_assignment are enabled
-  // advanced_assignment identifies premium users
+const showCapacityTab = computed(() => {
   const hasAssignmentV2 = isFeatureEnabledonAccount.value(
     accountId.value,
     'assignment_v2'
@@ -49,59 +25,79 @@ const agentAssignments = computed(() => {
     accountId.value,
     'advanced_assignment'
   );
-
-  if (hasAssignmentV2 && hasAdvancedAssignment) {
-    assignments.push({
-      key: 'agent_capacity_policy_index',
-      title: t('ASSIGNMENT_POLICY.INDEX.AGENT_CAPACITY_POLICY.TITLE'),
-      description: t(
-        'ASSIGNMENT_POLICY.INDEX.AGENT_CAPACITY_POLICY.DESCRIPTION'
-      ),
-      features: [
-        {
-          icon: 'i-lucide-glass-water',
-          label: t('ASSIGNMENT_POLICY.INDEX.AGENT_CAPACITY_POLICY.FEATURES.0'),
-        },
-        {
-          icon: 'i-lucide-circle-minus',
-          label: t('ASSIGNMENT_POLICY.INDEX.AGENT_CAPACITY_POLICY.FEATURES.1'),
-        },
-        {
-          icon: 'i-lucide-users-round',
-          label: t('ASSIGNMENT_POLICY.INDEX.AGENT_CAPACITY_POLICY.FEATURES.2'),
-        },
-      ],
-    });
-  }
-
-  return assignments;
+  return hasAssignmentV2 && hasAdvancedAssignment;
 });
 
-const handleClick = key => {
-  router.push({ name: key });
+const activeTab = computed(() =>
+  route.name === 'agent_capacity_policy_index' ? 'capacity' : 'assignment'
+);
+
+const tabs = computed(() => {
+  const items = [
+    {
+      key: 'assignment',
+      label: t('ASSIGNMENT_POLICY.INDEX.TABS.ASSIGNMENT'),
+      routeName: 'agent_assignment_policy_index',
+    },
+  ];
+  if (showCapacityTab.value) {
+    items.push({
+      key: 'capacity',
+      label: t('ASSIGNMENT_POLICY.INDEX.TABS.CAPACITY'),
+      routeName: 'agent_capacity_policy_index',
+    });
+  }
+  return items;
+});
+
+const selectTab = routeName => {
+  if (route.name === routeName) return;
+  router.push({ name: routeName });
 };
+
+watch(showCapacityTab, enabled => {
+  if (!enabled && activeTab.value === 'capacity') {
+    router.replace({ name: 'agent_assignment_policy_index' });
+  }
+});
 </script>
 
 <template>
-  <SettingsLayout :no-records-found="false" class="gap-10">
-    <template #header>
-      <BaseSettingsHeader
-        :title="$t('ASSIGNMENT_POLICY.INDEX.HEADER.TITLE')"
-        :description="$t('ASSIGNMENT_POLICY.INDEX.HEADER.DESCRIPTION')"
-        feature-name="assignment-policy"
-      />
-    </template>
-
+  <SettingsLayout :no-records-found="false">
     <template #body>
-      <div class="grid grid-cols-1 2xl:grid-cols-2 gap-6 mt-4">
-        <AssignmentCard
-          v-for="item in agentAssignments"
-          :key="item.key"
-          :title="item.title"
-          :description="item.description"
-          :features="item.features"
-          @click="handleClick(item.key)"
-        />
+      <div class="mx-auto max-w-5xl">
+        <div class="mb-8">
+          <h2 class="text-base font-medium text-foreground">
+            {{ $t('ASSIGNMENT_POLICY.INDEX.HEADER.TITLE') }}
+          </h2>
+          <p class="mt-1 text-sm text-muted-foreground">
+            {{ $t('ASSIGNMENT_POLICY.INDEX.HEADER.DESCRIPTION') }}
+          </p>
+        </div>
+
+        <div class="mb-6 flex items-center gap-1 border-b border-border/60">
+          <button
+            v-for="tab in tabs"
+            :key="tab.key"
+            type="button"
+            class="relative px-4 py-2.5 text-[14px] font-medium transition-colors"
+            :class="
+              activeTab === tab.key
+                ? 'text-primary'
+                : 'text-muted-foreground hover:text-foreground'
+            "
+            @click="selectTab(tab.routeName)"
+          >
+            {{ tab.label }}
+            <div
+              v-if="activeTab === tab.key"
+              class="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-primary"
+            />
+          </button>
+        </div>
+
+        <AgentAssignmentIndexPage v-if="activeTab === 'assignment'" />
+        <AgentCapacityIndexPage v-else-if="showCapacityTab" />
       </div>
     </template>
   </SettingsLayout>

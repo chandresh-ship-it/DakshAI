@@ -12,11 +12,11 @@ defineProps({
 </script>
 
 <template>
-  <div class="px-5">
-    <span class="text-n-slate-11 text-xs">
+  <div>
+    <span class="text-xs text-muted-foreground">
       {{ label }}
     </span>
-    <div class="mt-2 text-xl font-medium text-n-slate-12">
+    <div class="mt-1.5 text-base font-medium text-foreground">
       {{ value }}
     </div>
   </div>

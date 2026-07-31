@@ -5,7 +5,12 @@ import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import { useVuelidate } from '@vuelidate/core';
 import { required, email } from '@vuelidate/validators';
-import Button from 'dashboard/components-next/button/Button.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const emit = defineEmits(['close']);
 
@@ -61,6 +66,9 @@ const selectedRole = computed(() =>
   )
 );
 
+const selectClass =
+  'flex h-10 w-full appearance-none rounded-md border border-border/80 bg-background px-4 text-[14px] text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30';
+
 const addAgent = async () => {
   v$.value.$touch();
   if (v$.value.$invalid) return;
@@ -103,64 +111,106 @@ const addAgent = async () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-auto overflow-auto">
-    <woot-modal-header
-      :header-title="$t('AGENT_MGMT.ADD.TITLE')"
-      :header-content="$t('AGENT_MGMT.ADD.DESC')"
-    />
-    <form class="flex flex-col items-start w-full" @submit.prevent="addAgent">
-      <div class="w-full">
-        <label :class="{ error: v$.agentName.$error }">
-          {{ $t('AGENT_MGMT.ADD.FORM.NAME.LABEL') }}
-          <input
+  <div class="flex flex-col overflow-auto p-1">
+    <div class="mb-8 relative">
+      <h3 class="text-base font-medium text-foreground">
+        {{ $t('AGENT_MGMT.ADD.TITLE') }}
+      </h3>
+      <p class="mt-1.5 pr-8 text-[14px] leading-relaxed text-muted-foreground">
+        {{ $t('AGENT_MGMT.ADD.DESC') }}
+      </p>
+    </div>
+
+    <form class="flex w-full flex-col" @submit.prevent="addAgent">
+      <div class="space-y-6">
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="add-agent-name"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('AGENT_MGMT.ADD.FORM.NAME.LABEL') }}
+          </RelayLabel>
+          <RelayInput
+            id="add-agent-name"
             v-model="agentName"
             type="text"
             :placeholder="$t('AGENT_MGMT.ADD.FORM.NAME.PLACEHOLDER')"
-            @input="v$.agentName.$touch"
+            class-name="h-10 px-4 text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
+            @blur="v$.agentName.$touch"
           />
-        </label>
-      </div>
+          <p v-if="v$.agentName.$error" class="text-xs text-destructive">
+            {{ $t('AGENT_MGMT.ADD.FORM.NAME.ERROR') }}
+          </p>
+        </div>
 
-      <div class="w-full">
-        <label :class="{ error: v$.selectedRoleId.$error }">
-          {{ $t('AGENT_MGMT.ADD.FORM.AGENT_TYPE.LABEL') }}
-          <select v-model="selectedRoleId" @change="v$.selectedRoleId.$touch">
-            <option v-for="role in roles" :key="role.id" :value="role.id">
-              {{ role.label }}
-            </option>
-          </select>
-          <span v-if="v$.selectedRoleId.$error" class="message">
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="add-agent-role"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('AGENT_MGMT.ADD.FORM.AGENT_TYPE.LABEL') }}
+          </RelayLabel>
+          <div class="relative">
+            <select
+              id="add-agent-role"
+              v-model="selectedRoleId"
+              :class="selectClass"
+              @change="v$.selectedRoleId.$touch"
+            >
+              <option v-for="role in roles" :key="role.id" :value="role.id">
+                {{ role.label }}
+              </option>
+            </select>
+            <Icon
+              icon="i-lucide-chevron-down"
+              class="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60 ltr:right-3 rtl:left-3"
+            />
+          </div>
+          <p v-if="v$.selectedRoleId.$error" class="text-xs text-destructive">
             {{ $t('AGENT_MGMT.ADD.FORM.AGENT_TYPE.ERROR') }}
-          </span>
-        </label>
-      </div>
+          </p>
+        </div>
 
-      <div class="w-full">
-        <label :class="{ error: v$.agentEmail.$error }">
-          {{ $t('AGENT_MGMT.ADD.FORM.EMAIL.LABEL') }}
-          <input
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="add-agent-email"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('AGENT_MGMT.ADD.FORM.EMAIL.LABEL') }}
+          </RelayLabel>
+          <RelayInput
+            id="add-agent-email"
             v-model="agentEmail"
             type="email"
             :placeholder="$t('AGENT_MGMT.ADD.FORM.EMAIL.PLACEHOLDER')"
-            @input="v$.agentEmail.$touch"
+            class-name="h-10 px-4 text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
+            @blur="v$.agentEmail.$touch"
           />
-        </label>
+          <p v-if="v$.agentEmail.$error" class="text-xs text-destructive">
+            {{ $t('AGENT_MGMT.ADD.FORM.EMAIL.ERROR') }}
+          </p>
+        </div>
       </div>
 
-      <div class="flex flex-row justify-end w-full gap-2 px-0 py-2">
-        <Button
-          faded
-          slate
-          type="reset"
-          :label="$t('AGENT_MGMT.ADD.CANCEL_BUTTON_TEXT')"
-          @click.prevent="emit('close')"
-        />
-        <Button
+      <div
+        class="mt-10 flex items-center justify-end gap-3 border-t border-border/40 pt-6"
+      >
+        <RelayButton
+          type="button"
+          variant="ghost"
+          class="h-10 rounded-md border border-border/40 px-5 text-[14px] font-semibold text-muted-foreground hover:border-transparent hover:bg-muted"
+          @click="emit('close')"
+        >
+          {{ $t('AGENT_MGMT.ADD.CANCEL_BUTTON_TEXT') }}
+        </RelayButton>
+        <RelayButton
           type="submit"
-          :label="$t('AGENT_MGMT.ADD.FORM.SUBMIT')"
+          class="h-10 rounded-md px-6 text-[14px] font-semibold shadow-sm"
           :disabled="v$.$invalid || uiFlags.isCreating"
-          :is-loading="uiFlags.isCreating"
-        />
+        >
+          {{ $t('AGENT_MGMT.ADD.FORM.SUBMIT') }}
+          <Icon icon="i-lucide-arrow-right" class="size-4" />
+        </RelayButton>
       </div>
     </form>
   </div>

@@ -1,15 +1,21 @@
 <script>
 import validations from './helpers/validations';
-import FormInput from 'v3/components/Form/Input.vue';
 import { reactive } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+  RelayCheckbox,
+} from 'dashboard/components-next/relay';
 
 export default {
   components: {
-    NextButton,
-    FormInput,
+    RelayButton,
+    RelayInput,
+    RelayLabel,
+    RelayCheckbox,
   },
   props: {
     onSubmit: {
@@ -64,45 +70,63 @@ export default {
 </script>
 
 <template>
-  <div class="flex-shrink-0 w-full">
-    <form class="mx-0 grid gap-4" @submit.prevent="handleSubmit">
-      <FormInput
-        v-model="state.title"
-        name="title"
-        spacing="compact"
-        :label="$t('TEAMS_SETTINGS.FORM.NAME.LABEL')"
-        :placeholder="$t('TEAMS_SETTINGS.FORM.NAME.PLACEHOLDER')"
-        :has-error="v$.title.$error"
-        :error-message="v$.title.$error ? v$.title.$errors[0].$message : ''"
-        @blur="v$.title.$touch"
-      />
-      <FormInput
-        v-model="state.description"
-        name="description"
-        spacing="compact"
-        :label="$t('TEAMS_SETTINGS.FORM.DESCRIPTION.LABEL')"
-        :placeholder="$t('TEAMS_SETTINGS.FORM.DESCRIPTION.PLACEHOLDER')"
-        :has-error="v$.description.$error"
-        :error-message="
-          v$.description.$error ? v$.description.$errors[0].$message : ''
-        "
-        @blur="v$.description.$touch"
-      />
-      <div class="w-full flex items-center gap-2">
-        <input v-model="state.allowAutoAssign" type="checkbox" :value="true" />
-        <label for="conversation_creation">
-          {{ $t('TEAMS_SETTINGS.FORM.AUTO_ASSIGN.LABEL') }}
-        </label>
+  <div class="w-full flex-shrink-0">
+    <form class="mx-0 grid gap-6" @submit.prevent="handleSubmit">
+      <div class="flex flex-col gap-1.5">
+        <RelayLabel
+          html-for="team-name"
+          class="text-[13.5px] font-medium text-foreground"
+        >
+          {{ $t('TEAMS_SETTINGS.FORM.NAME.LABEL') }}
+        </RelayLabel>
+        <RelayInput
+          id="team-name"
+          v-model="state.title"
+          type="text"
+          :placeholder="$t('TEAMS_SETTINGS.FORM.NAME.PLACEHOLDER')"
+          class-name="h-10 px-4 text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
+          @blur="v$.title.$touch"
+        />
+        <p v-if="v$.title.$error" class="text-xs text-destructive">
+          {{ v$.title.$errors[0].$message }}
+        </p>
       </div>
-      <div class="flex flex-row justify-end gap-2 py-2 px-0 w-full">
-        <div class="w-full">
-          <NextButton
-            type="submit"
-            :label="submitButtonText"
-            :disabled="v$.title.$invalid || submitInProgress"
-            :is-loading="submitInProgress"
-          />
-        </div>
+
+      <div class="flex flex-col gap-1.5">
+        <RelayLabel
+          html-for="team-description"
+          class="text-[13.5px] font-medium text-foreground"
+        >
+          {{ $t('TEAMS_SETTINGS.FORM.DESCRIPTION.LABEL') }}
+        </RelayLabel>
+        <textarea
+          id="team-description"
+          v-model="state.description"
+          rows="3"
+          :placeholder="$t('TEAMS_SETTINGS.FORM.DESCRIPTION.PLACEHOLDER')"
+          class="min-h-[90px] w-full resize-none rounded-md border border-border/80 bg-background p-3 text-[14px] text-foreground shadow-sm outline-none focus:ring-1 focus:ring-primary/30"
+          @blur="v$.description.$touch"
+        />
+        <p v-if="v$.description.$error" class="text-xs text-destructive">
+          {{ v$.description.$errors[0].$message }}
+        </p>
+      </div>
+
+      <label class="flex cursor-pointer items-center gap-2.5">
+        <RelayCheckbox v-model="state.allowAutoAssign" />
+        <span class="text-sm text-foreground">
+          {{ $t('TEAMS_SETTINGS.FORM.AUTO_ASSIGN.LABEL') }}
+        </span>
+      </label>
+
+      <div class="flex justify-end border-t border-border/40 pt-6">
+        <RelayButton
+          type="submit"
+          class="h-10 rounded-md px-6 text-[14px] font-semibold shadow-sm"
+          :disabled="v$.title.$invalid || submitInProgress"
+        >
+          {{ submitButtonText }}
+        </RelayButton>
       </div>
     </form>
   </div>

@@ -157,12 +157,52 @@ class DashboardController < ActionController::Base
   # Build an inline style string with CSS custom properties for brand colors.
   def brand_colors_inline_style(brand_colors)
     parts = []
-    parts << "--woot-brand: #{hex_to_rgb_space(brand_colors['primary'])}" if brand_colors['primary'].present?
-    parts << "--slate-12: #{hex_to_rgb_space(brand_colors['text'])}" if brand_colors['text'].present?
-    parts << "--background-color: #{hex_to_rgb_space(brand_colors['background'])}" if brand_colors['background'].present?
+    if brand_colors['primary'].present?
+      parts << "--primary: #{brand_colors['primary']}"
+      parts << "--ring: #{brand_colors['primary']}"
+      parts << "--sidebar-primary: #{brand_colors['primary']}"
+      parts << "--woot-brand: #{hex_to_rgb_space(brand_colors['primary'])}"
+    end
+    if brand_colors['secondary'].present?
+      parts << "--secondary: #{brand_colors['secondary']}"
+      parts << "--muted: #{brand_colors['secondary']}"
+    end
+    if brand_colors['accent'].present?
+      parts << "--accent: #{brand_colors['accent']}"
+      parts << "--sidebar-accent: #{brand_colors['accent']}"
+    end
+    if brand_colors['text'].present?
+      parts << "--foreground: #{brand_colors['text']}"
+      parts << "--slate-12: #{hex_to_rgb_space(brand_colors['text'])}"
+    end
+    if brand_colors['background'].present?
+      parts << "--background: #{brand_colors['background']}"
+      parts << "--card: #{brand_colors['background']}"
+      parts << "--popover: #{brand_colors['background']}"
+      parts << "--background-color: #{hex_to_rgb_space(brand_colors['background'])}"
+    end
+    # Full theme-preset chrome tokens (sidebar, card, muted, border, …) when stored
+    brand_theme_token_keys.each do |key|
+      value = brand_colors[key]
+      next if value.blank?
+
+      parts << "--#{key}: #{value}"
+    end
     parts.compact.join('; ')
   end
   helper_method :brand_colors_inline_style
+
+  def brand_theme_token_keys
+    %w[
+      foreground card card-foreground popover popover-foreground
+      primary-foreground secondary-foreground muted muted-foreground
+      accent-foreground destructive destructive-foreground
+      border input ring
+      sidebar sidebar-foreground sidebar-primary sidebar-primary-foreground
+      sidebar-accent sidebar-accent-foreground sidebar-border sidebar-ring
+    ]
+  end
+  helper_method :brand_theme_token_keys
 
   def compute_hue(r, g, b, max_c, d)
     return 0 if d.zero?

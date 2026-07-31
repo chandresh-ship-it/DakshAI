@@ -21,7 +21,7 @@ defineProps({
   >
     <div
       v-if="$slots.toolbar"
-      class="flex flex-col justify-between gap-4 border-b border-border/40 bg-background/50 p-4 sm:flex-row sm:items-center sm:p-6"
+      class="flex flex-col justify-between gap-4 border-b border-border/40 p-4 sm:p-6 md:flex-row md:items-center"
     >
       <slot name="toolbar" />
     </div>

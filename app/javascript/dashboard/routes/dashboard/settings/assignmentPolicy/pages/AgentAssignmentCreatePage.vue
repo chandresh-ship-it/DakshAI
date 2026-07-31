@@ -52,7 +52,6 @@ const handleBreadcrumbClick = item => {
   if (item.params) {
     const accountId = route.params.accountId;
     const inboxId = item.params.inboxId;
-    // Navigate using explicit path to ensure tab parameter is included
     router.push(
       `/app/accounts/${accountId}/settings/inboxes/${inboxId}/collaborators`
     );
@@ -61,6 +60,17 @@ const handleBreadcrumbClick = item => {
       name: item.routeName,
     });
   }
+};
+
+const handleCancel = () => {
+  if (inboxIdFromQuery.value) {
+    const accountId = route.params.accountId;
+    router.push(
+      `/app/accounts/${accountId}/settings/inboxes/${inboxIdFromQuery.value}/collaborators`
+    );
+    return;
+  }
+  router.push({ name: 'agent_assignment_policy_index' });
 };
 
 const handleSubmit = async formState => {
@@ -76,7 +86,6 @@ const handleSubmit = async formState => {
       params: {
         id: policy.id,
       },
-      // Pass inboxId to edit page to show link prompt
       query: inboxIdFromQuery.value ? { inboxId: inboxIdFromQuery.value } : {},
     });
   } catch (error) {
@@ -88,20 +97,38 @@ const handleSubmit = async formState => {
 </script>
 
 <template>
-  <SettingsLayout class="w-full max-w-2xl ltr:mr-auto rtl:ml-auto">
+  <SettingsLayout class="w-full max-w-3xl ltr:mr-auto rtl:ml-auto">
     <template #header>
-      <div class="flex items-center gap-2 w-full justify-between mb-4 min-h-10">
+      <div class="mb-4 flex min-h-10 w-full items-center justify-between gap-2">
         <Breadcrumb :items="breadcrumbItems" @click="handleBreadcrumbClick" />
       </div>
     </template>
 
     <template #body>
-      <AssignmentPolicyForm
-        ref="formRef"
-        mode="CREATE"
-        :is-loading="uiFlags.isCreating"
-        @submit="handleSubmit"
-      />
+      <div
+        class="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/40 bg-background/50 p-5"
+        >
+          <h3 class="text-[16px] font-semibold text-foreground">
+            {{
+              $t(
+                'ASSIGNMENT_POLICY.AGENT_ASSIGNMENT_POLICY.CREATE.HEADER.TITLE'
+              )
+            }}
+          </h3>
+        </div>
+        <div class="p-5">
+          <AssignmentPolicyForm
+            ref="formRef"
+            mode="CREATE"
+            :is-loading="uiFlags.isCreating"
+            @submit="handleSubmit"
+            @cancel="handleCancel"
+          />
+        </div>
+      </div>
     </template>
   </SettingsLayout>
 </template>

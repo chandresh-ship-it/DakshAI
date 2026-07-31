@@ -2,10 +2,7 @@ import { createApp } from 'vue';
 import { createI18n } from 'vue-i18n';
 
 import i18nMessages from 'dashboard/i18n';
-import {
-  hexToRgbSpace,
-  generateThemeVariables,
-} from 'dashboard/helper/colorHelper';
+import { applyBrandColorVariables } from 'dashboard/helper/colorHelper';
 import * as Sentry from '@sentry/vue';
 import {
   initializeAnalyticsEvents,
@@ -68,23 +65,9 @@ initalizeRouter();
 // Apply brand colors from server-injected globalConfig synchronously before first paint
 // This runs before Vue mounts so colors are available from the very first render
 if (window.globalConfig && window.globalConfig.BRAND_COLORS) {
-  const { primary, text, background } = window.globalConfig.BRAND_COLORS;
-  if (primary) {
-    const rgb = hexToRgbSpace(primary);
-    if (rgb) document.documentElement.style.setProperty('--woot-brand', rgb);
-  }
-  if (text) {
-    const rgb = hexToRgbSpace(text);
-    if (rgb) document.documentElement.style.setProperty('--slate-12', rgb);
-  }
-  if (background) {
-    const themeVars = generateThemeVariables(background);
-    if (themeVars) {
-      Object.entries(themeVars).forEach(([key, value]) => {
-        if (value) document.documentElement.style.setProperty(key, value);
-      });
-    }
-  }
+  applyBrandColorVariables(window.globalConfig.BRAND_COLORS, {
+    structural: true,
+  });
 }
 
 window.onload = () => {

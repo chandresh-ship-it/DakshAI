@@ -6,21 +6,31 @@ defineProps({
   },
   description: {
     type: String,
-    required: true,
+    default: '',
   },
 });
 </script>
 
 <template>
-  <div class="grid grid-cols-[1fr_auto] gap-5">
-    <div>
-      <span class="text-base font-medium text-foreground">
+  <div
+    class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+  >
+    <div class="min-w-0 flex-1">
+      <h3 class="text-base font-medium text-foreground">
         {{ title }}
-      </span>
-      <p class="mt-1 text-sm text-muted-foreground">
-        {{ description }}
+      </h3>
+      <p
+        v-if="description || $slots.description"
+        class="mt-1 text-sm text-muted-foreground"
+      >
+        <slot name="description">{{ description }}</slot>
       </p>
     </div>
-    <slot />
+    <div
+      v-if="$slots.default"
+      class="flex shrink-0 flex-wrap items-center gap-3"
+    >
+      <slot />
+    </div>
   </div>
 </template>

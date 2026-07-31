@@ -92,6 +92,10 @@ const formData = computed(() => ({
 const handleBreadcrumbClick = ({ routeName }) =>
   router.push({ name: routeName });
 
+const handleCancel = () => {
+  router.push({ name: 'agent_capacity_policy_index' });
+};
+
 const handleDeleteUser = async agentId => {
   try {
     await store.dispatch('agentCapacityPolicies/removeUser', {
@@ -195,26 +199,40 @@ onMounted(() => store.dispatch('agents/get'));
     </template>
 
     <template #body>
-      <AgentCapacityPolicyForm
-        :key="routeId"
-        mode="EDIT"
-        :initial-data="formData"
-        :policy-users="policyUsers"
-        :agent-list="allAgents"
-        :label-list="allLabels"
-        :inbox-list="allInboxes"
-        show-user-section
-        show-inbox-limit-section
-        :is-loading="uiFlags.isUpdating"
-        :is-users-loading="usersUiFlags.isFetching"
-        :is-inboxes-loading="inboxesUiFlags.isFetching"
-        @submit="handleSubmit"
-        @add-user="handleAddUser"
-        @delete-user="handleDeleteUser"
-        @add-inbox-limit="handleAddInboxLimit"
-        @update-inbox-limit="handleLimitChange"
-        @delete-inbox-limit="handleDeleteInboxLimit"
-      />
+      <div
+        class="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/40 bg-background/50 p-5"
+        >
+          <h3 class="text-[16px] font-semibold text-foreground">
+            {{ $t(`${BASE_KEY}.EDIT.HEADER.TITLE`) }}
+          </h3>
+        </div>
+        <div class="p-5">
+          <AgentCapacityPolicyForm
+            :key="routeId"
+            mode="EDIT"
+            :initial-data="formData"
+            :policy-users="policyUsers"
+            :agent-list="allAgents"
+            :label-list="allLabels"
+            :inbox-list="allInboxes"
+            show-user-section
+            show-inbox-limit-section
+            :is-loading="uiFlags.isUpdating"
+            :is-users-loading="usersUiFlags.isFetching"
+            :is-inboxes-loading="inboxesUiFlags.isFetching"
+            @submit="handleSubmit"
+            @cancel="handleCancel"
+            @add-user="handleAddUser"
+            @delete-user="handleDeleteUser"
+            @add-inbox-limit="handleAddInboxLimit"
+            @update-inbox-limit="handleLimitChange"
+            @delete-inbox-limit="handleDeleteInboxLimit"
+          />
+        </div>
+      </div>
     </template>
   </SettingsLayout>
 </template>

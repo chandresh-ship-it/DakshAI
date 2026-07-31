@@ -41,6 +41,10 @@ const handleBreadcrumbClick = item => {
   });
 };
 
+const handleCancel = () => {
+  router.push({ name: 'agent_capacity_policy_index' });
+};
+
 const handleSubmit = async formState => {
   try {
     const policy = await store.dispatch(
@@ -69,19 +73,35 @@ const handleSubmit = async formState => {
 <template>
   <SettingsLayout class="w-full max-w-2xl ltr:mr-auto rtl:ml-auto">
     <template #header>
-      <div class="flex items-center gap-2 w-full justify-between mb-4 min-h-10">
+      <div class="mb-4 flex min-h-10 w-full items-center justify-between gap-2">
         <Breadcrumb :items="breadcrumbItems" @click="handleBreadcrumbClick" />
       </div>
     </template>
 
     <template #body>
-      <AgentCapacityPolicyForm
-        ref="formRef"
-        mode="CREATE"
-        :is-loading="uiFlags.isCreating"
-        :label-list="allLabels"
-        @submit="handleSubmit"
-      />
+      <div
+        class="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/40 bg-background/50 p-5"
+        >
+          <h3 class="text-[16px] font-semibold text-foreground">
+            {{
+              $t('ASSIGNMENT_POLICY.AGENT_CAPACITY_POLICY.CREATE.HEADER.TITLE')
+            }}
+          </h3>
+        </div>
+        <div class="p-5">
+          <AgentCapacityPolicyForm
+            ref="formRef"
+            mode="CREATE"
+            :is-loading="uiFlags.isCreating"
+            :label-list="allLabels"
+            @submit="handleSubmit"
+            @cancel="handleCancel"
+          />
+        </div>
+      </div>
     </template>
   </SettingsLayout>
 </template>

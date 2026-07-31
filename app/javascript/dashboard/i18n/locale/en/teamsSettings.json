@@ -1,6 +1,6 @@
 {
   "TEAMS_SETTINGS": {
-    "NEW_TEAM": "Create new team",
+    "NEW_TEAM": "Create Team",
     "HEADER": "Teams",
     "LOADING": "Fetching teams",
     "DESCRIPTION": "Teams allow you to organize agents into groups based on their responsibilities. An agent can belong to multiple teams. When working collaboratively, you can assign conversations to specific teams.",
@@ -8,9 +8,19 @@
     "COUNT": "{n} team | {n} teams",
     "SEARCH_PLACEHOLDER": "Search teams...",
     "NO_RESULTS": "No teams found matching your search",
+    "VIEW": {
+      "GRID": "Grid view",
+      "LIST": "List view"
+    },
+    "PAGINATION": {
+      "SHOWING": "Showing {startItem} to {endItem} of {totalItems} teams",
+      "PER_PAGE": "{size} / page"
+    },
     "LIST": {
       "404": "There are no teams created on this account.",
-      "EDIT_TEAM": "Edit team",
+      "EMPTY_TITLE": "No teams found",
+      "EMPTY_DESC": "There are no teams created on this account. Start by creating a team to organize your agents.",
+      "EDIT_TEAM": "Edit",
       "VIEW_TEAM": "View team",
       "DETAILS": "Team Details",
       "ACTIONS": "Actions",

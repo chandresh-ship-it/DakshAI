@@ -479,6 +479,11 @@
       "SEAT_COUNT": "Number of seats",
       "RENEWS_ON": "Renews on",
       "CHANGE_PLAN_BUTTON": "Change plan",
+      "VIEW_PLAN_DETAILS": "View Plan Details",
+      "HIDE_PLAN_DETAILS": "Hide Plan Details",
+      "AUTO_RENEW": "Auto renew",
+      "AUTO_RENEW_ON": "ON",
+      "AUTO_RENEW_OFF": "OFF",
       "DATA_RETENTION_LABEL": "Data retention",
       "RETENTION_MONTHS": "{months} month(s)",
       "RETENTION_UNLIMITED": "Unlimited"
@@ -508,12 +513,12 @@
     "RESOURCE_LIMITS": {
       "TITLE": "Resource Limits",
       "DESCRIPTION": "Usage and limits for your current billing cycle.",
-      "SEATS": "Seats (team members)",
+      "SEATS": "Seats (Team Members)",
       "INBOXES": "Inboxes",
       "CONTACTS": "Contacts",
-      "CONVERSATIONS": "Conversations/month",
+      "CONVERSATIONS": "Conversations / Month",
       "T3_SUBACCOUNTS": "T3 Reseller Sub-accounts",
-      "AUTOMATIONS": "Automations/workflows"
+      "AUTOMATIONS": "Automations / Workflows"
     },
     "SELECT_PLAN": {
       "TITLE": "Select a plan to continue",
@@ -841,8 +846,12 @@
   "ASSIGNMENT_POLICY": {
     "INDEX": {
       "HEADER": {
-        "TITLE": "Agent assignment",
-        "DESCRIPTION": "Define policies to effectively manage workload and route conversations based on the needs of inboxes and agents. Learn more here"
+        "TITLE": "Agent Assignment",
+        "DESCRIPTION": "Define how conversations are routed and manage individual agent workload limits."
+      },
+      "TABS": {
+        "ASSIGNMENT": "Assignment Policies",
+        "CAPACITY": "Capacity Policies"
       },
       "ASSIGNMENT_POLICY": {
         "TITLE": "Assignment policy",
@@ -866,8 +875,21 @@
     "AGENT_ASSIGNMENT_POLICY": {
       "INDEX": {
         "HEADER": {
-          "TITLE": "Assignment policy",
-          "CREATE_POLICY": "New policy"
+          "TITLE": "Assignment Policies",
+          "DESCRIPTION": "Set up rules to automatically distribute incoming conversations among your team members.",
+          "CREATE_POLICY": "Create Policy"
+        },
+        "ACTIVE_POLICIES": "Active Policies",
+        "CREATE_FIRST_POLICY": "Create first policy",
+        "LOADING": "Fetching assignment policies...",
+        "SEARCH_PLACEHOLDER": "Search policies...",
+        "NO_RESULTS": "No policies found matching your search",
+        "NO_DESCRIPTION": "No description provided",
+        "EMPTY_TITLE": "No assignment policies",
+        "EMPTY_DESC": "Set up rules to automatically distribute incoming conversations among your team members.",
+        "LIST": {
+          "DETAILS": "Policy Details",
+          "ACTIONS": "Actions"
         },
         "CARD": {
           "ORDER": "Order",
@@ -875,15 +897,16 @@
           "ACTIVE": "Active",
           "INACTIVE": "Inactive",
           "POPOVER": "Added inboxes",
-          "EDIT": "Edit"
+          "EDIT": "Edit",
+          "DELETE": "Delete"
         },
         "NO_RECORDS_FOUND": "No assignment policies found"
       },
       "CREATE": {
         "HEADER": {
-          "TITLE": "Create assignment policy"
+          "TITLE": "Create Assignment Policy"
         },
-        "CREATE_BUTTON": "Create policy",
+        "CREATE_BUTTON": "Create Policy",
         "API": {
           "SUCCESS_MESSAGE": "Assignment policy created successfully",
           "ERROR_MESSAGE": "Failed to create assignment policy",
@@ -892,9 +915,9 @@
       },
       "EDIT": {
         "HEADER": {
-          "TITLE": "Edit assignment policy"
+          "TITLE": "Edit Assignment Policy"
         },
-        "EDIT_BUTTON": "Update policy",
+        "EDIT_BUTTON": "Save Changes",
         "CONFIRM_ADD_INBOX_DIALOG": {
           "TITLE": "Add inbox",
           "DESCRIPTION": "{inboxName} inbox is already linked to another policy. Are you sure you want to link it to this policy? It will be unlinked from the other policy.",
@@ -924,13 +947,16 @@
       },
       "FORM": {
         "NAME": {
-          "LABEL": "Policy name:",
-          "PLACEHOLDER": "Enter policy name"
+          "LABEL": "Policy name",
+          "PLACEHOLDER": "e.g. Sales Routing",
+          "ERROR": "Policy name is required"
         },
         "DESCRIPTION": {
-          "LABEL": "Description:",
-          "PLACEHOLDER": "Enter description"
+          "LABEL": "Description",
+          "OPTIONAL": "(Optional)",
+          "PLACEHOLDER": "Short description of this policy"
         },
+        "CANCEL_BUTTON": "Cancel",
         "STATUS": {
           "LABEL": "Status:",
           "PLACEHOLDER": "Select status",
@@ -938,27 +964,27 @@
           "INACTIVE": "Policy is inactive"
         },
         "ASSIGNMENT_ORDER": {
-          "LABEL": "Assignment order",
+          "LABEL": "Assignment Method",
           "ROUND_ROBIN": {
-            "LABEL": "Round robin",
-            "DESCRIPTION": "Assign conversations evenly among agents."
+            "LABEL": "Round Robin",
+            "DESCRIPTION": "Evenly distribute conversations."
           },
           "BALANCED": {
             "LABEL": "Balanced",
-            "DESCRIPTION": "Assign conversations based on available capacity.",
+            "DESCRIPTION": "Assign to agent with fewest chats.",
             "PREMIUM_MESSAGE": "Upgrade to access balanced assignment and agent capacity management.",
             "PREMIUM_BADGE": "Premium"
           }
         },
         "ASSIGNMENT_PRIORITY": {
-          "LABEL": "Assignment priority",
+          "LABEL": "Prioritization",
           "EARLIEST_CREATED": {
-            "LABEL": "Earliest created",
-            "DESCRIPTION": "The conversation that was created first gets assigned first."
+            "LABEL": "Earliest Created",
+            "DESCRIPTION": "Oldest tickets assigned first."
           },
           "LONGEST_WAITING": {
-            "LABEL": "Longest waiting",
-            "DESCRIPTION": "The conversation waiting the longest gets assigned first."
+            "LABEL": "Longest Waiting",
+            "DESCRIPTION": "Longest idle time prioritized."
           }
         },
         "FAIR_DISTRIBUTION": {
@@ -990,20 +1016,37 @@
     "AGENT_CAPACITY_POLICY": {
       "INDEX": {
         "HEADER": {
-          "TITLE": "Agent capacity",
-          "CREATE_POLICY": "New policy"
+          "TITLE": "Capacity Policies",
+          "DESCRIPTION": "Define limits to ensure your agents aren't overwhelmed with too many concurrent conversations.",
+          "CREATE_POLICY": "Create Limits"
+        },
+        "CAPACITY_LIMITS": "Capacity Limits",
+        "SET_UP_LIMITS": "Set up limits",
+        "AGENTS_ASSIGNED": "Agents Assigned",
+        "AGENTS_NONE": "None",
+        "LOADING": "Fetching capacity policies...",
+        "SEARCH_PLACEHOLDER": "Search policies...",
+        "NO_RESULTS": "No policies found matching your search",
+        "NO_DESCRIPTION": "No description provided",
+        "EMPTY_TITLE": "No capacity policies",
+        "EMPTY_DESC": "Define limits to ensure your agents aren't overwhelmed with too many concurrent conversations.",
+        "AGENTS_COUNT": "{n} agent assigned | {n} agents assigned",
+        "LIST": {
+          "DETAILS": "Policy Details",
+          "ACTIONS": "Actions"
         },
         "CARD": {
           "POPOVER": "Added agents",
-          "EDIT": "Edit"
+          "EDIT": "Edit",
+          "DELETE": "Delete"
         },
         "NO_RECORDS_FOUND": "No agent capacity policies found"
       },
       "CREATE": {
         "HEADER": {
-          "TITLE": "Create agent capacity policy"
+          "TITLE": "Create Capacity Limits"
         },
-        "CREATE_BUTTON": "Create policy",
+        "CREATE_BUTTON": "Create Limits",
         "API": {
           "SUCCESS_MESSAGE": "Agent capacity policy created successfully",
           "ERROR_MESSAGE": "Failed to create agent capacity policy"
@@ -1011,9 +1054,9 @@
       },
       "EDIT": {
         "HEADER": {
-          "TITLE": "Edit agent capacity policy"
+          "TITLE": "Edit Capacity Limits"
         },
-        "EDIT_BUTTON": "Update policy",
+        "EDIT_BUTTON": "Save Changes",
         "CONFIRM_ADD_AGENT_DIALOG": {
           "TITLE": "Add agent",
           "DESCRIPTION": "{agentName} is already linked to another policy. Are you sure you want to link it to this policy? It will be unlinked from the other policy.",
@@ -1051,13 +1094,16 @@
       },
       "FORM": {
         "NAME": {
-          "LABEL": "Policy name:",
-          "PLACEHOLDER": "Enter policy name"
+          "LABEL": "Name",
+          "PLACEHOLDER": "e.g. T1 Support Capacity",
+          "ERROR": "Name is required"
         },
         "DESCRIPTION": {
-          "LABEL": "Description:",
-          "PLACEHOLDER": "Enter description"
+          "LABEL": "Description",
+          "OPTIONAL": "(Optional)",
+          "PLACEHOLDER": "Define when agents hit max capacity"
         },
+        "CANCEL_BUTTON": "Cancel",
         "INBOX_CAPACITY_LIMIT": {
           "LABEL": "Inbox capacity limits",
           "ADD_BUTTON": "Add inbox",
@@ -1072,16 +1118,16 @@
           "LABEL": "Exclusion rules",
           "DESCRIPTION": "Conversations that satisfy the following conditions would not count towards agent capacity",
           "TAGS": {
-            "LABEL": "Exclude conversations tagged with specific labels",
-            "ADD_TAG": "add tag",
+            "LABEL": "Excluded Tags",
+            "ADD_TAG": "Add tag",
             "DROPDOWN": {
-              "SEARCH_PLACEHOLDER": "Search and select tags to add"
+              "SEARCH_PLACEHOLDER": "Search tags..."
             },
-            "EMPTY_STATE": "No tags added to this policy."
+            "EMPTY_STATE": "No tags found"
           },
           "DURATION": {
             "LABEL": "Exclude conversations older than a specified duration",
-            "PLACEHOLDER": "Set time"
+            "PLACEHOLDER": "Enter duration"
           }
         },
         "USERS": {
@@ -1179,6 +1225,12 @@
     "THEME_SETTINGS": {
       "TITLE": "Theme Preset",
       "DESCRIPTION": "Quickly apply a professionally designed color scheme to your portal.",
+      "CHOOSE": "Choose color theme",
+      "SEARCH": "Search themes…",
+      "COUNT": "{count} themes",
+      "SHUFFLE": "Random theme",
+      "BUILT_IN": "Built-in themes",
+      "EMPTY": "No themes found.",
       "LIGHT": {
         "TITLE": "Light",
         "DESCRIPTION": "Clean, light styling"
@@ -1196,14 +1248,12 @@
       "TITLE": "Brand Colors",
       "DESCRIPTION": "Define your brand color palette.",
       "PRIMARY": "Primary",
+      "SECONDARY": "Secondary",
+      "ACCENT": "Accent",
       "TEXT": "Text",
       "BACKGROUND": "Background",
       "RESET": "Reset to default",
-      "LOW_CONTRAST_WARNING": "Low contrast between text and background colors — text may be hard to read.",
-      "LIVE_PREVIEW": "Live Preview",
-      "PREVIEW_TEXT": "Hi, how can we help?",
-      "PREVIEW_BUTTON": "Start chat",
-      "PREVIEW_NOTE": "Updates instantly as you edit colors"
+      "LOW_CONTRAST_WARNING": "Low contrast between text and background colors — text may be hard to read."
     },
     "LOGO_SETTINGS": {
       "TITLE": "Logos",

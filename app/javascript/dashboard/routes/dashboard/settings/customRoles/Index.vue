@@ -1,16 +1,15 @@
 <script setup>
 import { useAlert } from 'dashboard/composables';
 import SettingsLayout from '../SettingsLayout.vue';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import CustomRoleModal from './component/CustomRoleModal.vue';
-import CustomRoleTableBody from './component/CustomRoleTableBody.vue';
 import CustomRolePaywall from './component/CustomRolePaywall.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { picoSearch } from '@scmmishra/pico-search';
-import { BaseTable } from 'dashboard/components-next/table';
+import { getI18nKey } from 'dashboard/routes/dashboard/settings/helper/settingsHelper';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 
 const store = useStore();
 const { t } = useI18n();
@@ -57,6 +56,12 @@ const isBehindAPaywall = computed(() => {
   );
 });
 
+const getFormattedPermissions = role => {
+  return role.permissions
+    .map(event => t(getI18nKey('CUSTOM_ROLE.PERMISSIONS', event)))
+    .join(', ');
+};
+
 const fetchCustomRoles = async () => {
   try {
     await store.dispatch('customRole/getCustomRole');
@@ -67,15 +72,6 @@ const fetchCustomRoles = async () => {
 
 onMounted(() => {
   fetchCustomRoles();
-});
-
-const tableHeaders = computed(() => {
-  return [
-    t('CUSTOM_ROLE.LIST.TABLE_HEADER.NAME'),
-    t('CUSTOM_ROLE.LIST.TABLE_HEADER.DESCRIPTION'),
-    t('CUSTOM_ROLE.LIST.TABLE_HEADER.PERMISSIONS'),
-    t('CUSTOM_ROLE.LIST.TABLE_HEADER.ACTIONS'),
-  ];
 });
 
 const showAlertMessage = message => {
@@ -123,7 +119,7 @@ const deleteCustomRole = async id => {
 };
 
 const confirmDeletion = () => {
-  loading[activeResponse.value.id] = true;
+  loading.value[activeResponse.value.id] = true;
   closeDeletePopup();
   deleteCustomRole(activeResponse.value.id);
 };
@@ -133,55 +129,146 @@ const confirmDeletion = () => {
   <SettingsLayout
     :is-loading="uiFlags.fetchingList"
     :loading-message="$t('CUSTOM_ROLE.LOADING')"
-    :no-records-found="!records.length && !isBehindAPaywall"
-    :no-records-message="$t('CUSTOM_ROLE.LIST.404')"
+    :no-records-found="false"
   >
-    <template #header>
-      <BaseSettingsHeader
-        v-model:search-query="searchQuery"
-        :title="$t('CUSTOM_ROLE.HEADER')"
-        :description="$t('CUSTOM_ROLE.DESCRIPTION')"
-        :link-text="$t('CUSTOM_ROLE.LEARN_MORE')"
-        :search-placeholder="$t('CUSTOM_ROLE.SEARCH_PLACEHOLDER')"
-        feature-name="canned_responses"
-      >
-        <template v-if="records?.length" #count>
-          <span class="text-body-main text-n-slate-11">
-            {{ $t('CUSTOM_ROLE.COUNT', { n: records.length }) }}
-          </span>
-        </template>
-        <template #actions>
-          <Button
-            :label="$t('CUSTOM_ROLE.HEADER_BTN_TXT')"
-            size="sm"
-            :disabled="isBehindAPaywall"
-            @click="openAddModal"
-          />
-        </template>
-      </BaseSettingsHeader>
-    </template>
-
     <template #body>
       <CustomRolePaywall v-if="isBehindAPaywall" />
-      <BaseTable
-        v-else
-        :headers="tableHeaders"
-        :items="filteredRecords"
-        :no-data-message="
-          searchQuery
-            ? $t('CUSTOM_ROLE.NO_RESULTS')
-            : $t('CUSTOM_ROLE.LIST.404')
-        "
-      >
-        <template #row="{ items }">
-          <CustomRoleTableBody
-            :roles="items"
-            :loading="loading"
-            @edit="openEditModal"
-            @delete="openDeletePopup"
-          />
-        </template>
-      </BaseTable>
+      <div v-else class="max-w-5xl space-y-8">
+        <div>
+          <h2 class="text-base font-medium text-foreground">
+            {{ $t('CUSTOM_ROLE.HEADER') }}
+          </h2>
+          <p
+            class="mt-2 max-w-3xl text-[14px] leading-relaxed text-muted-foreground"
+          >
+            {{ $t('CUSTOM_ROLE.LIST.DESC') }}
+          </p>
+        </div>
+
+        <div
+          class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"
+        >
+          <div class="relative w-full sm:max-w-xs">
+            <Icon
+              icon="i-lucide-search"
+              class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <RelayInput
+              v-model="searchQuery"
+              type="search"
+              :placeholder="$t('CUSTOM_ROLE.SEARCH_PLACEHOLDER')"
+              class-name="h-10 bg-background pl-9 shadow-sm"
+            />
+          </div>
+          <div class="flex shrink-0 items-center gap-4">
+            <span class="text-[13px] font-medium text-muted-foreground">
+              {{ $t('CUSTOM_ROLE.COUNT', { n: records.length }) }}
+            </span>
+            <RelayButton
+              class="h-9 w-full whitespace-nowrap shadow-sm sm:w-auto"
+              @click="openAddModal"
+            >
+              {{ $t('CUSTOM_ROLE.HEADER_BTN_TXT') }}
+            </RelayButton>
+          </div>
+        </div>
+
+        <div
+          v-if="!records.length"
+          class="flex flex-col items-center justify-center rounded-xl border border-border/60 bg-card p-16 text-center shadow-xs"
+        >
+          <div
+            class="mb-5 flex size-14 items-center justify-center rounded-full border border-border/40 bg-muted/50"
+          >
+            <Icon icon="i-lucide-shield" class="size-6 text-muted-foreground" />
+          </div>
+          <h3 class="mb-2 text-base font-semibold text-foreground">
+            {{ $t('CUSTOM_ROLE.LIST.EMPTY_TITLE') }}
+          </h3>
+          <p
+            class="mx-auto mb-6 max-w-sm text-[13.5px] leading-relaxed text-muted-foreground"
+          >
+            {{ $t('CUSTOM_ROLE.LIST.EMPTY_DESC') }}
+          </p>
+          <RelayButton class="h-9 shadow-sm" @click="openAddModal">
+            {{ $t('CUSTOM_ROLE.HEADER_BTN_TXT') }}
+          </RelayButton>
+        </div>
+
+        <div
+          v-else-if="!filteredRecords.length"
+          class="px-2 py-12 text-center text-sm text-muted-foreground"
+        >
+          {{ $t('CUSTOM_ROLE.NO_RESULTS') }}
+        </div>
+
+        <div v-else class="border-t border-border/60">
+          <table class="w-full text-left">
+            <thead>
+              <tr
+                class="border-b border-border/40 text-[12px] font-medium text-foreground"
+              >
+                <th class="py-4 pr-4 align-bottom font-semibold">
+                  {{ $t('CUSTOM_ROLE.LIST.TABLE_HEADER.NAME') }}
+                </th>
+                <th class="px-4 py-4 align-bottom font-semibold">
+                  {{ $t('CUSTOM_ROLE.LIST.TABLE_HEADER.DESCRIPTION') }}
+                </th>
+                <th class="px-4 py-4 align-bottom font-semibold">
+                  {{ $t('CUSTOM_ROLE.LIST.TABLE_HEADER.PERMISSIONS') }}
+                </th>
+                <th
+                  class="w-[100px] py-4 pl-4 text-center align-bottom font-semibold"
+                >
+                  {{ $t('CUSTOM_ROLE.LIST.TABLE_HEADER.ACTIONS') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border/40 text-[13px] text-slate-600">
+              <tr
+                v-for="role in filteredRecords"
+                :key="role.id"
+                class="group transition-colors hover:bg-muted/10"
+              >
+                <td
+                  class="w-[120px] py-4 pr-4 align-top font-medium text-foreground"
+                >
+                  {{ role.name }}
+                </td>
+                <td class="w-[140px] px-4 py-4 align-top">
+                  {{ role.description }}
+                </td>
+                <td class="px-4 py-4 pr-8 align-top leading-relaxed">
+                  {{ getFormattedPermissions(role) }}
+                </td>
+                <td class="py-4 pl-4 align-top">
+                  <div class="flex items-center justify-center gap-2">
+                    <RelayButton
+                      v-tooltip.top="$t('CUSTOM_ROLE.EDIT.BUTTON_TEXT')"
+                      variant="outline"
+                      size="icon"
+                      class="size-8 border-border/60 bg-background text-muted-foreground shadow-none hover:bg-muted/50 hover:text-foreground"
+                      @click="openEditModal(role)"
+                    >
+                      <Icon icon="i-lucide-pencil" class="size-3.5" />
+                    </RelayButton>
+                    <RelayButton
+                      v-tooltip.top="$t('CUSTOM_ROLE.DELETE.BUTTON_TEXT')"
+                      variant="outline"
+                      size="icon"
+                      class="size-8 border-border/60 bg-background text-muted-foreground shadow-none hover:bg-red-50 hover:text-red-600"
+                      :disabled="loading[role.id]"
+                      @click="openDeletePopup(role)"
+                    >
+                      <Icon icon="i-lucide-trash-2" class="size-3.5" />
+                    </RelayButton>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </template>
 
     <woot-modal

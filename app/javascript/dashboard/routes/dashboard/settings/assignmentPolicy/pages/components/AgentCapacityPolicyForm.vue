@@ -1,12 +1,15 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import BaseInfo from 'dashboard/components-next/AssignmentPolicy/components/BaseInfo.vue';
 import DataTable from 'dashboard/components-next/AssignmentPolicy/components/DataTable.vue';
 import AddDataDropdown from 'dashboard/components-next/AssignmentPolicy/components/AddDataDropdown.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
 import ExclusionRules from 'dashboard/components-next/AssignmentPolicy/components/ExclusionRules.vue';
 import InboxCapacityLimits from 'dashboard/components-next/AssignmentPolicy/components/InboxCapacityLimits.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 
 const props = defineProps({
   initialData: {
@@ -67,9 +70,9 @@ const props = defineProps({
 
 const emit = defineEmits([
   'submit',
+  'cancel',
   'addUser',
   'deleteUser',
-  'validationChange',
   'deleteInboxLimit',
   'addInboxLimit',
   'updateInboxLimit',
@@ -89,18 +92,13 @@ const state = reactive({
   inboxCapacityLimits: [],
 });
 
-const validationState = ref({
-  isValid: false,
-});
+const nameTouched = ref(false);
+
+const isNameValid = computed(() => state.name.trim().length > 0);
 
 const buttonLabel = computed(() =>
   t(`${BASE_KEY}.${props.mode.toUpperCase()}.${props.mode}_BUTTON`)
 );
-
-const handleValidationChange = validation => {
-  validationState.value = validation;
-  emit('validationChange', validation);
-};
 
 const handleDeleteInboxLimit = id => {
   emit('deleteInboxLimit', id);
@@ -124,9 +122,12 @@ const resetForm = () => {
     },
     inboxCapacityLimits: [],
   });
+  nameTouched.value = false;
 };
 
 const handleSubmit = () => {
+  nameTouched.value = true;
+  if (!isNameValid.value) return;
   emit('submit', { ...state });
 };
 
@@ -144,17 +145,47 @@ defineExpose({
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit">
-    <div class="flex flex-col gap-4 mb-2 divide-y divide-n-weak">
-      <BaseInfo
-        v-model:policy-name="state.name"
-        v-model:description="state.description"
-        :name-label="t(`${BASE_KEY}.FORM.NAME.LABEL`)"
-        :name-placeholder="t(`${BASE_KEY}.FORM.NAME.PLACEHOLDER`)"
-        :description-label="t(`${BASE_KEY}.FORM.DESCRIPTION.LABEL`)"
-        :description-placeholder="t(`${BASE_KEY}.FORM.DESCRIPTION.PLACEHOLDER`)"
-        @validation-change="handleValidationChange"
-      />
+  <form class="flex w-full flex-col" @submit.prevent="handleSubmit">
+    <div class="space-y-6">
+      <div class="flex flex-col gap-1.5">
+        <RelayLabel
+          html-for="capacity-policy-name"
+          class="text-[13.5px] font-medium text-foreground"
+        >
+          {{ t(`${BASE_KEY}.FORM.NAME.LABEL`) }}
+        </RelayLabel>
+        <RelayInput
+          id="capacity-policy-name"
+          v-model="state.name"
+          type="text"
+          :placeholder="t(`${BASE_KEY}.FORM.NAME.PLACEHOLDER`)"
+          class-name="h-10 px-4 text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
+          @blur="nameTouched = true"
+        />
+        <p v-if="nameTouched && !isNameValid" class="text-xs text-destructive">
+          {{ t(`${BASE_KEY}.FORM.NAME.ERROR`) }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <RelayLabel
+          html-for="capacity-policy-description"
+          class="text-[13.5px] font-medium text-foreground"
+        >
+          {{ t(`${BASE_KEY}.FORM.DESCRIPTION.LABEL`) }}
+          <span class="font-normal text-muted-foreground">
+            {{ t(`${BASE_KEY}.FORM.DESCRIPTION.OPTIONAL`) }}
+          </span>
+        </RelayLabel>
+        <RelayInput
+          id="capacity-policy-description"
+          v-model="state.description"
+          type="text"
+          :placeholder="t(`${BASE_KEY}.FORM.DESCRIPTION.PLACEHOLDER`)"
+          class-name="h-10 px-4 text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
+        />
+      </div>
+
       <ExclusionRules
         v-model:excluded-labels="state.exclusionRules.excludedLabels"
         v-model:exclude-older-than-minutes="
@@ -163,16 +194,30 @@ defineExpose({
         :tags-list="labelList"
       />
     </div>
-    <Button
-      type="submit"
-      :label="buttonLabel"
-      :disabled="!validationState.isValid || isLoading"
-      :is-loading="isLoading"
-    />
+
+    <div
+      class="mt-8 flex items-center justify-end gap-3 border-t border-border/40 pt-5"
+    >
+      <RelayButton
+        type="button"
+        variant="ghost"
+        class="h-10 rounded-md border border-border/40 px-5 text-[14px] font-semibold text-muted-foreground hover:border-transparent hover:bg-muted"
+        @click="emit('cancel')"
+      >
+        {{ t(`${BASE_KEY}.FORM.CANCEL_BUTTON`) }}
+      </RelayButton>
+      <RelayButton
+        type="submit"
+        class="h-10 rounded-md px-6 text-[14px] font-semibold shadow-sm"
+        :disabled="!isNameValid || isLoading"
+      >
+        {{ buttonLabel }}
+      </RelayButton>
+    </div>
 
     <div
       v-if="showInboxLimitSection || showUserSection"
-      class="flex flex-col gap-4 divide-y divide-n-weak border-t border-n-weak mt-6"
+      class="mt-6 flex flex-col gap-4 border-t border-border/40 pt-4"
     >
       <InboxCapacityLimits
         v-if="showInboxLimitSection"
@@ -183,13 +228,13 @@ defineExpose({
         @add="handleAddInboxLimit"
         @update="handleLimitChange"
       />
-      <div v-if="showUserSection" class="py-4 flex-col flex gap-4">
-        <div class="flex items-end gap-4 w-full justify-between">
+      <div v-if="showUserSection" class="flex flex-col gap-4 py-4">
+        <div class="flex w-full items-end justify-between gap-4">
           <div class="flex flex-col items-start gap-1 py-1">
-            <label class="text-sm font-medium text-n-slate-12 py-1">
+            <label class="py-1 text-sm font-medium text-foreground">
               {{ t(`${BASE_KEY}.FORM.USERS.LABEL`) }}
             </label>
-            <p class="mb-0 text-n-slate-11 text-sm">
+            <p class="mb-0 text-sm text-muted-foreground">
               {{ t(`${BASE_KEY}.FORM.USERS.DESCRIPTION`) }}
             </p>
           </div>

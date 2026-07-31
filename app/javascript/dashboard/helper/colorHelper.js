@@ -1,4 +1,9 @@
 import { lighten, darken, getLuminance, toRgba, transparentize } from 'color2k';
+import {
+  THEME_TOKEN_KEYS,
+  findMatchingPreset,
+  findPresetById,
+} from 'dashboard/routes/dashboard/settings/branding/brandThemePresets';
 
 export const hexToRgbSpace = color => {
   if (!color) return null;
@@ -79,29 +84,210 @@ export const generatePrimaryColorVariables = primaryHex => {
   return vars;
 };
 
+const LEGACY_THEME_KEYS = [
+  '--background-color',
+  '--surface-1',
+  '--surface-2',
+  '--surface-active',
+  '--solid-1',
+  '--solid-2',
+  '--solid-3',
+  '--card-color',
+  '--border-strong',
+  '--border-weak',
+  '--label-background',
+  '--slate-12',
+  '--woot-brand',
+  '--text-blue',
+  '--border-blue-strong',
+  '--solid-blue',
+  '--solid-blue-2',
+  '--border-blue',
+  ...Array.from({ length: 12 }, (_, i) => `--blue-${i + 1}`),
+];
+
+const clearManagedThemeTokens = () => {
+  const root = document.documentElement;
+  THEME_TOKEN_KEYS.forEach(key => root.style.removeProperty(`--${key}`));
+};
+
+const removeServerBrandStyle = () => {
+  const styleNode = document.getElementById('brand-colors');
+  if (styleNode) styleNode.remove();
+};
+
+const applyLegacyPrimary = primary => {
+  if (!primary) return;
+  const root = document.documentElement;
+  const primaryVars = generatePrimaryColorVariables(primary);
+  if (primaryVars) {
+    Object.entries(primaryVars).forEach(([key, value]) => {
+      if (value) root.style.setProperty(key, value);
+    });
+  }
+  root.style.setProperty('--primary', primary);
+  root.style.setProperty('--ring', primary);
+  root.style.setProperty('--sidebar-primary', primary);
+};
+
+/**
+ * Apply full new-ui preset token map (sidebar, card, muted, border, …).
+ * Mirrors new-ui stores/theme.ts applyAppearance.
+ */
+const applyPresetTokenMap = (preset, { dark = false } = {}) => {
+  const root = document.documentElement;
+  removeServerBrandStyle();
+  clearManagedThemeTokens();
+
+  if (!preset?.light) {
+    // Default / no token map — fall back to swatch accents only
+    applyLegacyPrimary(preset?.primary);
+    if (preset?.secondary) {
+      root.style.setProperty('--secondary', preset.secondary);
+      root.style.setProperty('--muted', preset.secondary);
+    }
+    if (preset?.accent) {
+      root.style.setProperty('--accent', preset.accent);
+      root.style.setProperty('--sidebar-accent', preset.accent);
+    }
+    return;
+  }
+
+  const light = preset.light;
+  const darkVars = preset.dark || light;
+  const vars = dark ? darkVars : light;
+
+  Object.entries(vars).forEach(([key, value]) => {
+    // Identical dark≈light (broken generator): only brand accents in dark mode
+    // so structural surfaces fall back to .dark in _relay-theme.scss
+    if (dark && value === light[key]) {
+      const isCoreBrand =
+        key.includes('primary') ||
+        key.includes('ring') ||
+        key.includes('chart');
+      if (!isCoreBrand) return;
+    }
+    root.style.setProperty(`--${key}`, value);
+  });
+
+  // Keep legacy blue scale / woot-brand in sync with primary
+  applyLegacyPrimary(vars.primary || light.primary);
+
+  const bg = vars.background || light.background;
+  if (bg) {
+    const themeVars = generateThemeVariables(bg);
+    if (themeVars) {
+      Object.entries(themeVars).forEach(([key, value]) => {
+        if (value) root.style.setProperty(key, value);
+      });
+    }
+  }
+
+  const fg = vars.foreground || light.foreground;
+  if (fg) {
+    const textRgb = hexToRgbSpace(fg);
+    if (textRgb) root.style.setProperty('--slate-12', textRgb);
+  }
+};
+
+const resolvePreset = colors => {
+  if (!colors) return null;
+  if (colors.theme_preset) {
+    const byId = findPresetById(colors.theme_preset);
+    if (byId) return byId;
+  }
+  return findMatchingPreset(colors);
+};
+
+/**
+ * Apply account brand_colors to CSS variables.
+ * Full theme presets set every new-ui token (incl. --sidebar*).
+ * Legacy 4-swatch branding still uses --woot-brand / --blue-* / surfaces.
+ * @param {object} colors
+ * @param {{ structural?: boolean, dark?: boolean }} options
+ *   structural=false keeps light/dark surfaces for custom swatches;
+ *   full presets always apply the light/dark token map for `dark`.
+ */
+export const applyBrandColorVariables = (
+  colors,
+  { structural = true, dark = false } = {}
+) => {
+  if (!colors) return;
+
+  const preset = resolvePreset(colors);
+  if (preset && (preset.light || preset.id === 'default')) {
+    applyPresetTokenMap(preset, { dark });
+    return;
+  }
+
+  // Stored flat token map (sidebar etc.) from a previous save — apply directly
+  if (colors.sidebar || colors['sidebar-foreground']) {
+    const root = document.documentElement;
+    removeServerBrandStyle();
+    clearManagedThemeTokens();
+    THEME_TOKEN_KEYS.forEach(key => {
+      const value = colors[key];
+      if (value) root.style.setProperty(`--${key}`, value);
+    });
+    applyLegacyPrimary(colors.primary || colors['sidebar-primary']);
+    if (colors.background || colors.foreground) {
+      if (colors.background) {
+        const themeVars = generateThemeVariables(colors.background);
+        if (themeVars) {
+          Object.entries(themeVars).forEach(([key, value]) => {
+            if (value) root.style.setProperty(key, value);
+          });
+        }
+      }
+      if (colors.foreground || colors.text) {
+        const textRgb = hexToRgbSpace(colors.foreground || colors.text);
+        if (textRgb) root.style.setProperty('--slate-12', textRgb);
+      }
+    }
+    return;
+  }
+
+  const root = document.documentElement;
+  const { primary, secondary, accent, background, text } = colors;
+
+  if (primary) applyLegacyPrimary(primary);
+
+  if (secondary) {
+    root.style.setProperty('--secondary', secondary);
+    root.style.setProperty('--muted', secondary);
+  }
+
+  if (accent) {
+    root.style.setProperty('--accent', accent);
+    root.style.setProperty('--sidebar-accent', accent);
+  }
+
+  if (!structural) return;
+
+  if (text) {
+    const textRgb = hexToRgbSpace(text);
+    if (textRgb) root.style.setProperty('--slate-12', textRgb);
+    root.style.setProperty('--foreground', text);
+  }
+
+  if (background) {
+    const themeVars = generateThemeVariables(background);
+    if (themeVars) {
+      Object.entries(themeVars).forEach(([key, value]) => {
+        if (value) root.style.setProperty(key, value);
+      });
+    }
+    root.style.setProperty('--background', background);
+    root.style.setProperty('--card', background);
+    root.style.setProperty('--popover', background);
+  }
+};
+
 export const clearCustomThemeVariables = () => {
-  const keys = [
-    '--background-color',
-    '--surface-1',
-    '--surface-2',
-    '--surface-active',
-    '--solid-1',
-    '--solid-2',
-    '--solid-3',
-    '--card-color',
-    '--border-strong',
-    '--border-weak',
-    '--label-background',
-    '--slate-12', // for custom text color
-    '--woot-brand',
-    '--text-blue',
-    '--border-blue-strong',
-    '--solid-blue',
-    '--solid-blue-2',
-    '--border-blue',
-    ...Array.from({ length: 12 }, (_, i) => `--blue-${i + 1}`),
-  ];
-  keys.forEach(key => document.documentElement.style.removeProperty(key));
+  clearManagedThemeTokens();
+  LEGACY_THEME_KEYS.forEach(key =>
+    document.documentElement.style.removeProperty(key)
+  );
 
   const styleNode = document.getElementById('brand-colors');
   if (styleNode) {
@@ -116,4 +302,11 @@ export const isDarkBackground = backgroundHex => {
   } catch {
     return false;
   }
+};
+
+export const hasFullThemePreset = colors => {
+  if (!colors) return false;
+  if (colors.sidebar || colors['sidebar-foreground']) return true;
+  const preset = resolvePreset(colors);
+  return Boolean(preset && (preset.light || preset.id === 'default'));
 };

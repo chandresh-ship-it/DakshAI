@@ -220,6 +220,17 @@ const handleConfirmAddInbox = async inboxId => {
   }
 };
 
+const handleCancel = () => {
+  if (inboxIdFromQuery.value) {
+    const accountId = route.params.accountId;
+    router.push(
+      `/app/accounts/${accountId}/settings/inboxes/${inboxIdFromQuery.value}/collaborators`
+    );
+    return;
+  }
+  router.push({ name: 'agent_assignment_policy_index' });
+};
+
 const handleSubmit = async formState => {
   try {
     await store.dispatch('assignmentPolicies/update', {
@@ -253,29 +264,43 @@ watch(routeId, fetchPolicyData, { immediate: true });
 <template>
   <SettingsLayout
     :is-loading="uiFlags.isFetchingItem"
-    class="w-full max-w-2xl ltr:mr-auto rtl:ml-auto"
+    class="w-full max-w-3xl ltr:mr-auto rtl:ml-auto"
   >
     <template #header>
-      <div class="flex items-center gap-2 w-full justify-between mb-4 min-h-10">
+      <div class="mb-4 flex min-h-10 w-full items-center justify-between gap-2">
         <Breadcrumb :items="breadcrumbItems" @click="handleBreadcrumbClick" />
       </div>
     </template>
 
     <template #body>
-      <AssignmentPolicyForm
-        :key="routeId"
-        mode="EDIT"
-        :initial-data="formData"
-        :policy-inboxes="policyInboxes"
-        :inbox-list="inboxList"
-        show-inbox-section
-        :is-loading="uiFlags.isUpdating"
-        :is-inbox-loading="inboxUiFlags.isFetching"
-        @submit="handleSubmit"
-        @add-inbox="handleAddInbox"
-        @delete-inbox="handleDeleteInbox"
-        @navigate-to-inbox="handleNavigateToInbox"
-      />
+      <div
+        class="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/40 bg-background/50 p-5"
+        >
+          <h3 class="text-[16px] font-semibold text-foreground">
+            {{ $t(`${BASE_KEY}.EDIT.HEADER.TITLE`) }}
+          </h3>
+        </div>
+        <div class="p-5">
+          <AssignmentPolicyForm
+            :key="routeId"
+            mode="EDIT"
+            :initial-data="formData"
+            :policy-inboxes="policyInboxes"
+            :inbox-list="inboxList"
+            show-inbox-section
+            :is-loading="uiFlags.isUpdating"
+            :is-inbox-loading="inboxUiFlags.isFetching"
+            @submit="handleSubmit"
+            @cancel="handleCancel"
+            @add-inbox="handleAddInbox"
+            @delete-inbox="handleDeleteInbox"
+            @navigate-to-inbox="handleNavigateToInbox"
+          />
+        </div>
+      </div>
     </template>
 
     <ConfirmInboxDialog

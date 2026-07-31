@@ -5,7 +5,12 @@ import { required, minLength } from '@vuelidate/validators';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
-import Button from 'dashboard/components-next/button/Button.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Auth from '../../../../api/auth';
 import wootConstants from 'dashboard/constants/globals';
 
@@ -113,9 +118,11 @@ const availabilityStatuses = computed(() =>
   statusList.value.map((statusLabel, index) => ({
     label: statusLabel,
     value: AVAILABILITY_STATUS_KEYS[index],
-    disabled: props.availability === AVAILABILITY_STATUS_KEYS[index],
   }))
 );
+
+const selectClass =
+  'flex h-10 w-full appearance-none rounded-md border border-border/80 bg-background px-4 text-[14px] text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30';
 
 const editAgent = async () => {
   v$.value.$touch();
@@ -154,82 +161,130 @@ const resetPassword = async () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-auto overflow-auto">
-    <woot-modal-header :header-title="pageTitle" />
-    <form class="w-full" @submit.prevent="editAgent">
-      <div class="w-full">
-        <label :class="{ error: v$.agentName.$error }">
-          {{ $t('AGENT_MGMT.EDIT.FORM.NAME.LABEL') }}
-          <input
+  <div class="flex flex-col overflow-auto p-1">
+    <div class="mb-8 relative">
+      <h3 class="text-base font-medium text-foreground">
+        {{ pageTitle }}
+      </h3>
+    </div>
+
+    <form class="flex w-full flex-col" @submit.prevent="editAgent">
+      <div class="space-y-6">
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="edit-agent-name"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('AGENT_MGMT.EDIT.FORM.NAME.LABEL') }}
+          </RelayLabel>
+          <RelayInput
+            id="edit-agent-name"
             v-model="agentName"
             type="text"
             :placeholder="$t('AGENT_MGMT.EDIT.FORM.NAME.PLACEHOLDER')"
-            @input="v$.agentName.$touch"
+            class-name="h-10 px-4 text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
+            @blur="v$.agentName.$touch"
           />
-        </label>
-      </div>
-
-      <div class="w-full">
-        <label :class="{ error: v$.selectedRoleId.$error }">
-          {{ $t('AGENT_MGMT.EDIT.FORM.AGENT_TYPE.LABEL') }}
-          <select v-model="selectedRoleId" @change="v$.selectedRoleId.$touch">
-            <option v-for="role in roles" :key="role.id" :value="role.id">
-              {{ role.label }}
-            </option>
-          </select>
-          <span v-if="v$.selectedRoleId.$error" class="message">
-            {{ $t('AGENT_MGMT.EDIT.FORM.AGENT_TYPE.ERROR') }}
-          </span>
-        </label>
-      </div>
-
-      <div class="w-full">
-        <label :class="{ error: v$.agentAvailability.$error }">
-          {{ $t('PROFILE_SETTINGS.FORM.AVAILABILITY.LABEL') }}
-          <select
-            v-model="agentAvailability"
-            @change="v$.agentAvailability.$touch"
-          >
-            <option
-              v-for="status in availabilityStatuses"
-              :key="status.value"
-              :value="status.value"
-            >
-              {{ status.label }}
-            </option>
-          </select>
-          <span v-if="v$.agentAvailability.$error" class="message">
-            {{ $t('AGENT_MGMT.EDIT.FORM.AGENT_AVAILABILITY.ERROR') }}
-          </span>
-        </label>
-      </div>
-
-      <div class="flex flex-row justify-start w-full gap-2 px-0 py-2">
-        <div class="w-[50%] ltr:text-left rtl:text-right">
-          <Button
-            v-if="provider !== 'saml'"
-            ghost
-            type="button"
-            icon="i-lucide-lock-keyhole"
-            class="!px-2"
-            :label="$t('AGENT_MGMT.EDIT.PASSWORD_RESET.ADMIN_RESET_BUTTON')"
-            @click.prevent="resetPassword"
-          />
+          <p v-if="v$.agentName.$error" class="text-xs text-destructive">
+            {{ $t('AGENT_MGMT.EDIT.FORM.NAME.ERROR') }}
+          </p>
         </div>
-        <div class="w-[50%] flex justify-end items-center gap-2">
-          <Button
-            faded
-            slate
-            type="reset"
-            :label="$t('AGENT_MGMT.EDIT.CANCEL_BUTTON_TEXT')"
-            @click.prevent="emit('close')"
-          />
-          <Button
+
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="edit-agent-role"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('AGENT_MGMT.EDIT.FORM.AGENT_TYPE.LABEL') }}
+          </RelayLabel>
+          <div class="relative">
+            <select
+              id="edit-agent-role"
+              v-model="selectedRoleId"
+              :class="selectClass"
+              @change="v$.selectedRoleId.$touch"
+            >
+              <option v-for="role in roles" :key="role.id" :value="role.id">
+                {{ role.label }}
+              </option>
+            </select>
+            <Icon
+              icon="i-lucide-chevron-down"
+              class="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60 ltr:right-3 rtl:left-3"
+            />
+          </div>
+          <p v-if="v$.selectedRoleId.$error" class="text-xs text-destructive">
+            {{ $t('AGENT_MGMT.EDIT.FORM.AGENT_TYPE.ERROR') }}
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="edit-agent-availability"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('AGENT_MGMT.EDIT.FORM.AGENT_AVAILABILITY.LABEL') }}
+          </RelayLabel>
+          <div class="relative">
+            <select
+              id="edit-agent-availability"
+              v-model="agentAvailability"
+              :class="selectClass"
+              @change="v$.agentAvailability.$touch"
+            >
+              <option
+                v-for="status in availabilityStatuses"
+                :key="status.value"
+                :value="status.value"
+              >
+                {{ status.label }}
+              </option>
+            </select>
+            <Icon
+              icon="i-lucide-chevron-down"
+              class="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60 ltr:right-3 rtl:left-3"
+            />
+          </div>
+          <p
+            v-if="v$.agentAvailability.$error"
+            class="text-xs text-destructive"
+          >
+            {{ $t('AGENT_MGMT.EDIT.FORM.AGENT_AVAILABILITY.ERROR') }}
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="mt-10 flex items-center justify-between gap-3 border-t border-border/40 pt-6"
+      >
+        <div>
+          <RelayButton
+            v-if="provider !== 'saml'"
+            type="button"
+            variant="ghost"
+            class="h-10 rounded-md px-4 text-[13px] font-semibold text-primary hover:bg-primary/10 hover:text-primary"
+            @click="resetPassword"
+          >
+            <Icon icon="i-lucide-lock" class="size-4" />
+            {{ $t('AGENT_MGMT.EDIT.PASSWORD_RESET.ADMIN_RESET_BUTTON') }}
+          </RelayButton>
+        </div>
+        <div class="flex items-center gap-3">
+          <RelayButton
+            type="button"
+            variant="ghost"
+            class="h-10 rounded-md border border-border/40 px-5 text-[14px] font-semibold text-muted-foreground hover:border-transparent hover:bg-muted"
+            @click="emit('close')"
+          >
+            {{ $t('AGENT_MGMT.EDIT.CANCEL_BUTTON_TEXT') }}
+          </RelayButton>
+          <RelayButton
             type="submit"
-            :label="$t('AGENT_MGMT.EDIT.FORM.SUBMIT')"
+            class="h-10 rounded-md px-6 text-[14px] font-semibold shadow-sm"
             :disabled="v$.$invalid || uiFlags.isUpdating"
-            :is-loading="uiFlags.isUpdating"
-          />
+          >
+            {{ $t('AGENT_MGMT.EDIT.FORM.SUBMIT') }}
+          </RelayButton>
         </div>
       </div>
     </form>

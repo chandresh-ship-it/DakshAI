@@ -9,7 +9,7 @@
       </div>
     </div>
     <div
-      class="flex items-center gap-1 self-end pr-2 opacity-100 transition-opacity sm:self-auto sm:opacity-0 sm:group-hover:opacity-100"
+      class="flex items-center gap-1 self-end pr-2 opacity-0 transition-opacity group-hover:opacity-100 sm:self-auto"
     >
       <slot name="actions" />
     </div>
