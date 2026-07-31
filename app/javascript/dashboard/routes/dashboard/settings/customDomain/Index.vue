@@ -40,12 +40,18 @@ const isWhiteLabelEnabled = computed(() =>
 
 const hasSavedDomain = computed(() => !!activeAccount.value?.custom_domain);
 
+const normalizedDomain = computed(() =>
+  (customDomain.value || '').trim().replace(/\.$/, '').toLowerCase()
+);
+
 const domainStatus = computed(
   () => activeAccount.value?.ssl_settings?.cf_status || 'not_configured'
 );
 
 const isDomainUnchanged = computed(
-  () => customDomain.value === activeAccount.value?.custom_domain
+  () =>
+    normalizedDomain.value ===
+    (activeAccount.value?.custom_domain || '').toLowerCase()
 );
 
 const isVerified = computed(
@@ -58,6 +64,10 @@ const isPending = computed(
     ['pending_validation', 'pending_issuance', 'pending_deployment'].includes(
       domainStatus.value
     )
+);
+
+const showDnsInstructions = computed(
+  () => !!normalizedDomain.value && !isVerified.value
 );
 
 const cnameTarget = computed(() => {
@@ -75,8 +85,8 @@ const txtVerificationRecord = computed(
 );
 
 const txtVerificationName = computed(() => {
-  if (!customDomain.value) return '';
-  return `_cf-custom-hostname.${customDomain.value}`;
+  if (!normalizedDomain.value) return '';
+  return `_cf-custom-hostname.${normalizedDomain.value}`;
 });
 
 const serverIp = computed(() => activeAccount.value?.server_ip || '');
@@ -87,14 +97,22 @@ const routingRecordType = computed(() => {
 });
 
 const isRootDomain = computed(() => {
-  if (!customDomain.value) return false;
-  const parts = customDomain.value.split('.');
+  if (!normalizedDomain.value) return false;
+  const parts = normalizedDomain.value.split('.').filter(Boolean);
   return (
     parts.length <= 2 ||
     (parts.length === 3 &&
       ['co', 'com', 'org', 'net', 'edu', 'gov'].includes(parts[1]))
   );
 });
+
+// Option 2 shows once the domain is saved / pending, or as soon as CF returns
+// the TXT token — matching the old branding helper once Verify has run.
+const showTxtOption = computed(
+  () =>
+    showDnsInstructions.value &&
+    (txtVerificationRecord.value || hasSavedDomain.value || isPending.value)
+);
 
 const whiteLabelDescription = computed(() =>
   replaceInstallationName(
@@ -111,29 +129,79 @@ const initFromAccount = () => {
   customDomain.value = activeAccount.value.custom_domain || '';
 };
 
-watch(activeAccount, initFromAccount, { immediate: true });
+watch(
+  () => activeAccount.value?.custom_domain,
+  () => {
+    if (isUpdating.value) return;
+    initFromAccount();
+  },
+  { immediate: true }
+);
+
+const saveErrorMessage = error => {
+  const data = error?.response?.data;
+  return (
+    data?.message ||
+    data?.error ||
+    t('BRANDING_SETTINGS.CUSTOM_DOMAIN.SAVE_ERROR')
+  );
+};
+
+const mergeAccountUpdate = data => {
+  store.commit('accounts/EDIT_ACCOUNT', {
+    ...activeAccount.value,
+    ...data,
+  });
+};
+
+const wait = ms =>
+  new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+
+const refreshSslSettings = async (attempt = 0) => {
+  // Cloudflare hostname create/check runs async; poll until TXT token arrives.
+  if (activeAccount.value?.ssl_settings?.cf_verification_body) return;
+  if (attempt >= 6) return;
+
+  await wait(1500);
+  await store.dispatch('accounts/get', { silent: true });
+  await refreshSslSettings(attempt + 1);
+};
 
 const handleSave = async (isVerifyAction = false) => {
   try {
     const formData = new FormData();
-    formData.append('custom_domain', customDomain.value || '');
+    formData.append('custom_domain', normalizedDomain.value || '');
     if (isVerifyAction) formData.append('force_verify', 'true');
 
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: true });
     const response = await AccountAPI.update(formData);
-    store.commit('accounts/EDIT_ACCOUNT', response.data);
+    mergeAccountUpdate(response.data);
+    customDomain.value =
+      response.data.custom_domain || normalizedDomain.value || '';
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
 
     useAlert(t('BRANDING_SETTINGS.CUSTOM_DOMAIN.SAVE_SUCCESS'));
-  } catch {
+
+    if (isVerifyAction && normalizedDomain.value) {
+      refreshSslSettings();
+    }
+  } catch (error) {
     store.commit('accounts/SET_ACCOUNT_UI_FLAG', { isUpdating: false });
-    useAlert(t('BRANDING_SETTINGS.CUSTOM_DOMAIN.SAVE_ERROR'));
+    useAlert(saveErrorMessage(error));
   }
 };
 
-const handleVerify = () => handleSave(true);
+const handleVerify = async event => {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  await handleSave(true);
+};
 
-const handleRemove = async () => {
+const handleRemove = async event => {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
   customDomain.value = '';
   await handleSave(false);
 };
@@ -159,7 +227,10 @@ const handleRemove = async () => {
           <label class="text-sm font-medium text-foreground">
             {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.LABEL') }}
           </label>
-          <div class="mt-1 flex items-center gap-3">
+          <form
+            class="mt-1 flex items-center gap-3"
+            @submit.prevent="handleVerify"
+          >
             <template v-if="!isVerified">
               <RelayInput
                 v-model="customDomain"
@@ -167,10 +238,11 @@ const handleRemove = async () => {
                 :placeholder="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PLACEHOLDER')"
               />
               <RelayButton
+                type="button"
                 variant="outline"
                 size="lg"
                 class="shrink-0 px-6 font-medium shadow-none"
-                :disabled="isUpdating || !customDomain"
+                :disabled="isUpdating || !normalizedDomain"
                 @click="handleVerify"
               >
                 <span
@@ -181,6 +253,7 @@ const handleRemove = async () => {
               </RelayButton>
               <RelayButton
                 v-if="hasSavedDomain"
+                type="button"
                 variant="outline"
                 size="lg"
                 class="shrink-0 px-6 font-medium shadow-none"
@@ -203,6 +276,7 @@ const handleRemove = async () => {
                 </span>
               </div>
               <RelayButton
+                type="button"
                 variant="outline"
                 size="lg"
                 class="shrink-0 px-6 font-medium shadow-none"
@@ -216,10 +290,10 @@ const handleRemove = async () => {
                 {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.REMOVE') }}
               </RelayButton>
             </template>
-          </div>
+          </form>
 
           <p
-            v-if="!isVerified && customDomain && isPending"
+            v-if="!isVerified && normalizedDomain && isPending"
             class="text-sm font-semibold text-amber-500"
           >
             {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PENDING') }}
@@ -233,7 +307,7 @@ const handleRemove = async () => {
         </div>
 
         <div
-          v-if="customDomain && !isVerified"
+          v-if="showDnsInstructions"
           class="flex flex-col gap-5 rounded-xl border border-border bg-muted/40 p-4"
         >
           <div v-if="!isRootDomain" class="flex flex-col gap-3">
@@ -244,7 +318,7 @@ const handleRemove = async () => {
               {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
             </p>
             <div
-              class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 rounded-lg border border-border bg-background p-3 text-xs"
+              class="grid grid-cols-[80px_1fr] gap-x-4 gap-y-2 rounded-lg border border-border bg-background p-3 text-xs"
             >
               <span class="text-muted-foreground">{{
                 $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
@@ -257,7 +331,7 @@ const handleRemove = async () => {
               }}</span>
               <code
                 class="select-all bg-transparent p-0 font-mono font-semibold text-foreground"
-                >{{ customDomain }}</code
+                >{{ normalizedDomain }}</code
               >
               <span class="text-muted-foreground">{{
                 $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TARGET')
@@ -269,12 +343,9 @@ const handleRemove = async () => {
             </div>
           </div>
 
-          <hr
-            v-if="txtVerificationRecord && !isRootDomain"
-            class="border-border"
-          />
+          <hr v-if="showTxtOption && !isRootDomain" class="border-border" />
 
-          <div v-if="txtVerificationRecord" class="flex flex-col gap-3">
+          <div v-if="showTxtOption" class="flex flex-col gap-3">
             <p class="text-xs font-semibold text-foreground">
               {{
                 isRootDomain
@@ -289,7 +360,8 @@ const handleRemove = async () => {
               class="flex flex-col gap-3 rounded-lg border border-border bg-background p-3"
             >
               <div
-                class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 border-b border-border pb-3 text-xs"
+                class="grid grid-cols-[80px_1fr] gap-x-4 gap-y-2 border-b border-border pb-3 text-xs"
+                :class="{ 'border-b-0 pb-0': !serverIp }"
               >
                 <span class="text-muted-foreground">{{
                   $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
@@ -308,13 +380,21 @@ const handleRemove = async () => {
                   $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VALUE')
                 }}</span>
                 <code
+                  v-if="txtVerificationRecord"
                   class="select-all bg-transparent p-0 font-mono font-semibold text-foreground"
                   >{{ txtVerificationRecord }}</code
                 >
+                <span
+                  v-else
+                  class="inline-flex items-center gap-2 font-medium text-muted-foreground"
+                >
+                  <span class="i-lucide-loader-2 size-3.5 animate-spin" />
+                  {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PENDING') }}
+                </span>
               </div>
               <div
                 v-if="serverIp"
-                class="grid grid-cols-[80px,1fr] gap-x-4 gap-y-2 pt-1 text-xs"
+                class="grid grid-cols-[80px_1fr] gap-x-4 gap-y-2 pt-1 text-xs"
               >
                 <span class="text-muted-foreground">{{
                   $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')

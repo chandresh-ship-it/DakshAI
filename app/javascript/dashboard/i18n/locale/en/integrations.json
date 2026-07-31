@@ -22,6 +22,13 @@
     "LOADING": "Fetching integrations",
     "SEARCH_PLACEHOLDER": "Search integrations...",
     "NO_RESULTS": "No integrations found matching your search",
+    "DETAILS": "Details",
+    "REMOVE": "Remove",
+    "FILTERS": {
+      "ALL": "All Applications",
+      "CONNECTED": "Connected",
+      "DISCONNECTED": "Disconnected"
+    },
     "CAPTAIN": {
       "DISABLED": "Relay AI is not enabled on your account.",
       "CLICK_HERE_TO_CONFIGURE": "Click here to configure",
@@ -228,6 +235,12 @@
       "BUTTON_TEXT": "Delete",
       "API": {
         "SUCCESS_MESSAGE": "Integration deleted successfully"
+      },
+      "CONFIRM": {
+        "TITLE": "Disconnect integration",
+        "MESSAGE": "Are you sure you want to disconnect {integrationName}?",
+        "YES": "Yes, Disconnect",
+        "NO": "Cancel"
       }
     },
     "CONNECT": {

@@ -252,7 +252,6 @@ export default {
       @toggle-account-modal="toggleAccountModal"
       @open-key-shortcut-modal="toggleKeyShortcutModal"
       @close-key-shortcut-modal="closeKeyShortcutModal"
-      @show-create-account-modal="openCreateAccountModal"
       @close-mobile-sidebar="closeMobileSidebar"
     />
 

@@ -13,7 +13,6 @@ import { useWindowSize, useEventListener } from '@vueuse/core';
 import Auth from 'dashboard/api/auth';
 import ChannelLeaf from './ChannelLeaf.vue';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
-import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
 import SidebarChangelogCard from './SidebarChangelogCard.vue';
 import SidebarChangelogButton from './SidebarChangelogButton.vue';
 import SidebarGroup from './SidebarGroup.vue';
@@ -28,7 +27,6 @@ const props = defineProps({
 const emit = defineEmits([
   'closeKeyShortcutModal',
   'openKeyShortcutModal',
-  'showCreateAccountModal',
   'closeMobileSidebar',
 ]);
 
@@ -39,12 +37,9 @@ const { t } = useI18n();
 const isACustomBrandedInstance = useMapGetter(
   'globalConfig/isACustomBrandedInstance'
 );
-const globalConfig = useMapGetter('globalConfig/get');
 const isRTL = useMapGetter('accounts/isRTL');
-const brandInitial = computed(() => {
-  const name = globalConfig.value?.installationName || 'N';
-  return name.charAt(0).toUpperCase();
-});
+const brandName = computed(() => t('SIDEBAR.BRAND_NAME'));
+const brandInitial = computed(() => brandName.value.charAt(0).toUpperCase());
 const brandSubtitle = computed(() => t('SIDEBAR.ENTERPRISE_EDITION'));
 
 const { width: windowWidth } = useWindowSize();
@@ -766,40 +761,30 @@ const logoutMenuItem = computed(() => ({
     :style="isMobile ? undefined : { width: `${sidebarWidth}px` }"
   >
     <!-- Header / brand -->
-    <div
-      class="flex flex-col gap-2 p-2 pb-6"
-      :class="{ 'items-center': isEffectivelyCollapsed }"
-    >
+    <div class="flex flex-col gap-2 p-2 pb-6">
       <div
-        class="flex h-12 w-full min-w-0 items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm transition-[width,height,padding]"
+        class="flex h-12 w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm transition-[width,height,padding]"
         :class="{
           'justify-center p-1.5': isEffectivelyCollapsed,
         }"
       >
-        <template v-if="isEffectivelyCollapsed">
-          <SidebarAccountSwitcher
-            is-collapsed
-            @show-create-account-modal="emit('showCreateAccountModal')"
-          />
-        </template>
-        <template v-else>
-          <div
-            class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground"
-          >
-            {{ brandInitial }}
-          </div>
-          <div class="grid min-w-0 flex-1 text-left text-sm leading-tight">
-            <SidebarAccountSwitcher
-              class="min-w-0"
-              @show-create-account-modal="emit('showCreateAccountModal')"
-            />
-            <span
-              class="truncate px-2 text-xs font-normal text-muted-foreground/60"
-            >
-              {{ brandSubtitle }}
-            </span>
-          </div>
-        </template>
+        <div
+          class="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
+          :title="isEffectivelyCollapsed ? brandName : undefined"
+        >
+          <span class="text-sm font-bold">{{ brandInitial }}</span>
+        </div>
+        <div
+          v-if="!isEffectivelyCollapsed"
+          class="grid min-w-0 flex-1 text-left text-sm leading-tight"
+        >
+          <span class="truncate font-semibold text-sidebar-foreground">
+            {{ brandName }}
+          </span>
+          <span class="truncate text-xs font-normal text-muted-foreground/60">
+            {{ brandSubtitle }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -815,7 +800,7 @@ const logoutMenuItem = computed(() => ({
           v-if="section.label && !isEffectivelyCollapsed"
           class="mb-2 px-2 text-xs font-medium text-muted-foreground"
         >
-          {{ section.label }} {{ 'sss' }}
+          {{ section.label }}
         </p>
         <ul
           class="m-0 flex w-full min-w-0 list-none flex-col gap-3"

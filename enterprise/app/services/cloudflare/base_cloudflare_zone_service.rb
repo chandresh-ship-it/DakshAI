@@ -27,12 +27,15 @@ class Cloudflare::BaseCloudflareZoneService
     # Start with existing settings to preserve verification data if it exists
     ssl_settings = record.ssl_settings || {}
 
-    # Only update verification fields if they exist in the response (during initial setup)
+    # Prefer TXT ownership token for DNS instruction UI (Option 2). Keep HTTP
+    # challenge id for the well-known endpoint used by Cloudflare.
+    if txt_verification.present? && txt_verification['value'].present?
+      ssl_settings['cf_verification_body'] = txt_verification['value']
+    end
+
     if verification_record.present?
       ssl_settings['cf_verification_id'] = verification_record['http_url'].split('/').last
-      ssl_settings['cf_verification_body'] = verification_record['http_body']
-    elsif txt_verification.present? && txt_verification['type'] == 'txt'
-      ssl_settings['cf_verification_body'] = txt_verification['value']
+      ssl_settings['cf_verification_body'] ||= verification_record['http_body']
     end
 
     # Also save ACME SSL verification fields if they exist (for HTTP SSL validation)

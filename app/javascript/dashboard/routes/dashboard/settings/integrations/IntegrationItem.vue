@@ -1,11 +1,11 @@
 <script setup>
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useStoreGetters } from 'dashboard/composables/store';
-import { useI18n } from 'vue-i18n';
 import { frontendURL } from 'dashboard/helper/URLHelper';
 import { useBranding } from 'shared/composables/useBranding';
 
-import { RelayButton, RelayBadge } from 'dashboard/components-next/relay';
+import { RelayButton, RelaySwitch } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   id: {
@@ -26,21 +26,36 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['disconnect']);
+
+const router = useRouter();
 const getters = useStoreGetters();
 const accountId = getters.getCurrentAccountId;
-
-const { t } = useI18n();
 const { replaceInstallationName } = useBranding();
-
-const integrationStatus = computed(() =>
-  props.enabled
-    ? t('INTEGRATION_APPS.STATUS.ENABLED')
-    : t('INTEGRATION_APPS.STATUS.DISABLED')
-);
 
 const actionURL = computed(() =>
   frontendURL(`accounts/${accountId.value}/settings/integrations/${props.id}`)
 );
+
+const goToDetails = () => {
+  router.push(actionURL.value);
+};
+
+const onToggle = value => {
+  if (value && !props.enabled) {
+    goToDetails();
+    return;
+  }
+  if (!value && props.enabled) {
+    emit('disconnect');
+  }
+};
+
+const onRemove = () => {
+  if (props.enabled) {
+    emit('disconnect');
+  }
+};
 </script>
 
 <template>
@@ -53,27 +68,19 @@ const actionURL = computed(() =>
       >
         <img
           :src="`/dashboard/images/integrations/${id}.png`"
-          class="size-7 rounded-md block dark:hidden"
+          class="block size-7 rounded-md dark:hidden"
           :alt="name"
         />
         <img
           :src="`/dashboard/images/integrations/${id}-dark.png`"
-          class="size-7 rounded-md hidden dark:block"
+          class="hidden size-7 rounded-md dark:block"
           :alt="name"
         />
       </div>
       <div class="min-w-0 flex-1 pt-0.5">
-        <div class="flex items-center justify-between gap-2">
-          <h4 class="text-[15px] font-bold leading-none text-foreground">
-            {{ name }}
-          </h4>
-          <RelayBadge
-            :variant="enabled ? 'default' : 'secondary'"
-            class="shrink-0 text-[10px] uppercase"
-          >
-            {{ integrationStatus }}
-          </RelayBadge>
-        </div>
+        <h4 class="text-[15px] font-bold leading-none text-foreground">
+          {{ name }}
+        </h4>
         <p class="mt-2 text-[13px] leading-relaxed text-muted-foreground">
           {{ replaceInstallationName(description) }}
         </p>
@@ -82,15 +89,26 @@ const actionURL = computed(() =>
     <div
       class="mt-6 flex items-center justify-between border-t border-border/40 pt-4"
     >
-      <router-link :to="actionURL">
+      <div class="flex items-center gap-3">
         <RelayButton
           variant="outline"
           size="sm"
           class="h-8 px-4 text-xs font-semibold"
+          @click="goToDetails"
         >
-          {{ $t('INTEGRATION_APPS.CONFIGURE') }}
+          {{ $t('INTEGRATION_SETTINGS.DETAILS') }}
         </RelayButton>
-      </router-link>
+        <RelayButton
+          v-if="enabled"
+          variant="ghost"
+          size="sm"
+          class="h-8 px-4 text-xs font-semibold text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+          @click="onRemove"
+        >
+          {{ $t('INTEGRATION_SETTINGS.REMOVE') }}
+        </RelayButton>
+      </div>
+      <RelaySwitch :model-value="enabled" @update:model-value="onToggle" />
     </div>
   </div>
 </template>
