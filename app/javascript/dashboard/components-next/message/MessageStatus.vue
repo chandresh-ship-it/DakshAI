@@ -56,10 +56,10 @@ const statusIcon = computed(() => {
 
 const statusColor = computed(() => {
   const statusIconMap = {
-    // Inherit bubble meta color so icons stay visible on primary (white) bubbles
+    // Meta sits outside the bubble (muted); read checks use primary like NewRelay
     [MESSAGE_STATUS.SENT]: 'text-current',
     [MESSAGE_STATUS.DELIVERED]: 'text-current',
-    [MESSAGE_STATUS.READ]: 'text-sky-300',
+    [MESSAGE_STATUS.READ]: 'text-primary',
   };
 
   return statusIconMap[status];

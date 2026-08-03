@@ -50,7 +50,7 @@ const handleImageError = () => {
 
 <template>
   <BaseBubble
-    class="overflow-hidden p-3"
+    class="overflow-hidden p-3 !bg-transparent"
     data-bubble-name="image"
     @click="showGallery = true"
   >

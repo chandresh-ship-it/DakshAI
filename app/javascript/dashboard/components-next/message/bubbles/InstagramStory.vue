@@ -44,7 +44,10 @@ const onVideoLoadError = () => {
 </script>
 
 <template>
-  <BaseBubble class="p-3 overflow-hidden" data-bubble-name="ig-story">
+  <BaseBubble
+    class="p-3 overflow-hidden !bg-transparent"
+    data-bubble-name="ig-story"
+  >
     <p v-if="isStoryReply" class="mb-1 text-xs text-n-slate-11">
       {{ t('COMPONENTS.FILE_BUBBLE.INSTAGRAM_STORY_REPLY') }}
     </p>

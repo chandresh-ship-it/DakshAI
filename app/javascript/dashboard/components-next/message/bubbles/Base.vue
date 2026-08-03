@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, useAttrs } from 'vue';
 
 import MessageMeta from '../MessageMeta.vue';
 
@@ -15,33 +15,33 @@ const props = defineProps({
   hideMeta: { type: Boolean, default: false },
 });
 
+defineOptions({ inheritAttrs: false });
+
+const attrs = useAttrs();
 const { variant, orientation, inReplyTo, shouldGroupWithNext } =
   useMessageContext();
 const { t } = useI18n();
 
+// Colored fill lives ONLY on the inner surface (never the meta wrapper).
+// Agent/bot/template text: solid primary + white. Media/email override via attrs.
 const varaintBaseMap = {
-  // Relay: agent/bot on primary need primary-foreground (white), not slate-12
-  [MESSAGE_VARIANTS.AGENT]: 'bg-primary text-primary-foreground',
+  // Non-important so media/email can override with !bg-card / !bg-transparent
+  [MESSAGE_VARIANTS.AGENT]:
+    'bg-primary text-primary-foreground border-transparent',
   [MESSAGE_VARIANTS.PRIVATE]:
     'bg-n-solid-amber text-n-amber-12 [&_.prosemirror-mention-node]:font-semibold',
   [MESSAGE_VARIANTS.USER]:
     'bg-card text-card-foreground border border-border shadow-xs',
   [MESSAGE_VARIANTS.ACTIVITY]: 'bg-n-alpha-1 text-muted-foreground text-sm',
-  [MESSAGE_VARIANTS.BOT]: 'bg-primary text-primary-foreground',
-  [MESSAGE_VARIANTS.TEMPLATE]: 'bg-primary text-primary-foreground',
+  [MESSAGE_VARIANTS.BOT]:
+    'bg-primary text-primary-foreground border-transparent',
+  [MESSAGE_VARIANTS.TEMPLATE]:
+    'bg-primary text-primary-foreground border-transparent',
   [MESSAGE_VARIANTS.ERROR]: 'bg-n-ruby-4 text-n-ruby-12',
   [MESSAGE_VARIANTS.EMAIL]: 'w-full',
   [MESSAGE_VARIANTS.UNSUPPORTED]:
     'bg-n-solid-amber/70 border border-dashed border-n-amber-12 text-n-amber-12',
 };
-
-const isPrimaryBubble = computed(() =>
-  [
-    MESSAGE_VARIANTS.AGENT,
-    MESSAGE_VARIANTS.BOT,
-    MESSAGE_VARIANTS.TEMPLATE,
-  ].includes(variant.value)
-);
 
 const orientationMap = {
   [ORIENTATION.LEFT]:
@@ -61,6 +61,16 @@ const flexOrientationClass = computed(() => {
   return map[orientation.value];
 });
 
+const wrapperAlignClass = computed(() => {
+  const map = {
+    [ORIENTATION.LEFT]: 'items-start',
+    [ORIENTATION.RIGHT]: 'items-end',
+    [ORIENTATION.CENTER]: 'items-center',
+  };
+
+  return map[orientation.value];
+});
+
 const messageClass = computed(() => {
   const classToApply = [varaintBaseMap[variant.value]];
 
@@ -68,6 +78,11 @@ const messageClass = computed(() => {
     classToApply.push(orientationMap[orientation.value]);
   } else {
     classToApply.push('rounded-lg');
+  }
+
+  // Content-sized surface so primary never stretches behind the timestamp row
+  if (variant.value !== MESSAGE_VARIANTS.EMAIL) {
+    classToApply.push('w-fit max-w-full');
   }
 
   return classToApply;
@@ -105,37 +120,36 @@ const replyToPreview = computed(() => {
 
 <template>
   <div
-    class="text-sm min-w-0"
+    class="text-sm min-w-0 flex flex-col gap-1.5 bg-transparent"
     :class="[
-      messageClass,
+      wrapperAlignClass,
       {
         'max-w-lg': variant !== MESSAGE_VARIANTS.EMAIL,
+        'w-full': variant === MESSAGE_VARIANTS.EMAIL,
       },
     ]"
   >
-    <div
-      v-if="inReplyTo"
-      class="p-2 -mx-1 mb-2 rounded-lg cursor-pointer bg-n-alpha-black1"
-      @click="scrollToMessage"
-    >
+    <div v-bind="attrs" :class="messageClass">
       <div
-        v-dompurify-html="replyToPreview"
-        class="prose prose-bubble line-clamp-2"
-      />
+        v-if="inReplyTo"
+        class="p-2 -mx-1 mb-2 rounded-lg cursor-pointer bg-n-alpha-black1"
+        @click="scrollToMessage"
+      >
+        <div
+          v-dompurify-html="replyToPreview"
+          class="prose prose-bubble line-clamp-2"
+        />
+      </div>
+      <slot />
     </div>
-    <slot />
     <MessageMeta
       v-if="shouldShowMeta"
       :class="[
         flexOrientationClass,
-        variant === MESSAGE_VARIANTS.EMAIL ? 'px-3 pb-3' : '',
         variant === MESSAGE_VARIANTS.PRIVATE
           ? 'text-n-amber-12/50'
-          : isPrimaryBubble
-            ? 'text-primary-foreground/70'
-            : 'text-muted-foreground',
+          : 'text-muted-foreground',
       ]"
-      class="mt-2"
     />
   </div>
 </template>

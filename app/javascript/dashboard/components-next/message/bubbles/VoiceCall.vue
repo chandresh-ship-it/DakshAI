@@ -300,7 +300,10 @@ const handleCallBack = async () => {
 </script>
 
 <template>
-  <BaseBubble class="!p-3 !max-w-md min-w-[240px]" hide-meta>
+  <BaseBubble
+    class="!p-3 !max-w-md min-w-[240px] !bg-card !text-card-foreground border border-border shadow-xs"
+    hide-meta
+  >
     <div class="flex flex-col gap-3 w-full">
       <!-- Header row: icon + title + duration/subtext -->
       <div class="flex gap-2.5 items-start">

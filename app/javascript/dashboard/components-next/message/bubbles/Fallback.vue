@@ -19,7 +19,10 @@ const title = computed(
 </script>
 
 <template>
-  <BaseBubble class="p-3" data-bubble-name="fallback">
+  <BaseBubble
+    class="p-3 !bg-card !text-card-foreground border border-border shadow-xs"
+    data-bubble-name="fallback"
+  >
     <FormattedContent v-if="content" :content="content" class="mb-2" />
     <a
       v-if="url"

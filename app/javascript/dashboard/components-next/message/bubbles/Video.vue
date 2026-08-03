@@ -28,7 +28,7 @@ const isReel = computed(() => {
 
 <template>
   <BaseBubble
-    class="overflow-hidden p-3"
+    class="overflow-hidden p-3 !bg-transparent"
     data-bubble-name="video"
     @click="showGallery = true"
   >
