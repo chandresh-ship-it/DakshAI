@@ -1,23 +1,14 @@
 <script setup>
 import { computed, ref, onBeforeMount } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { getInboxIconByType } from 'dashboard/helper/inbox';
 import { dynamicTime, shortTimestamp } from 'shared/helpers/timeHelper';
-import {
-  snoozedReopenTimeToTimestamp,
-  shortenSnoozeTime,
-} from 'dashboard/helper/snoozeHelpers';
-import { NOTIFICATION_TYPES_MAPPING } from 'dashboard/routes/dashboard/inbox/helpers/InboxViewHelpers';
-
-import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
-import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon.vue';
-import SLACardLabel from 'dashboard/components-next/Conversation/ConversationCard/SLACardLabel.vue';
 import InboxContextMenu from 'dashboard/routes/dashboard/inbox/components/InboxContextMenu.vue';
 
 const props = defineProps({
   inboxItem: { type: Object, default: () => ({}) },
-  stateInbox: { type: Object, default: () => ({}) },
+  isActive: { type: Boolean, default: false },
+  isStarred: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -27,40 +18,72 @@ const emit = defineEmits([
   'markNotificationAsRead',
   'markNotificationAsUnRead',
   'deleteNotification',
+  'toggleStar',
 ]);
 
 const { t } = useI18n();
 
 const isContextMenuOpen = ref(false);
 const contextMenuPosition = ref({ x: null, y: null });
-const slaCardLabel = ref(null);
 
-const getMessageClasses = {
-  emphasis: 'text-sm font-medium text-n-slate-11',
-  emphasisUnread: 'text-sm font-medium text-n-slate-12',
-  normal: 'text-sm font-normal text-n-slate-11',
-  normalUnread: 'text-sm text-n-slate-12',
-};
-
-const primaryActor = computed(() => props.inboxItem?.primaryActor);
-const meta = computed(() => primaryActor.value?.meta);
-const assigneeMeta = computed(() => meta.value?.sender);
+const primaryActor = computed(() => props.inboxItem?.primaryActor || {});
+const meta = computed(() => primaryActor.value?.meta || {});
+const sender = computed(() => meta.value?.sender || {});
 const isUnread = computed(() => !props.inboxItem?.readAt);
-const inbox = computed(() => props.stateInbox);
 
-const inboxIcon = computed(() => {
-  const { channelType, medium } = inbox.value;
-  return getInboxIconByType(channelType, medium);
-});
-
-const hasSlaThreshold = computed(() => {
-  return slaCardLabel.value?.hasSlaThreshold && primaryActor.value?.slaPolicyId;
-});
+const contactName = computed(() => sender.value?.name || t('INBOX.NO_CONTENT'));
+const contactThumbnail = computed(() => sender.value?.thumbnail || '');
+const contactStatus = computed(() => sender.value?.availabilityStatus || null);
 
 const lastActivityAt = computed(() => {
   const timestamp = props.inboxItem?.lastActivityAt;
   return timestamp ? shortTimestamp(dynamicTime(timestamp)) : '';
 });
+
+const subject = computed(() => {
+  const attrs = primaryActor.value?.additionalAttributes || {};
+  if (attrs.mailSubject) return attrs.mailSubject;
+  const type = props.inboxItem?.notificationType?.toUpperCase();
+  if (type) return t(`INBOX.TYPES_NEXT.${type}`);
+  return t('INBOX.NO_CONTENT');
+});
+
+const snippet = computed(() => {
+  const body = props.inboxItem?.pushMessageBody || '';
+  return body.replace(/^[^:]+:\s*/, '').trim();
+});
+
+const snippetWithSeparator = computed(() =>
+  snippet.value ? `– ${snippet.value}` : ''
+);
+
+const attachments = computed(() => {
+  const messages = primaryActor.value?.messages || [];
+  const lastMessage = messages[0] || {};
+  const files = lastMessage.attachments || [];
+  return files
+    .map(file => {
+      if (file.fallbackTitle) return file.fallbackTitle;
+      if (file.fileName) return file.fileName;
+      if (file.filename) return file.filename;
+      if (file.extension) return `attachment.${file.extension}`;
+      const url = file.dataUrl || '';
+      if (url.includes('/')) {
+        const part = url.split('/').pop()?.split('?')[0];
+        if (part && part.includes('.')) return part;
+      }
+      return null;
+    })
+    .filter(Boolean)
+    .slice(0, 3);
+});
+
+const attachmentPillClass = name => {
+  const lower = String(name).toLowerCase();
+  if (lower.endsWith('.pdf'))
+    return 'bg-red-100 text-red-600 border-red-200/60';
+  return 'bg-primary/10 text-primary border-primary/20';
+};
 
 const menuItems = computed(() => [
   {
@@ -70,58 +93,6 @@ const menuItems = computed(() => [
   },
   { key: 'delete', icon: 'delete', label: t('INBOX.MENU_ITEM.DELETE') },
 ]);
-
-const messageClasses = computed(() => ({
-  emphasis: isUnread.value
-    ? getMessageClasses.emphasisUnread
-    : getMessageClasses.emphasis,
-  normal: isUnread.value
-    ? getMessageClasses.normalUnread
-    : getMessageClasses.normal,
-}));
-
-const formatPushMessage = message => {
-  if (message.startsWith(': ')) {
-    return message.slice(2);
-  }
-
-  return message.replace(/^([^:]+):/g, (match, name) => {
-    return `<span class="${messageClasses.value.emphasis}">${name}:</span>`;
-  });
-};
-
-const formattedMessage = computed(() => {
-  const messageContent = `<span class="${messageClasses.value.normal}">${formatPushMessage(props.inboxItem?.pushMessageBody || '')}</span>`;
-
-  return isUnread.value
-    ? `<span class="inline-flex flex-shrink-0 w-2 h-2 mb-px rounded-full bg-n-iris-10 ltr:mr-1 rtl:ml-1"></span> ${messageContent}`
-    : messageContent;
-});
-
-const notificationDetails = computed(() => {
-  const type = props.inboxItem?.notificationType?.toUpperCase() || '';
-  const [icon = '', color = 'text-n-blue-11'] =
-    NOTIFICATION_TYPES_MAPPING[type] || [];
-  return { text: type ? t(`INBOX.TYPES_NEXT.${type}`) : '', icon, color };
-});
-
-const snoozedUntilTime = computed(() => {
-  const { snoozedUntil } = props.inboxItem;
-  if (!snoozedUntil) return null;
-  return shortenSnoozeTime(
-    dynamicTime(snoozedReopenTimeToTimestamp(snoozedUntil))
-  );
-});
-
-const hasLastSnoozed = computed(() => props.inboxItem?.meta?.lastSnoozedAt);
-
-const snoozedText = computed(() => {
-  return !hasLastSnoozed.value
-    ? t('INBOX.TYPES_NEXT.SNOOZED_UNTIL', {
-        time: shortTimestamp(snoozedUntilTime.value),
-      })
-    : t('INBOX.TYPES_NEXT.SNOOZED_ENDS');
-});
 
 const contextMenuActions = {
   close: () => {
@@ -154,90 +125,104 @@ onBeforeMount(contextMenuActions.close);
 <template>
   <div
     role="button"
-    class="flex flex-col w-full gap-1 p-3 transition-all duration-300 ease-in-out cursor-pointer"
+    class="flex items-center gap-4 px-5 py-3 text-left transition-colors w-full group border-b border-border/60 hover:shadow-sm cursor-pointer"
+    :class="[
+      isActive
+        ? 'bg-primary/5 hover:bg-primary/5'
+        : isUnread
+          ? 'bg-background hover:bg-muted/20'
+          : 'bg-muted/10 hover:bg-muted/30',
+    ]"
     @contextmenu="contextMenuActions.open($event)"
     @click="emit('click')"
   >
-    <div class="flex items-start gap-2">
-      <Avatar
-        :name="assigneeMeta.name"
-        :src="assigneeMeta.thumbnail"
-        :size="20"
-        rounded-full
-        class="mt-1"
-      />
-      <p v-dompurify-html="formattedMessage" class="mb-0 line-clamp-2" />
-    </div>
-    <div class="flex items-center justify-between h-6 gap-2">
-      <div class="flex items-center flex-1 min-w-0 gap-1">
-        <div
-          v-if="snoozedUntilTime || hasLastSnoozed"
-          class="flex items-center w-full min-w-0 gap-2 ltr:pl-1 rtl:pr-1"
-        >
-          <Icon
-            :icon="
-              !hasLastSnoozed
-                ? 'i-lucide-alarm-clock-plus'
-                : 'i-lucide-alarm-clock-off'
-            "
-            class="flex-shrink-0 size-4"
-            :class="!isUnread ? 'text-n-slate-11' : 'text-n-blue-11'"
-          />
-          <span
-            class="text-xs font-medium truncate"
-            :class="!isUnread ? 'text-n-slate-11' : 'text-n-blue-11'"
-          >
-            {{ snoozedText }}
-          </span>
-        </div>
-        <div
-          v-else-if="notificationDetails.text"
-          class="flex items-center w-full min-w-0 gap-2 ltr:pl-1 rtl:pr-1"
-        >
-          <Icon
-            :icon="notificationDetails.icon"
-            :class="isUnread ? notificationDetails.color : 'text-n-slate-11'"
-            class="flex-shrink-0 size-4"
-          />
-          <span
-            class="text-xs font-medium truncate"
-            :class="isUnread ? notificationDetails.color : 'text-n-slate-11'"
-          >
-            {{ notificationDetails.text }}
-          </span>
-        </div>
-      </div>
-      <div class="flex items-center flex-shrink-0 gap-2">
-        <SLACardLabel
-          v-show="hasSlaThreshold"
-          ref="slaCardLabel"
-          :conversation="primaryActor"
-          class="[&>span]:text-xs"
+    <!-- Star + Avatar -->
+    <div class="flex items-center gap-3 shrink-0">
+      <button
+        type="button"
+        class="size-4 flex items-center justify-center"
+        :aria-label="t('INBOX.VIEWS.STARRED')"
+        @click.stop="emit('toggleStar', inboxItem)"
+      >
+        <span
+          class="size-4 hover:text-amber-400 cursor-pointer"
           :class="
-            !isUnread && '[&>span]:text-n-slate-11 [&>div>svg]:fill-n-slate-11'
+            isStarred
+              ? 'i-ri-star-fill text-amber-400 opacity-100'
+              : 'i-lucide-star text-muted-foreground opacity-30 group-hover:opacity-100 transition-opacity'
           "
         />
-        <div v-if="hasSlaThreshold" class="w-px h-3 rounded-sm bg-n-slate-4" />
-        <CardPriorityIcon
-          v-if="primaryActor?.priority"
-          :priority="primaryActor?.priority"
-          class="[&>svg]:size-4"
+      </button>
+      <div class="relative shrink-0 ml-1">
+        <Avatar
+          :name="contactName"
+          :src="contactThumbnail"
+          :size="32"
+          rounded-full
         />
         <div
-          v-if="inboxIcon"
-          v-tooltip.left="inbox?.name"
-          class="flex items-center justify-center flex-shrink-0 rounded-full bg-n-alpha-2 size-4"
-        >
-          <Icon
-            :icon="inboxIcon"
-            class="flex-shrink-0 text-n-slate-11 size-2.5"
-          />
-        </div>
-        <span class="text-xs text-n-slate-10">
-          {{ lastActivityAt }}
-        </span>
+          v-if="isUnread"
+          class="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary border border-card"
+        />
       </div>
     </div>
+
+    <!-- Sender -->
+    <div class="w-40 xl:w-48 shrink-0 flex items-center gap-1.5 truncate">
+      <span
+        class="text-[14px] text-foreground truncate"
+        :class="isUnread ? 'font-bold' : 'font-medium'"
+      >
+        {{ contactName }}
+      </span>
+      <span
+        v-if="contactStatus === 'online'"
+        class="size-1.5 rounded-full bg-primary shrink-0"
+      />
+    </div>
+
+    <!-- Subject & Snippet -->
+    <div class="flex-1 min-w-0 flex items-center gap-2 truncate">
+      <span
+        class="text-[14px] text-foreground truncate"
+        :class="isUnread ? 'font-bold' : 'font-medium'"
+      >
+        {{ subject }}
+      </span>
+      <span
+        v-if="snippetWithSeparator"
+        class="text-[14px] text-muted-foreground truncate hidden sm:inline"
+      >
+        {{ snippetWithSeparator }}
+      </span>
+    </div>
+
+    <!-- Attachments -->
+    <div
+      v-if="attachments.length"
+      class="flex gap-1.5 shrink-0 ml-2 hidden lg:flex"
+    >
+      <span
+        v-for="name in attachments"
+        :key="name"
+        class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md border bg-background/50"
+        :class="attachmentPillClass(name)"
+      >
+        <span class="i-lucide-paperclip size-2.5" />
+        {{ name }}
+      </span>
+    </div>
+
+    <!-- Time -->
+    <div class="w-20 shrink-0 text-right">
+      <span
+        class="text-[12px] text-muted-foreground"
+        :class="isUnread ? 'font-bold text-foreground' : ''"
+      >
+        {{ lastActivityAt }}
+      </span>
+    </div>
+
     <InboxContextMenu
       v-if="isContextMenuOpen"
       :context-menu-position="contextMenuPosition"

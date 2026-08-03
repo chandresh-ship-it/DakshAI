@@ -1,7 +1,7 @@
 {
   "INBOX": {
     "LIST": {
-      "TITLE": "My Inbox",
+      "TITLE": "Inbox",
       "DISPLAY_DROPDOWN": "Display",
       "LOADING": "Fetching notifications",
       "404": "There are no active notifications in this group.",
@@ -10,7 +10,44 @@
       "NO_MESSAGES_AVAILABLE": "Oops! Not able to fetch messages",
       "SNOOZED_UNTIL": "Snoozed until",
       "SNOOZED_UNTIL_TOMORROW": "Snoozed until tomorrow",
-      "SNOOZED_UNTIL_NEXT_WEEK": "Snoozed until next week"
+      "SNOOZED_UNTIL_NEXT_WEEK": "Snoozed until next week",
+      "CONVERSATIONS": "Conversations",
+      "LOAD_MORE": "Load more conversations",
+      "FILTER_TOOLTIP": "Filter conversations",
+      "MORE_OPTIONS": "More options"
+    },
+    "VIEWS": {
+      "TITLE": "Views",
+      "ALL": "All Messages",
+      "UNREAD": "Unread",
+      "ASSIGNED": "Assigned to Me",
+      "STARRED": "Starred",
+      "SNOOZED": "Snoozed",
+      "ARCHIVED": "Archived",
+      "SPAM": "Spam"
+    },
+    "CHANNELS": {
+      "TITLE": "Channels",
+      "ADD": "Add channel",
+      "WHATSAPP": "WhatsApp",
+      "EMAIL": "Email",
+      "INSTAGRAM": "Instagram",
+      "LIVE_CHAT": "Live Chat",
+      "SMS": "SMS"
+    },
+    "TABS": {
+      "NEW": "New",
+      "IN_PROGRESS": "In Progress",
+      "ON_HOLD": "On Hold",
+      "CLOSED": "Closed"
+    },
+    "FILTER_MENU": {
+      "ASSIGNED_TO_ME": "Assigned to me",
+      "UNASSIGNED": "Unassigned",
+      "OLDEST_FIRST": "Oldest first",
+      "ARCHIVED": "Archived",
+      "SNOOZED": "Snoozed",
+      "SPAM": "Spam"
     },
     "ACTION_HEADER": {
       "SNOOZE": "Snooze notification",

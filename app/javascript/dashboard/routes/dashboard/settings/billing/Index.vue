@@ -223,26 +223,6 @@ const getPlanPriceForProvider = (plan, provider) => {
   return plan.price_per_agent;
 };
 
-const planPriceLabel = planName => {
-  const plan = planCatalog.value.find(p => p.name === planName);
-  if (!plan) {
-    return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
-  }
-  const provider =
-    lockedPaymentProvider.value ||
-    resolveProviderForCountry(effectiveBillingCountry.value);
-  const price = getPlanPriceForProvider(plan, provider);
-
-  if (price == null || price === '') {
-    return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
-  }
-  if (Number(price) === 0) {
-    return t('BILLING_SETTINGS.SELECT_PLAN.FREE_PLAN');
-  }
-  const currency = currencyForProvider(provider);
-  return `${formatMoneyAmount(price, currency)}/${t('BILLING_SETTINGS.PLAN_CHECKOUT.PER_MONTH')}`;
-};
-
 const agencyPriceInput = ref(0);
 const selectedCurrency = ref('usd');
 
@@ -726,6 +706,35 @@ const fetchTransactions = async () => {
   }
 };
 
+const planPriceLabel = selectablePlanName => {
+  const plan = planCatalog.value.find(p => p.name === selectablePlanName);
+  if (!plan) {
+    return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
+  }
+  const provider =
+    lockedPaymentProvider.value ||
+    resolveProviderForCountry(effectiveBillingCountry.value);
+  const price = getPlanPriceForProvider(plan, provider);
+
+  if (price == null || price === '') {
+    return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
+  }
+  if (Number(price) === 0) {
+    return t('BILLING_SETTINGS.SELECT_PLAN.FREE_PLAN');
+  }
+  const currency = currencyForProvider(provider);
+  return `${formatMoneyAmount(price, currency)}/${t('BILLING_SETTINGS.PLAN_CHECKOUT.PER_MONTH')}`;
+};
+
+const formatPlanPrice = planKey => {
+  const label = planPriceLabel(planKey);
+  if (label.includes('/')) {
+    const parts = label.split('/');
+    return { amount: parts[0], suffix: `/${parts[1]}` };
+  }
+  return { amount: label, suffix: '' };
+};
+
 onMounted(() => {
   handleBillingPageLogic();
   fetchTransactions();
@@ -918,24 +927,43 @@ onMounted(() => {
               <div
                 v-for="plan in selectablePlans"
                 :key="plan"
-                class="flex flex-col justify-between gap-4 rounded-xl border border-border/60 bg-background p-5 shadow-xs"
+                class="flex flex-col justify-between gap-6 rounded-xl border border-border/60 bg-card p-6 shadow-xs relative"
               >
-                <div>
-                  <div
-                    class="text-center text-xl font-medium tracking-tight text-foreground"
-                  >
-                    {{
-                      $t('BILLING_SETTINGS.SELECT_PLAN.PLAN_LABEL', { plan })
-                    }}
+                <div class="flex items-start justify-between w-full">
+                  <div>
+                    <h3 class="text-sm font-semibold text-foreground">
+                      {{
+                        $t('BILLING_SETTINGS.SELECT_PLAN.PLAN_LABEL', { plan })
+                      }}
+                    </h3>
+                    <div class="mt-2 flex items-baseline gap-1 text-foreground">
+                      <span class="text-[27px] font-semibold tracking-tight">
+                        {{ formatPlanPrice(plan).amount }}
+                      </span>
+                      <span class="text-xs text-muted-foreground">
+                        {{ formatPlanPrice(plan).suffix }}
+                      </span>
+                    </div>
                   </div>
-                  <div class="mt-1 text-center text-sm text-muted-foreground">
-                    {{ planPriceLabel(plan) }}
+                  <div class="flex flex-col gap-1 items-end">
+                    <span
+                      v-if="plan === 'Standard'"
+                      class="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary"
+                    >
+                      {{ $t('BILLING_SETTINGS.SELECT_PLAN.POPULAR') }}
+                    </span>
+                    <span
+                      v-if="plan === planName"
+                      class="rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
+                    >
+                      {{ $t('BILLING_SETTINGS.SELECT_PLAN.CURRENT') }}
+                    </span>
                   </div>
                 </div>
-                <ButtonV4
-                  solid
-                  blue
-                  class="w-full justify-center"
+                <RelayButton
+                  :variant="plan === 'Standard' ? 'default' : 'outline'"
+                  class="w-full justify-center h-10 text-sm font-medium"
+                  :class="plan === 'Standard' ? 'shadow-sm' : ''"
                   :is-loading="plan !== 'Enterprise' && isCheckingOut"
                   @click="handlePlanSelection(plan)"
                 >
@@ -944,7 +972,7 @@ onMounted(() => {
                       ? $t('BILLING_SETTINGS.SELECT_PLAN.CONTACT_SALES_BUTTON')
                       : $t('BILLING_SETTINGS.SELECT_PLAN.SELECT_BUTTON')
                   }}
-                </ButtonV4>
+                </RelayButton>
               </div>
             </div>
           </BillingCard>

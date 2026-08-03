@@ -545,7 +545,9 @@
       "CANCEL_SUBSCRIPTION_ERROR": "Failed to cancel subscription. Please try again.",
       "COUPON_LABEL": "Coupon code",
       "COUPON_PLACEHOLDER": "Enter coupon code (optional)",
-      "COUPON_HINT": "If you have a promo code, enter it before selecting a plan."
+      "COUPON_HINT": "If you have a promo code, enter it before selecting a plan.",
+      "POPULAR": "Popular",
+      "CURRENT": "Current"
     },
     "PLAN_CHECKOUT": {
       "TITLE": "Checkout {plan} plan",
