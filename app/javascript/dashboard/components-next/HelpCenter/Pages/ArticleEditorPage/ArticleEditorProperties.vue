@@ -6,7 +6,7 @@ import { debounce } from '@chatwoot/utils';
 import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import TagInput from 'dashboard/components-next/taginput/TagInput.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   article: {
@@ -52,30 +52,32 @@ onMounted(() => {
 
 <template>
   <div
-    class="flex flex-col absolute w-[25rem] bg-n-alpha-3 outline outline-1 outline-n-container backdrop-blur-[100px] shadow-lg gap-6 rounded-xl p-6"
+    class="absolute flex w-[25rem] flex-col gap-1.5 rounded-xl border border-border/80 bg-background p-1.5 shadow-lg"
   >
-    <div class="flex items-center justify-between">
-      <h3>
+    <div
+      class="mb-1 flex items-center justify-between border-b border-border/40 px-2.5 py-2"
+    >
+      <h3 class="text-[13.5px] font-medium text-foreground">
         {{
           t(
             'HELP_CENTER.EDIT_ARTICLE_PAGE.ARTICLE_PROPERTIES.ARTICLE_PROPERTIES'
           )
         }}
       </h3>
-      <Button
-        icon="i-lucide-x"
-        size="sm"
+      <RelayButton
         variant="ghost"
-        color="slate"
-        class="hover:text-n-slate-11"
+        size="icon"
+        class="size-7 text-muted-foreground hover:text-foreground"
         @click="emit('close')"
-      />
+      >
+        <span class="i-lucide-x size-3.5" aria-hidden="true" />
+      </RelayButton>
     </div>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2 px-2.5 pb-2">
       <div>
-        <div class="flex justify-between w-full gap-4 py-2">
+        <div class="flex w-full justify-between gap-4 py-2">
           <label
-            class="text-sm font-medium whitespace-nowrap min-w-[6.25rem] text-n-slate-12"
+            class="min-w-[6.25rem] whitespace-nowrap text-[13px] font-medium text-foreground"
           >
             {{
               t(
@@ -113,7 +115,7 @@ onMounted(() => {
         </div>
         <div class="flex justify-between w-full gap-3 py-2">
           <label
-            class="text-sm font-medium whitespace-nowrap min-w-[7.5rem] text-n-slate-12"
+            class="min-w-[7.5rem] whitespace-nowrap text-[13px] font-medium text-foreground"
           >
             {{
               t('HELP_CENTER.EDIT_ARTICLE_PAGE.ARTICLE_PROPERTIES.META_TAGS')

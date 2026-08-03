@@ -5,7 +5,7 @@ import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 import { getInboxIconByType } from 'dashboard/helper/inbox';
 
 import CardLayout from 'dashboard/components-next/CardLayout.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayBadge } from 'dashboard/components-next/relay';
 import LiveChatCampaignDetails from './LiveChatCampaignDetails.vue';
 import SMSCampaignDetails from './SMSCampaignDetails.vue';
 
@@ -57,10 +57,9 @@ const isActive = computed(() =>
   props.isLiveChatType ? props.isEnabled : props.status !== STATUS_COMPLETED
 );
 
-const statusTextColor = computed(() => ({
-  'text-n-teal-11': isActive.value,
-  'text-n-slate-12': !isActive.value,
-}));
+const badgeVariant = computed(() => {
+  return isActive.value ? 'default' : 'secondary';
+});
 
 const campaignStatus = computed(() => {
   if (props.isLiveChatType) {
@@ -83,32 +82,30 @@ const campaignStatus = computed(() => {
 const inboxName = computed(() => props.inbox?.name || '');
 
 const inboxIcon = computed(() => {
+  if (!props.inbox) return '';
   const { medium, channel_type: type } = props.inbox;
   return getInboxIconByType(type, medium);
 });
 </script>
 
 <template>
-  <CardLayout layout="row">
+  <CardLayout layout="row" class="hover:border-border/80 transition-colors">
     <div class="flex flex-col items-start justify-between flex-1 min-w-0 gap-2">
-      <div class="flex justify-between gap-3 w-fit">
-        <span
-          class="text-base font-medium capitalize text-n-slate-12 line-clamp-1"
-        >
+      <div class="flex items-center gap-3 w-fit">
+        <span class="text-base font-semibold text-foreground line-clamp-1">
           {{ title }}
         </span>
-        <span
-          class="text-xs font-medium inline-flex items-center h-6 px-2 py-0.5 rounded-md bg-n-alpha-2"
-          :class="statusTextColor"
-        >
+        <RelayBadge :variant="badgeVariant" class="rounded px-2 font-medium">
           {{ campaignStatus }}
-        </span>
+        </RelayBadge>
       </div>
       <div
         v-dompurify-html="formatMessage(message, false, false, false)"
-        class="text-sm text-n-slate-11 line-clamp-1 [&>p]:mb-0 h-6"
+        class="text-[13.5px] text-muted-foreground line-clamp-1 [&>p]:mb-0 h-6"
       />
-      <div class="flex items-center w-full h-6 gap-2 overflow-hidden">
+      <div
+        class="flex items-center w-full h-6 gap-2 overflow-hidden text-xs text-muted-foreground"
+      >
         <LiveChatCampaignDetails
           v-if="isLiveChatType"
           :sender="sender"
@@ -124,21 +121,25 @@ const inboxIcon = computed(() => {
       </div>
     </div>
     <div class="flex items-center justify-end w-20 gap-2">
-      <Button
+      <RelayButton
         v-if="isLiveChatType"
-        variant="faded"
+        variant="outline"
         size="sm"
-        color="slate"
-        icon="i-lucide-sliders-vertical"
+        class="h-8 w-8 p-0"
+        :title="t('CAMPAIGN.LIVE_CHAT.EDIT.TITLE')"
         @click="emit('edit')"
-      />
-      <Button
-        variant="faded"
-        color="ruby"
+      >
+        <span class="i-lucide-sliders-horizontal size-4" />
+      </RelayButton>
+      <RelayButton
+        variant="outline"
         size="sm"
-        icon="i-lucide-trash"
+        class="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+        :title="t('CAMPAIGN.CONFIRM_DELETE.CONFIRM')"
         @click="emit('delete')"
-      />
+      >
+        <span class="i-lucide-trash size-4" />
+      </RelayButton>
     </div>
   </CardLayout>
 </template>

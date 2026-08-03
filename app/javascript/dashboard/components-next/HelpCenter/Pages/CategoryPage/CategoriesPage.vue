@@ -124,7 +124,7 @@ const reorderCategories = async reorderedGroup => {
     <template #content>
       <div
         v-if="isLoading"
-        class="flex items-center justify-center py-10 text-n-slate-11"
+        class="flex items-center justify-center py-10 text-muted-foreground"
       >
         <Spinner />
       </div>
@@ -137,7 +137,6 @@ const reorderCategories = async reorderedGroup => {
       />
       <CategoryEmptyState
         v-else
-        class="pt-14"
         :title="t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_EMPTY_STATE.TITLE')"
         :subtitle="t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_EMPTY_STATE.SUBTITLE')"
       />

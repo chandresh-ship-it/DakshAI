@@ -113,14 +113,16 @@ const handleCreateArticle = event => {
       />
     </template>
     <template #content>
-      <div class="flex flex-col gap-3 pl-4 mb-3 rtl:pr-3 rtl:pl-0">
+      <div class="mx-auto flex w-full max-w-4xl flex-col pb-20">
         <TextArea
           v-model="articleTitle"
           auto-height
-          min-height="4rem"
-          custom-text-area-class="!text-[32px] !leading-[48px] !font-medium !tracking-[0.2px]"
-          custom-text-area-wrapper-class="border-0 !bg-transparent dark:!bg-transparent !py-0 !px-0"
-          placeholder="Title"
+          min-height="3rem"
+          custom-text-area-class="!text-4xl !leading-tight !font-semibold !text-foreground placeholder:!text-muted-foreground"
+          custom-text-area-wrapper-class="mb-6 border-0 !bg-transparent dark:!bg-transparent !py-0 !px-0"
+          :placeholder="
+            t('HELP_CENTER.EDIT_ARTICLE_PAGE.EDIT_ARTICLE.TITLE_PLACEHOLDER')
+          "
           :autofocus="isNewArticle"
           @blur="handleCreateArticle"
         />
@@ -130,23 +132,24 @@ const handleCreateArticle = event => {
           @set-author="setAuthorId"
           @set-category="setCategoryId"
         />
+        <FullEditor
+          v-model="articleContent"
+          class="h-fit min-h-[150px] py-0 text-[15px] leading-relaxed"
+          :placeholder="
+            t('HELP_CENTER.EDIT_ARTICLE_PAGE.EDIT_ARTICLE.EDITOR_PLACEHOLDER')
+          "
+          :enabled-menu-options="ARTICLE_EDITOR_MENU_OPTIONS"
+          :autofocus="!isNewArticle"
+        />
       </div>
-      <FullEditor
-        v-model="articleContent"
-        class="py-0 pb-10 pl-4 rtl:pr-4 rtl:pl-0 h-fit"
-        :placeholder="
-          t('HELP_CENTER.EDIT_ARTICLE_PAGE.EDIT_ARTICLE.EDITOR_PLACEHOLDER')
-        "
-        :enabled-menu-options="ARTICLE_EDITOR_MENU_OPTIONS"
-        :autofocus="!isNewArticle"
-      />
     </template>
   </HelpCenterLayout>
 </template>
 
 <style lang="scss" scoped>
 :deep(.ProseMirror .empty-node::before) {
-  @apply text-n-slate-10 text-base;
+  @apply text-[15px] text-muted-foreground;
+  opacity: 0.6;
 }
 
 :deep(.ProseMirror-menubar-wrapper) {
@@ -165,7 +168,7 @@ const handleCreateArticle = event => {
   }
 
   .ProseMirror-menubar {
-    @apply rounded-lg !px-3 !py-1.5 z-50 bg-n-background items-center gap-4 ml-0 mb-0 shadow-md outline outline-1 outline-n-weak;
+    @apply z-50 mb-0 ml-0 items-center gap-4 rounded-lg bg-background !px-3 !py-1.5 shadow-md outline outline-1 outline-border;
     display: flex;
     top: var(--selection-top, auto) !important;
     left: var(--selection-left, 0) !important;
@@ -173,15 +176,15 @@ const handleCreateArticle = event => {
     position: absolute !important;
 
     .ProseMirror-menuitem {
-      @apply ltr:mr-0 rtl:ml-0 size-4 flex items-center;
+      @apply flex size-4 items-center ltr:mr-0 rtl:ml-0;
 
       .ProseMirror-icon {
-        @apply p-0.5 flex-shrink-0 ltr:mr-2 rtl:ml-2;
+        @apply shrink-0 p-0.5 ltr:mr-2 rtl:ml-2;
       }
     }
 
     .ProseMirror-menu-active {
-      @apply bg-n-slate-3;
+      @apply bg-muted;
     }
   }
 }

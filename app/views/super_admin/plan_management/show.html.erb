@@ -35,20 +35,33 @@
             </div>
             <p class="mt-2 text-xs text-slate-400">Pricing is negotiated per account - see Enterprise Inquiries and Enterprise Contracts.</p>
           <% else %>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Price per agent ($/month)</label>
-              <%= number_field_tag "plans[#{plan['name']}][price_per_agent]", plan['price_per_agent'] || 0, min: 0, step: 0.01, class: 'block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-violet-600 focus:ring-violet-600' %>
-            </div>
-            <div class="mt-3">
-              <label class="block text-sm font-medium text-slate-700 mb-1">Stripe Price ID</label>
-              <%= text_field_tag "plans[#{plan['name']}][stripe_price_id]", plan['price_ids']&.first, placeholder: 'price_...', class: 'block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-violet-600 focus:ring-violet-600' %>
-              <p class="mt-1 text-xs text-slate-400">Recurring monthly Price from your Stripe Dashboard. Required before non-India users can buy this plan.</p>
-            </div>
-            <div class="mt-3">
-              <label class="block text-sm font-medium text-slate-700 mb-1">Razorpay Plan ID</label>
-              <%= text_field_tag "plans[#{plan['name']}][razorpay_plan_id]", plan['razorpay_plan_ids']&.first || plan['razorpay_plan_id'], placeholder: 'plan_...', class: 'block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-violet-600 focus:ring-violet-600' %>
-              <p class="mt-1 text-xs text-slate-400">Monthly Plan from your Razorpay Dashboard. Required before India users can buy this plan.</p>
-            </div>
+            <%
+              gateway_prices = plan['gateway_prices'] || {}
+            %>
+            <% Enterprise::Billing::PaymentGatewayRegistry.definitions.each do |gateway_id, definition| %>
+              <%
+                gw_price = gateway_prices.dig(gateway_id, 'amount') || plan['price_per_agent'] || 0
+                gw_plan_id = gateway_prices.dig(gateway_id, 'price_id') || gateway_prices.dig(gateway_id, 'plan_id')
+                if gateway_id == 'stripe'
+                  gw_plan_id ||= plan['price_ids']&.first
+                elsif gateway_id == 'razorpay'
+                  gw_plan_id ||= plan['razorpay_plan_ids']&.first || plan['razorpay_plan_id']
+                end
+              %>
+              <div class="mt-4 border-t border-slate-100 pt-4">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2"><%= definition[:label] %></p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Price (<%= definition[:currency].upcase %>/mo)</label>
+                    <%= number_field_tag "plans[#{plan['name']}][gateway_prices][#{gateway_id}][amount]", gw_price, min: 0, step: 0.01, class: 'block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-violet-600 focus:ring-violet-600' %>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Plan/Price ID</label>
+                    <%= text_field_tag "plans[#{plan['name']}][gateway_prices][#{gateway_id}][plan_id]", gw_plan_id, placeholder: 'id_...', class: 'block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-violet-600 focus:ring-violet-600' %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
           <% end %>
         </div>
       <% end %>

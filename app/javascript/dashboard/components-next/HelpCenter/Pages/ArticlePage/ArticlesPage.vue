@@ -17,7 +17,7 @@ import CategoryHeaderControls from 'dashboard/components-next/HelpCenter/Pages/C
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ArticleEmptyState from 'dashboard/components-next/HelpCenter/EmptyState/Article/ArticleEmptyState.vue';
 import BulkSelectBar from 'dashboard/components-next/captain/assistant/BulkSelectBar.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import BulkTranslateDialog from './BulkTranslateDialog.vue';
@@ -131,6 +131,7 @@ const articlesCount = computed(() => {
   const countMap = {
     '': meta.articlesCount,
     mine: meta.mineArticlesCount,
+    published: meta.publishedCount,
     draft: meta.draftArticlesCount,
     archived: meta.archivedArticlesCount,
   };
@@ -291,129 +292,137 @@ watch(
     @update:current-page="handlePageChange"
   >
     <template #header-actions>
-      <div class="flex items-end justify-between">
-        <ArticleHeaderControls
-          v-if="showArticleHeaderControls"
-          :categories="categories"
-          :allowed-locales="allowedLocales"
-          :meta="meta"
-          @tab-change="handleTabChange"
-          @locale-change="handleLocaleAction"
-          @category-change="handleCategoryAction"
-          @new-article="navigateToNewArticlePage"
-        />
-        <CategoryHeaderControls
-          v-else-if="showCategoryHeaderControls"
-          :categories="categories"
-          :allowed-locales="allowedLocales"
-          :has-selected-category="isCategoryArticles"
-          @new-article="navigateToNewArticlePage"
-        />
-      </div>
+      <ArticleHeaderControls
+        v-if="showArticleHeaderControls"
+        :categories="categories"
+        :allowed-locales="allowedLocales"
+        :meta="meta"
+        @tab-change="handleTabChange"
+        @locale-change="handleLocaleAction"
+        @category-change="handleCategoryAction"
+        @new-article="navigateToNewArticlePage"
+      />
+      <CategoryHeaderControls
+        v-else-if="showCategoryHeaderControls"
+        :categories="categories"
+        :allowed-locales="allowedLocales"
+        :has-selected-category="isCategoryArticles"
+        @new-article="navigateToNewArticlePage"
+      />
     </template>
     <template #content>
       <div
         v-if="isLoading"
-        class="flex items-center justify-center py-10 text-n-slate-11"
+        class="flex items-center justify-center py-10 text-muted-foreground"
       >
         <Spinner />
       </div>
       <template v-else-if="!hasNoArticles">
         <div
           v-if="selectedArticleIds.size > 0"
-          class="sticky top-0 z-[5] bg-gradient-to-b from-n-surface-1 from-90% to-transparent pt-1 pb-2"
+          class="sticky top-0 z-[5] bg-gradient-to-b from-background from-90% to-transparent pb-2 pt-1"
         >
           <BulkSelectBar
             v-model="selectedArticleIds"
             :all-items="allItems"
             :select-all-label="selectAllLabel"
             :selected-count-label="selectedCountLabel"
-            class="py-2 ltr:!pr-3 rtl:!pl-3 justify-between"
+            class="mb-3 justify-between rounded-xl border-primary/30 bg-primary/5 p-3 shadow-md ltr:!pr-3 rtl:!pl-3"
           >
             <template #secondaryActions>
-              <Button
-                sm
-                ghost
-                slate
-                :label="
-                  t('HELP_CENTER.ARTICLES_PAGE.BULK_TRANSLATE.CLEAR_SELECTION')
-                "
-                class="!px-1.5"
+              <RelayButton
+                variant="ghost"
+                size="sm"
+                class="h-8 text-[12.5px] text-muted-foreground"
                 @click="clearSelection"
-              />
+              >
+                {{
+                  t('HELP_CENTER.ARTICLES_PAGE.BULK_TRANSLATE.CLEAR_SELECTION')
+                }}
+              </RelayButton>
             </template>
             <template #actions>
-              <div class="flex items-center gap-2 ml-auto">
-                <Button
-                  sm
-                  faded
-                  slate
-                  icon="i-lucide-check"
-                  :label="t('HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.PUBLISH')"
-                  class="[&>span:nth-child(2)]:hidden sm:[&>span:nth-child(2)]:inline w-fit"
+              <div class="ml-auto flex flex-wrap items-center gap-2">
+                <RelayButton
+                  variant="outline"
+                  size="sm"
+                  class="h-8 text-[12.5px]"
                   @click="bulkUpdateStatus('published')"
-                />
-                <Button
-                  sm
-                  faded
-                  slate
-                  icon="i-lucide-pencil-line"
-                  :label="t('HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.DRAFT')"
-                  class="[&>span:nth-child(2)]:hidden sm:[&>span:nth-child(2)]:inline w-fit"
+                >
+                  <span class="i-lucide-check size-3.5 text-primary" />
+                  <span class="hidden sm:inline">{{
+                    t('HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.PUBLISH')
+                  }}</span>
+                </RelayButton>
+                <RelayButton
+                  variant="outline"
+                  size="sm"
+                  class="h-8 text-[12.5px]"
                   @click="bulkUpdateStatus('draft')"
-                />
-                <Button
-                  sm
-                  faded
-                  slate
-                  icon="i-lucide-archive-restore"
-                  :label="t('HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.ARCHIVE')"
-                  class="[&>span:nth-child(2)]:hidden sm:[&>span:nth-child(2)]:inline w-fit"
+                >
+                  <span class="i-lucide-pencil-line size-3.5 opacity-70" />
+                  <span class="hidden sm:inline">{{
+                    t('HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.DRAFT')
+                  }}</span>
+                </RelayButton>
+                <RelayButton
+                  variant="outline"
+                  size="sm"
+                  class="h-8 text-[12.5px]"
                   @click="bulkUpdateStatus('archived')"
-                />
-                <div v-if="categoryMenuItems.length" class="relative group">
+                >
+                  <span class="i-lucide-archive size-3.5 opacity-70" />
+                  <span class="hidden sm:inline">{{
+                    t('HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.ARCHIVE')
+                  }}</span>
+                </RelayButton>
+                <div v-if="categoryMenuItems.length" class="relative">
                   <OnClickOutside @trigger="isCategoryMenuOpen = false">
-                    <Button
-                      sm
-                      faded
-                      slate
-                      icon="i-lucide-folder-input"
-                      :label="
+                    <RelayButton
+                      variant="outline"
+                      size="sm"
+                      class="h-8 text-[12.5px]"
+                      @click="isCategoryMenuOpen = !isCategoryMenuOpen"
+                    >
+                      <span class="i-lucide-folder-input size-3.5 opacity-70" />
+                      <span class="hidden sm:inline">{{
                         t(
                           'HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.MOVE_TO_CATEGORY'
                         )
-                      "
-                      class="[&>span:nth-child(2)]:hidden sm:[&>span:nth-child(2)]:inline w-fit"
-                      @click="isCategoryMenuOpen = !isCategoryMenuOpen"
-                    />
+                      }}</span>
+                    </RelayButton>
                     <DropdownMenu
                       v-if="isCategoryMenuOpen"
                       :menu-items="categoryMenuItems"
                       show-search
-                      class="right-0 w-48 mt-2 top-full max-h-60"
+                      class="right-0 top-full mt-2 max-h-60 w-48"
                       @action="handleBulkUpdateCategory"
                     />
                   </OnClickOutside>
                 </div>
-                <Button
+                <RelayButton
                   v-if="isTranslationAvailable"
-                  sm
-                  faded
-                  slate
-                  icon="i-lucide-languages"
-                  :label="t('HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.TRANSLATE')"
-                  class="[&>span:nth-child(2)]:hidden sm:[&>span:nth-child(2)]:inline w-fit"
+                  variant="outline"
+                  size="sm"
+                  class="h-8 text-[12.5px]"
                   @click="openTranslateDialog"
-                />
-                <Button
-                  sm
-                  faded
-                  ruby
-                  icon="i-lucide-trash"
-                  :label="t('HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.DELETE')"
-                  class="!px-1.5 [&>span:nth-child(2)]:hidden"
+                >
+                  <span class="i-lucide-languages size-3.5 opacity-70" />
+                  <span class="hidden sm:inline">{{
+                    t('HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.TRANSLATE')
+                  }}</span>
+                </RelayButton>
+                <RelayButton
+                  variant="destructive"
+                  size="sm"
+                  class="h-8 text-[12.5px]"
                   @click="confirmBulkDelete"
-                />
+                >
+                  <span class="i-lucide-trash-2 size-3.5" />
+                  <span class="hidden sm:inline">{{
+                    t('HELP_CENTER.ARTICLES_PAGE.BULK_ACTIONS.DELETE')
+                  }}</span>
+                </RelayButton>
               </div>
             </template>
           </BulkSelectBar>
@@ -429,7 +438,6 @@ watch(
       </template>
       <ArticleEmptyState
         v-else
-        class="pt-14"
         :title="getEmptyStateTitle"
         :subtitle="getEmptyStateSubtitle"
         :show-button="hasNoArticlesInPortal"

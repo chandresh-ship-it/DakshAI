@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { OnClickOutside } from '@vueuse/components';
 import { useStoreGetters } from 'dashboard/composables/store.js';
 
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Breadcrumb from 'dashboard/components-next/breadcrumb/Breadcrumb.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import CategoryDialog from 'dashboard/components-next/HelpCenter/Pages/CategoryPage/CategoryDialog.vue';
@@ -126,29 +126,32 @@ const handleBreadcrumbClick = () => {
 </script>
 
 <template>
-  <div class="flex items-center justify-between w-full">
-    <div v-if="!hasSelectedCategory" class="flex items-center gap-4">
-      <div class="relative group">
+  <div class="flex w-full items-center justify-between gap-4">
+    <div v-if="!hasSelectedCategory" class="flex flex-wrap items-center gap-2">
+      <div class="relative">
         <OnClickOutside @trigger="isLocaleMenuOpen = false">
-          <Button
-            :label="activeLocaleName"
-            size="sm"
-            trailing-icon
-            icon="i-lucide-chevron-down"
-            color="slate"
+          <RelayButton
+            variant="ghost"
+            class="h-9 border border-border px-3 text-[13px] hover:border-transparent"
             @click="isLocaleMenuOpen = !isLocaleMenuOpen"
-          />
+          >
+            {{ activeLocaleName }}
+            <span
+              class="i-lucide-chevron-down size-4 opacity-50"
+              aria-hidden="true"
+            />
+          </RelayButton>
           <DropdownMenu
             v-if="isLocaleMenuOpen"
             :menu-items="localeMenuItems"
             show-search
-            class="left-0 w-40 mt-2 xl:right-0 top-full max-h-60"
+            class="left-0 top-full mt-2 max-h-60 w-40 xl:right-0"
             @action="handleLocaleAction"
           />
         </OnClickOutside>
       </div>
-      <div class="w-px h-3.5 rounded my-auto bg-n-weak" />
-      <span class="min-w-0 text-sm font-medium truncate text-n-slate-12">
+      <div class="hidden h-4 w-px bg-border sm:block" />
+      <span class="min-w-0 truncate text-[13px] text-muted-foreground">
         {{
           t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_HEADER.CATEGORIES_COUNT', {
             n: categoriesCount,
@@ -161,14 +164,15 @@ const handleBreadcrumbClick = () => {
       :items="breadcrumbItems"
       @click="handleBreadcrumbClick"
     />
-    <div v-if="!hasSelectedCategory" class="relative">
+    <div v-if="!hasSelectedCategory" class="relative shrink-0">
       <OnClickOutside @trigger="isCreateCategoryDialogOpen = false">
-        <Button
-          :label="t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_HEADER.NEW_CATEGORY')"
-          icon="i-lucide-plus"
-          size="sm"
+        <RelayButton
+          class="h-9 shadow-xs"
           @click="isCreateCategoryDialogOpen = !isCreateCategoryDialogOpen"
-        />
+        >
+          <span class="i-lucide-plus size-4" aria-hidden="true" />
+          {{ t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_HEADER.NEW_CATEGORY') }}
+        </RelayButton>
         <CategoryDialog
           v-if="isCreateCategoryDialogOpen"
           mode="create"
@@ -179,14 +183,16 @@ const handleBreadcrumbClick = () => {
         />
       </OnClickOutside>
     </div>
-    <div v-else class="relative flex items-center gap-2">
+    <div v-else class="relative flex shrink-0 items-center gap-2">
       <OnClickOutside @trigger="isEditCategoryDialogOpen = false">
-        <Button
-          :label="t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_HEADER.EDIT_CATEGORY')"
-          color="slate"
+        <RelayButton
+          variant="outline"
           size="sm"
+          class="h-8"
           @click="isEditCategoryDialogOpen = !isEditCategoryDialogOpen"
-        />
+        >
+          {{ t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_HEADER.EDIT_CATEGORY') }}
+        </RelayButton>
         <CategoryDialog
           v-if="isEditCategoryDialogOpen"
           :selected-category="selectedCategory"
@@ -196,12 +202,10 @@ const handleBreadcrumbClick = () => {
           @close="isEditCategoryDialogOpen = false"
         />
       </OnClickOutside>
-      <Button
-        :label="t('HELP_CENTER.ARTICLES_PAGE.ARTICLES_HEADER.NEW_ARTICLE')"
-        icon="i-lucide-plus"
-        size="sm"
-        @click="emit('newArticle')"
-      />
+      <RelayButton class="h-9 shadow-xs" @click="emit('newArticle')">
+        <span class="i-lucide-plus size-4" aria-hidden="true" />
+        {{ t('HELP_CENTER.ARTICLES_PAGE.ARTICLES_HEADER.NEW_ARTICLE') }}
+      </RelayButton>
     </div>
   </div>
 </template>

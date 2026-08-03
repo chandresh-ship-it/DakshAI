@@ -1,21 +1,26 @@
 # frozen_string_literal: true
 
 # =============================================================================
-# Local/dev only — enable ALL account features + put the account on Enterprise
+# ONE-OFF DEV UTILITY — enable ALL account features + put account on Enterprise
 # =============================================================================
 #
-# Usage:
+# Purpose:
+#   Quickly unlocks every feature flag and Captain/LLM toggle for a single
+#   local account so you can test Enterprise-gated UI without a real billing
+#   subscription. NOT for use in production or staging.
+#
+# Usage (run from repo root):
 #   eval "$(rbenv init -)"
 #   bundle exec rails runner bin/enable_all_features_account.rb
 #
 # Or inline:
 #   bundle exec rails runner "load Rails.root.join('bin/enable_all_features_account.rb')"
 #
-# Resolve target account:
+# Target account:
 #   - Default: Account id 2  (most common local seed account)
-#   - Variant: User id 2 → first AccountUser membership (see USER_ID below)
+#   - Variant: resolve via User id 2 → first AccountUser membership (see USER_ID below)
 #
-# Related: bin/enable_features.rb (installation-wide + ALL accounts)
+# Related: bin/enable_features.rb  (installation-wide + ALL accounts)
 #
 # DO NOT run against production.
 # =============================================================================

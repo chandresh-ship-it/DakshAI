@@ -5,7 +5,7 @@ import { useRoute } from 'vue-router';
 import { OnClickOutside } from '@vueuse/components';
 import { useMapGetter } from 'dashboard/composables/store';
 
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import ArticleEditorProperties from 'dashboard/components-next/HelpCenter/Pages/ArticleEditorPage/ArticleEditorProperties.vue';
@@ -169,86 +169,81 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex items-center gap-4">
-    <div class="relative flex items-center gap-2">
+  <div class="mb-6 flex flex-wrap items-center gap-3">
+    <div class="relative">
       <OnClickOutside @trigger="openAgentsList = false">
-        <Button
+        <RelayButton
           variant="ghost"
-          color="slate"
-          class="!px-0 font-normal hover:!bg-transparent"
-          text-variant="info"
+          class="h-8 border border-transparent px-2 text-[13px] font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
           @click="openAgentsList = !openAgentsList"
         >
           <Avatar
             :name="authorName"
             :src="authorThumbnailSrc"
-            :size="20"
+            :size="16"
             rounded-full
           />
-          <span class="text-sm text-n-slate-12 hover:text-n-slate-11">
-            {{ authorName || '-' }}
-          </span>
-        </Button>
+          <span>{{ authorName || '-' }}</span>
+        </RelayButton>
         <DropdownMenu
           v-if="openAgentsList && hasAgentList"
           :menu-items="agentList"
           show-search
-          class="z-[100] w-48 mt-2 ltr:left-0 rtl:right-0 top-full max-h-60"
-          @action="handleArticleAction"
-        />
-      </OnClickOutside>
-    </div>
-    <div class="w-px h-3 bg-n-weak" />
-    <div class="relative">
-      <OnClickOutside @trigger="openCategoryList = false">
-        <Button
-          :label="
-            selectedCategory?.name ||
-            t('HELP_CENTER.EDIT_ARTICLE_PAGE.EDIT_ARTICLE.UNCATEGORIZED')
-          "
-          :icon="!selectedCategory?.icon ? 'i-lucide-shapes' : ''"
-          variant="ghost"
-          color="slate"
-          class="!px-2 font-normal hover:!bg-transparent"
-          @click="openCategoryList = !openCategoryList"
-        >
-          <span
-            v-if="selectedCategory"
-            class="text-sm text-n-slate-12 hover:text-n-slate-11"
-          >
-            {{
-              `${selectedCategory.icon || ''} ${selectedCategory.name || t('HELP_CENTER.EDIT_ARTICLE_PAGE.EDIT_ARTICLE.UNCATEGORIZED')}`
-            }}
-          </span>
-        </Button>
-        <DropdownMenu
-          v-if="openCategoryList && hasCategoryMenuItems"
-          :menu-items="categoryList"
-          show-search
-          class="w-48 mt-2 z-[100] left-0 top-full max-h-60"
+          class="z-[100] mt-2 max-h-60 w-48 top-full ltr:left-0 rtl:right-0"
           @action="handleArticleAction"
         />
       </OnClickOutside>
     </div>
 
-    <div class="w-px h-3 bg-n-weak" />
+    <div class="h-4 w-px bg-border/60" />
+
+    <div class="relative">
+      <OnClickOutside @trigger="openCategoryList = false">
+        <RelayButton
+          variant="ghost"
+          class="h-8 border border-transparent px-2 text-[13px] font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
+          @click="openCategoryList = !openCategoryList"
+        >
+          <span
+            v-if="!selectedCategory?.icon"
+            class="i-lucide-layout-grid size-3.5"
+            aria-hidden="true"
+          />
+          <span>
+            {{
+              selectedCategory
+                ? `${selectedCategory.icon || ''} ${selectedCategory.name || t('HELP_CENTER.EDIT_ARTICLE_PAGE.EDIT_ARTICLE.UNCATEGORIZED')}`
+                : t('HELP_CENTER.EDIT_ARTICLE_PAGE.EDIT_ARTICLE.UNCATEGORIZED')
+            }}
+          </span>
+        </RelayButton>
+        <DropdownMenu
+          v-if="openCategoryList && hasCategoryMenuItems"
+          :menu-items="categoryList"
+          show-search
+          class="left-0 top-full z-[100] mt-2 max-h-60 w-48"
+          @action="handleArticleAction"
+        />
+      </OnClickOutside>
+    </div>
+
+    <div class="h-4 w-px bg-border/60" />
+
     <div class="relative">
       <OnClickOutside @trigger="openProperties = false">
-        <Button
-          :label="
-            t('HELP_CENTER.EDIT_ARTICLE_PAGE.EDIT_ARTICLE.MORE_PROPERTIES')
-          "
-          icon="i-lucide-plus"
+        <RelayButton
           variant="ghost"
-          color="slate"
           :disabled="isNewArticle"
-          class="!px-2 font-normal hover:!bg-transparent hover:!text-n-slate-11"
+          class="h-8 border border-transparent px-2 text-[13px] font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
           @click="openProperties = !openProperties"
-        />
+        >
+          <span class="i-lucide-plus size-3.5" aria-hidden="true" />
+          {{ t('HELP_CENTER.EDIT_ARTICLE_PAGE.EDIT_ARTICLE.MORE_PROPERTIES') }}
+        </RelayButton>
         <ArticleEditorProperties
           v-if="openProperties"
           :article="article"
-          class="right-0 z-[100] mt-2 xl:left-0 top-full"
+          class="right-0 top-full z-[100] mt-2 xl:left-0"
           @save-article="updateMeta"
           @close="openProperties = false"
         />

@@ -214,17 +214,33 @@ const selectablePlans = computed(() => {
   return DEFAULT_PLAN_NAMES;
 });
 
+const getPlanPriceForProvider = (plan, provider) => {
+  if (!plan) return null;
+  const p = provider || 'stripe';
+  if (plan.gateway_prices && plan.gateway_prices[p]) {
+    return plan.gateway_prices[p].amount;
+  }
+  return plan.price_per_agent;
+};
+
 const planPriceLabel = planName => {
   const plan = planCatalog.value.find(p => p.name === planName);
-  if (!plan || plan.price_per_agent == null || plan.price_per_agent === '') {
+  if (!plan) {
     return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
   }
-  if (Number(plan.price_per_agent) === 0) {
+  const provider =
+    lockedPaymentProvider.value ||
+    resolveProviderForCountry(effectiveBillingCountry.value);
+  const price = getPlanPriceForProvider(plan, provider);
+
+  if (price == null || price === '') {
+    return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
+  }
+  if (Number(price) === 0) {
     return t('BILLING_SETTINGS.SELECT_PLAN.FREE_PLAN');
   }
-  return t('BILLING_SETTINGS.SELECT_PLAN.PRICE_PER_MONTH', {
-    price: plan.price_per_agent,
-  });
+  const currency = currencyForProvider(provider);
+  return `${formatMoneyAmount(price, currency)}/${t('BILLING_SETTINGS.PLAN_CHECKOUT.PER_MONTH')}`;
 };
 
 const agencyPriceInput = ref(0);
@@ -411,16 +427,17 @@ const currencyForProvider = provider => {
 
 const currentPlanPriceLabel = computed(() => {
   const plan = planCatalog.value.find(p => p.name === planName.value);
-  if (!plan || plan.price_per_agent == null || plan.price_per_agent === '') {
+  const provider = accountSubscription.value?.payment_provider;
+  const price = getPlanPriceForProvider(plan, provider);
+
+  if (!plan || price == null || price === '') {
     return t('BILLING_SETTINGS.SELECT_PLAN.CUSTOM_PRICING');
   }
-  if (Number(plan.price_per_agent) === 0) {
+  if (Number(price) === 0) {
     return t('BILLING_SETTINGS.SELECT_PLAN.FREE_PLAN');
   }
-  const currency = currencyForProvider(
-    accountSubscription.value?.payment_provider
-  );
-  return `${formatMoneyAmount(plan.price_per_agent, currency)}/${t('BILLING_SETTINGS.PLAN_CHECKOUT.PER_MONTH')}`;
+  const currency = currencyForProvider(provider);
+  return `${formatMoneyAmount(price, currency)}/${t('BILLING_SETTINGS.PLAN_CHECKOUT.PER_MONTH')}`;
 });
 
 const lastPayment = computed(() => transactions.value[0] || null);

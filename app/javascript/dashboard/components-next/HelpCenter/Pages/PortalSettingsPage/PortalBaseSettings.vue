@@ -10,8 +10,11 @@ import { useVuelidate } from '@vuelidate/core';
 import { required, minLength, helpers, url } from '@vuelidate/validators';
 import { isValidSlug } from 'shared/helpers/Validators';
 
-import Button from 'dashboard/components-next/button/Button.vue';
-import Input from 'dashboard/components-next/input/Input.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import ColorPicker from 'dashboard/components-next/colorpicker/ColorPicker.vue';
@@ -199,118 +202,127 @@ const handleAvatarDelete = () => {
 </script>
 
 <template>
-  <div class="flex flex-col w-full gap-4">
-    <div class="flex flex-col w-full gap-2">
-      <label class="mb-0.5 text-sm font-medium text-gray-900 dark:text-gray-50">
-        {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.AVATAR.LABEL') }}
-      </label>
-      <Avatar
-        :src="state.logoUrl"
-        :name="state.name"
-        :size="72"
-        allow-upload
-        icon-name="i-lucide-building-2"
-        @upload="handleAvatarUpload"
-        @delete="handleAvatarDelete"
-      />
+  <div
+    class="relative flex flex-col gap-6 overflow-hidden rounded-2xl border border-border/40 bg-card p-6 shadow-sm"
+  >
+    <h2 class="flex items-center gap-2 text-base font-medium text-foreground">
+      <span class="i-lucide-monitor size-4 text-primary" aria-hidden="true" />
+      {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.SECTION_IDENTITY') }}
+    </h2>
+
+    <div class="flex flex-col gap-8 md:flex-row">
+      <div class="flex shrink-0 flex-col gap-3">
+        <RelayLabel>
+          {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.AVATAR.LABEL') }}
+        </RelayLabel>
+        <Avatar
+          :src="state.logoUrl"
+          :name="state.name"
+          :size="96"
+          allow-upload
+          icon-name="i-lucide-layout-grid"
+          @upload="handleAvatarUpload"
+          @delete="handleAvatarDelete"
+        />
+        <span
+          class="max-w-[96px] text-center text-[11px] leading-tight text-muted-foreground"
+        >
+          {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.AVATAR.HINT') }}
+        </span>
+      </div>
+
+      <div class="flex-1 space-y-5">
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel class="text-[13.5px]">
+            {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.NAME.LABEL') }}
+          </RelayLabel>
+          <RelayInput
+            v-model="state.name"
+            :placeholder="
+              t('HELP_CENTER.PORTAL_SETTINGS.FORM.NAME.PLACEHOLDER')
+            "
+            class-name="h-10 text-[14px]"
+            @blur="v$.name.$touch()"
+          />
+          <p v-if="nameError" class="text-[12px] text-destructive">
+            {{ nameError }}
+          </p>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel class="text-[13.5px]">
+            {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.HEADER_TEXT.LABEL') }}
+          </RelayLabel>
+          <RelayInput
+            v-model="state.headerText"
+            :placeholder="
+              t('HELP_CENTER.PORTAL_SETTINGS.FORM.HEADER_TEXT.PLACEHOLDER')
+            "
+            class-name="h-10 text-[14px]"
+          />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel class="text-[13.5px]">
+            {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.PAGE_TITLE.LABEL') }}
+          </RelayLabel>
+          <RelayInput
+            v-model="state.pageTitle"
+            :placeholder="
+              t('HELP_CENTER.PORTAL_SETTINGS.FORM.PAGE_TITLE.PLACEHOLDER')
+            "
+            class-name="h-10 text-[14px]"
+          />
+        </div>
+      </div>
     </div>
-    <div class="flex flex-col w-full gap-4">
-      <div
-        class="grid items-start justify-between w-full gap-2 grid-cols-[200px,1fr]"
-      >
-        <label
-          class="text-sm font-medium whitespace-nowrap py-2.5 text-n-slate-12"
-        >
-          {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.NAME.LABEL') }}
-        </label>
-        <Input
-          v-model="state.name"
-          :placeholder="t('HELP_CENTER.PORTAL_SETTINGS.FORM.NAME.PLACEHOLDER')"
-          :message-type="nameError ? 'error' : 'info'"
-          :message="nameError"
-          custom-input-class="!bg-transparent dark:!bg-transparent"
-          @input="v$.name.$touch()"
-          @blur="v$.name.$touch()"
+
+    <div class="space-y-5 border-t border-border/40 pt-6">
+      <h2 class="flex items-center gap-2 text-base font-medium text-foreground">
+        <span
+          class="i-lucide-layout-grid size-4 text-primary"
+          aria-hidden="true"
         />
-      </div>
-      <div
-        class="grid items-start justify-between w-full gap-2 grid-cols-[200px,1fr]"
-      >
-        <label
-          class="text-sm font-medium whitespace-nowrap py-2.5 text-n-slate-12"
-        >
-          {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.HEADER_TEXT.LABEL') }}
-        </label>
-        <Input
-          v-model="state.headerText"
-          :placeholder="
-            t('HELP_CENTER.PORTAL_SETTINGS.FORM.HEADER_TEXT.PLACEHOLDER')
-          "
-          custom-input-class="!bg-transparent dark:!bg-transparent"
-        />
-      </div>
-      <div
-        class="grid items-start justify-between w-full gap-2 grid-cols-[200px,1fr]"
-      >
-        <label
-          class="text-sm font-medium whitespace-nowrap text-n-slate-12 py-2.5"
-        >
-          {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.PAGE_TITLE.LABEL') }}
-        </label>
-        <Input
-          v-model="state.pageTitle"
-          :placeholder="
-            t('HELP_CENTER.PORTAL_SETTINGS.FORM.PAGE_TITLE.PLACEHOLDER')
-          "
-          custom-input-class="!bg-transparent dark:!bg-transparent"
-        />
-      </div>
-      <div
-        class="grid items-start justify-between w-full gap-2 grid-cols-[200px,1fr]"
-      >
-        <label
-          class="text-sm font-medium whitespace-nowrap text-n-slate-12 py-2.5"
-        >
+        {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.SECTION_ROUTING') }}
+      </h2>
+
+      <div class="flex flex-col gap-1.5">
+        <RelayLabel class="text-[13.5px]">
           {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.HOME_PAGE_LINK.LABEL') }}
-        </label>
-        <Input
+        </RelayLabel>
+        <RelayInput
           v-model="state.homePageLink"
           :placeholder="
             t('HELP_CENTER.PORTAL_SETTINGS.FORM.HOME_PAGE_LINK.PLACEHOLDER')
           "
-          :message-type="homePageLinkError ? 'error' : 'info'"
-          :message="homePageLinkError"
-          custom-input-class="!bg-transparent dark:!bg-transparent"
-          @input="v$.homePageLink.$touch()"
+          class-name="h-10 text-[14px]"
           @blur="v$.homePageLink.$touch()"
         />
+        <p v-if="homePageLinkError" class="text-[12px] text-destructive">
+          {{ homePageLinkError }}
+        </p>
       </div>
-      <div
-        class="grid items-start justify-between w-full gap-2 grid-cols-[200px,1fr]"
-      >
-        <label
-          class="text-sm font-medium whitespace-nowrap py-2.5 text-n-slate-12"
-        >
+
+      <div class="flex flex-col gap-1.5">
+        <RelayLabel class="text-[13.5px]">
           {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.SLUG.LABEL') }}
-        </label>
-        <Input
+        </RelayLabel>
+        <RelayInput
           v-model="state.slug"
           :placeholder="t('HELP_CENTER.PORTAL_SETTINGS.FORM.SLUG.PLACEHOLDER')"
-          :message-type="slugError ? 'error' : 'info'"
-          :message="slugError || buildPortalURL(state.slug)"
-          custom-input-class="!bg-transparent dark:!bg-transparent"
-          @input="v$.slug.$touch()"
+          class-name="h-10 text-[14px]"
           @blur="v$.slug.$touch()"
         />
-      </div>
-      <div
-        class="grid items-start justify-between w-full gap-2 grid-cols-[200px,1fr]"
-      >
-        <label
-          class="text-sm font-medium whitespace-nowrap py-2.5 text-n-slate-12"
+        <p
+          class="truncate px-0.5 text-[12px]"
+          :class="slugError ? 'text-destructive' : 'text-muted-foreground'"
         >
+          {{ slugError || buildPortalURL(state.slug) }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <RelayLabel class="text-[13.5px]">
           {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.LIVE_CHAT_WIDGET.LABEL') }}
-        </label>
+        </RelayLabel>
         <ComboBox
           v-model="state.liveChatWidgetInboxId"
           :options="liveChatWidgets"
@@ -320,29 +332,25 @@ const handleAvatarDelete = () => {
           :message="
             t('HELP_CENTER.PORTAL_SETTINGS.FORM.LIVE_CHAT_WIDGET.HELP_TEXT')
           "
-          class="[&>div>button:not(.focused)]:!outline-n-weak"
         />
       </div>
-      <div
-        class="grid items-start justify-between w-full gap-2 grid-cols-[200px,1fr]"
-      >
-        <label
-          class="text-sm font-medium whitespace-nowrap py-2.5 text-n-slate-12"
-        >
+
+      <div class="flex flex-col gap-1.5">
+        <RelayLabel class="text-[13.5px]">
           {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.BRAND_COLOR.LABEL') }}
-        </label>
-        <div class="w-[432px] justify-start">
-          <ColorPicker v-model="state.widgetColor" />
-        </div>
+        </RelayLabel>
+        <ColorPicker v-model="state.widgetColor" />
       </div>
-      <div class="flex justify-end w-full gap-2">
-        <Button
-          :label="t('HELP_CENTER.PORTAL_SETTINGS.FORM.SAVE_CHANGES')"
-          :disabled="!hasChanges || isUpdatingPortal || v$.$invalid"
-          :is-loading="isUpdatingPortal"
-          @click="handleUpdatePortal"
-        />
-      </div>
+    </div>
+
+    <div class="flex justify-end border-t border-border/40 pt-5">
+      <RelayButton
+        class="h-9 shadow-xs"
+        :disabled="!hasChanges || isUpdatingPortal || v$.$invalid"
+        @click="handleUpdatePortal"
+      >
+        {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.SAVE_CHANGES') }}
+      </RelayButton>
     </div>
   </div>
 </template>

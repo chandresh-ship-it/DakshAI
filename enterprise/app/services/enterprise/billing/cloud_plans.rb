@@ -32,7 +32,18 @@ class Enterprise::Billing::CloudPlans
     end
 
     def public_catalog
-      all.map { |plan| plan.slice('name', 'price_per_agent', 'enabled') }
+      all.map { |plan| plan.slice('name', 'price_per_agent', 'enabled', 'gateway_prices') }
+    end
+
+    def price_for(name, provider)
+      plan = find(name)
+      return 0.0 if plan.blank?
+
+      if plan['gateway_prices'].present? && plan['gateway_prices'][provider.to_s].present?
+        plan['gateway_prices'][provider.to_s]['amount'].to_f
+      else
+        plan['price_per_agent'].to_f
+      end
     end
   end
 end

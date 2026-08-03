@@ -4,9 +4,8 @@ import { useI18n } from 'vue-i18n';
 import { useToggle } from '@vueuse/core';
 import { buildLocaleMenuItems } from 'dashboard/helper/portalHelper';
 
-import CardLayout from 'dashboard/components-next/CardLayout.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   locale: {
@@ -76,66 +75,70 @@ const handleAction = ({ action, value }) => {
 </script>
 
 <template>
-  <CardLayout>
-    <div class="flex justify-between gap-2">
-      <div class="flex items-center justify-start gap-2">
-        <span class="text-sm font-medium text-n-slate-12 line-clamp-1">
-          {{ localeLabel }}
+  <div
+    class="group flex flex-col justify-between gap-3 rounded-xl border border-border/40 bg-card p-4 transition-all hover:border-border hover:shadow-sm sm:flex-row sm:items-center"
+  >
+    <div class="flex items-center gap-3">
+      <span class="text-[14px] font-medium text-foreground">
+        {{ localeLabel }}
+      </span>
+      <span
+        v-if="isDefault"
+        class="rounded bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+      >
+        {{ $t('HELP_CENTER.LOCALES_PAGE.LOCALE_CARD.DEFAULT') }}
+      </span>
+      <span
+        v-else-if="isDraft"
+        class="rounded bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+      >
+        {{ $t('HELP_CENTER.LOCALES_PAGE.LOCALE_CARD.DRAFT') }}
+      </span>
+    </div>
+
+    <div class="mt-0 flex items-center gap-4 sm:mt-0">
+      <div
+        class="hidden items-center gap-2 text-[13px] text-muted-foreground sm:flex"
+      >
+        <span>
+          {{
+            $t(
+              'HELP_CENTER.LOCALES_PAGE.LOCALE_CARD.ARTICLES_COUNT',
+              articleCount
+            )
+          }}
         </span>
-        <span
-          v-if="isDefault"
-          class="bg-n-alpha-2 h-6 inline-flex items-center justify-center rounded-md text-xs border-px border-transparent text-n-blue-11 px-2 py-0.5"
-        >
-          {{ $t('HELP_CENTER.LOCALES_PAGE.LOCALE_CARD.DEFAULT') }}
-        </span>
-        <span
-          v-else-if="isDraft"
-          class="bg-n-alpha-2 h-6 inline-flex items-center justify-center rounded-md text-xs border-px border-transparent text-n-slate-11 px-2 py-0.5"
-        >
-          {{ $t('HELP_CENTER.LOCALES_PAGE.LOCALE_CARD.DRAFT') }}
+        <span class="text-border">|</span>
+        <span>
+          {{
+            $t(
+              'HELP_CENTER.LOCALES_PAGE.LOCALE_CARD.CATEGORIES_COUNT',
+              categoryCount
+            )
+          }}
         </span>
       </div>
-      <div class="flex items-center justify-end gap-4">
-        <div class="flex items-center gap-4">
-          <span class="text-sm text-n-slate-11 whitespace-nowrap">
-            {{
-              $t(
-                'HELP_CENTER.LOCALES_PAGE.LOCALE_CARD.ARTICLES_COUNT',
-                articleCount
-              )
-            }}
-          </span>
-          <div class="w-px h-3 bg-n-weak" />
-          <span class="text-sm text-n-slate-11 whitespace-nowrap">
-            {{
-              $t(
-                'HELP_CENTER.LOCALES_PAGE.LOCALE_CARD.CATEGORIES_COUNT',
-                categoryCount
-              )
-            }}
-          </span>
-        </div>
-        <div
-          v-if="localeMenuItems.length"
-          v-on-clickaway="() => toggleDropdown(false)"
-          class="relative group"
+      <div
+        v-if="localeMenuItems.length"
+        v-on-clickaway="() => toggleDropdown(false)"
+        class="relative"
+      >
+        <RelayButton
+          variant="ghost"
+          size="icon"
+          class="size-8 border border-border text-muted-foreground hover:border-transparent hover:bg-muted hover:text-foreground"
+          @click="toggleDropdown()"
         >
-          <Button
-            icon="i-lucide-ellipsis-vertical"
-            color="slate"
-            size="xs"
-            class="rounded-md group-hover:bg-n-alpha-2"
-            @click="toggleDropdown()"
-          />
+          <span class="i-lucide-ellipsis-vertical size-4" />
+        </RelayButton>
 
-          <DropdownMenu
-            v-if="showDropdownMenu"
-            :menu-items="localeMenuItems"
-            class="ltr:right-0 rtl:left-0 mt-1 top-full z-60 min-w-[150px]"
-            @action="handleAction"
-          />
-        </div>
+        <DropdownMenu
+          v-if="showDropdownMenu"
+          :menu-items="localeMenuItems"
+          class="top-full z-60 mt-1 min-w-[150px] ltr:right-0 rtl:left-0"
+          @action="handleAction"
+        />
       </div>
     </div>
-  </CardLayout>
+  </div>
 </template>

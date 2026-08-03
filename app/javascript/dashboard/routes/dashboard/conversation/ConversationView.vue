@@ -1,7 +1,9 @@
-<script>
-import { mapGetters } from 'vuex';
+<script setup>
+import { computed, watch, onMounted } from 'vue';
+import { useRoute, onBeforeRouteLeave } from 'vue-router';
+import { useStore } from 'vuex';
 import { useUISettings } from 'dashboard/composables/useUISettings';
-import { useAccount } from 'dashboard/composables/useAccount';
+import { useMapGetter } from 'dashboard/composables/store';
 import ChatList from '../../../components/ChatList.vue';
 import ConversationBox from '../../../components/widgets/conversation/ConversationBox.vue';
 import wootConstants from 'dashboard/constants/globals';
@@ -11,191 +13,156 @@ import { emitter } from 'shared/helpers/mitt';
 import SidepanelSwitch from 'dashboard/components-next/Conversation/SidepanelSwitch.vue';
 import ConversationSidebar from 'dashboard/components/widgets/conversation/ConversationSidebar.vue';
 
-export default {
-  components: {
-    ChatList,
-    ConversationBox,
-    CmdBarConversationSnooze,
-    SidepanelSwitch,
-    ConversationSidebar,
+const props = defineProps({
+  inboxId: {
+    type: [String, Number],
+    default: 0,
   },
-  beforeRouteLeave(to, from, next) {
-    // Clear selected state if navigating away from a conversation to a route without a conversationId to prevent stale data issues
-    // and resolves timing issues during navigation with conversation view and other screens
-    if (this.conversationId) {
-      this.$store.dispatch('clearSelectedState');
-    }
-    next(); // Continue with navigation
+  conversationId: {
+    type: [String, Number],
+    default: 0,
   },
-  props: {
-    inboxId: {
-      type: [String, Number],
-      default: 0,
-    },
-    conversationId: {
-      type: [String, Number],
-      default: 0,
-    },
-    label: {
-      type: String,
-      default: '',
-    },
-    teamId: {
-      type: String,
-      default: '',
-    },
-    conversationType: {
-      type: String,
-      default: '',
-    },
-    foldersId: {
-      type: [String, Number],
-      default: 0,
-    },
+  label: {
+    type: String,
+    default: '',
   },
-  setup() {
-    const { uiSettings, updateUISettings } = useUISettings();
-    const { accountId } = useAccount();
+  teamId: {
+    type: String,
+    default: '',
+  },
+  conversationType: {
+    type: String,
+    default: '',
+  },
+  foldersId: {
+    type: [String, Number],
+    default: 0,
+  },
+});
 
-    return {
-      uiSettings,
-      updateUISettings,
-      accountId,
-    };
-  },
-  data() {
-    return {
-      showSearchModal: false,
-    };
-  },
-  computed: {
-    ...mapGetters({
-      chatList: 'getAllConversations',
-      currentChat: 'getSelectedChat',
-    }),
-    showConversationList() {
-      return this.isOnExpandedLayout ? !this.conversationId : true;
-    },
-    showMessageView() {
-      return this.conversationId ? true : !this.isOnExpandedLayout;
-    },
-    isOnExpandedLayout() {
-      const {
-        LAYOUT_TYPES: { CONDENSED },
-      } = wootConstants;
-      const { conversation_display_type: conversationDisplayType = CONDENSED } =
-        this.uiSettings;
-      return conversationDisplayType !== CONDENSED;
-    },
+const route = useRoute();
+const store = useStore();
+const { uiSettings } = useUISettings();
 
-    shouldShowSidebar() {
-      if (!this.currentChat.id) {
-        return false;
-      }
+const chatList = useMapGetter('getAllConversations');
+const currentChat = useMapGetter('getSelectedChat');
 
-      const { is_contact_sidebar_open: isContactSidebarOpen } = this.uiSettings;
-      return isContactSidebarOpen;
-    },
-  },
-  watch: {
-    conversationId() {
-      this.fetchConversationIfUnavailable();
-    },
-  },
+const isOnExpandedLayout = computed(() => {
+  const {
+    LAYOUT_TYPES: { CONDENSED },
+  } = wootConstants;
+  const { conversation_display_type: conversationDisplayType = CONDENSED } =
+    uiSettings.value;
+  return conversationDisplayType !== CONDENSED;
+});
 
-  created() {
-    // Clear selected state early if no conversation is selected
-    // This prevents child components from accessing stale data
-    // and resolves timing issues during navigation
-    // with conversation view and other screens
-    if (!this.conversationId) {
-      this.$store.dispatch('clearSelectedState');
-    }
-  },
+const showConversationList = computed(() => {
+  return isOnExpandedLayout.value ? !props.conversationId : true;
+});
 
-  mounted() {
-    this.$store.dispatch('agents/get');
-    this.$store.dispatch('portals/index');
-    this.initialize();
-    this.$watch('$store.state.route', () => this.initialize());
-    this.$watch('chatList.length', () => {
-      this.setActiveChat();
-    });
-  },
+const showMessageView = computed(() => {
+  return props.conversationId ? true : !isOnExpandedLayout.value;
+});
 
-  methods: {
-    onConversationLoad() {
-      this.fetchConversationIfUnavailable();
-    },
-    initialize() {
-      this.$store.dispatch('setActiveInbox', this.inboxId);
-      this.setActiveChat();
-    },
-    toggleConversationLayout() {
-      const { LAYOUT_TYPES } = wootConstants;
-      const {
-        conversation_display_type:
-          conversationDisplayType = LAYOUT_TYPES.CONDENSED,
-      } = this.uiSettings;
-      const newViewType =
-        conversationDisplayType === LAYOUT_TYPES.CONDENSED
-          ? LAYOUT_TYPES.EXPANDED
-          : LAYOUT_TYPES.CONDENSED;
-      this.updateUISettings({
-        conversation_display_type: newViewType,
-        previously_used_conversation_display_type: newViewType,
-      });
-    },
-    fetchConversationIfUnavailable() {
-      if (!this.conversationId) {
-        return;
-      }
-      const chat = this.findConversation();
-      if (!chat) {
-        this.$store.dispatch('getConversation', this.conversationId);
-      }
-    },
-    findConversation() {
-      const conversationId = parseInt(this.conversationId, 10);
-      const [chat] = this.chatList.filter(c => c.id === conversationId);
-      return chat;
-    },
-    setActiveChat() {
-      if (this.conversationId) {
-        const selectedConversation = this.findConversation();
-        // If conversation doesn't exist or selected conversation is same as the active
-        // conversation, don't set active conversation.
-        if (
-          !selectedConversation ||
-          selectedConversation.id === this.currentChat.id
-        ) {
-          return;
-        }
-        const { messageId } = this.$route.query;
-        this.$store
-          .dispatch('setActiveChat', {
-            data: selectedConversation,
-            after: messageId,
-          })
-          .then(() => {
-            emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE, { messageId });
-          });
-      } else {
-        this.$store.dispatch('clearSelectedState');
-      }
-    },
-    onSearch() {
-      this.showSearchModal = true;
-    },
-    closeSearch() {
-      this.showSearchModal = false;
-    },
-  },
+const shouldShowSidebar = computed(() => {
+  if (!currentChat.value?.id) {
+    return false;
+  }
+  const { is_contact_sidebar_open: isContactSidebarOpen } = uiSettings.value;
+  return isContactSidebarOpen;
+});
+
+const findConversation = () => {
+  const convId = parseInt(props.conversationId, 10);
+  const [chat] = chatList.value.filter(c => c.id === convId);
+  return chat;
 };
+
+const setActiveChat = () => {
+  if (props.conversationId) {
+    const selectedConversation = findConversation();
+    if (
+      !selectedConversation ||
+      selectedConversation.id === currentChat.value?.id
+    ) {
+      return;
+    }
+    const { messageId } = route.query;
+    store
+      .dispatch('setActiveChat', {
+        data: selectedConversation,
+        after: messageId,
+      })
+      .then(() => {
+        emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE, { messageId });
+      });
+  } else {
+    store.dispatch('clearSelectedState');
+  }
+};
+
+const fetchConversationIfUnavailable = () => {
+  if (!props.conversationId) {
+    return;
+  }
+  const chat = findConversation();
+  if (!chat) {
+    store.dispatch('getConversation', props.conversationId);
+  }
+};
+
+const onConversationLoad = () => {
+  fetchConversationIfUnavailable();
+};
+
+const initialize = () => {
+  store.dispatch('setActiveInbox', props.inboxId);
+  setActiveChat();
+};
+
+onBeforeRouteLeave((to, from, next) => {
+  if (props.conversationId) {
+    store.dispatch('clearSelectedState');
+  }
+  next();
+});
+
+if (!props.conversationId) {
+  store.dispatch('clearSelectedState');
+}
+
+onMounted(() => {
+  store.dispatch('agents/get');
+  store.dispatch('portals/index');
+  initialize();
+});
+
+watch(
+  () => props.conversationId,
+  () => {
+    fetchConversationIfUnavailable();
+  }
+);
+
+watch(
+  () => route.fullPath,
+  () => {
+    initialize();
+  }
+);
+
+watch(
+  () => chatList.value.length,
+  () => {
+    setActiveChat();
+  }
+);
 </script>
 
 <template>
-  <section class="flex w-full h-full min-w-0">
+  <section
+    class="flex w-full h-full min-w-0 bg-background text-foreground animate-in fade-in duration-300"
+  >
     <ChatList
       :show-conversation-list="showConversationList"
       :conversation-inbox="inboxId"
@@ -204,16 +171,22 @@ export default {
       :conversation-type="conversationType"
       :folders-id="foldersId"
       :is-on-expanded-layout="isOnExpandedLayout"
+      class="border-0"
       @conversation-load="onConversationLoad"
     />
     <ConversationBox
       v-if="showMessageView"
       :inbox-id="inboxId"
       :is-on-expanded-layout="isOnExpandedLayout"
+      class="flex-1 bg-background border-0"
     >
       <SidepanelSwitch v-if="currentChat.id" />
     </ConversationBox>
-    <ConversationSidebar v-if="shouldShowSidebar" :current-chat="currentChat" />
+    <ConversationSidebar
+      v-if="shouldShowSidebar"
+      :current-chat="currentChat"
+      class="w-[320px] bg-card border-l border-border/60 shrink-0"
+    />
     <CmdBarConversationSnooze />
   </section>
 </template>

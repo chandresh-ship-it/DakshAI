@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMapGetter, useStore } from 'dashboard/composables/store.js';
 import { buildPortalURL } from 'dashboard/helper/portalHelper';
 
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 
 const emit = defineEmits(['close', 'createPortal']);
@@ -93,73 +93,80 @@ const redirectToPortalHomePage = () => {
 
 <template>
   <div
-    class="pt-5 pb-3 bg-n-alpha-3 backdrop-blur-[100px] outline outline-n-container outline-1 z-50 absolute w-[27.5rem] rounded-xl shadow-md flex flex-col gap-4"
+    class="absolute z-50 flex w-[280px] flex-col gap-1.5 rounded-xl border border-border bg-background p-1.5 shadow-md"
   >
     <div
-      class="flex items-center justify-between gap-4 px-6 pb-3 border-b border-n-alpha-2"
+      class="mb-1.5 flex items-center justify-between gap-3 border-b border-border/40 px-2 pb-2.5 pt-2"
     >
-      <div class="flex flex-col gap-1">
-        <div class="flex items-center gap-2">
-          <h2
-            class="text-base font-medium cursor-pointer text-n-slate-12 w-fit hover:underline"
+      <div class="flex min-w-0 flex-col gap-1">
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            class="truncate text-[14px] font-semibold leading-none text-foreground hover:underline"
             @click="redirectToPortalHomePage"
           >
             {{ t('HELP_CENTER.PORTAL_SWITCHER.PORTALS') }}
-          </h2>
-          <Button
-            icon="i-lucide-arrow-up-right"
+          </button>
+          <RelayButton
             variant="ghost"
-            color="slate"
-            icon-lib="lucide"
-            size="sm"
-            class="!w-6 !h-6 hover:bg-n-slate-2 text-n-slate-11 !p-0.5 rounded-md"
+            size="icon"
+            class="size-6 text-muted-foreground"
             @click="onClickPreviewPortal"
-          />
+          >
+            <span class="i-lucide-arrow-up-right size-3.5" aria-hidden="true" />
+          </RelayButton>
         </div>
-        <p class="text-sm text-n-slate-11">
+        <p class="text-[12px] leading-none text-muted-foreground">
           {{ t('HELP_CENTER.PORTAL_SWITCHER.CREATE_PORTAL') }}
         </p>
       </div>
-      <Button
-        :label="t('HELP_CENTER.PORTAL_SWITCHER.NEW_PORTAL')"
-        color="slate"
-        icon="i-lucide-plus"
+      <RelayButton
+        variant="outline"
         size="sm"
-        class="!bg-n-alpha-2 hover:!bg-n-alpha-3"
+        class="h-7 shrink-0 px-2.5 text-[12px]"
         @click="openCreatePortalDialog"
-      />
+      >
+        <span class="i-lucide-plus size-3.5" aria-hidden="true" />
+        {{ t('HELP_CENTER.PORTAL_SWITCHER.NEW_PORTAL') }}
+      </RelayButton>
     </div>
-    <div v-if="portals.length > 0" class="flex flex-col gap-2 px-4">
-      <Button
+    <div v-if="portals.length > 0" class="flex flex-col gap-0.5">
+      <button
         v-for="(portal, index) in portals"
         :key="index"
-        :label="portal.name"
-        variant="ghost"
-        color="slate"
-        trailing-icon
-        :icon="isPortalActive(portal) ? 'i-lucide-check' : ''"
-        class="!justify-end !px-2 !py-2 hover:!bg-n-alpha-2 [&>.i-lucide-check]:text-n-teal-10 h-9"
-        size="sm"
+        type="button"
+        class="flex cursor-pointer items-center rounded-md px-2 py-2 text-left transition-colors hover:bg-muted"
         @click="handlePortalChange(portal)"
       >
-        <div v-if="portal.custom_domain" class="flex items-center gap-1">
-          <span class="i-lucide-link size-3" />
-          <span class="text-sm truncate text-n-slate-11">
-            {{ portal.custom_domain || '' }}
-          </span>
-        </div>
-        <span class="text-sm font-medium truncate text-n-slate-12">
-          {{ portal.name || '' }}
-        </span>
         <Avatar
           v-if="portal"
           :name="portal.name"
           :src="getPortalThumbnailSrc(portal)"
-          :size="20"
-          icon-name="i-lucide-building-2"
-          rounded-full
+          :size="28"
+          icon-name="i-lucide-layout-grid"
+          class="mr-3 shrink-0"
         />
-      </Button>
+        <div
+          v-else
+          class="mr-3 flex size-7 shrink-0 items-center justify-center rounded bg-primary/10"
+        >
+          <span class="i-lucide-layout-grid size-4 text-primary" />
+        </div>
+        <span class="truncate text-[13px] font-semibold text-foreground">
+          {{ portal.name || '' }}
+        </span>
+        <span
+          v-if="portal.custom_domain"
+          class="ml-2 truncate text-[13px] text-muted-foreground"
+        >
+          {{ portal.custom_domain }}
+        </span>
+        <span
+          v-if="isPortalActive(portal)"
+          class="i-lucide-check ml-auto size-4 shrink-0 text-primary"
+          aria-hidden="true"
+        />
+      </button>
     </div>
   </div>
 </template>

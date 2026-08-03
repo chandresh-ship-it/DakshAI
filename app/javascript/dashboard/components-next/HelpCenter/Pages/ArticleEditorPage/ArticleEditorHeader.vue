@@ -15,7 +15,7 @@ import {
 import wootConstants from 'dashboard/constants/globals';
 
 import ButtonGroup from 'dashboard/components-next/buttonGroup/ButtonGroup.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 
 const props = defineProps({
@@ -116,65 +116,66 @@ const updateArticleStatus = async ({ value }) => {
 </script>
 
 <template>
-  <div class="flex items-center justify-between h-20">
-    <Button
-      :label="t('HELP_CENTER.EDIT_ARTICLE_PAGE.HEADER.BACK_TO_ARTICLES')"
-      icon="i-lucide-chevron-left"
-      variant="link"
-      color="slate"
+  <div class="mb-6 flex items-center justify-between py-4">
+    <RelayButton
+      variant="ghost"
       size="sm"
-      class="ltr:pl-3 rtl:pr-3"
+      class="pl-2 text-[13px] text-muted-foreground hover:text-foreground"
       @click="onClickGoBack"
-    />
+    >
+      <span class="i-lucide-chevron-left size-4" aria-hidden="true" />
+      {{ t('HELP_CENTER.EDIT_ARTICLE_PAGE.HEADER.BACK_TO_ARTICLES') }}
+    </RelayButton>
     <div class="flex items-center gap-4">
       <span
         v-if="isUpdating || isSaved"
-        class="text-xs font-medium transition-all duration-300 text-n-slate-11"
+        class="hidden text-[13px] text-muted-foreground transition-all duration-300 sm:inline-block"
       >
         {{ statusText }}
       </span>
-      <div class="flex items-center gap-2">
-        <Button
-          :label="t('HELP_CENTER.EDIT_ARTICLE_PAGE.HEADER.PREVIEW')"
-          color="slate"
-          size="sm"
-          :disabled="!articleId"
-          @click="previewArticle"
-        />
-        <ButtonGroup class="flex items-center">
-          <Button
-            :label="t('HELP_CENTER.EDIT_ARTICLE_PAGE.HEADER.PUBLISH')"
-            size="sm"
-            class="ltr:rounded-r-none rtl:rounded-l-none"
-            no-animation
-            :is-loading="isArticlePublishing"
-            :disabled="
-              status === ARTICLE_STATUSES.PUBLISHED ||
-              !articleId ||
-              isArticlePublishing
-            "
-            @click="updateArticleStatus({ value: ARTICLE_STATUSES.PUBLISHED })"
+      <RelayButton
+        variant="outline"
+        class="h-9 px-4 text-[13px] font-medium shadow-xs"
+        :disabled="!articleId"
+        @click="previewArticle"
+      >
+        {{ t('HELP_CENTER.EDIT_ARTICLE_PAGE.HEADER.PREVIEW') }}
+      </RelayButton>
+      <ButtonGroup class="flex items-center" no-animation>
+        <RelayButton
+          class="h-9 px-4 font-medium shadow-xs ltr:rounded-r-none rtl:rounded-l-none ltr:border-r ltr:border-primary-foreground/20 rtl:border-l rtl:border-primary-foreground/20"
+          :disabled="
+            status === ARTICLE_STATUSES.PUBLISHED ||
+            !articleId ||
+            isArticlePublishing
+          "
+          @click="updateArticleStatus({ value: ARTICLE_STATUSES.PUBLISHED })"
+        >
+          <span
+            v-if="isArticlePublishing"
+            class="i-lucide-loader-circle size-4 animate-spin"
+            aria-hidden="true"
           />
-          <div class="relative">
-            <OnClickOutside @trigger="showArticleActionMenu = false">
-              <Button
-                icon="i-lucide-chevron-down"
-                size="sm"
-                :disabled="!articleId"
-                no-animation
-                class="ltr:rounded-l-none rtl:rounded-r-none"
-                @click.stop="showArticleActionMenu = !showArticleActionMenu"
-              />
-              <DropdownMenu
-                v-if="showArticleActionMenu"
-                :menu-items="articleMenuItems"
-                class="mt-2 ltr:right-0 rtl:left-0 top-full"
-                @action="updateArticleStatus($event)"
-              />
-            </OnClickOutside>
-          </div>
-        </ButtonGroup>
-      </div>
+          {{ t('HELP_CENTER.EDIT_ARTICLE_PAGE.HEADER.PUBLISH') }}
+        </RelayButton>
+        <div class="relative">
+          <OnClickOutside @trigger="showArticleActionMenu = false">
+            <RelayButton
+              :disabled="!articleId"
+              class="h-9 px-2 shadow-xs ltr:rounded-l-none rtl:rounded-r-none"
+              @click.stop="showArticleActionMenu = !showArticleActionMenu"
+            >
+              <span class="i-lucide-chevron-down size-4" aria-hidden="true" />
+            </RelayButton>
+            <DropdownMenu
+              v-if="showArticleActionMenu"
+              :menu-items="articleMenuItems"
+              class="top-full mt-2 ltr:right-0 rtl:left-0"
+              @action="updateArticleStatus($event)"
+            />
+          </OnClickOutside>
+        </div>
+      </ButtonGroup>
     </div>
   </div>
 </template>

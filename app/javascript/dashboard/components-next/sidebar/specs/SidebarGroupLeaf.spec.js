@@ -2,6 +2,10 @@ import { mount } from '@vue/test-utils';
 import { h } from 'vue';
 import SidebarGroupLeaf from '../SidebarGroupLeaf.vue';
 
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ name: 'home', matched: [], params: {} }),
+}));
+
 vi.mock('../provider', () => ({
   useSidebarContext: () => ({
     resolvePermissions: () => [],

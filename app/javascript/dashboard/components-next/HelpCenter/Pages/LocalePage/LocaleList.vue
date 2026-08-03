@@ -161,7 +161,7 @@ const handleAction = ({ action }, localeCode) => {
 </script>
 
 <template>
-  <ul role="list" class="w-full h-full space-y-4">
+  <ul role="list" class="flex h-full w-full flex-col gap-2">
     <LocaleCard
       v-for="(locale, index) in locales"
       :key="index"

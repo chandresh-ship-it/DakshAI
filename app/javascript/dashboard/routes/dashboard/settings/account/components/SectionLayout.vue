@@ -17,7 +17,7 @@ const { t } = useI18n();
 
 <template>
   <section
-    class="grid grid-cols-1 gap-5 [interpolate-size:allow-keywords]"
+    class="grid grid-cols-1 gap-5"
     :class="{
       'border-t border-border pt-8': withBorder && !asCard,
       'overflow-hidden rounded-xl border border-border/60 bg-card shadow-xs':
@@ -73,10 +73,10 @@ const { t } = useI18n();
       </div>
     </header>
     <div
-      class="text-foreground transition-[height] duration-300 ease-in-out"
+      class="text-foreground transition-[max-height] duration-300 ease-in-out"
       :class="{
-        'overflow-hidden h-0': hideContent,
-        'h-auto': !hideContent,
+        'max-h-0 overflow-hidden': hideContent,
+        'max-h-screen': !hideContent,
         'p-4 sm:p-6': asCard && !hideContent && !inlineHeader,
         hidden: inlineHeader && hideContent,
       }"

@@ -1,7 +1,8 @@
 class Cloudflare::BaseCloudflareZoneService
-  BASE_URI = 'https://api.cloudflare.com/client/v4'.freeze
-
   private
+
+  BASE_URI = 'https://api.cloudflare.com/client/v4'.freeze
+  private_constant :BASE_URI
 
   def headers
     {
@@ -11,11 +12,11 @@ class Cloudflare::BaseCloudflareZoneService
   end
 
   def api_token
-    GlobalConfigService.load('CLOUDFLARE_API_KEY', nil)
+    @api_token ||= GlobalConfigService.load('CLOUDFLARE_API_KEY', nil)
   end
 
   def zone_id
-    GlobalConfigService.load('CLOUDFLARE_ZONE_ID', nil)
+    @zone_id ||= GlobalConfigService.load('CLOUDFLARE_ZONE_ID', nil)
   end
 
   def update_ssl_settings(record, data)

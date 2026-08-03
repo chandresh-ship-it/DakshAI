@@ -115,6 +115,7 @@ export const ARTICLE_MENU_OPTIONS = {
 export const ARTICLE_TABS = {
   ALL: 'all',
   MINE: 'mine',
+  PUBLISHED: 'published',
   DRAFT: 'draft',
   ARCHIVED: 'archived',
 };
@@ -129,6 +130,10 @@ export const ARTICLE_TABS_OPTIONS = [
   {
     key: 'MINE',
     value: 'mine',
+  },
+  {
+    key: 'PUBLISHED',
+    value: 'published',
   },
   {
     key: 'DRAFT',

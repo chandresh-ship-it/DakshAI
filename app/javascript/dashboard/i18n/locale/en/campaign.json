@@ -1,5 +1,8 @@
 {
   "CAMPAIGN": {
+    "HEADER": {
+      "VS_LAST_7D": "vs last 7d"
+    },
     "LIVE_CHAT": {
       "HEADER_TITLE": "Live chat campaigns",
       "NEW_CAMPAIGN": "Create campaign",

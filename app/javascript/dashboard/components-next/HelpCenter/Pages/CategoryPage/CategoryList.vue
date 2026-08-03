@@ -59,7 +59,7 @@ watch(
     item-key="id"
     tag="ul"
     role="list"
-    class="grid w-full h-full grid-cols-1 gap-4 md:grid-cols-2"
+    class="flex h-full w-full flex-col gap-3"
     @end="onDragEnd"
   >
     <template #item="{ element }">

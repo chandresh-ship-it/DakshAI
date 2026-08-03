@@ -197,11 +197,11 @@ watch(
     item-key="id"
     tag="ul"
     ghost-class="article-ghost-class"
-    class="w-full h-full space-y-4"
+    class="h-full w-full space-y-3"
     @end="onDragEnd"
   >
     <template #item="{ element }">
-      <li class="list-none rounded-2xl">
+      <li class="list-none">
         <ArticleCard
           :id="element.id"
           :key="element.id"
@@ -227,6 +227,6 @@ watch(
 
 <style lang="scss" scoped>
 .article-ghost-class {
-  @apply opacity-50 bg-n-solid-1;
+  @apply bg-muted opacity-50;
 }
 </style>

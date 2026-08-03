@@ -161,7 +161,7 @@ onMounted(() => {
           <button
             type="button"
             class="text-muted-foreground hover:text-destructive"
-            @click="onClickRemoveTag(tag.title)"
+            @click="onClickRemoveTag(tag.name)"
           >
             <Icon icon="i-lucide-x" class="size-3.5" />
           </button>

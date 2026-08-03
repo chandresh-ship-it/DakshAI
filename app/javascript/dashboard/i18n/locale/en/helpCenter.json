@@ -635,7 +635,10 @@
         "SUBTITLE": "Categories will appear here. You can add a category by clicking the 'New Category' button."
       },
       "CATEGORY_CARD": {
-        "ARTICLES_COUNT": "{count} article | {count} articles"
+        "ARTICLES_COUNT": "{count} article | {count} articles",
+        "EDIT": "Edit",
+        "DELETE": "Delete",
+        "NO_DESCRIPTION": "No description added"
       },
       "CATEGORY_DIALOG": {
         "CREATE": {
@@ -753,6 +756,7 @@
         "BACK_TO_ARTICLES": "Back to articles"
       },
       "EDIT_ARTICLE": {
+        "TITLE_PLACEHOLDER": "Title",
         "MORE_PROPERTIES": "More properties",
         "UNCATEGORIZED": "Uncategorized",
         "EDITOR_PLACEHOLDER": "Write your content here. Type '/' for formatting options."
@@ -797,8 +801,11 @@
     },
     "PORTAL_SETTINGS": {
       "FORM": {
+        "SECTION_IDENTITY": "Portal identity",
+        "SECTION_ROUTING": "Domain & routing",
         "AVATAR": {
           "LABEL": "Logo",
+          "HINT": "Recommended size 512x512px",
           "IMAGE_UPLOAD_ERROR": "Couldn't upload image! Try again",
           "IMAGE_UPLOAD_SUCCESS": "Image added successfully. Please click on save changes to save the logo",
           "IMAGE_DELETE_SUCCESS": "Logo deleted successfully",

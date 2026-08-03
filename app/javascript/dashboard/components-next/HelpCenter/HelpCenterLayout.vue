@@ -5,7 +5,7 @@ import { useRoute } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store.js';
 
 import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import PortalSwitcher from 'dashboard/components-next/HelpCenter/PortalSwitcher/PortalSwitcher.vue';
 import CreatePortalDialog from 'dashboard/components-next/HelpCenter/PortalSwitcher/CreatePortalDialog.vue';
 
@@ -58,57 +58,59 @@ const togglePortalSwitcher = () => {
 </script>
 
 <template>
-  <section class="flex flex-col w-full h-full overflow-hidden bg-n-surface-1">
-    <header class="sticky top-0 z-10 px-6 pb-3">
-      <div class="w-full max-w-5xl mx-auto">
-        <div
-          v-if="showHeaderTitle"
-          class="flex items-center justify-start h-20 gap-2"
-        >
-          <span
-            v-if="activePortalName"
-            class="text-xl font-medium text-n-slate-12"
-          >
-            {{ activePortalName }}
-          </span>
-          <div v-if="activePortalName" class="relative group">
-            <OnClickOutside @trigger="showPortalSwitcher = false">
-              <Button
-                icon="i-lucide-chevron-down"
-                variant="ghost"
-                color="slate"
-                size="xs"
-                class="rounded-md group-hover:bg-n-slate-3 hover:bg-n-slate-3"
-                @click="togglePortalSwitcher"
+  <section
+    class="relative flex h-full w-full flex-col overflow-hidden bg-muted/10 animate-in fade-in duration-300"
+  >
+    <div
+      class="mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden p-4 pb-12 sm:p-8"
+    >
+      <div
+        v-if="showHeaderTitle"
+        class="mb-8 mt-2 flex shrink-0 flex-col gap-6"
+      >
+        <div v-if="activePortalName" class="relative">
+          <OnClickOutside @trigger="showPortalSwitcher = false">
+            <RelayButton
+              variant="outline"
+              class="h-9 px-3 text-[14px] font-medium"
+              @click="togglePortalSwitcher"
+            >
+              {{ activePortalName }}
+              <span
+                class="i-lucide-chevron-down size-3.5 opacity-50"
+                aria-hidden="true"
               />
+            </RelayButton>
 
-              <PortalSwitcher
-                v-if="showPortalSwitcher"
-                class="absolute ltr:left-0 rtl:right-0 top-9"
-                @close="showPortalSwitcher = false"
-                @create-portal="createPortalDialogRef.dialogRef.open()"
-              />
-            </OnClickOutside>
-            <CreatePortalDialog ref="createPortalDialogRef" />
-          </div>
+            <PortalSwitcher
+              v-if="showPortalSwitcher"
+              class="absolute ltr:left-0 rtl:right-0 top-11"
+              @close="showPortalSwitcher = false"
+              @create-portal="createPortalDialogRef.dialogRef.open()"
+            />
+          </OnClickOutside>
+          <CreatePortalDialog ref="createPortalDialogRef" />
         </div>
         <slot name="header-actions" />
       </div>
-    </header>
-    <main class="flex-1 px-6 overflow-y-auto">
-      <div class="w-full max-w-5xl mx-auto py-3">
-        <slot name="content" />
+      <div v-else class="shrink-0">
+        <slot name="header-actions" />
       </div>
-    </main>
-    <footer v-if="showPaginationFooter" class="sticky bottom-0 z-10">
-      <PaginationFooter
-        :current-page="currentPage"
-        :total-items="totalItems"
-        :items-per-page="itemsPerPage"
-        class="max-w-[67rem]"
-        @update:current-page="updateCurrentPage"
-      />
-    </footer>
+
+      <main class="min-h-0 flex-1 overflow-y-auto">
+        <slot name="content" />
+      </main>
+
+      <footer v-if="showPaginationFooter" class="sticky bottom-0 z-10">
+        <PaginationFooter
+          :current-page="currentPage"
+          :total-items="totalItems"
+          :items-per-page="itemsPerPage"
+          class="max-w-7xl"
+          @update:current-page="updateCurrentPage"
+        />
+      </footer>
+    </div>
     <!-- Do not remove this slot. It can be used to add dialogs. -->
     <slot />
   </section>

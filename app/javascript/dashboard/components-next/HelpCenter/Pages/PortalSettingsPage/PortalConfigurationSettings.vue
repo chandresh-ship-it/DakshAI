@@ -5,7 +5,7 @@ import { useAccount } from 'dashboard/composables/useAccount';
 
 import AddCustomDomainDialog from 'dashboard/components-next/HelpCenter/Pages/PortalSettingsPage/AddCustomDomainDialog.vue';
 import DNSConfigurationDialog from 'dashboard/components-next/HelpCenter/Pages/PortalSettingsPage/DNSConfigurationDialog.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   activePortal: {
@@ -100,10 +100,16 @@ const statusText = computed(() => {
 
 const statusColors = computed(() => {
   if (isLive.value)
-    return { text: 'text-n-teal-11', bubble: 'outline-n-teal-6 bg-n-teal-9' };
+    return { text: 'text-primary', bubble: 'outline-primary/30 bg-primary' };
   if (isError.value)
-    return { text: 'text-n-ruby-11', bubble: 'outline-n-ruby-6 bg-n-ruby-9' };
-  return { text: 'text-n-amber-11', bubble: 'outline-n-amber-6 bg-n-amber-9' };
+    return {
+      text: 'text-destructive',
+      bubble: 'outline-destructive/30 bg-destructive',
+    };
+  return {
+    text: 'text-amber-600',
+    bubble: 'outline-amber-500/30 bg-amber-500',
+  };
 });
 
 const updatePortalConfiguration = customDomain => {
@@ -137,16 +143,18 @@ const onClickSend = email => {
 </script>
 
 <template>
-  <div class="flex flex-col w-full gap-6">
+  <div
+    class="flex flex-col gap-6 rounded-2xl border border-border/40 bg-card p-6 shadow-sm"
+  >
     <div class="flex flex-col gap-2">
-      <h6 class="text-base font-medium text-n-slate-12">
+      <h6 class="text-base font-medium text-foreground">
         {{
           t(
             'HELP_CENTER.PORTAL_SETTINGS.CONFIGURATION_FORM.CUSTOM_DOMAIN.HEADER'
           )
         }}
       </h6>
-      <span class="text-sm text-n-slate-11">
+      <span class="text-sm text-muted-foreground">
         {{
           t(
             'HELP_CENTER.PORTAL_SETTINGS.CONFIGURATION_FORM.CUSTOM_DOMAIN.DESCRIPTION'
@@ -154,24 +162,24 @@ const onClickSend = email => {
         }}
       </span>
     </div>
-    <div class="flex flex-col w-full gap-4">
-      <div class="flex items-center justify-between w-full gap-2">
+    <div class="flex flex-col gap-4">
+      <div class="flex w-full items-center justify-between gap-2">
         <div v-if="customDomainAddress" class="flex flex-col gap-1">
-          <div class="flex items-center w-full h-8 gap-4">
-            <label class="text-sm font-medium text-n-slate-12">
+          <div class="flex h-8 w-full items-center gap-4">
+            <label class="text-sm font-medium text-foreground">
               {{
                 t(
                   'HELP_CENTER.PORTAL_SETTINGS.CONFIGURATION_FORM.CUSTOM_DOMAIN.LABEL'
                 )
               }}
             </label>
-            <span class="text-sm text-n-slate-12">
+            <span class="text-sm text-foreground">
               {{ customDomainAddress }}
             </span>
           </div>
           <span
             v-if="!isLive && isOnChatwootCloud"
-            class="text-sm text-n-slate-11"
+            class="text-sm text-muted-foreground"
           >
             {{
               t(
@@ -185,56 +193,58 @@ const onClickSend = email => {
             <div
               v-if="statusText && isOnChatwootCloud"
               v-tooltip="verificationErrors"
-              class="flex items-center gap-3 flex-shrink-0"
+              class="flex flex-shrink-0 items-center gap-3"
             >
               <span
-                class="size-1.5 rounded-full outline outline-2 block flex-shrink-0"
+                class="block size-1.5 flex-shrink-0 rounded-full outline outline-2"
                 :class="statusColors.bubble"
               />
               <span
                 :class="statusColors.text"
-                class="text-sm leading-[16px] font-medium"
+                class="text-sm font-medium leading-[16px]"
               >
                 {{ statusText }}
               </span>
             </div>
             <div
               v-if="statusText && isOnChatwootCloud"
-              class="w-px h-3 bg-n-weak"
+              class="h-3 w-px bg-border"
             />
-            <Button
-              slate
-              sm
-              link
-              :label="
+            <RelayButton
+              variant="link"
+              size="sm"
+              class="h-auto flex-shrink-0 p-0"
+              @click="addCustomDomainDialogRef.dialogRef.open()"
+            >
+              {{
                 t(
                   'HELP_CENTER.PORTAL_SETTINGS.CONFIGURATION_FORM.CUSTOM_DOMAIN.EDIT_BUTTON'
                 )
-              "
-              class="hover:!no-underline flex-shrink-0"
-              @click="addCustomDomainDialogRef.dialogRef.open()"
-            />
-            <div v-if="isOnChatwootCloud" class="w-px h-3 bg-n-weak" />
-            <Button
+              }}
+            </RelayButton>
+            <div v-if="isOnChatwootCloud" class="h-3 w-px bg-border" />
+            <RelayButton
               v-if="isOnChatwootCloud"
-              slate
-              sm
-              link
-              icon="i-lucide-refresh-ccw"
+              variant="ghost"
+              size="icon"
+              class="size-8 text-muted-foreground"
               :class="isFetchingStatus && 'animate-spin'"
               @click="onClickRefreshSSLStatus"
-            />
+            >
+              <span class="i-lucide-refresh-ccw size-4" />
+            </RelayButton>
           </div>
-          <Button
+          <RelayButton
             v-else
-            :label="
+            variant="outline"
+            @click="addCustomDomainDialogRef.dialogRef.open()"
+          >
+            {{
               t(
                 'HELP_CENTER.PORTAL_SETTINGS.CONFIGURATION_FORM.CUSTOM_DOMAIN.ADD_BUTTON'
               )
-            "
-            color="slate"
-            @click="addCustomDomainDialogRef.dialogRef.open()"
-          />
+            }}
+          </RelayButton>
         </div>
       </div>
     </div>

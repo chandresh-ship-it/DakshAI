@@ -70,11 +70,31 @@ class SuperAdmin::PlanManagementController < SuperAdmin::ApplicationController
       plan_data = plans_param[plan['name']]
       next plan unless plan_data
 
+      gw_prices_param = plan_data[:gateway_prices] || {}
+      gateway_prices = {}
+
+      Enterprise::Billing::PaymentGatewayRegistry.definitions.each do |gateway_id, definition|
+        gw_data = gw_prices_param[gateway_id] || {}
+        amount = gw_data[:amount].to_f
+        plan_id = gw_data[:plan_id].presence
+
+        gateway_prices[gateway_id.to_s] = {
+          'amount' => amount,
+          'currency' => definition[:currency],
+          'price_id' => plan_id,
+          'plan_id' => plan_id
+        }
+      end
+
+      stripe_gw = gateway_prices['stripe'] || {}
+      razorpay_gw = gateway_prices['razorpay'] || {}
+
       plan.merge(
-        'price_per_agent' => plan_data[:price_per_agent].to_f,
+        'price_per_agent' => stripe_gw['amount'].to_f,
         'enabled' => plan_data[:enabled] == '1',
-        'price_ids' => plan_data[:stripe_price_id].present? ? [plan_data[:stripe_price_id]] : [],
-        'razorpay_plan_ids' => plan_data[:razorpay_plan_id].present? ? [plan_data[:razorpay_plan_id]] : []
+        'price_ids' => stripe_gw['price_id'].present? ? [stripe_gw['price_id']] : [],
+        'razorpay_plan_ids' => razorpay_gw['plan_id'].present? ? [razorpay_gw['plan_id']] : [],
+        'gateway_prices' => gateway_prices
       )
     end
 

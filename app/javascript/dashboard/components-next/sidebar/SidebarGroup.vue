@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, watch, nextTick, ref } from 'vue';
+import { computed, onMounted, onUnmounted, watch, ref } from 'vue';
 import { useSidebarContext, usePopoverState } from './provider';
 import { useRoute, useRouter } from 'vue-router';
 import Policy from 'dashboard/components/policy.vue';
@@ -24,6 +24,7 @@ const props = defineProps({
 const {
   expandedItem,
   setExpandedItem,
+  expandItem,
   resolvePath,
   resolvePermissions,
   resolveFeatureFlag,
@@ -114,11 +115,61 @@ const hasAccessibleChildren = computed(() => {
   return accessibleItems.value.length > 0;
 });
 
-const isActive = computed(() => {
-  if (props.to) {
-    if (route.path === resolvePath(props.to)) return true;
+// Route names for the live location (leaf + parents). Portal/Captain links use
+// navigationPath redirectors whose resolved path is NOT the real URL.
+const activeRouteNames = computed(() => {
+  const names = route.matched.map(record => record.name).filter(Boolean);
+  if (route.name && !names.includes(route.name)) names.push(route.name);
+  return names;
+});
 
-    return props.activeOn.includes(route.name);
+// accountId is always current-account scope; navigationPath is a redirector hint,
+// not a live route param. Only keys like teamId / inbox_id discriminate leaves.
+const NON_DISCRIMINATING_PARAMS = new Set(['navigationPath', 'accountId']);
+
+const discriminatingParamKeys = (childParams = {}) =>
+  Object.keys(childParams || {}).filter(
+    key => !NON_DISCRIMINATING_PARAMS.has(key) && key in route.params
+  );
+
+const paramsMatchChild = child => {
+  const keys = discriminatingParamKeys(child.to?.params);
+  if (!keys.length) return true;
+  return keys.every(
+    key => String(child.to.params[key]) === String(route.params[key])
+  );
+};
+
+const childMatchesRoute = child => {
+  if (!child?.to) return false;
+
+  const names = activeRouteNames.value;
+  const navPath = child.to.params?.navigationPath;
+
+  // Prefer route-name match (activeOn and/or navigationPath === live route name).
+  // Portal Settings: activeOn/navPath both use portals_settings_index.
+  const nameMatch =
+    child.activeOn?.some(name => names.includes(name)) ||
+    (navPath && names.includes(navPath));
+
+  if (nameMatch) {
+    return paramsMatchChild(child);
+  }
+
+  // Skip path match for redirector links — resolvePath is a fake URL segment
+  if (navPath) return false;
+
+  const childPath = resolvePath(child.to);
+  return route.path === childPath || route.path.startsWith(`${childPath}/`);
+};
+
+const isActive = computed(() => {
+  if (props.activeOn.some(name => activeRouteNames.value.includes(name))) {
+    return true;
+  }
+
+  if (props.to) {
+    return route.path === resolvePath(props.to);
   }
 
   return false;
@@ -128,47 +179,24 @@ const isActive = computed(() => {
 // nested correctly, so we need to check the active state ourselves
 // TODO: Audit the routes and fix the nesting and remove this
 const activeChild = computed(() => {
-  const pathSame = navigableChildren.value.find(
-    child => child.to && route.path === resolvePath(child.to)
-  );
-  if (pathSame) return pathSame;
+  const matches = navigableChildren.value.filter(childMatchesRoute);
+  if (!matches.length) return undefined;
 
-  // Rank the activeOn Prop higher than the path match
-  // There will be cases where the path name is the same but the params are different
-  // So we need to rank them based on the params
-  // For example, contacts segment list in the sidebar effectively has the same name
-  // But the params are different
-  const activeOnPages = navigableChildren.value.filter(child =>
-    child.activeOn?.includes(route.name)
-  );
-
-  if (activeOnPages.length > 0) {
-    const rankedPage = activeOnPages.find(child => {
-      return Object.keys(child.to.params)
-        .map(key => {
-          return String(child.to.params[key]) === String(route.params[key]);
-        })
-        .every(match => match);
-    });
-
-    // If there is no ranked page, return the first activeOn page anyway
-    // Since this takes higher precedence over the path match
-    // This is not perfect, ideally we should rank each route based on all the techniques
-    // and then return the highest ranked one
-    // But this is good enough for now
-    return rankedPage ?? activeOnPages[0];
-  }
-
-  return navigableChildren.value.find(child => {
-    if (!child.to) return false;
-    const childPath = resolvePath(child.to);
-    return route.path === childPath || route.path.startsWith(`${childPath}/`);
-  });
+  // Prefer the most specific param match (e.g. segmentId / teamId)
+  return [...matches].sort((a, b) => {
+    return (
+      discriminatingParamKeys(b.to?.params).length -
+      discriminatingParamKeys(a.to?.params).length
+    );
+  })[0];
 });
 
 const hasActiveChild = computed(() => {
   return activeChild.value !== undefined;
 });
+
+// Parent header highlight + keep group open for group-level activeOn (e.g. Captain create)
+const shouldHighlight = computed(() => isActive.value || hasActiveChild.value);
 
 const handleCollapsedClick = () => {
   if (hasChildren.value && hasAccessibleChildren.value) {
@@ -192,11 +220,7 @@ const toggleTrigger = () => {
   setExpandedItem(props.name);
 };
 
-onMounted(async () => {
-  await nextTick();
-  if (hasActiveChild.value) {
-    setExpandedItem(props.name);
-  }
+onMounted(() => {
   window.addEventListener('blur', handleWindowBlur);
   document.addEventListener('mouseleave', handleWindowBlur);
 });
@@ -206,11 +230,12 @@ onUnmounted(() => {
   document.removeEventListener('mouseleave', handleWindowBlur);
 });
 
+// Force-expand on route changes (do not toggle) so active leaf stays visible
 watch(
-  hasActiveChild,
-  hasNewActiveChild => {
-    if (hasNewActiveChild && !isExpanded.value) {
-      setExpandedItem(props.name);
+  () => [shouldHighlight.value, route.name, route.fullPath],
+  () => {
+    if (shouldHighlight.value) {
+      expandItem(props.name);
     }
   },
   { immediate: true }
@@ -241,9 +266,9 @@ watch(
           class="peer/menu-button relative mx-auto flex size-10 items-center justify-center rounded-md p-2 transition-colors"
           :class="{
             'bg-sidebar-primary/10 font-medium text-sidebar-primary before:absolute before:inset-y-1.5 before:w-[3px] before:rounded-r-md before:bg-sidebar-primary ltr:before:-left-3 rtl:before:-right-3':
-              isActive || hasActiveChild,
+              shouldHighlight,
             'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground':
-              !isActive && !hasActiveChild,
+              !shouldHighlight,
           }"
           :title="label"
           @click="hasChildren ? handleCollapsedClick() : handleLeafClick()"
@@ -253,9 +278,7 @@ watch(
             :icon="icon"
             class="size-5 shrink-0"
             :class="
-              isActive || hasActiveChild
-                ? 'text-sidebar-primary'
-                : 'text-muted-foreground'
+              shouldHighlight ? 'text-sidebar-primary' : 'text-muted-foreground'
             "
           />
           <span class="sr-only">{{ label }}</span>

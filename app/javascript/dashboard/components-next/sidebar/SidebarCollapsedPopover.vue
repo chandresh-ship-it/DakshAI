@@ -153,7 +153,7 @@ onMounted(async () => {
                     <button
                       class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
                       :class="{
-                        'bg-accent font-medium text-accent-foreground':
+                        'bg-sidebar-accent font-medium text-sidebar-primary':
                           isActive(subChild),
                       }"
                       @click="navigateAndClose(subChild.to)"
@@ -162,7 +162,12 @@ onMounted(async () => {
                         :is="renderIcon(subChild.icon).component"
                         v-if="subChild.icon"
                         v-bind="renderIcon(subChild.icon).props"
-                        class="mr-2 size-4 flex-shrink-0 text-muted-foreground"
+                        class="mr-2 size-4 flex-shrink-0"
+                        :class="
+                          isActive(subChild)
+                            ? 'text-sidebar-primary'
+                            : 'text-muted-foreground'
+                        "
                       />
                       <span class="flex-1 truncate">{{ subChild.label }}</span>
                       <SidebarUnreadBadge :count="subChild.badgeCount" />
@@ -176,7 +181,7 @@ onMounted(async () => {
               <button
                 class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
                 :class="{
-                  'bg-accent font-medium text-accent-foreground':
+                  'bg-sidebar-accent font-medium text-sidebar-primary':
                     isActive(child),
                 }"
                 @click="navigateAndClose(child.to)"
@@ -185,7 +190,12 @@ onMounted(async () => {
                   :is="renderIcon(child.icon).component"
                   v-if="child.icon"
                   v-bind="renderIcon(child.icon).props"
-                  class="mr-2 size-4 flex-shrink-0 text-muted-foreground"
+                  class="mr-2 size-4 flex-shrink-0"
+                  :class="
+                    isActive(child)
+                      ? 'text-sidebar-primary'
+                      : 'text-muted-foreground'
+                  "
                 />
                 <span class="flex-1 truncate">{{ child.label }}</span>
                 <SidebarUnreadBadge :count="child.badgeCount" />

@@ -39,7 +39,7 @@ defineProps({
           <slot name="action" />
         </BillingHeader>
       </div>
-      <div class="p-4 sm:p-6 pt-2">
+      <div class="px-4 pb-4 pt-2 sm:px-6 sm:pb-6">
         <slot />
       </div>
     </template>

@@ -3,9 +3,8 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useToggle } from '@vueuse/core';
 
-import CardLayout from 'dashboard/components-next/CardLayout.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   id: {
@@ -40,27 +39,25 @@ const { t } = useI18n();
 
 const [showActionsDropdown, toggleDropdown] = useToggle();
 
-const categoryMenuItems = [
+const categoryMenuItems = computed(() => [
   {
-    label: 'Edit',
+    label: t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_CARD.EDIT'),
     action: 'edit',
     value: 'edit',
     icon: 'i-lucide-pencil',
   },
   {
-    label: 'Delete',
+    label: t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_CARD.DELETE'),
     action: 'delete',
     value: 'delete',
     icon: 'i-lucide-trash',
   },
-];
-
-const categoryTitleWithIcon = computed(() => {
-  return `${props.icon} ${props.title}`;
-});
+]);
 
 const description = computed(() => {
-  return props.description ? props.description : 'No description added';
+  return props.description
+    ? props.description
+    : t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_CARD.NO_DESCRIPTION');
 });
 
 const hasDescription = computed(() => {
@@ -78,52 +75,68 @@ const handleAction = ({ action, value }) => {
 </script>
 
 <template>
-  <CardLayout>
-    <div class="flex w-full gap-2">
-      <div class="flex justify-between w-full gap-2">
-        <div class="flex items-center justify-start w-full min-w-0 gap-2">
-          <span
-            class="text-base truncate cursor-pointer hover:underline underline-offset-2 hover:text-n-blue-11 text-n-slate-12"
-            @click="handleClick(slug)"
-          >
-            {{ categoryTitleWithIcon }}
-          </span>
-          <span
-            class="inline-flex items-center justify-center h-6 px-2 py-1 text-xs text-center border rounded-lg bg-n-slate-1 whitespace-nowrap shrink-0 text-n-slate-11 border-n-slate-4"
-          >
-            {{
-              t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_CARD.ARTICLES_COUNT', {
-                count: articlesCount,
-              })
-            }}
-          </span>
-        </div>
-        <div
-          v-on-clickaway="() => toggleDropdown(false)"
-          class="relative group"
+  <div
+    class="group flex flex-col justify-between gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:shadow-sm sm:flex-row sm:items-center"
+  >
+    <div class="flex min-w-0 flex-1 items-center gap-3.5">
+      <div
+        class="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/15 text-[15px] shadow-sm"
+      >
+        <span v-if="icon" class="text-[15px] leading-none">{{ icon }}</span>
+        <span v-else class="i-lucide-folder size-4 text-primary" />
+      </div>
+      <div
+        class="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:flex-nowrap"
+      >
+        <h3
+          class="shrink-0 cursor-pointer truncate text-[14.5px] font-medium text-foreground hover:text-primary"
+          @click="handleClick(slug)"
         >
-          <Button
-            icon="i-lucide-ellipsis-vertical"
-            color="slate"
-            size="xs"
-            variant="ghost"
-            class="rounded-md group-hover:bg-n-alpha-2"
-            @click="toggleDropdown()"
-          />
-          <DropdownMenu
-            v-if="showActionsDropdown"
-            :menu-items="categoryMenuItems"
-            class="mt-1 ltr:right-0 rtl:left-0 xl:ltr:left-0 xl:rtl:right-0 top-full z-60"
-            @action="handleAction"
-          />
-        </div>
+          {{ title }}
+        </h3>
+        <div
+          class="hidden size-1 shrink-0 rounded-full bg-muted-foreground/40 sm:block"
+          aria-hidden="true"
+        />
+        <p
+          class="min-w-0 flex-1 truncate text-[13px]"
+          :class="
+            hasDescription
+              ? 'text-muted-foreground'
+              : 'text-muted-foreground/60'
+          "
+        >
+          {{ description }}
+        </p>
       </div>
     </div>
-    <span
-      class="text-sm line-clamp-3"
-      :class="hasDescription ? 'text-n-slate-11' : 'text-n-slate-9'"
-    >
-      {{ description }}
-    </span>
-  </CardLayout>
+
+    <div class="flex shrink-0 items-center gap-3 self-end sm:self-center">
+      <span
+        class="rounded border border-border/50 bg-muted px-2 py-0.5 text-[12px] font-medium text-muted-foreground"
+      >
+        {{
+          t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_CARD.ARTICLES_COUNT', {
+            count: articlesCount,
+          })
+        }}
+      </span>
+      <div v-on-clickaway="() => toggleDropdown(false)" class="relative">
+        <RelayButton
+          variant="ghost"
+          size="icon"
+          class="size-7 border border-border text-muted-foreground hover:border-transparent hover:bg-muted hover:text-foreground"
+          @click="toggleDropdown()"
+        >
+          <span class="i-lucide-ellipsis-vertical size-3.5" />
+        </RelayButton>
+        <DropdownMenu
+          v-if="showActionsDropdown"
+          :menu-items="categoryMenuItems"
+          class="top-full z-60 mt-1 ltr:right-0 rtl:left-0 xl:ltr:left-0 xl:rtl:right-0"
+          @action="handleAction"
+        />
+      </div>
+    </div>
+  </div>
 </template>

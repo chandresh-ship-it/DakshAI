@@ -89,13 +89,7 @@ const onCopy = async e => {
           :label="t('COMPONENTS.CODE.CODEPEN')"
         />
       </form>
-      <NextButton
-        slate
-        xs
-        faded
-        :label="buttonLabel"
-        @click="onCopy"
-      />
+      <NextButton slate xs faded :label="buttonLabel" @click="onCopy" />
     </div>
     <highlightjs
       v-if="script"

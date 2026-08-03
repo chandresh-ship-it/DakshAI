@@ -63,7 +63,11 @@ const isSelected = id => selectedIdsSet.value.has(id);
 
 const parseDateString = dateString => {
   if (!dateString) return null;
-  const isUnixTimestamp = typeof dateString === 'number' || (!isNaN(dateString) && !String(dateString).includes('-') && !String(dateString).includes('T'));
+  const isUnixTimestamp =
+    typeof dateString === 'number' ||
+    (!isNaN(dateString) &&
+      !String(dateString).includes('-') &&
+      !String(dateString).includes('T'));
   return new Date(isUnixTimestamp ? Number(dateString) * 1000 : dateString);
 };
 

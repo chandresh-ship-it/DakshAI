@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store.js';
 
 import HelpCenterLayout from 'dashboard/components-next/HelpCenter/HelpCenterLayout.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import LocaleList from 'dashboard/components-next/HelpCenter/Pages/LocalePage/LocaleList.vue';
 import AddLocaleDialog from 'dashboard/components-next/HelpCenter/Pages/LocalePage/AddLocaleDialog.vue';
@@ -33,24 +33,23 @@ const localeCount = computed(() => props.locales?.length);
 <template>
   <HelpCenterLayout :show-pagination-footer="false">
     <template #header-actions>
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <span class="text-sm font-medium text-n-slate-12">
-            {{ $t('HELP_CENTER.LOCALES_PAGE.LOCALES_COUNT', localeCount) }}
-          </span>
-        </div>
-        <Button
-          :label="$t('HELP_CENTER.LOCALES_PAGE.NEW_LOCALE_BUTTON_TEXT')"
-          icon="i-lucide-plus"
-          size="sm"
+      <div class="flex items-center justify-between gap-4">
+        <span class="text-[13px] text-muted-foreground">
+          {{ $t('HELP_CENTER.LOCALES_PAGE.LOCALES_COUNT', localeCount) }}
+        </span>
+        <RelayButton
+          class="h-9 shrink-0 shadow-xs"
           @click="openAddLocaleDialog"
-        />
+        >
+          <span class="i-lucide-plus size-4" aria-hidden="true" />
+          {{ $t('HELP_CENTER.LOCALES_PAGE.NEW_LOCALE_BUTTON_TEXT') }}
+        </RelayButton>
       </div>
     </template>
     <template #content>
       <div
         v-if="isSwitchingPortal"
-        class="flex items-center justify-center py-10 text-n-slate-11"
+        class="flex items-center justify-center py-10 text-muted-foreground"
       >
         <Spinner />
       </div>

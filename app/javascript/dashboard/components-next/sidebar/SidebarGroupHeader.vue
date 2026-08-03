@@ -34,17 +34,17 @@ const isHighlighted = computed(() => props.isActive || props.hasActiveChild);
     :to="to || undefined"
     :type="to ? undefined : 'button'"
     :title="label"
-    :class="{
-      'bg-transparent font-medium text-sidebar-primary hover:bg-transparent [&>svg]:text-sidebar-primary':
-        isHighlighted,
-      'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground':
-        !isHighlighted,
-    }"
+    :class="
+      isHighlighted
+        ? 'bg-transparent font-medium text-sidebar-primary hover:bg-transparent hover:text-sidebar-primary'
+        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+    "
     @click.stop="emit('toggle')"
   >
     <span
       v-if="isHighlighted"
-      class="absolute inset-y-1.5 w-[3px] rounded-r-md bg-sidebar-primary ltr:-left-2 rtl:-right-2 rtl:rounded-l-md rtl:rounded-r-none"
+      class="pointer-events-none absolute inset-y-1.5 w-[3px] rounded-r-md bg-sidebar-primary ltr:-left-2 rtl:-right-2 rtl:rounded-l-md rtl:rounded-r-none"
+      aria-hidden="true"
     />
     <div v-if="icon" class="relative flex shrink-0 items-center">
       <Icon

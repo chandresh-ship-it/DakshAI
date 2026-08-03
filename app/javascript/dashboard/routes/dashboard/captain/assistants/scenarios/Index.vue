@@ -121,16 +121,23 @@ const deleteScenario = async id => {
 
 const bulkDeleteScenarios = async ids => {
   const idsArray = ids || Array.from(bulkSelectedIds.value);
-  await Promise.all(
-    idsArray.map(id =>
-      store.dispatch('captainScenarios/delete', {
-        id,
-        assistantId: assistantId.value,
-      })
-    )
-  );
-  bulkSelectedIds.value = new Set();
-  useAlert(t('CAPTAIN.ASSISTANTS.SCENARIOS.API.DELETE.SUCCESS'));
+  try {
+    await Promise.all(
+      idsArray.map(id =>
+        store.dispatch('captainScenarios/delete', {
+          id,
+          assistantId: assistantId.value,
+        })
+      )
+    );
+    bulkSelectedIds.value = new Set();
+    useAlert(t('CAPTAIN.ASSISTANTS.SCENARIOS.API.DELETE.SUCCESS'));
+  } catch (error) {
+    const errorMessage =
+      error?.response?.message ||
+      t('CAPTAIN.ASSISTANTS.SCENARIOS.API.DELETE.ERROR');
+    useAlert(errorMessage);
+  }
 };
 
 const addScenario = async scenario => {

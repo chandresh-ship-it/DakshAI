@@ -69,9 +69,12 @@ const formatDate = dateString => {
 
 const getStatusClass = status => {
   const classes = {
-    pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-500',
-    processing: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-500',
-    completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-500',
+    pending:
+      'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-500',
+    processing:
+      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-500',
+    completed:
+      'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-500',
     failed: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-500',
   };
   return classes[status] || 'bg-slate-100 text-slate-800';
@@ -89,8 +92,10 @@ const getOperationLabel = operation => {
 };
 
 const formatStatistics = audit => {
-  if (audit.status === 'pending') return t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING');
-  if (audit.status === 'processing' && !audit.statistics?.total) return t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING');
+  if (audit.status === 'pending')
+    return t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING');
+  if (audit.status === 'processing' && !audit.statistics?.total)
+    return t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING');
 
   const stats = audit.statistics || {};
   const total = stats.total || 0;
@@ -110,7 +115,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col justify-between flex-1 h-full m-0 overflow-auto bg-n-surface-1 p-6">
+  <div
+    class="flex flex-col justify-between flex-1 h-full m-0 overflow-auto bg-n-surface-1 p-6"
+  >
     <!-- Header -->
     <div class="flex flex-col mb-6">
       <h1 class="text-2xl font-semibold text-n-slate-12">
@@ -122,17 +129,29 @@ onMounted(() => {
     </div>
 
     <!-- Filters Row -->
-    <div class="flex flex-wrap items-center gap-3 mb-6 bg-n-slate-2 p-3 rounded-lg border border-n-slate-4">
+    <div
+      class="flex flex-wrap items-center gap-3 mb-6 bg-n-slate-2 p-3 rounded-lg border border-n-slate-4"
+    >
       <!-- Status Filter -->
       <select
         v-model="statusFilter"
         class="px-3 py-1.5 text-sm rounded-lg border border-n-slate-4 bg-n-surface-1 text-n-slate-12 focus:outline-none focus:border-n-brand"
       >
-        <option value="">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.STATUS') }}</option>
-        <option value="pending">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING') }}</option>
-        <option value="processing">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING') }}</option>
-        <option value="completed">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.COMPLETED') }}</option>
-        <option value="failed">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.FAILED') }}</option>
+        <option value="">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.STATUS') }}
+        </option>
+        <option value="pending">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING') }}
+        </option>
+        <option value="processing">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING') }}
+        </option>
+        <option value="completed">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.COMPLETED') }}
+        </option>
+        <option value="failed">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.FAILED') }}
+        </option>
       </select>
 
       <!-- Operation Filter -->
@@ -140,12 +159,24 @@ onMounted(() => {
         v-model="operationFilter"
         class="px-3 py-1.5 text-sm rounded-lg border border-n-slate-4 bg-n-surface-1 text-n-slate-12 focus:outline-none focus:border-n-brand"
       >
-        <option value="">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.OPERATION') }}</option>
-        <option value="add_tag">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.ADD_LABEL') }}</option>
-        <option value="remove_tag">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.REMOVE_LABEL') }}</option>
-        <option value="delete">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.DELETE') }}</option>
-        <option value="send_sms">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_SMS') }}</option>
-        <option value="send_email">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_EMAIL') }}</option>
+        <option value="">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.OPERATION') }}
+        </option>
+        <option value="add_tag">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.ADD_LABEL') }}
+        </option>
+        <option value="remove_tag">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.REMOVE_LABEL') }}
+        </option>
+        <option value="delete">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.DELETE') }}
+        </option>
+        <option value="send_sms">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_SMS') }}
+        </option>
+        <option value="send_email">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_EMAIL') }}
+        </option>
       </select>
 
       <!-- Date Range -->
@@ -179,7 +210,10 @@ onMounted(() => {
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center py-20 text-n-slate-11">
+    <div
+      v-if="isLoading"
+      class="flex items-center justify-center py-20 text-n-slate-11"
+    >
       <Spinner />
     </div>
 
@@ -198,10 +232,15 @@ onMounted(() => {
     </div>
 
     <!-- Table Grid -->
-    <div v-else class="w-full border rounded-lg border-n-slate-4 bg-n-surface-1 overflow-x-auto">
+    <div
+      v-else
+      class="w-full border rounded-lg border-n-slate-4 bg-n-surface-1 overflow-x-auto"
+    >
       <table class="w-full text-left border-collapse table-auto">
         <thead>
-          <tr class="border-b border-n-slate-4 bg-n-slate-2 text-n-slate-11 text-xs font-semibold uppercase tracking-wider">
+          <tr
+            class="border-b border-n-slate-4 bg-n-slate-2 text-n-slate-11 text-xs font-semibold uppercase tracking-wider"
+          >
             <th class="p-3 text-sm font-semibold capitalize text-n-slate-12">
               {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.ACTION_NAME') }}
             </th>
@@ -223,14 +262,20 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody class="divide-y divide-n-slate-3 text-sm text-n-slate-12">
-          <tr v-for="audit in audits" :key="audit.id" class="hover:bg-n-slate-2 transition-colors">
+          <tr
+            v-for="audit in audits"
+            :key="audit.id"
+            class="hover:bg-n-slate-2 transition-colors"
+          >
             <!-- Action Name -->
             <td class="p-3 font-medium text-n-slate-12">
               {{ audit.action_label }}
             </td>
             <!-- Operation -->
             <td class="p-3">
-              <span class="px-2 py-0.5 text-xs rounded-full bg-n-slate-3 text-n-slate-11 font-medium border border-n-slate-4">
+              <span
+                class="px-2 py-0.5 text-xs rounded-full bg-n-slate-3 text-n-slate-11 font-medium border border-n-slate-4"
+              >
                 {{ getOperationLabel(audit.operation_type) }}
               </span>
             </td>
@@ -244,8 +289,15 @@ onMounted(() => {
             </td>
             <!-- Status -->
             <td class="p-3">
-              <span :class="getStatusClass(audit.status)" class="px-2.5 py-0.5 text-xs rounded-full font-medium inline-block uppercase tracking-wider text-center min-w-[5rem]">
-                {{ t(`CONTACTS_BULK_ACTIONS.AUDIT.STATUS.${audit.status.toUpperCase()}`) }}
+              <span
+                :class="getStatusClass(audit.status)"
+                class="px-2.5 py-0.5 text-xs rounded-full font-medium inline-block uppercase tracking-wider text-center min-w-[5rem]"
+              >
+                {{
+                  t(
+                    `CONTACTS_BULK_ACTIONS.AUDIT.STATUS.${audit.status.toUpperCase()}`
+                  )
+                }}
               </span>
             </td>
             <!-- Statistics -->

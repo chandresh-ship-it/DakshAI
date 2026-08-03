@@ -10,7 +10,7 @@ import PortalConfigurationSettings from './PortalConfigurationSettings.vue';
 import PortalLayoutContentSettings from './PortalLayoutContentSettings.vue';
 import ConfirmDeletePortalDialog from 'dashboard/components-next/HelpCenter/Pages/PortalSettingsPage/ConfirmDeletePortalDialog.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   portals: {
@@ -80,20 +80,19 @@ const handleDeletePortal = () => {
     <template #content>
       <div
         v-if="isLoading"
-        class="flex items-center justify-center py-10 pt-2 pb-8 text-n-slate-11"
+        class="flex items-center justify-center py-10 text-muted-foreground"
       >
         <Spinner />
       </div>
       <div
         v-else-if="activePortal"
-        class="flex flex-col w-full gap-4 max-w-[40rem] pb-8"
+        class="flex w-full max-w-3xl flex-col gap-6 pb-8"
       >
         <PortalBaseSettings
           :active-portal="activePortal"
           :is-fetching="isFetching"
           @update-portal="handleUpdatePortal"
         />
-        <div class="w-full h-px bg-n-weak" />
         <PortalConfigurationSettings
           :active-portal="activePortal"
           :is-fetching="isFetching"
@@ -102,23 +101,23 @@ const handleDeletePortal = () => {
           @refresh-status="fetchSSLStatus"
           @send-cname-instructions="handleSendCnameInstructions"
         />
-        <div class="w-full h-px bg-n-weak" />
         <PortalLayoutContentSettings
           :active-portal="activePortal"
           :is-fetching="isFetching"
           @update-portal-configuration="handleUpdatePortalConfiguration"
         />
-        <div class="w-full h-px bg-n-weak" />
-        <div class="flex items-end justify-between w-full gap-4">
+        <div
+          class="flex w-full items-end justify-between gap-4 rounded-2xl border border-border/40 bg-card p-6 shadow-sm"
+        >
           <div class="flex flex-col gap-2">
-            <h6 class="text-base font-medium text-n-slate-12">
+            <h6 class="text-base font-medium text-foreground">
               {{
                 t(
                   'HELP_CENTER.PORTAL_SETTINGS.CONFIGURATION_FORM.DELETE_PORTAL.HEADER'
                 )
               }}
             </h6>
-            <span class="text-sm text-n-slate-11">
+            <span class="text-sm text-muted-foreground">
               {{
                 t(
                   'HELP_CENTER.PORTAL_SETTINGS.CONFIGURATION_FORM.DELETE_PORTAL.DESCRIPTION'
@@ -126,19 +125,20 @@ const handleDeletePortal = () => {
               }}
             </span>
           </div>
-          <Button
-            :label="
+          <RelayButton
+            variant="destructive"
+            class="h-9 max-w-56 shrink-0"
+            @click="openConfirmDeletePortalDialog"
+          >
+            {{
               t(
                 'HELP_CENTER.PORTAL_SETTINGS.CONFIGURATION_FORM.DELETE_PORTAL.BUTTON',
                 {
                   portalName: activePortalName,
                 }
               )
-            "
-            color="ruby"
-            class="max-w-56 !w-fit"
-            @click="openConfirmDeletePortalDialog"
-          />
+            }}
+          </RelayButton>
         </div>
       </div>
     </template>

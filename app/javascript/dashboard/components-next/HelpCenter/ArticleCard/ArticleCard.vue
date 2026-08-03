@@ -13,11 +13,9 @@ import { useMapGetter } from 'dashboard/composables/store.js';
 import { useConfig } from 'dashboard/composables/useConfig';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import CardLayout from 'dashboard/components-next/CardLayout.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
-import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
+import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   id: {
@@ -107,14 +105,14 @@ const articleMenuItems = computed(() => {
   return [...statusItems, commonItems.delete];
 });
 
-const statusTextColor = computed(() => {
+const statusBadgeClass = computed(() => {
   switch (props.status) {
     case 'archived':
-      return 'text-n-slate-12';
+      return 'bg-muted text-muted-foreground';
     case 'draft':
-      return 'text-n-amber-11';
+      return 'bg-amber-500/15 text-amber-600';
     default:
-      return 'text-n-teal-11';
+      return 'bg-primary/10 text-primary';
   }
 });
 
@@ -161,86 +159,97 @@ const handleClick = id => {
 </script>
 
 <template>
-  <CardLayout
-    :selectable="selectable"
-    class="relative"
+  <div
+    class="group relative flex cursor-pointer flex-col justify-between gap-3 rounded-xl border p-5 transition-all sm:flex-row sm:items-center"
+    :class="
+      isSelected
+        ? 'border-primary/60 bg-primary/5 shadow-sm'
+        : 'border-border bg-card hover:shadow-sm'
+    "
     @mouseenter="emit('hover', true)"
     @mouseleave="emit('hover', false)"
+    @click="handleClick(id)"
   >
-    <div
-      v-show="showSelectionControl"
-      class="absolute top-7 ltr:left-3 rtl:right-3"
-    >
-      <Checkbox :model-value="isSelected" @change="emit('toggleSelect', id)" />
-    </div>
-    <div class="flex justify-between w-full gap-1">
-      <div class="flex items-center gap-2 min-w-0">
-        <span
-          class="text-base cursor-pointer hover:underline underline-offset-2 hover:text-n-blue-11 text-n-slate-12 line-clamp-1"
-          @click="handleClick(id)"
+    <div class="flex min-w-0 flex-1 items-center gap-3 pr-4">
+      <div
+        v-show="selectable && showSelectionControl"
+        class="shrink-0"
+        @click.stop
+      >
+        <RelayCheckbox
+          :model-value="isSelected"
+          @update:model-value="emit('toggleSelect', id)"
+        />
+      </div>
+
+      <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+        <h3
+          class="truncate text-[15px] font-normal text-foreground transition-colors group-hover:text-primary"
         >
           {{ title }}
-        </span>
+        </h3>
+
+        <div
+          class="flex flex-wrap items-center gap-3 text-[13px] text-muted-foreground"
+        >
+          <div class="flex items-center gap-1.5">
+            <Avatar
+              :name="authorName"
+              :src="authorThumbnailSrc"
+              :size="16"
+              rounded-full
+            />
+            <span>{{ authorName || '-' }}</span>
+          </div>
+          <span class="text-[10px] text-muted-foreground/40">•</span>
+          <span>{{ categoryName }}</span>
+          <span class="text-[10px] text-muted-foreground/40">•</span>
+          <div class="inline-flex items-center gap-1.5">
+            <Icon icon="i-lucide-eye" class="size-3.5 opacity-60" />
+            <span>
+              {{
+                t('HELP_CENTER.ARTICLES_PAGE.ARTICLE_CARD.CARD.VIEWS', {
+                  count: views,
+                })
+              }}
+            </span>
+          </div>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
+    </div>
+
+    <div class="flex shrink-0 flex-col items-end gap-1">
+      <div class="flex items-center gap-1.5">
         <span
-          class="text-xs font-medium inline-flex items-center h-6 px-2 py-0.5 rounded-md bg-n-alpha-2"
-          :class="statusTextColor"
+          class="rounded px-2 py-0.5 text-[12px] font-medium"
+          :class="statusBadgeClass"
         >
           {{ statusText }}
         </span>
         <div
           v-on-clickaway="() => toggleDropdown(false)"
-          class="relative flex items-center group"
+          class="relative"
+          @click.stop
         >
-          <Button
-            icon="i-lucide-ellipsis-vertical"
-            color="slate"
-            size="xs"
-            class="rounded-md group-hover:bg-n-alpha-2"
+          <RelayButton
+            variant="ghost"
+            size="icon"
+            class="size-7 border border-transparent text-muted-foreground hover:border-transparent hover:bg-muted hover:text-foreground"
             @click="toggleDropdown()"
-          />
+          >
+            <span class="i-lucide-ellipsis-vertical size-3.5" />
+          </RelayButton>
           <DropdownMenu
             v-if="showActionsDropdown"
             :menu-items="articleMenuItems"
-            class="mt-1 ltr:right-0 rtl:left-0 xl:ltr:left-0 xl:rtl:right-0 top-full"
+            class="top-full mt-1 ltr:right-0 rtl:left-0 xl:ltr:left-0 xl:rtl:right-0"
             @action="handleArticleAction($event)"
           />
         </div>
       </div>
-    </div>
-    <div class="flex items-center justify-between w-full gap-4">
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-1">
-          <Avatar
-            :name="authorName"
-            :src="authorThumbnailSrc"
-            :size="16"
-            rounded-full
-          />
-          <span class="text-sm truncate text-n-slate-11">
-            {{ authorName || '-' }}
-          </span>
-        </div>
-        <span class="block text-sm whitespace-nowrap text-n-slate-11">
-          {{ categoryName }}
-        </span>
-        <div
-          class="inline-flex items-center gap-1 text-n-slate-11 whitespace-nowrap"
-        >
-          <Icon icon="i-lucide-eye" class="size-4" />
-          <span class="text-sm">
-            {{
-              t('HELP_CENTER.ARTICLES_PAGE.ARTICLE_CARD.CARD.VIEWS', {
-                count: views,
-              })
-            }}
-          </span>
-        </div>
-      </div>
-      <span class="text-sm text-n-slate-11 line-clamp-1">
+      <span class="text-right text-[12.5px] text-muted-foreground">
         {{ lastUpdatedAt }}
       </span>
     </div>
-  </CardLayout>
+  </div>
 </template>

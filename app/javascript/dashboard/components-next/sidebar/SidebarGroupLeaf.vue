@@ -1,5 +1,6 @@
 <script setup>
 import { isVNode, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import Icon from 'next/icon/Icon.vue';
 import Policy from 'dashboard/components/policy.vue';
 import { useSidebarContext } from './provider';
@@ -10,14 +11,33 @@ const props = defineProps({
   to: { type: [String, Object], required: true },
   icon: { type: [String, Object], default: null },
   active: { type: Boolean, default: false },
+  activeOn: { type: Array, default: () => [] },
   component: { type: Function, default: null },
   badgeCount: { type: [Number, String], default: 0 },
 });
 
+const route = useRoute();
 const { resolvePermissions, resolveFeatureFlag } = useSidebarContext();
 
 const shouldRenderComponent = computed(() => {
   return typeof props.component === 'function' || isVNode(props.component);
+});
+
+// Parent passes `active` from activeChild selection; also match locally so
+// portal/Captain redirector leaves (navigationPath) never miss highlight.
+const isLeafActive = computed(() => {
+  if (props.active) return true;
+
+  const names = route.matched.map(record => record.name).filter(Boolean);
+  if (route.name && !names.includes(route.name)) names.push(route.name);
+
+  if (props.activeOn.some(name => names.includes(name))) return true;
+
+  const navPath =
+    props.to && typeof props.to === 'object'
+      ? props.to.params?.navigationPath
+      : null;
+  return Boolean(navPath && names.includes(navPath));
 });
 </script>
 
@@ -33,22 +53,28 @@ const shouldRenderComponent = computed(() => {
       :is="to ? 'router-link' : 'div'"
       :to="to"
       :title="label"
-      class="flex h-8 min-w-0 items-center gap-3 overflow-hidden rounded-md px-2 text-sm outline-none transition-colors"
-      :class="{
-        'font-medium text-sidebar-primary': active,
-        'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground':
-          !active,
-      }"
+      active-class=""
+      exact-active-class=""
+      class="flex h-8 min-w-0 -translate-x-px items-center gap-3 overflow-hidden rounded-md px-2 text-sm outline-none transition-colors"
+      :class="
+        isLeafActive
+          ? 'bg-sidebar-accent font-medium text-sidebar-primary hover:bg-sidebar-accent hover:text-sidebar-primary'
+          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+      "
+      :aria-current="isLeafActive ? 'page' : undefined"
     >
       <component
         :is="component"
         v-if="shouldRenderComponent"
-        v-bind="{ label, icon, active, badgeCount }"
+        v-bind="{ label, icon, active: isLeafActive, badgeCount }"
       />
       <template v-else>
         <span
           v-if="icon"
-          class="grid size-4 shrink-0 place-content-center text-muted-foreground"
+          class="grid size-4 shrink-0 place-content-center"
+          :class="
+            isLeafActive ? 'text-sidebar-primary' : 'text-muted-foreground'
+          "
         >
           <Icon :icon="icon" class="inline-block size-4" />
         </span>

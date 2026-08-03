@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { vOnClickOutside } from '@vueuse/components';
 import { RelayInput } from 'dashboard/components-next/relay';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { DURATION_UNITS } from 'dashboard/components-next/input/constants';
@@ -77,6 +78,10 @@ const detectUnit = minutes => {
   return DURATION_UNITS.MINUTES;
 };
 
+const closeUnitDropdown = () => {
+  showTimeUnitDropdown.value = false;
+};
+
 const selectUnit = unit => {
   windowUnit.value = unit;
   showTimeUnitDropdown.value = false;
@@ -123,7 +128,7 @@ onMounted(() => {
         type="number"
         class-name="h-9 w-20 px-3 text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
       />
-      <div class="relative w-32">
+      <div v-on-click-outside="closeUnitDropdown" class="relative w-32">
         <button
           type="button"
           class="flex h-9 w-full items-center justify-between rounded-md border border-border/80 bg-background px-3 text-left text-[13.5px] text-foreground shadow-sm outline-none focus:ring-1 focus:ring-primary/30"

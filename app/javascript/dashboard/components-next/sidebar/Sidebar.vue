@@ -80,8 +80,13 @@ useSidebarKeyboardShortcuts(toggleShortcutModalFn);
 
 const expandedItem = ref(null);
 
+// Accordion toggle (user click). Use expandItem for route-driven open.
 const setExpandedItem = name => {
   expandedItem.value = expandedItem.value === name ? null : name;
+};
+
+const expandItem = name => {
+  expandedItem.value = name;
 };
 
 const {
@@ -107,6 +112,7 @@ const startWidth = ref(0);
 provideSidebarContext({
   expandedItem,
   setExpandedItem,
+  expandItem,
   isCollapsed: isEffectivelyCollapsed,
   sidebarWidth,
   isResizing,
@@ -291,7 +297,7 @@ const primaryMenuItems = computed(() => {
         {
           name: 'All',
           label: t('SIDEBAR.CONVERSATIONS'),
-          activeOn: ['inbox_conversation'],
+          activeOn: ['home', 'inbox_conversation'],
           to: accountScopedRoute('home'),
         },
         {
@@ -687,6 +693,7 @@ const administrationMenuItems = computed(() => [
         activeOn: [
           'portals_categories_index',
           'portals_categories_articles_index',
+          'portals_categories_articles_new',
           'portals_categories_articles_edit',
         ],
         to: accountScopedRoute('portals_index', {
@@ -702,7 +709,8 @@ const administrationMenuItems = computed(() => [
         }),
       },
       {
-        name: 'Settings',
+        // Distinct from footer account Settings (name: 'Settings')
+        name: 'Portal Settings',
         label: t('SIDEBAR.HELP_CENTER.SETTINGS'),
         activeOn: ['portals_settings_index'],
         to: accountScopedRoute('portals_index', {
@@ -725,7 +733,7 @@ const settingsMenuItem = computed(() => ({
   label: t('SIDEBAR.SETTINGS'),
   icon: 'i-lucide-settings',
   to: accountScopedRoute('settings_home'),
-  activeOn: ['settings_home'],
+  activeOn: ['settings_home', 'general_settings_index'],
 }));
 
 const logoutMenuItem = computed(() => ({

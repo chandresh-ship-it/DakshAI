@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 
 import classicLayoutPreview from './classic-layout-preview.svg?raw';
 import documentationLayoutPreview from './documentation-layout-preview.svg?raw';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import RadioCard from 'dashboard/components-next/radioCard/RadioCard.vue';
@@ -150,18 +150,20 @@ const handleSave = () => {
 </script>
 
 <template>
-  <div class="flex flex-col w-full gap-6">
+  <div
+    class="flex w-full flex-col gap-6 rounded-2xl border border-border/40 bg-card p-6 shadow-sm"
+  >
     <div class="flex flex-col gap-2">
-      <h6 class="text-base font-medium text-n-slate-12">
+      <h6 class="text-base font-medium text-foreground">
         {{ t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.HEADER') }}
       </h6>
-      <span class="text-sm text-n-slate-11">
+      <span class="text-sm text-muted-foreground">
         {{ t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.DESCRIPTION') }}
       </span>
     </div>
 
     <section class="flex flex-col gap-3">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-n-slate-11">
+      <div class="grid grid-cols-1 gap-3 text-muted-foreground sm:grid-cols-2">
         <RadioCard
           :id="PORTAL_LAYOUTS.CLASSIC"
           :is-active="state.layout === PORTAL_LAYOUTS.CLASSIC"
@@ -176,7 +178,7 @@ const handleSave = () => {
           @select="value => (state.layout = value)"
         >
           <div
-            class="w-full mt-2 rounded-md overflow-hidden border border-solid border-n-weak bg-n-slate-2 dark:bg-n-slate-1"
+            class="mt-2 w-full overflow-hidden rounded-md border border-border bg-muted/40"
           >
             <span v-dompurify-html="classicLayoutPreview" />
           </div>
@@ -197,7 +199,7 @@ const handleSave = () => {
           @select="value => (state.layout = value)"
         >
           <div
-            class="w-full mt-2 rounded-md overflow-hidden border border-solid border-n-weak bg-n-slate-2 dark:bg-n-slate-1"
+            class="mt-2 w-full overflow-hidden rounded-md border border-border bg-muted/40"
           >
             <span v-dompurify-html="documentationLayoutPreview" />
           </div>
@@ -210,12 +212,12 @@ const handleSave = () => {
       class="flex flex-col gap-3"
     >
       <div class="flex flex-col gap-1">
-        <h6 class="text-sm font-medium text-n-slate-12">
+        <h6 class="text-sm font-medium text-foreground">
           {{
             t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.SOCIAL_LINKS.HEADER')
           }}
         </h6>
-        <span class="text-sm text-n-slate-11">
+        <span class="text-sm text-muted-foreground">
           {{
             t(
               'HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.SOCIAL_LINKS.DESCRIPTION'
@@ -227,32 +229,36 @@ const handleSave = () => {
       <div
         v-for="platform in visiblePlatformDetails"
         :key="platform.key"
-        class="flex items-center h-10 gap-1.5 px-3 rounded-lg outline outline-1 outline-n-weak focus-within:outline-n-brand"
+        class="flex h-10 items-center gap-1.5 rounded-md border border-input px-3 shadow-xs focus-within:ring-1 focus-within:ring-ring"
       >
-        <Icon :icon="platform.icon" class="size-4 shrink-0 text-n-slate-11" />
-        <span class="text-sm shrink-0 text-n-slate-10">{{
+        <Icon
+          :icon="platform.icon"
+          class="size-4 shrink-0 text-muted-foreground"
+        />
+        <span class="shrink-0 text-sm text-muted-foreground">{{
           platform.prefix
         }}</span>
         <input
           v-model="state.socialProfiles[platform.key]"
           type="text"
-          class="flex-1 min-w-0 text-sm bg-transparent outline-none reset-base text-n-slate-12 placeholder:text-n-slate-10"
+          class="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           :placeholder="
             t(
               'HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.SOCIAL_LINKS.PLACEHOLDER'
             )
           "
         />
-        <Button
-          icon="i-lucide-x"
-          color="slate"
+        <RelayButton
           variant="ghost"
-          size="xs"
+          size="icon"
+          class="size-7 text-muted-foreground"
           :aria-label="
             t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.SOCIAL_LINKS.REMOVE')
           "
           @click="removePlatform(platform.key)"
-        />
+        >
+          <span class="i-lucide-x size-3.5" />
+        </RelayButton>
       </div>
 
       <div
@@ -260,31 +266,32 @@ const handleSave = () => {
         v-on-clickaway="() => (showAddMenu = false)"
         class="relative"
       >
-        <Button
-          :label="
-            t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.SOCIAL_LINKS.ADD')
-          "
-          icon="i-lucide-plus"
-          color="slate"
-          variant="faded"
+        <RelayButton
+          variant="outline"
           size="sm"
+          class="h-8"
           @click="showAddMenu = !showAddMenu"
-        />
+        >
+          <span class="i-lucide-plus size-3.5" />
+          {{ t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.SOCIAL_LINKS.ADD') }}
+        </RelayButton>
         <DropdownMenu
           v-if="showAddMenu"
           :menu-items="addablePlatforms"
-          class="mt-1 w-52 top-full ltr:left-0 rtl:right-0"
+          class="top-full mt-1 w-52 ltr:left-0 rtl:right-0"
           @action="addPlatform"
         />
       </div>
     </section>
 
-    <div class="flex justify-end">
-      <Button
-        :label="t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.SAVE')"
+    <div class="flex justify-end border-t border-border/40 pt-5">
+      <RelayButton
+        class="h-9 shadow-xs"
         :disabled="!hasChanges || isFetching"
         @click="handleSave"
-      />
+      >
+        {{ t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.SAVE') }}
+      </RelayButton>
     </div>
   </div>
 </template>
