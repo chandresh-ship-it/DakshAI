@@ -14,6 +14,20 @@
       "INPUT": "Search for People, Chats, Saved Replies .."
     },
     "FILTER_ALL": "All",
+    "MORE_OPTIONS": "More options",
+    "STATUS_TABS": {
+      "NEW": "New",
+      "IN_PROGRESS": "In Progress",
+      "ON_HOLD": "On Hold",
+      "CLOSED": "Closed"
+    },
+    "FILTER_MENU": {
+      "ASSIGNED_TO_ME": "Assigned to me",
+      "UNASSIGNED": "Unassigned",
+      "OLDEST_FIRST": "Oldest first",
+      "ARCHIVED": "Archived",
+      "SNOOZED": "Snoozed"
+    },
     "ASSIGNEE_TYPE_TABS": {
       "me": "Mine",
       "unassigned": "Unassigned",

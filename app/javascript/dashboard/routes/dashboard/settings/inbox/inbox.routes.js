@@ -37,13 +37,18 @@ export default {
     {
       path: frontendURL('accounts/:accountId/settings/inboxes'),
       component: SettingsContent,
-      props: params => {
-        const showBackButton = params.name !== 'settings_inbox_list';
-        const fullWidth = params.name === 'settings_inbox_show';
+      props: route => {
+        const isCreateFlow = [
+          'settings_inbox_new',
+          'settings_inbox_finish',
+          'settings_inboxes_page_channel',
+          'settings_inboxes_add_agents',
+        ].includes(route.name);
+        const fullWidth = route.name === 'settings_inbox_show' || isCreateFlow;
         return {
-          headerTitle: 'INBOX_MGMT.HEADER',
-          icon: 'mail-inbox-all',
-          showBackButton,
+          headerTitle: isCreateFlow ? '' : 'INBOX_MGMT.HEADER',
+          icon: isCreateFlow ? '' : 'mail-inbox-all',
+          showBackButton: route.name === 'settings_inbox_show',
           fullWidth,
         };
       },

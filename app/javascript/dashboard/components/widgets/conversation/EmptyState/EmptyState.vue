@@ -1,7 +1,6 @@
 <script>
 import { mapGetters } from 'vuex';
 import { useAdmin } from 'dashboard/composables/useAdmin';
-import { useAccount } from 'dashboard/composables/useAccount';
 import OnboardingView from '../OnboardingView.vue';
 import EmptyStateMessage from './EmptyStateMessage.vue';
 
@@ -19,11 +18,8 @@ export default {
   setup() {
     const { isAdmin } = useAdmin();
 
-    const { accountScopedUrl } = useAccount();
-
     return {
       isAdmin,
-      accountScopedUrl,
     };
   },
   computed: {
@@ -46,9 +42,6 @@ export default {
       }
       return this.$t('CONVERSATION.404');
     },
-    newInboxURL() {
-      return this.accountScopedUrl('settings/inboxes/new');
-    },
     emptyClassName() {
       if (
         !this.inboxesList.length &&
@@ -56,9 +49,9 @@ export default {
         !this.loadingChatList &&
         this.isAdmin
       ) {
-        return 'h-full overflow-auto w-full';
+        return 'h-full overflow-auto w-full bg-background';
       }
-      return 'flex-1 min-w-0 px-0 flex flex-col items-center justify-center h-full bg-n-surface-1';
+      return 'flex-1 min-w-0 px-0 flex flex-col items-center justify-center h-full bg-background';
     },
   },
 };
@@ -71,12 +64,19 @@ export default {
       :message="loadingIndicatorMessage"
     />
     <!-- No inboxes attached -->
+    <OnboardingView
+      v-if="
+        !inboxesList.length &&
+        !uiFlags.isFetching &&
+        !loadingChatList &&
+        isAdmin
+      "
+    />
     <div
-      v-if="!inboxesList.length && !uiFlags.isFetching && !loadingChatList"
+      v-else-if="!inboxesList.length && !uiFlags.isFetching && !loadingChatList"
       class="clearfix mx-auto"
     >
-      <OnboardingView v-if="isAdmin" />
-      <EmptyStateMessage v-else :message="$t('CONVERSATION.NO_INBOX_AGENT')" />
+      <EmptyStateMessage :message="$t('CONVERSATION.NO_INBOX_AGENT')" />
     </div>
     <!-- Show empty state images if not loading -->
 

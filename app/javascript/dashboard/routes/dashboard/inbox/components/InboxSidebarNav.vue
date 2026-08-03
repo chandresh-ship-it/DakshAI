@@ -99,7 +99,7 @@ const channelLabel = channel => {
 const selectView = id => emit('select', id);
 
 const addChannel = () => {
-  router.push(accountScopedRoute('settings_inbox_new'));
+  router.push(accountScopedRoute('settings_inbox_list'));
 };
 </script>
 

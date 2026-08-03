@@ -106,6 +106,7 @@
       "CLOSE": "Close",
       "DETAILS": "details",
       "COPY_ID_SUCCESS": "Conversation ID copied to clipboard",
+      "CUSTOMER_SINCE": "Customer Since {date}",
       "SNOOZED_UNTIL": "Snoozed until",
       "SNOOZED_UNTIL_TOMORROW": "Snoozed until tomorrow",
       "SNOOZED_UNTIL_NEXT_WEEK": "Snoozed until next week",
@@ -221,6 +222,7 @@
     "REPLYBOX": {
       "REPLY": "Reply",
       "PRIVATE_NOTE": "Private Note",
+      "AI_REPLY": "AI Reply",
       "SEND": "Send",
       "CREATE": "Add Note",
       "INSERT_READ_MORE": "Read more",
@@ -308,7 +310,25 @@
     },
     "SIDEBAR": {
       "CONTACT": "Contact",
-      "COPILOT": "Copilot"
+      "COPILOT": "Copilot",
+      "OVERVIEW": "Overview",
+      "VIEW_FULL_PROFILE": "View full profile"
+    },
+    "AI_SUMMARY": {
+      "TITLE": "AI Summary",
+      "NOT_GENERATED": "Generate a summary to get takeaways",
+      "LAST_UPDATED": "Last updated {time}",
+      "EMPTY": "No summary yet. Generate one from this conversation, or takeaways will appear from labels when available.",
+      "NEXT_BEST_ACTION": "Next Best Action",
+      "GENERATE": "Generate New Summary",
+      "GENERATING": "Generating…",
+      "ERROR": "Could not generate summary. Please try again.",
+      "ACTIONS": {
+        "SCHEDULE_DEMO": "Schedule a demo call",
+        "FOLLOW_UP": "Send a follow-up message",
+        "REVIEW_SUMMARY": "Review summary with the customer",
+        "GENERATE_FIRST": "Generate a summary to unlock actions"
+      }
     },
     "VOICE_WIDGET": {
       "INCOMING_CALL": "Incoming call",
@@ -351,6 +371,47 @@
     "GREETING_AFTERNOON": "👋 Good afternoon, {name}. Welcome to {installationName}.",
     "GREETING_EVENING": "👋 Good evening, {name}. Welcome to {installationName}.",
     "READ_LATEST_UPDATES": "Read our latest updates",
+    "CONNECT": {
+      "TITLE": "Connect a Channel to Start Receiving Messages",
+      "DESCRIPTION": "Stop switching between tabs. Connect your communication channels and reply to all your customers from one powerful, unified inbox.",
+      "GETTING_STARTED": "Getting Started",
+      "STEP_BADGE": "Step {current} of {total}",
+      "LEARN_HOW": "Learn how Conversations works",
+      "EXPLORE_DEMO": "Explore Demo Workspace"
+    },
+    "STEPS": {
+      "CREATE_WORKSPACE": "Create Workspace",
+      "IMPORT_CONTACTS": "Import Contacts",
+      "CONNECT_CHANNEL": "Connect Channel",
+      "FIRST_CONVERSATION": "First Conversation"
+    },
+    "CHANNELS": {
+      "CONNECT": "Connect",
+      "SETUP": "Setup",
+      "WHATSAPP": {
+        "TITLE": "WhatsApp API",
+        "DESCRIPTION": "Cloud API integration"
+      },
+      "EMAIL": {
+        "TITLE": "Email Inbox",
+        "DESCRIPTION": "Gmail, Outlook, IMAP"
+      },
+      "MESSENGER": {
+        "TITLE": "Messenger & IG",
+        "DESCRIPTION": "Meta Business Suite"
+      },
+      "LIVE_CHAT": {
+        "TITLE": "Live Chat",
+        "DESCRIPTION": "Website widget"
+      }
+    },
+    "COMING_SOON": {
+      "LABEL": "Coming Soon:",
+      "TELEGRAM": "Telegram",
+      "APPLE": "Apple",
+      "GOOGLE": "Google",
+      "SLACK": "Slack"
+    },
     "ALL_CONVERSATION": {
       "TITLE": "All your conversations in one place",
       "DESCRIPTION": "View all the conversations from your customers in one single dashboard. You can filter the conversations by the incoming channel, label and status.",

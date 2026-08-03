@@ -7,14 +7,12 @@ import { vOnClickOutside } from '@vueuse/components';
 import { REPLY_EDITOR_MODES, CHAR_LENGTH_WARNING } from './constants';
 import { CAPTAIN_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
 import NextButton from 'dashboard/components-next/button/Button.vue';
-import EditorModeToggle from './EditorModeToggle.vue';
 import CopilotMenuBar from './CopilotMenuBar.vue';
 
 export default {
   name: 'ReplyTopPanel',
   components: {
     NextButton,
-    EditorModeToggle,
     CopilotMenuBar,
   },
   directives: {
@@ -57,25 +55,42 @@ export default {
       type: Boolean,
       default: false,
     },
+    isCopilotActive: {
+      type: Boolean,
+      default: false,
+    },
   },
-  emits: ['setReplyMode', 'toggleEditorSize', 'executeCopilotAction'],
+  emits: [
+    'setReplyMode',
+    'toggleEditorSize',
+    'executeCopilotAction',
+    'toggleCopilot',
+  ],
   setup(props, { emit }) {
     const setReplyMode = mode => {
       emit('setReplyMode', mode);
     };
     const handleReplyClick = () => {
       if (props.isReplyRestricted) return;
+      if (props.isCopilotActive) {
+        emit('toggleCopilot');
+      }
       setReplyMode(REPLY_EDITOR_MODES.REPLY);
     };
     const handleNoteClick = () => {
+      if (props.isCopilotActive) {
+        emit('toggleCopilot');
+      }
       setReplyMode(REPLY_EDITOR_MODES.NOTE);
     };
-    const handleModeToggle = () => {
-      const newMode =
-        props.mode === REPLY_EDITOR_MODES.REPLY
-          ? REPLY_EDITOR_MODES.NOTE
-          : REPLY_EDITOR_MODES.REPLY;
-      setReplyMode(newMode);
+    const handleAiReplyClick = () => {
+      if (props.disabled || props.isEditorDisabled) return;
+      if (!props.isCopilotActive) {
+        if (props.mode !== REPLY_EDITOR_MODES.REPLY) {
+          setReplyMode(REPLY_EDITOR_MODES.REPLY);
+        }
+        emit('toggleCopilot');
+      }
     };
 
     const { captainTasksEnabled } = useCaptain();
@@ -115,9 +130,9 @@ export default {
     useKeyboardEvents(keyboardEvents);
 
     return {
-      handleModeToggle,
       handleReplyClick,
       handleNoteClick,
+      handleAiReplyClick,
       REPLY_EDITOR_MODES,
       captainTasksEnabled,
       handleCopilotAction,
@@ -128,18 +143,23 @@ export default {
     };
   },
   computed: {
-    replyButtonClass() {
-      return {
-        'is-active': this.mode === REPLY_EDITOR_MODES.REPLY,
-      };
+    isReplyActive() {
+      return (
+        this.mode === REPLY_EDITOR_MODES.REPLY &&
+        !this.isCopilotActive &&
+        !this.isReplyRestricted
+      );
     },
-    noteButtonClass() {
-      return {
-        'is-active': this.mode === REPLY_EDITOR_MODES.NOTE,
-      };
+    isNoteActive() {
+      return this.mode === REPLY_EDITOR_MODES.NOTE || this.isReplyRestricted;
+    },
+    isAiActive() {
+      return this.isCopilotActive;
     },
     charLengthClass() {
-      return this.charactersRemaining < 0 ? 'text-n-ruby-9' : 'text-n-slate-11';
+      return this.charactersRemaining < 0
+        ? 'text-destructive'
+        : 'text-muted-foreground';
     },
     characterLengthWarning() {
       return this.charactersRemaining < 0
@@ -152,33 +172,65 @@ export default {
 
 <template>
   <div
-    class="flex justify-between gap-2 h-[3.25rem] items-center ltr:pl-3 ltr:pr-2 rtl:pr-3 rtl:pl-2"
+    class="flex items-center justify-between h-10 px-4 border-b border-border gap-4"
   >
-    <EditorModeToggle
-      :mode="mode"
-      :disabled="disabled"
-      :is-reply-restricted="isReplyRestricted"
-      @toggle-mode="handleModeToggle"
-    />
-    <div class="flex items-center mx-4 my-0">
+    <div class="flex items-center gap-6 h-full">
+      <button
+        type="button"
+        class="h-full px-0 text-sm font-semibold border-b-2 transition-colors"
+        :class="
+          isReplyActive
+            ? 'border-primary text-foreground'
+            : 'border-transparent text-muted-foreground hover:text-foreground'
+        "
+        :disabled="disabled || isReplyRestricted"
+        @click="handleReplyClick"
+      >
+        {{ $t('CONVERSATION.REPLYBOX.REPLY') }}
+      </button>
+      <button
+        type="button"
+        class="h-full px-0 text-sm font-semibold border-b-2 transition-colors"
+        :class="
+          isNoteActive
+            ? 'border-primary text-foreground'
+            : 'border-transparent text-muted-foreground hover:text-foreground'
+        "
+        :disabled="disabled"
+        @click="handleNoteClick"
+      >
+        {{ $t('CONVERSATION.REPLYBOX.PRIVATE_NOTE') }}
+      </button>
+      <button
+        v-if="captainTasksEnabled"
+        type="button"
+        class="h-full px-0 text-sm font-semibold border-b-2 transition-colors inline-flex items-center gap-1.5"
+        :class="
+          isAiActive
+            ? 'border-primary text-primary'
+            : 'border-transparent text-muted-foreground hover:text-foreground'
+        "
+        :disabled="disabled || isEditorDisabled"
+        @click="handleAiReplyClick"
+      >
+        <span class="i-lucide-wand-sparkles size-4" />
+        {{ $t('CONVERSATION.REPLYBOX.AI_REPLY') }}
+      </button>
+    </div>
+    <div class="flex items-center gap-2">
       <div v-if="isMessageLengthReachingThreshold" class="text-xs">
         <span :class="charLengthClass">
           {{ characterLengthWarning }}
         </span>
       </div>
-    </div>
-    <div v-if="captainTasksEnabled" class="flex items-center gap-2">
-      <div class="relative">
+      <div v-if="captainTasksEnabled" class="relative">
         <NextButton
           ref="copilotToggleRef"
           ghost
           :disabled="disabled || isEditorDisabled"
-          :class="{
-            'text-n-violet-9 hover:enabled:!bg-n-violet-3': !showCopilotMenu,
-            'text-n-violet-9 bg-n-violet-3': showCopilotMenu,
-          }"
           sm
           icon="i-ph-sparkle-fill"
+          class="text-muted-foreground"
           @click="toggleCopilotMenu"
         />
         <CopilotMenuBar
@@ -196,7 +248,7 @@ export default {
       </div>
       <NextButton
         ghost
-        class="text-n-slate-11"
+        class="text-muted-foreground"
         sm
         icon="i-lucide-maximize-2"
         @click="$emit('toggleEditorSize')"

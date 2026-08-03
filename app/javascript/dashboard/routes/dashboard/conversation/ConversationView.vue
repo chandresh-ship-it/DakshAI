@@ -46,6 +46,8 @@ const { uiSettings } = useUISettings();
 
 const chatList = useMapGetter('getAllConversations');
 const currentChat = useMapGetter('getSelectedChat');
+const inboxesList = useMapGetter('inboxes/getInboxes');
+const inboxUiFlags = useMapGetter('inboxes/getUIFlags');
 
 const isOnExpandedLayout = computed(() => {
   const {
@@ -56,11 +58,17 @@ const isOnExpandedLayout = computed(() => {
   return conversationDisplayType !== CONDENSED;
 });
 
+const showFullWidthOnboarding = computed(() => {
+  return !inboxUiFlags.value.isFetching && !inboxesList.value.length;
+});
+
 const showConversationList = computed(() => {
+  if (showFullWidthOnboarding.value) return false;
   return isOnExpandedLayout.value ? !props.conversationId : true;
 });
 
 const showMessageView = computed(() => {
+  if (showFullWidthOnboarding.value) return true;
   return props.conversationId ? true : !isOnExpandedLayout.value;
 });
 

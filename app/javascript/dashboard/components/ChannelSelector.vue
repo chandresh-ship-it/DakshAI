@@ -1,7 +1,6 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
 import Icon from 'next/icon/Icon.vue';
-import Label from 'dashboard/components-next/label/Label.vue';
 
 defineProps({
   title: {
@@ -35,51 +34,56 @@ const { t } = useI18n();
 
 <template>
   <button
-    class="relative bg-n-solid-1 gap-6 cursor-pointer rounded-2xl flex flex-col justify-start transition-all duration-200 ease-in -m-px py-6 px-5 items-start border border-solid border-n-weak"
+    type="button"
+    class="group relative flex flex-col items-start rounded-[20px] border border-border/60 bg-background p-6 text-left transition-all duration-200"
     :class="{
-      'hover:enabled:border-n-blue-9 hover:enabled:shadow-md disabled:opacity-60 disabled:cursor-not-allowed':
+      'hover:border-border hover:shadow-md enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-60':
         !isComingSoon,
       'cursor-not-allowed disabled:opacity-80': isComingSoon,
     }"
   >
-    <div class="relative">
+    <div class="relative mb-5">
       <div
-        class="flex size-10 items-center justify-center rounded-full bg-n-alpha-2"
+        class="flex size-11 items-center justify-center rounded-[12px] border border-border/40 bg-card shadow-xs transition-transform group-hover:scale-105"
       >
-        <Icon :icon="icon" class="text-n-slate-10 size-6" />
+        <Icon
+          :icon="icon"
+          class="size-5 text-muted-foreground transition-colors group-hover:text-primary"
+        />
       </div>
       <div
         v-if="hasVoiceBadge"
-        class="absolute -top-1 ltr:-right-1 rtl:-left-1 flex size-4 items-center justify-center rounded-full bg-n-alpha-2 ring-2 ring-n-solid-1"
+        class="absolute -top-1 flex size-4 items-center justify-center rounded-full border-2 border-background bg-muted ltr:-right-1 rtl:-left-1"
       >
-        <Icon icon="i-lucide-audio-lines" class="text-n-slate-10 size-2.5" />
+        <Icon
+          icon="i-lucide-audio-lines"
+          class="size-2.5 text-muted-foreground"
+        />
       </div>
     </div>
 
-    <div class="flex flex-col items-start gap-1.5">
-      <div class="flex items-center gap-2">
-        <h3 class="text-n-slate-12 text-sm text-start font-medium capitalize">
-          {{ title }}
-        </h3>
-        <Label
-          v-if="isBeta && !isComingSoon"
-          v-tooltip.top="t('GENERAL.BETA_DESCRIPTION')"
-          :label="t('GENERAL.BETA')"
-          color="blue"
-          compact
-        />
-      </div>
-      <p class="text-n-slate-11 text-start text-sm">
-        {{ description }}
-      </p>
+    <div class="mb-1.5 flex w-full items-center gap-2">
+      <h3 class="text-[15px] font-semibold capitalize text-foreground">
+        {{ title }}
+      </h3>
+      <span
+        v-if="isBeta && !isComingSoon"
+        v-tooltip.top="t('GENERAL.BETA_DESCRIPTION')"
+        class="ml-auto rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider bg-primary/10 text-primary"
+      >
+        {{ t('GENERAL.BETA') }}
+      </span>
     </div>
+    <p class="text-[13px] leading-relaxed text-muted-foreground">
+      {{ description }}
+    </p>
 
     <div
       v-if="isComingSoon"
-      class="absolute inset-0 flex items-center justify-center backdrop-blur-[2px] rounded-2xl bg-gradient-to-br from-n-surface-1/90 via-n-surface-1/70 to-n-surface-1/95 cursor-not-allowed"
+      class="absolute inset-0 flex cursor-not-allowed items-center justify-center rounded-[20px] bg-gradient-to-br from-background/90 via-background/70 to-background/95 backdrop-blur-[2px]"
     >
-      <span class="text-n-slate-12 font-medium text-sm">
-        {{ t('CHANNEL_SELECTOR.COMING_SOON') }} 🚀
+      <span class="text-sm font-medium text-foreground">
+        {{ t('CHANNEL_SELECTOR.COMING_SOON') }}
       </span>
     </div>
   </button>

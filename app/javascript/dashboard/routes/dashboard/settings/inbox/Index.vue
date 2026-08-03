@@ -1,12 +1,12 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
 import { picoSearch } from '@scmmishra/pico-search';
 import Avatar from 'next/avatar/Avatar.vue';
 import { useAdmin } from 'dashboard/composables/useAdmin';
 import SettingsLayout from '../SettingsLayout.vue';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsListCard from '../components/SettingsListCard.vue';
 import SettingsListRow from '../components/SettingsListRow.vue';
 import {
@@ -16,11 +16,12 @@ import {
 } from 'dashboard/composables/store';
 import ChannelName from './components/ChannelName.vue';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
-import { RelayButton } from 'dashboard/components-next/relay';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const getters = useStoreGetters();
 const store = useStore();
+const router = useRouter();
 const { t } = useI18n();
 const { isAdmin } = useAdmin();
 
@@ -81,48 +82,96 @@ const openDelete = inbox => {
   showDeletePopup.value = true;
   selectedInbox.value = inbox;
 };
+
+const openAddInbox = () => {
+  router.push({ name: 'settings_inbox_new' });
+};
 </script>
 
 <template>
   <SettingsLayout
-    :no-records-found="!inboxesList.length"
-    :no-records-message="$t('INBOX_MGMT.LIST.404')"
     :is-loading="uiFlags.isFetching"
+    :loading-message="$t('INBOX_MGMT.LOADING')"
+    :no-records-found="false"
   >
-    <template #header>
-      <BaseSettingsHeader
-        v-model:search-query="searchQuery"
-        :title="$t('INBOX_MGMT.HEADER')"
-        :description="$t('INBOX_MGMT.DESCRIPTION')"
-        :link-text="$t('INBOX_MGMT.LEARN_MORE')"
-        :search-placeholder="$t('INBOX_MGMT.SEARCH_PLACEHOLDER')"
-        feature-name="inboxes"
-      >
-        <template v-if="inboxesList?.length" #count>
-          <span class="text-sm text-muted-foreground">
-            {{ $t('INBOX_MGMT.COUNT', { n: inboxesList.length }) }}
-          </span>
-        </template>
-        <template #actions>
-          <router-link v-if="isAdmin" :to="{ name: 'settings_inbox_new' }">
-            <RelayButton size="sm">
-              {{ $t('SETTINGS.INBOXES.NEW_INBOX') }}
-            </RelayButton>
-          </router-link>
-        </template>
-      </BaseSettingsHeader>
-    </template>
     <template #body>
       <SettingsListCard
         :details-label="$t('INBOX_MGMT.LIST.DETAILS')"
         :actions-label="$t('INBOX_MGMT.LIST.ACTIONS')"
         :show-column-headers="!!filteredInboxesList.length"
       >
-        <template v-if="!filteredInboxesList.length && searchQuery" #empty>
-          <p class="text-center text-sm text-muted-foreground">
-            {{ $t('INBOX_MGMT.NO_RESULTS') }}
-          </p>
+        <template #toolbar>
+          <div>
+            <h3 class="text-base font-medium text-foreground">
+              {{ $t('INBOX_MGMT.HEADER') }}
+            </h3>
+            <p class="mt-1 text-sm text-muted-foreground">
+              {{ $t('INBOX_MGMT.DESCRIPTION') }}
+            </p>
+          </div>
+          <div
+            class="flex w-full flex-col items-center gap-3 sm:flex-row md:w-auto"
+          >
+            <div class="relative w-full sm:w-64">
+              <Icon
+                icon="i-lucide-search"
+                class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              />
+              <RelayInput
+                v-model="searchQuery"
+                type="search"
+                :placeholder="$t('INBOX_MGMT.SEARCH_PLACEHOLDER')"
+                class-name="h-9 bg-background pl-9 shadow-none"
+              />
+            </div>
+            <RelayButton
+              v-if="isAdmin"
+              class="h-9 w-full whitespace-nowrap shadow-sm sm:w-auto"
+              @click="openAddInbox"
+            >
+              {{ $t('SETTINGS.INBOXES.NEW_INBOX') }}
+            </RelayButton>
+          </div>
         </template>
+
+        <template v-if="!filteredInboxesList.length" #empty>
+          <div
+            v-if="searchQuery"
+            class="px-6 text-center text-sm text-muted-foreground"
+          >
+            {{ $t('INBOX_MGMT.NO_RESULTS') }}
+          </div>
+          <div
+            v-else
+            class="flex flex-col items-center justify-center bg-muted/10 px-6 py-4"
+          >
+            <div
+              class="mb-5 flex size-16 items-center justify-center rounded-full border border-border bg-muted/50"
+            >
+              <Icon
+                icon="i-lucide-inbox"
+                class="size-7 text-muted-foreground/70"
+              />
+            </div>
+            <h3 class="mb-1.5 text-base font-semibold text-foreground">
+              {{ $t('INBOX_MGMT.LIST.EMPTY_TITLE') }}
+            </h3>
+            <p
+              class="mb-6 max-w-sm text-center text-[13.5px] leading-relaxed text-muted-foreground"
+            >
+              {{ $t('INBOX_MGMT.LIST.EMPTY_DESC') }}
+            </p>
+            <RelayButton
+              v-if="isAdmin"
+              class="h-9 shadow-sm"
+              @click="openAddInbox"
+            >
+              <Icon icon="i-lucide-plus" class="size-4" />
+              {{ $t('SETTINGS.INBOXES.NEW_INBOX') }}
+            </RelayButton>
+          </div>
+        </template>
+
         <SettingsListRow v-for="inbox in filteredInboxesList" :key="inbox.id">
           <template #leading>
             <div

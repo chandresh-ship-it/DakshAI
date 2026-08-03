@@ -1258,6 +1258,7 @@ export default {
       :characters-remaining="charactersRemaining"
       :editor-content="message"
       :has-content="hasMeaningfulEditorContent"
+      :is-copilot-active="copilot.isActive.value"
       @set-reply-mode="setReplyMode"
       @toggle-editor-size="toggleEditorSize"
       @toggle-copilot="copilot.toggleEditor"
@@ -1463,10 +1464,10 @@ export default {
 }
 
 .reply-box {
-  @apply relative mb-2 mx-2 border border-n-weak rounded-xl bg-n-solid-1;
+  @apply relative mb-4 mx-4 border border-border rounded-xl bg-card shadow-xs overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary;
 
   &.is-private {
-    @apply bg-n-solid-amber dark:border-n-amber-3/10 border-n-amber-12/5;
+    @apply bg-amber-500/5 border-amber-500/20;
   }
 }
 
@@ -1475,7 +1476,7 @@ export default {
 }
 
 .reply-box__top {
-  @apply relative py-0 px-3 -mt-px;
+  @apply relative py-0 px-4 -mt-px;
 }
 
 .emoji-dialog {

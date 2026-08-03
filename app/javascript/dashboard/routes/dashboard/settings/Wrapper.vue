@@ -18,17 +18,17 @@ const showSettingsHeader = computed(
 </script>
 
 <template>
-  <div class="flex flex-col h-full m-0 bg-n-surface-1 w-full">
+  <div class="m-0 flex h-full w-full flex-col bg-background">
     <SettingsHeader
       v-if="showSettingsHeader"
       :icon="icon"
       :header-title="t(headerTitle)"
       :show-back-button="showBackButton"
       :back-url="backUrl"
-      class="z-20 max-w-7xl w-full mx-auto"
+      class="z-20 mx-auto w-full max-w-7xl"
     />
 
-    <router-view v-slot="{ Component }" class="px-4 overflow-hidden">
+    <router-view v-slot="{ Component }" class="overflow-hidden px-4">
       <component :is="Component" v-if="!keepAlive" :key="$route.fullPath" />
       <keep-alive v-else>
         <component :is="Component" :key="$route.fullPath" />

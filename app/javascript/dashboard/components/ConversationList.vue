@@ -67,7 +67,7 @@ defineExpose({ conversationListRef });
       ref="virtualListRef"
       v-slot="{ item }"
       :data="conversationList"
-      class="[&>div:has(+_div_.active)>*]:!border-n-surface-1 [&>div:has(+_div_.selected)>*]:!border-n-surface-1"
+      class="px-0 py-1"
     >
       <ConversationItem
         :source="item"
@@ -82,13 +82,26 @@ defineExpose({ conversationListRef });
     <div v-if="isLoading" class="flex justify-center my-4">
       <Spinner class="text-n-brand" />
     </div>
-    <p v-else-if="showEndOfListMessage" class="p-4 text-center text-n-slate-11">
+    <p
+      v-else-if="showEndOfListMessage"
+      class="p-4 text-center text-xs font-medium text-muted-foreground"
+    >
       {{ $t('CHAT_LIST.EOF') }}
     </p>
-    <IntersectionObserver
-      v-else
-      :options="intersectionObserverOptions"
-      @observed="loadMoreConversations"
-    />
+    <div v-else class="py-2">
+      <IntersectionObserver
+        :options="intersectionObserverOptions"
+        @observed="loadMoreConversations"
+      />
+      <div class="pb-4 flex justify-center">
+        <button
+          type="button"
+          class="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline transition-colors"
+          @click="loadMoreConversations"
+        >
+          {{ $t('CHAT_LIST.LOAD_MORE_CONVERSATIONS') }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>

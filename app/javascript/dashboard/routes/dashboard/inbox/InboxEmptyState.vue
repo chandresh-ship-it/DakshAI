@@ -15,7 +15,7 @@ const { accountScopedRoute } = useAccount();
 const uiFlags = computed(() => store.getters['notifications/getUIFlags']);
 
 const connectChannel = () => {
-  router.push(accountScopedRoute('settings_inbox_new'));
+  router.push(accountScopedRoute('settings_inbox_list'));
 };
 
 const learnMore = () => {

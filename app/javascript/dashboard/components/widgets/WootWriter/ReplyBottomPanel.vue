@@ -276,7 +276,10 @@ export default {
 </script>
 
 <template>
-  <div class="flex justify-between p-3" :class="wrapClass">
+  <div
+    class="px-3 py-2 flex items-center justify-between border-t border-border bg-muted/20"
+    :class="wrapClass"
+  >
     <div class="left-wrap">
       <NextButton
         v-if="!isEditorDisabled"
@@ -397,15 +400,20 @@ export default {
       />
     </div>
     <div class="right-wrap">
-      <NextButton
-        :label="sendButtonText"
+      <button
         type="submit"
-        sm
-        :color="isNote ? 'amber' : 'blue'"
+        class="inline-flex items-center gap-2 h-8 px-4 rounded-md text-sm font-semibold shadow-xs transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        :class="
+          isNote
+            ? 'bg-amber-500 text-white hover:bg-amber-600'
+            : 'bg-primary text-primary-foreground hover:bg-primary/90'
+        "
         :disabled="isSendDisabled"
-        class="flex-shrink-0"
         @click="onSend"
-      />
+      >
+        {{ sendButtonText }}
+        <span class="i-lucide-corner-down-left size-3.5 opacity-70" />
+      </button>
     </div>
   </div>
 </template>

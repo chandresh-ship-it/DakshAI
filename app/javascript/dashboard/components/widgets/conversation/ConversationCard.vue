@@ -1,16 +1,12 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { getLastMessage } from 'dashboard/helper/conversationHelper';
+import { dynamicTime, shortTimestamp } from 'shared/helpers/timeHelper';
 import Avatar from 'next/avatar/Avatar.vue';
 import MessagePreview from './MessagePreview.vue';
-import InboxName from '../InboxName.vue';
-import TimeAgo from 'dashboard/components/ui/TimeAgo.vue';
-import CardLabels from './conversationCardComponents/CardLabels.vue';
-import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon.vue';
-import UnreadBadge from 'dashboard/components-next/Conversation/ConversationCard/UnreadBadge.vue';
-import SLACardLabel from './components/SLACardLabel.vue';
-import VoiceCallStatus from './VoiceCallStatus.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
+import { useMapGetter } from 'dashboard/composables/store';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -32,43 +28,80 @@ const emit = defineEmits([
   'deSelectConversation',
 ]);
 
+const { t } = useI18n();
 const hovered = ref(false);
+const accountLabels = useMapGetter('labels/getLabels');
 
 const unreadCount = computed(() => props.chat.unread_count);
 const hasUnread = computed(() => unreadCount.value > 0);
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
 
-const voiceCallData = computed(() => {
-  const last = lastMessageInChat.value;
-  if (last?.content_type !== 'voice_call' || !last.call) {
-    return { status: null, direction: null };
-  }
-  return {
-    status: last.call.status,
-    direction: last.call.direction === 'outgoing' ? 'outbound' : 'inbound',
-  };
+const lastActivityAt = computed(() => {
+  const timestamp = props.chat?.timestamp;
+  return timestamp ? shortTimestamp(dynamicTime(timestamp)) : '';
 });
 
-const showMetaSection = computed(() => {
+const primaryLabel = computed(() => {
+  const titles = props.chat.labels || [];
+  if (!titles.length) return null;
   return (
-    props.showInboxName ||
-    (props.showAssignee && props.assignee.name) ||
-    props.chat.priority
+    accountLabels.value.find(label => label.title === titles[0]) || {
+      title: titles[0],
+      color: null,
+    }
   );
 });
 
-const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
-
-const showLabelsSection = computed(() => {
-  return props.chat.labels?.length > 0 || hasSlaPolicyId.value;
+const statusBadge = computed(() => {
+  if (primaryLabel.value) {
+    return { text: primaryLabel.value.title, variant: 'label' };
+  }
+  const status = props.chat.status;
+  if (status === 'pending') {
+    return {
+      text: t('CHAT_LIST.STATUS_TABS.IN_PROGRESS'),
+      variant: 'secondary',
+    };
+  }
+  if (status === 'snoozed') {
+    return { text: t('CHAT_LIST.STATUS_TABS.ON_HOLD'), variant: 'warning' };
+  }
+  if (props.chat.priority === 'urgent' || props.chat.priority === 'high') {
+    return {
+      text: t(
+        `CONVERSATION.PRIORITY.OPTIONS.${props.chat.priority.toUpperCase()}`
+      ),
+      variant: 'default',
+    };
+  }
+  return null;
 });
 
-const messagePreviewClass = computed(() => {
-  return [
-    hasUnread.value ? 'font-medium text-n-slate-12' : 'text-n-slate-11',
-    !props.compact && hasUnread.value ? 'ltr:pr-4 rtl:pl-4' : '',
-    props.compact && hasUnread.value ? 'ltr:pr-6 rtl:pl-6' : '',
-  ];
+const badgeClass = computed(() => {
+  const variant = statusBadge.value?.variant;
+  if (variant === 'default') {
+    return 'bg-primary text-primary-foreground border-transparent';
+  }
+  if (variant === 'secondary') {
+    return 'bg-primary/10 text-primary border-primary/20';
+  }
+  if (variant === 'warning') {
+    return 'bg-background text-foreground border-border';
+  }
+  return 'bg-primary text-primary-foreground border-transparent';
+});
+
+const statusDotClass = computed(() => {
+  const priority = props.chat.priority;
+  if (priority === 'urgent') return 'bg-destructive';
+  if (priority === 'high') return 'bg-primary';
+  if (priority === 'medium') return 'bg-amber-500';
+  if (priority === 'low') return 'bg-emerald-500';
+  if (hasUnread.value) return 'bg-primary';
+  if (props.chat.status === 'pending') return 'bg-amber-500';
+  if (props.chat.status === 'snoozed') return 'bg-amber-500';
+  if (props.chat.status === 'resolved') return 'bg-emerald-500';
+  return 'bg-primary';
 });
 
 const onThumbnailHover = () => {
@@ -102,19 +135,20 @@ watch(
 
 <template>
   <div
-    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border-b border-n-slate-3 hover:border-n-surface-1 hover:bg-n-alpha-1 dark:hover:bg-n-alpha-3 group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-n-surface-1 before:pointer-events-none hover:before:content-['']"
-    :class="{
-      'active animate-card-select bg-n-background !border-n-surface-1':
-        isActiveChat,
-      'selected bg-n-slate-2 !border-n-surface-1': selected,
-      'px-0': compact,
-      'px-3': !compact,
-    }"
+    class="flex gap-3 p-3 mx-2 my-1 rounded-lg text-left transition-colors relative cursor-pointer group"
+    :class="[
+      isActiveChat
+        ? 'bg-primary/5'
+        : selected
+          ? 'bg-muted'
+          : 'hover:bg-accent/50',
+      compact ? 'px-2' : '',
+    ]"
     @click="$emit('click', $event)"
     @contextmenu="$emit('contextmenu', $event)"
   >
     <div
-      class="relative"
+      class="relative shrink-0 mt-0.5"
       @mouseenter="onThumbnailHover"
       @mouseleave="onThumbnailLeave"
     >
@@ -122,10 +156,10 @@ watch(
         v-if="!hideThumbnail"
         :name="currentContact.name"
         :src="currentContact.thumbnail"
-        :size="32"
+        :size="40"
         :status="currentContact.availability_status"
-        :class="!showInboxName ? 'mt-4' : 'mt-8'"
         hide-offline-status
+        rounded-full
       >
         <template #overlay="{ size }">
           <label
@@ -139,96 +173,53 @@ watch(
         </template>
       </Avatar>
     </div>
-    <div class="px-0 py-3 flex-1 min-w-0 border-line">
-      <div
-        v-if="showMetaSection"
-        class="flex items-center min-w-0 gap-1"
-        :class="{
-          'ltr:ml-2 rtl:mr-2': !compact,
-          'mx-2': compact,
-        }"
-      >
-        <InboxName v-if="showInboxName" :inbox="inbox" class="flex-1 min-w-0" />
-        <div
-          class="flex items-baseline gap-2 flex-shrink-0"
-          :class="{
-            'flex-1 justify-between': !showInboxName,
-          }"
-        >
+
+    <div class="flex-1 min-w-0 flex flex-col gap-1">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
           <span
-            v-if="showAssignee && assignee.name"
-            class="text-n-slate-11 text-xs font-medium leading-3 py-0.5 px-0 inline-flex items-center truncate"
+            class="text-sm truncate text-foreground"
+            :class="hasUnread ? 'font-semibold' : 'font-semibold'"
           >
-            <fluent-icon icon="person" size="12" class="text-n-slate-11" />
-            {{ assignee.name }}
+            {{ currentContact.name }}
           </span>
-          <CardPriorityIcon
-            :priority="chat.priority"
-            class="flex-shrink-0 !size-3.5"
-          />
+          <span
+            v-if="statusBadge"
+            class="text-[10px] font-medium px-1.5 py-0 rounded-sm shrink-0 border"
+            :class="badgeClass"
+          >
+            {{ statusBadge.text }}
+          </span>
         </div>
-      </div>
-      <h4
-        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-n-slate-12"
-        :class="hasUnread ? 'font-semibold' : 'font-medium'"
-      >
-        {{ currentContact.name }}
-      </h4>
-      <VoiceCallStatus
-        v-if="voiceCallData.status"
-        key="voice-status-row"
-        :status="voiceCallData.status"
-        :direction="voiceCallData.direction"
-        :message-preview-class="messagePreviewClass"
-      />
-      <MessagePreview
-        v-else-if="lastMessageInChat"
-        key="message-preview"
-        :message="lastMessageInChat"
-        class="my-0 mx-2 leading-6 h-6 flex-1 min-w-0 text-sm"
-        :class="messagePreviewClass"
-      />
-      <p
-        v-else
-        key="no-messages"
-        class="text-n-slate-11 text-sm my-0 mx-2 leading-6 h-6 flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
-        :class="messagePreviewClass"
-      >
-        <fluent-icon
-          size="16"
-          class="-mt-0.5 align-middle inline-block text-n-slate-10"
-          icon="info"
-        />
-        <span class="mx-0.5">
-          {{ $t(`CHAT_LIST.NO_MESSAGES`) }}
+        <span class="text-[11px] text-muted-foreground shrink-0 font-medium">
+          {{ lastActivityAt }}
         </span>
-      </p>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 mt-0.5">
+        <MessagePreview
+          v-if="lastMessageInChat"
+          :message="lastMessageInChat"
+          class="text-[13px] text-muted-foreground truncate flex-1 leading-snug !my-0 !mx-0"
+          :class="hasUnread ? 'font-medium text-foreground/80' : ''"
+        />
+        <p
+          v-else
+          class="text-[13px] text-muted-foreground truncate flex-1 leading-snug"
+        >
+          {{ $t('CHAT_LIST.NO_MESSAGES') }}
+        </p>
+        <div class="size-2 rounded-full shrink-0" :class="statusDotClass" />
+      </div>
+
       <div
-        class="absolute flex flex-col ltr:right-3 rtl:left-3"
-        :class="showMetaSection ? 'top-8' : 'top-4'"
+        v-if="(showAssignee && assignee.name) || showInboxName"
+        class="text-[11px] text-muted-foreground truncate"
       >
-        <span class="ml-auto font-normal leading-4 text-xxs">
-          <TimeAgo
-            :last-activity-timestamp="chat.timestamp"
-            :created-at-timestamp="chat.created_at"
-            :conversation-id="chat.id"
-          />
-        </span>
-        <UnreadBadge
-          v-if="hasUnread"
-          :count="unreadCount"
-          class="ltr:ml-auto rtl:mr-auto mt-1"
-        />
+        <span v-if="showInboxName">{{ inbox.name }}</span>
+        <span v-if="showInboxName && showAssignee && assignee.name"> · </span>
+        <span v-if="showAssignee && assignee.name">{{ assignee.name }}</span>
       </div>
-      <CardLabels
-        v-if="showLabelsSection"
-        :conversation-labels="chat.labels"
-        class="mt-0.5 mx-2 mb-0"
-      >
-        <template v-if="hasSlaPolicyId" #before>
-          <SLACardLabel :chat="chat" class="ltr:mr-1 rtl:ml-1" />
-        </template>
-      </CardLabels>
     </div>
   </div>
 </template>

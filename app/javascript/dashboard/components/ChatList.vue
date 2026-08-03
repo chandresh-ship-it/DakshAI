@@ -12,7 +12,6 @@ import ConversationList from './ConversationList.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import ConversationFilter from 'next/filter/ConversationFilter.vue';
 import SaveCustomView from 'next/filter/SaveCustomView.vue';
-import ChatTypeTabs from './widgets/ChatTypeTabs.vue';
 import DeleteCustomViews from 'dashboard/routes/dashboard/customviews/DeleteCustomViews.vue';
 import ConversationBulkActions from './widgets/conversation/conversationBulkActions/Index.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
@@ -72,10 +71,25 @@ const store = useStore();
 
 const resolveAttributesModalRef = ref(null);
 
-const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
+const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ALL);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
 const showAdvancedFilters = ref(false);
+const showTabMoreMenu = ref(false);
+
+const STATUS_TAB_MAP = {
+  new: wootConstants.STATUS_TYPE.OPEN,
+  'in-progress': wootConstants.STATUS_TYPE.PENDING,
+  'on-hold': wootConstants.STATUS_TYPE.SNOOZED,
+  closed: wootConstants.STATUS_TYPE.RESOLVED,
+};
+
+const STATUS_TO_TAB = {
+  [wootConstants.STATUS_TYPE.OPEN]: 'new',
+  [wootConstants.STATUS_TYPE.PENDING]: 'in-progress',
+  [wootConstants.STATUS_TYPE.SNOOZED]: 'on-hold',
+  [wootConstants.STATUS_TYPE.RESOLVED]: 'closed',
+};
 // chatsOnView is to store the chats that are currently visible on the screen,
 // which mirrors the conversationList.
 const chatsOnView = ref([]);
@@ -292,6 +306,17 @@ const pageTitle = computed(() => {
   }
   return t('CHAT_LIST.TAB_HEADING');
 });
+
+const statusTabs = computed(() => [
+  { value: 'new', label: t('CHAT_LIST.STATUS_TABS.NEW') },
+  { value: 'in-progress', label: t('CHAT_LIST.STATUS_TABS.IN_PROGRESS') },
+  { value: 'on-hold', label: t('CHAT_LIST.STATUS_TABS.ON_HOLD') },
+  { value: 'closed', label: t('CHAT_LIST.STATUS_TABS.CLOSED') },
+]);
+
+const activeStatusTab = computed(
+  () => STATUS_TO_TAB[activeStatus.value] || 'new'
+);
 
 function filterByAssigneeTab(conversations) {
   if (activeAssigneeTab.value === wootConstants.ASSIGNEE_TYPE.ME) {
@@ -603,6 +628,12 @@ function onBasicFilterChange(value, type) {
   resetAndFetchData();
 }
 
+function onStatusTabChange(tabValue) {
+  const status = STATUS_TAB_MAP[tabValue];
+  if (!status || status === activeStatus.value) return;
+  onBasicFilterChange(status, 'status');
+}
+
 function openLastSavedItemInFolder() {
   const lastItemOfFolder = folders.value[folders.value.length - 1];
   const lastItemId = lastItemOfFolder.id;
@@ -864,10 +895,10 @@ watch(conversationFilters, (newVal, oldVal) => {
 
 <template>
   <div
-    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-n-surface-1 relative"
+    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-card relative border-r border-border"
     :class="[
       { hidden: !showConversationList },
-      isOnExpandedLayout ? 'basis-full' : 'w-[340px] 2xl:w-[412px]',
+      isOnExpandedLayout ? 'basis-full' : 'w-[300px] lg:w-[320px]',
     ]"
   >
     <slot />
@@ -875,7 +906,7 @@ watch(conversationFilters, (newVal, oldVal) => {
       :page-title="pageTitle"
       :has-applied-filters="hasAppliedFilters"
       :has-active-folders="hasActiveFolders"
-      :active-status="activeStatus"
+      :active-assignee-tab="activeAssigneeTab"
       :is-on-expanded-layout="isOnExpandedLayout"
       :conversation-stats="conversationStats"
       :is-list-loading="chatListLoading && !conversationList.length"
@@ -884,6 +915,7 @@ watch(conversationFilters, (newVal, oldVal) => {
       @filters-modal="onToggleAdvanceFiltersModal"
       @reset-filters="resetAndFetchData"
       @basic-filter-change="onBasicFilterChange"
+      @assignee-change="updateAssigneeTab"
     />
 
     <TeleportWithDirection
@@ -907,17 +939,68 @@ watch(conversationFilters, (newVal, oldVal) => {
       @close="onCloseDeleteFoldersModal"
     />
 
-    <ChatTypeTabs
-      v-if="!hasAppliedFiltersOrActiveFolders"
-      :items="assigneeTabItems"
-      :active-tab="activeAssigneeTab"
-      is-compact
-      @chat-tab-change="updateAssigneeTab"
-    />
+    <div v-if="!hasAppliedFiltersOrActiveFolders" class="px-4 pt-2 shrink-0">
+      <div class="flex items-center border-b border-border/60">
+        <div class="flex items-center gap-4 flex-1 min-w-0 overflow-x-auto">
+          <button
+            v-for="tab in statusTabs"
+            :key="tab.value"
+            type="button"
+            class="px-0 py-2 text-sm font-medium border-b-2 transition-colors shrink-0"
+            :class="
+              activeStatusTab === tab.value
+                ? 'border-primary text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            "
+            @click="onStatusTabChange(tab.value)"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+        <div class="relative shrink-0">
+          <button
+            type="button"
+            class="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
+            :aria-label="t('CHAT_LIST.MORE_OPTIONS')"
+            @click="showTabMoreMenu = !showTabMoreMenu"
+          >
+            <span class="i-lucide-ellipsis size-4" />
+          </button>
+          <div
+            v-if="showTabMoreMenu"
+            class="absolute right-0 mt-1.5 z-50 w-40 rounded-md border border-border bg-popover p-1 shadow-md"
+            @mouseleave="showTabMoreMenu = false"
+          >
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted"
+              @click="
+                onStatusTabChange('closed');
+                showTabMoreMenu = false;
+              "
+            >
+              <span class="i-lucide-archive size-4 text-muted-foreground" />
+              {{ t('CHAT_LIST.FILTER_MENU.ARCHIVED') }}
+            </button>
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted"
+              @click="
+                onStatusTabChange('on-hold');
+                showTabMoreMenu = false;
+              "
+            >
+              <span class="i-lucide-alarm-clock size-4 text-muted-foreground" />
+              {{ t('CHAT_LIST.FILTER_MENU.SNOOZED') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <p
       v-if="!chatListLoading && !conversationList.length"
-      class="flex overflow-auto justify-center items-center p-4"
+      class="flex overflow-auto justify-center items-center p-4 text-sm text-muted-foreground"
     >
       {{ $t('CHAT_LIST.LIST.404') }}
     </p>

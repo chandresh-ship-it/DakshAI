@@ -123,9 +123,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    class="grid max-w-3xl grid-cols-1 xs:grid-cols-2 mx-0 gap-6 sm:grid-cols-3 p-8"
-  >
+  <div class="mx-0 grid max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
     <ChannelItem
       v-for="channel in channelList"
       :key="channel.key"

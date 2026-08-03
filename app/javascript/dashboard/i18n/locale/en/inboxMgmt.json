@@ -1,8 +1,9 @@
 {
   "INBOX_MGMT": {
     "HEADER": "Inboxes",
-    "DESCRIPTION": "A channel is the mode of communication your customer chooses to interact with you. An inbox is where you manage interactions for a specific channel. It can include communications from various sources such as email, live chat, and social media.",
+    "DESCRIPTION": "Manage interactions for specific communication channels.",
     "LEARN_MORE": "Learn more about inboxes",
+    "LOADING": "Fetching inboxes...",
     "COUNT": "{n} inbox | {n} inboxes",
     "SEARCH_PLACEHOLDER": "Search inboxes...",
     "NO_RESULTS": "No inboxes found matching your search",
@@ -13,7 +14,9 @@
     "LIST": {
       "404": "There are no inboxes attached to this account.",
       "DETAILS": "Inbox Details",
-      "ACTIONS": "Actions"
+      "ACTIONS": "Actions",
+      "EMPTY_TITLE": "No inboxes found",
+      "EMPTY_DESC": "Connect a channel to start receiving and managing customer conversations in one place."
     },
     "CREATE_FLOW": {
       "CHANNEL": {
