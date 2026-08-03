@@ -15,7 +15,6 @@ import PurchaseCreditsModal from './components/PurchaseCreditsModal.vue';
 import EnterpriseInquiryModal from './components/EnterpriseInquiryModal.vue';
 import DowngradePlanWarningModal from './components/DowngradePlanWarningModal.vue';
 import PlanCheckoutModal from './components/PlanCheckoutModal.vue';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import ButtonV4 from 'next/button/Button.vue';
 import { RelayButton } from 'dashboard/components-next/relay';
@@ -746,22 +745,6 @@ onMounted(() => {
     :is-loading="uiFlags.isFetchingItem || isFetchingMarketplace"
     :loading-message="$t('ATTRIBUTES_MGMT.LOADING')"
   >
-    <template #header>
-      <BaseSettingsHeader
-        :title="
-          isReseller
-            ? $t('BILLING_SETTINGS.RESELLER.TITLE')
-            : $t('BILLING_SETTINGS.TITLE')
-        "
-        :description="
-          isReseller
-            ? $t('BILLING_SETTINGS.RESELLER.DESCRIPTION')
-            : $t('BILLING_SETTINGS.DESCRIPTION')
-        "
-        :link-text="isReseller ? '' : $t('BILLING_SETTINGS.VIEW_PRICING')"
-        feature-name="billing"
-      />
-    </template>
     <template #body>
       <div class="flex w-full max-w-3xl flex-col gap-6 ltr:mr-auto rtl:ml-auto">
         <!-- Marketplace client: subscribes to the pricing their reseller parent
