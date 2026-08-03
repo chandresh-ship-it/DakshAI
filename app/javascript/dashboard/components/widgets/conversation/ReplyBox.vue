@@ -1467,7 +1467,8 @@ export default {
   @apply relative mb-4 mx-4 border border-border rounded-xl bg-card shadow-xs overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary;
 
   &.is-private {
-    @apply bg-amber-500/5 border-amber-500/20;
+    background-color: rgba(245, 158, 11, 0.05);
+    border-color: rgba(245, 158, 11, 0.2);
   }
 }
 
