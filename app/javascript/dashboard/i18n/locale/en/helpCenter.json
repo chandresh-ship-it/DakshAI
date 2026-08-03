@@ -801,8 +801,9 @@
     },
     "PORTAL_SETTINGS": {
       "FORM": {
-        "SECTION_IDENTITY": "Portal identity",
-        "SECTION_ROUTING": "Domain & routing",
+        "SECTION_IDENTITY": "Portal Identity",
+        "SECTION_ROUTING": "Domain & Routing",
+        "SECTION_EXPERIENCE": "Experience & Branding",
         "AVATAR": {
           "LABEL": "Logo",
           "HINT": "Recommended size 512x512px",
@@ -851,6 +852,7 @@
           "LABEL": "Custom domain:",
           "DESCRIPTION": "You can host your portal on a custom domain. For instance, if your website is yourdomain.com and you want your portal available at docs.yourdomain.com, simply enter that in this field.",
           "STATUS_DESCRIPTION": "Your custom portal will start working as soon as it is verified.",
+          "NOT_SET": "No custom domain configured yet.",
           "PLACEHOLDER": "Portal custom domain",
           "EDIT_BUTTON": "Edit",
           "ADD_BUTTON": "Add custom domain",

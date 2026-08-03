@@ -35,6 +35,8 @@ const { t } = useI18n();
 const route = useRoute();
 
 const confirmDeletePortalDialogRef = ref(null);
+const baseSettingsRef = ref(null);
+const experienceSettingsRef = ref(null);
 
 const currentPortalSlug = computed(() => route.params.portalSlug);
 
@@ -49,8 +51,32 @@ const activePortalName = computed(() => activePortal.value?.name || '');
 
 const isLoading = computed(() => props.isFetching || isSwitchingPortal.value);
 
-const handleUpdatePortal = portal => {
-  emit('updatePortal', portal);
+const unwrap = value =>
+  value && typeof value === 'object' && 'value' in value ? value.value : value;
+
+const canSave = computed(() => {
+  const base = baseSettingsRef.value;
+  if (!base) return false;
+
+  return (
+    !unwrap(base.isInvalid) &&
+    !unwrap(base.isUpdatingPortal) &&
+    !props.isFetching
+  );
+});
+
+const handleSaveChanges = () => {
+  const base = baseSettingsRef.value;
+  const experience = experienceSettingsRef.value;
+  if (!base || !experience || unwrap(base.isInvalid)) return;
+
+  // Base payload last so a renamed slug wins over the active portal slug.
+  const payload = {
+    ...experience.getPayload(),
+    ...base.getPayload(),
+  };
+
+  emit('updatePortal', payload);
 };
 
 const handleUpdatePortalConfiguration = portal => {
@@ -84,50 +110,60 @@ const handleDeletePortal = () => {
       >
         <Spinner />
       </div>
-      <div
-        v-else-if="activePortal"
-        class="flex w-full max-w-3xl flex-col gap-6 pb-8"
-      >
+      <div v-else-if="activePortal" class="flex w-full flex-col gap-8 pb-8">
         <PortalBaseSettings
+          ref="baseSettingsRef"
           :active-portal="activePortal"
           :is-fetching="isFetching"
-          @update-portal="handleUpdatePortal"
-        />
-        <PortalConfigurationSettings
-          :active-portal="activePortal"
-          :is-fetching="isFetching"
-          :is-fetching-status="isFetchingSSLStatus"
-          @update-portal-configuration="handleUpdatePortalConfiguration"
-          @refresh-status="fetchSSLStatus"
-          @send-cname-instructions="handleSendCnameInstructions"
-        />
-        <PortalLayoutContentSettings
-          :active-portal="activePortal"
-          :is-fetching="isFetching"
-          @update-portal-configuration="handleUpdatePortalConfiguration"
-        />
-        <div
-          class="flex w-full items-end justify-between gap-4 rounded-2xl border border-border/40 bg-card p-6 shadow-sm"
         >
-          <div class="flex flex-col gap-2">
-            <h6 class="text-base font-medium text-foreground">
+          <template #custom-domain>
+            <PortalConfigurationSettings
+              :active-portal="activePortal"
+              :is-fetching-status="isFetchingSSLStatus"
+              @update-portal-configuration="handleUpdatePortalConfiguration"
+              @refresh-status="fetchSSLStatus"
+              @send-cname-instructions="handleSendCnameInstructions"
+            />
+          </template>
+        </PortalBaseSettings>
+
+        <PortalLayoutContentSettings
+          ref="experienceSettingsRef"
+          :active-portal="activePortal"
+        />
+
+        <div class="flex justify-end pt-2">
+          <RelayButton
+            class="h-9 px-6 shadow-sm"
+            :disabled="!canSave"
+            @click="handleSaveChanges"
+          >
+            {{ t('HELP_CENTER.PORTAL_SETTINGS.FORM.SAVE_CHANGES') }}
+          </RelayButton>
+        </div>
+
+        <div
+          class="mt-2 flex w-full flex-col items-start justify-between gap-6 rounded-2xl border border-border/40 bg-card p-6 shadow-sm sm:flex-row sm:items-center"
+        >
+          <div class="space-y-1.5">
+            <h3 class="text-base font-medium text-foreground">
               {{
                 t(
                   'HELP_CENTER.PORTAL_SETTINGS.CONFIGURATION_FORM.DELETE_PORTAL.HEADER'
                 )
               }}
-            </h6>
-            <span class="text-sm text-muted-foreground">
+            </h3>
+            <p class="text-[14px] text-muted-foreground">
               {{
                 t(
                   'HELP_CENTER.PORTAL_SETTINGS.CONFIGURATION_FORM.DELETE_PORTAL.DESCRIPTION'
                 )
               }}
-            </span>
+            </p>
           </div>
           <RelayButton
             variant="destructive"
-            class="h-9 max-w-56 shrink-0"
+            class="h-10 shrink-0 px-5 shadow-sm"
             @click="openConfirmDeletePortalDialog"
           >
             {{
