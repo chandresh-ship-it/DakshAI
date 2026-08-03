@@ -16,7 +16,6 @@ import EnterpriseInquiryModal from './components/EnterpriseInquiryModal.vue';
 import DowngradePlanWarningModal from './components/DowngradePlanWarningModal.vue';
 import PlanCheckoutModal from './components/PlanCheckoutModal.vue';
 import SettingsLayout from '../SettingsLayout.vue';
-import ButtonV4 from 'next/button/Button.vue';
 import { RelayButton } from 'dashboard/components-next/relay';
 import Input from 'dashboard/components-next/input/Input.vue';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
@@ -852,15 +851,15 @@ onMounted(() => {
               $t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.PENDING_BANNER')
             "
           >
-            <ButtonV4
-              sm
-              solid
-              slate
+            <RelayButton
+              variant="outline"
+              size="sm"
+              class="h-9"
               :is-loading="isCancelingEnterpriseInquiry"
               @click="onCancelEnterpriseInquiry"
             >
               {{ $t('BILLING_SETTINGS.ENTERPRISE_INQUIRY.CANCEL_REQUEST') }}
-            </ButtonV4>
+            </RelayButton>
           </BillingCard>
         </section>
         <section class="grid gap-6">
@@ -873,6 +872,7 @@ onMounted(() => {
               <RelayButton
                 variant="outline"
                 size="sm"
+                class="h-9"
                 @click="showPlanPicker = false"
               >
                 {{ $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_BUTTON') }}
@@ -894,19 +894,19 @@ onMounted(() => {
               "
               class="mb-4"
             >
-              <ButtonV4
-                sm
-                solid
-                slate
+              <RelayButton
+                variant="outline"
+                size="sm"
+                class="h-9 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
                 :is-loading="isCancelingSubscription"
                 @click="onCancelRazorpaySubscription"
               >
                 {{
                   $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_SUBSCRIPTION_BUTTON')
                 }}
-              </ButtonV4>
+              </RelayButton>
             </div>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
               <div
                 v-for="plan in selectablePlans"
                 :key="plan"
@@ -962,7 +962,7 @@ onMounted(() => {
 
           <!-- Current Plan (new-ui hero layout) -->
           <BillingCard
-            v-if="!hasResellerParent && planName && !showPlanPicker"
+            v-if="!hasResellerParent && planName"
             variant="hero"
             :title="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
           >
