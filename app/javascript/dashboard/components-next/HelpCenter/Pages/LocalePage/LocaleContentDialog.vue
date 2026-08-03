@@ -75,24 +75,21 @@ defineExpose({ openForLocale });
     @confirm="onConfirm"
   >
     <div class="flex flex-col gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-n-slate-12">
-          {{ t('HELP_CENTER.LOCALES_PAGE.CONTENT_DIALOG.NAME.LABEL') }}
-        </label>
-        <Input v-model="name" :placeholder="portal.name" />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-n-slate-12">
-          {{ t('HELP_CENTER.LOCALES_PAGE.CONTENT_DIALOG.PAGE_TITLE.LABEL') }}
-        </label>
-        <Input v-model="pageTitle" :placeholder="portal.page_title" />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-n-slate-12">
-          {{ t('HELP_CENTER.LOCALES_PAGE.CONTENT_DIALOG.HEADER_TEXT.LABEL') }}
-        </label>
-        <Input v-model="headerText" :placeholder="portal.header_text" />
-      </div>
+      <Input
+        v-model="name"
+        :label="t('HELP_CENTER.LOCALES_PAGE.CONTENT_DIALOG.NAME.LABEL')"
+        :placeholder="portal.name"
+      />
+      <Input
+        v-model="pageTitle"
+        :label="t('HELP_CENTER.LOCALES_PAGE.CONTENT_DIALOG.PAGE_TITLE.LABEL')"
+        :placeholder="portal.page_title"
+      />
+      <Input
+        v-model="headerText"
+        :label="t('HELP_CENTER.LOCALES_PAGE.CONTENT_DIALOG.HEADER_TEXT.LABEL')"
+        :placeholder="portal.header_text"
+      />
     </div>
   </Dialog>
 </template>

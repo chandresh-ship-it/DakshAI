@@ -157,24 +157,24 @@ defineExpose({ state, isSubmitDisabled });
 <template>
   <div class="flex flex-col gap-4">
     <div
-      class="flex items-center justify-start gap-8 px-4 py-2 border rounded-lg border-n-strong"
+      class="flex items-center justify-between p-3 rounded-lg border border-border/40 bg-card"
     >
-      <div class="flex flex-col items-start w-full gap-2 py-2">
-        <span class="text-sm font-medium text-n-slate-11">
+      <div class="flex flex-col gap-1">
+        <span class="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
           {{ t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.HEADER.PORTAL') }}
         </span>
-        <span class="text-sm text-n-slate-12">
+        <span class="text-[14px] text-foreground font-medium">
           {{ portalName }}
         </span>
       </div>
-      <div class="justify-start w-px h-10 bg-n-strong" />
-      <div class="flex flex-col w-full gap-2 py-2">
-        <span class="text-sm font-medium text-n-slate-11">
+      <div class="h-8 w-px bg-border/40" />
+      <div class="flex flex-col gap-1 text-right">
+        <span class="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
           {{ t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.HEADER.LOCALE') }}
         </span>
         <span
           :title="`${activeLocaleName} (${activeLocaleCode})`"
-          class="text-sm line-clamp-1 text-n-slate-12"
+          class="text-[14px] text-foreground font-medium line-clamp-1"
         >
           {{ `${activeLocaleName} (${activeLocaleCode})` }}
         </span>
