@@ -983,10 +983,57 @@ onMounted(() => {
             variant="hero"
             :title="$t('BILLING_SETTINGS.CURRENT_PLAN.TITLE')"
           >
+            <template #action>
+              <!-- If collapsed, show 'View Plan Details' dropdown button -->
+              <RelayButton
+                v-if="!showPlanDetails"
+                variant="outline"
+                class="gap-1.5 font-medium h-9 text-sm"
+                @click="showPlanDetails = true"
+              >
+                {{ $t('BILLING_SETTINGS.CURRENT_PLAN.VIEW_PLAN_DETAILS') }}
+                <span class="i-lucide-chevron-down size-4" />
+              </RelayButton>
+
+              <!-- If expanded, show action buttons (Cancel subscription, Change plan) -->
+              <div v-else class="flex items-center gap-3">
+                <RelayButton
+                  v-if="usesStripePortal && accountSubscription"
+                  variant="outline"
+                  size="sm"
+                  class="h-9"
+                  @click="onClickBillingPortal"
+                >
+                  {{ $t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.BUTTON_TXT') }}
+                </RelayButton>
+                <RelayButton
+                  v-if="usesRazorpayBilling && hasActiveSubscription"
+                  variant="outline"
+                  size="sm"
+                  class="h-9 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+                  :is-loading="isCancelingSubscription"
+                  @click="onCancelRazorpaySubscription"
+                >
+                  {{
+                    $t(
+                      'BILLING_SETTINGS.SELECT_PLAN.CANCEL_SUBSCRIPTION_BUTTON'
+                    )
+                  }}
+                </RelayButton>
+                <RelayButton
+                  size="sm"
+                  class="h-9 shadow-sm"
+                  @click="showPlanPicker = true"
+                >
+                  {{ $t('BILLING_SETTINGS.CURRENT_PLAN.CHANGE_PLAN_BUTTON') }}
+                </RelayButton>
+              </div>
+            </template>
+
             <div>
               <div class="mb-4 flex flex-wrap items-center gap-3">
                 <h2
-                  class="text-[27px] font-medium tracking-tight text-foreground"
+                  class="text-[27px] font-semibold tracking-tight text-foreground"
                 >
                   {{ planName }}
                 </h2>
@@ -1049,55 +1096,6 @@ onMounted(() => {
               >
                 {{ $t('BILLING_SETTINGS.SUBSCRIPTION.PAYMENT_FAILED_HINT') }}
               </p>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-3">
-              <RelayButton
-                variant="outline"
-                class="gap-2 font-medium"
-                @click="showPlanDetails = !showPlanDetails"
-              >
-                {{
-                  showPlanDetails
-                    ? $t('BILLING_SETTINGS.CURRENT_PLAN.HIDE_PLAN_DETAILS')
-                    : $t('BILLING_SETTINGS.CURRENT_PLAN.VIEW_PLAN_DETAILS')
-                }}
-                <span
-                  class="size-4"
-                  :class="
-                    showPlanDetails
-                      ? 'i-lucide-chevron-up'
-                      : 'i-lucide-external-link'
-                  "
-                />
-              </RelayButton>
-              <RelayButton
-                v-if="usesStripePortal && accountSubscription"
-                variant="outline"
-                size="sm"
-                @click="onClickBillingPortal"
-              >
-                {{ $t('BILLING_SETTINGS.MANAGE_SUBSCRIPTION.BUTTON_TXT') }}
-              </RelayButton>
-              <ButtonV4
-                v-if="usesRazorpayBilling && hasActiveSubscription"
-                sm
-                outline
-                slate
-                :is-loading="isCancelingSubscription"
-                @click="onCancelRazorpaySubscription"
-              >
-                {{
-                  $t('BILLING_SETTINGS.SELECT_PLAN.CANCEL_SUBSCRIPTION_BUTTON')
-                }}
-              </ButtonV4>
-              <RelayButton
-                size="sm"
-                class="shadow-sm"
-                @click="showPlanPicker = true"
-              >
-                {{ $t('BILLING_SETTINGS.CURRENT_PLAN.CHANGE_PLAN_BUTTON') }}
-              </RelayButton>
             </div>
 
             <div
@@ -1176,6 +1174,17 @@ onMounted(() => {
                 >
                   {{ $t('BILLING_SETTINGS.TRANSACTIONS.VIEW') }}
                 </a>
+              </div>
+
+              <div class="flex pt-2">
+                <button
+                  type="button"
+                  class="flex items-center text-xs font-semibold text-muted-foreground hover:text-foreground gap-1 transition-colors"
+                  @click="showPlanDetails = false"
+                >
+                  <span class="i-lucide-chevron-up size-4" />
+                  {{ $t('BILLING_SETTINGS.CURRENT_PLAN.HIDE_PLAN_DETAILS') }}
+                </button>
               </div>
             </div>
           </BillingCard>
