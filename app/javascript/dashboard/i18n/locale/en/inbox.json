@@ -90,6 +90,21 @@
         "COOKIES": "Third-party cookies must be enabled",
         "ADMIN_ACCESS": "You need admin access to the WhatsApp Business Account"
       }
+    },
+    "EMPTY": {
+      "TITLE": "Your Inbox is Ready",
+      "DESCRIPTION": "Connect WhatsApp, Email, SMS, Facebook Messenger, Instagram, or Live Chat to start receiving conversations from all your communication channels in one place.",
+      "CONNECT_CHANNEL": "Connect a Channel",
+      "LEARN_MORE": "Learn How Inboxes Work",
+      "SUPPORTED_CHANNELS": "Supported Channels",
+      "LEARN_HOW_WORKS": "Learn how Inbox works",
+      "EXPLORE_DEMO": "Explore Demo Workspace",
+      "WHATSAPP": "WhatsApp",
+      "EMAIL": "Email",
+      "SMS": "SMS",
+      "MESSENGER": "Messenger",
+      "INSTAGRAM": "Instagram",
+      "LIVE_CHAT": "Live Chat"
     }
   }
 }

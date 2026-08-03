@@ -1,121 +1,123 @@
-<script>
+<script setup>
+import { ref, watch } from 'vue';
+import { useStore } from 'vuex';
+import { useI18n } from 'vue-i18n';
 import { useAlert, useTrack } from 'dashboard/composables';
 import { INBOX_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
 
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import RelayButton from 'dashboard/components-next/relay/Button/Button.vue';
 import InboxOptionMenu from './InboxOptionMenu.vue';
 import InboxDisplayMenu from './InboxDisplayMenu.vue';
 
-export default {
-  components: {
-    NextButton,
-    InboxOptionMenu,
-    InboxDisplayMenu,
+const props = defineProps({
+  isContextMenuOpen: {
+    type: Boolean,
+    default: false,
   },
-  props: {
-    isContextMenuOpen: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ['redirect', 'filter'],
-  data() {
-    return {
-      showInboxDisplayMenu: false,
-      showInboxOptionMenu: false,
-    };
-  },
-  watch: {
-    isContextMenuOpen: {
-      handler(val) {
-        if (val) {
-          this.showInboxDisplayMenu = false;
-          this.showInboxOptionMenu = false;
-        }
-      },
-      immediate: true,
-    },
-  },
-  methods: {
-    markAllRead() {
-      useTrack(INBOX_EVENTS.MARK_ALL_NOTIFICATIONS_AS_READ);
-      this.$store.dispatch('notifications/readAll').then(() => {
-        useAlert(this.$t('INBOX.ALERTS.MARK_ALL_READ'));
-      });
-    },
-    deleteAll() {
-      this.$store.dispatch('notifications/deleteAll').then(() => {
-        useAlert(this.$t('INBOX.ALERTS.DELETE_ALL'));
-      });
-    },
-    deleteAllRead() {
-      this.$store.dispatch('notifications/deleteAllRead').then(() => {
-        useAlert(this.$t('INBOX.ALERTS.DELETE_ALL_READ'));
-      });
-    },
-    openInboxDisplayMenu() {
-      this.showInboxDisplayMenu = !this.showInboxDisplayMenu;
-    },
-    openInboxOptionsMenu() {
-      this.showInboxOptionMenu = !this.showInboxOptionMenu;
-    },
-    onInboxOptionMenuClick(key) {
-      const actions = {
-        mark_all_read: () => this.markAllRead(),
-        delete_all: () => this.deleteAll(),
-        delete_all_read: () => this.deleteAllRead(),
-      };
-      const action = actions[key];
-      if (action) action();
-      this.$emit('redirect');
-    },
-    onFilterChange(option) {
-      this.$emit('filter', option);
-      this.showInboxDisplayMenu = false;
-      this.$emit('redirect');
-    },
-  },
+});
+
+const emit = defineEmits(['redirect', 'filter']);
+
+const store = useStore();
+const { t } = useI18n();
+
+const showInboxDisplayMenu = ref(false);
+const showInboxOptionMenu = ref(false);
+
+watch(
+  () => props.isContextMenuOpen,
+  val => {
+    if (val) {
+      showInboxDisplayMenu.value = false;
+      showInboxOptionMenu.value = false;
+    }
+  }
+);
+
+const markAllRead = () => {
+  useTrack(INBOX_EVENTS.MARK_ALL_NOTIFICATIONS_AS_READ);
+  store.dispatch('notifications/readAll').then(() => {
+    useAlert(t('INBOX.ALERTS.MARK_ALL_READ'));
+  });
+};
+
+const deleteAll = () => {
+  store.dispatch('notifications/deleteAll').then(() => {
+    useAlert(t('INBOX.ALERTS.DELETE_ALL'));
+  });
+};
+
+const deleteAllRead = () => {
+  store.dispatch('notifications/deleteAllRead').then(() => {
+    useAlert(t('INBOX.ALERTS.DELETE_ALL_READ'));
+  });
+};
+
+const openInboxDisplayMenu = () => {
+  showInboxDisplayMenu.value = !showInboxDisplayMenu.value;
+};
+
+const openInboxOptionsMenu = () => {
+  showInboxOptionMenu.value = !showInboxOptionMenu.value;
+};
+
+const onInboxOptionMenuClick = key => {
+  const actions = {
+    mark_all_read: () => markAllRead(),
+    delete_all: () => deleteAll(),
+    delete_all_read: () => deleteAllRead(),
+  };
+  const action = actions[key];
+  if (action) action();
+  emit('redirect');
+};
+
+const onFilterChange = option => {
+  emit('filter', option);
+  showInboxDisplayMenu.value = false;
+  emit('redirect');
 };
 </script>
 
 <template>
   <div
-    class="flex items-center justify-between w-full gap-1 h-[3.25rem] ltr:pl-4 rtl:pr-4 ltr:pr-3 rtl:pl-3"
+    class="flex items-center justify-between w-full gap-1 h-14 border-b border-border/60 px-4 shrink-0 bg-card"
   >
     <div class="flex items-center gap-2 min-w-0 flex-1">
-      <h1 class="text-heading-2 truncate text-n-slate-12 min-w-0">
-        {{ $t('INBOX.LIST.TITLE') }}
+      <h1 class="text-base font-semibold text-foreground truncate min-w-0">
+        {{ t('INBOX.LIST.TITLE') }}
       </h1>
       <div class="relative">
-        <NextButton
-          :label="$t('INBOX.LIST.DISPLAY_DROPDOWN')"
-          icon="i-lucide-chevron-down"
-          trailing-icon
-          slate
-          xs
-          :variant="showInboxDisplayMenu ? 'faded' : 'solid'"
+        <RelayButton
+          variant="outline"
+          size="sm"
+          class="h-8 text-xs gap-1 py-1"
           @click="openInboxDisplayMenu"
-        />
+        >
+          {{ t('INBOX.LIST.DISPLAY_DROPDOWN') }}
+          <span class="i-lucide-chevron-down size-3" />
+        </RelayButton>
         <InboxDisplayMenu
           v-if="showInboxDisplayMenu"
           v-on-clickaway="openInboxDisplayMenu"
-          class="absolute mt-1 top-full ltr:left-0 rtl:right-0"
+          class="absolute mt-1.5 top-full ltr:left-0 rtl:right-0 z-50"
           @filter="onFilterChange"
         />
       </div>
     </div>
     <div class="relative flex items-center gap-1">
-      <NextButton
-        icon="i-lucide-sliders-vertical"
-        slate
-        sm
-        :variant="showInboxOptionMenu ? 'faded' : 'ghost'"
+      <RelayButton
+        variant="outline"
+        size="icon"
+        class="h-8 w-8 text-muted-foreground"
         @click="openInboxOptionsMenu"
-      />
+      >
+        <span class="i-lucide-sliders-horizontal size-4" />
+      </RelayButton>
       <InboxOptionMenu
         v-if="showInboxOptionMenu"
         v-on-clickaway="openInboxOptionsMenu"
-        class="absolute top-full mt-1 ltr:right-0 ltr:lg:right-[unset] rtl:left-0 rtl:lg:left-[unset]"
+        class="absolute top-full mt-1.5 ltr:right-0 ltr:lg:right-[unset] rtl:left-0 rtl:lg:left-[unset] z-50"
         @option-click="onInboxOptionMenuClick"
       />
     </div>
