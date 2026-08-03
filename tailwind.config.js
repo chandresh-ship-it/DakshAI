@@ -74,7 +74,8 @@ const tailwindConfig = {
       typography: {
         bubble: {
           css: {
-            color: 'rgb(var(--slate-12))',
+            // Inherit from bubble (primary-foreground on agent, card-foreground on user)
+            color: 'inherit',
             lineHeight: '1.6',
             fontSize: '14px',
             '*': {
@@ -85,17 +86,17 @@ const tailwindConfig = {
             overflowWrap: 'anywhere',
 
             strong: {
-              color: 'rgb(var(--slate-12))',
+              color: 'inherit',
               fontWeight: '700',
             },
 
             b: {
-              color: 'rgb(var(--slate-12))',
+              color: 'inherit',
               fontWeight: '700',
             },
 
             h1: {
-              color: 'rgb(var(--slate-12))',
+              color: 'inherit',
               fontWeight: '700',
               fontSize: '1.25rem',
               '&:first-child': {
@@ -103,7 +104,7 @@ const tailwindConfig = {
               },
             },
             h2: {
-              color: 'rgb(var(--slate-12))',
+              color: 'inherit',
               fontWeight: '700',
               fontSize: '1rem',
               '&:first-child': {
@@ -111,7 +112,7 @@ const tailwindConfig = {
               },
             },
             h3: {
-              color: 'rgb(var(--slate-12))',
+              color: 'inherit',
               fontWeight: '700',
               fontSize: '1rem',
               '&:first-child': {
@@ -123,7 +124,7 @@ const tailwindConfig = {
               marginBottom: '1.5em',
             },
             a: {
-              color: 'rgb(var(--slate-12))',
+              color: 'inherit',
               textDecoration: 'underline',
             },
             ul: {
@@ -153,7 +154,8 @@ const tailwindConfig = {
               textIndent: '0',
             },
             blockquote: {
-              color: 'rgb(var(--slate-11))',
+              color: 'inherit',
+              opacity: '0.8',
               borderLeft: `4px solid rgb(var(--black-alpha-1))`,
               paddingLeft: '1em',
               '[dir="rtl"] &': {
@@ -169,7 +171,8 @@ const tailwindConfig = {
             },
             code: {
               backgroundColor: 'rgb(var(--alpha-3))',
-              color: 'rgb(var(--slate-11))',
+              color: 'inherit',
+              opacity: '0.9',
               padding: '0.2em 0.4em',
               borderRadius: '4px',
               fontSize: '0.95em',
@@ -192,7 +195,7 @@ const tailwindConfig = {
             },
             th: {
               padding: '0.75em',
-              color: 'rgb(var(--slate-12))',
+              color: 'inherit',
               border: `none`,
               textAlign: 'start',
               fontWeight: '600',

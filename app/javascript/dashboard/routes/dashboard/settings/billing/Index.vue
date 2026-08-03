@@ -393,11 +393,6 @@ const subscriptionPeriodStartValue = computed(() => {
   return formatBillingDate(accountSubscription.value?.current_period_start);
 });
 
-const nextPaymentRetryValue = computed(() => {
-  if (!isSubscriptionPaymentPending.value) return null;
-  return formatBillingDate(accountSubscription.value?.grace_period_ends_at);
-});
-
 const currencyForProvider = provider => {
   const gateway = paymentGateways.value.find(entry => entry.id === provider);
   return gateway?.currency || (provider === 'razorpay' ? 'inr' : 'usd');
@@ -417,8 +412,6 @@ const currentPlanPriceLabel = computed(() => {
   const currency = currencyForProvider(provider);
   return `${formatMoneyAmount(price, currency)}/${t('BILLING_SETTINGS.PLAN_CHECKOUT.PER_MONTH')}`;
 });
-
-const lastPayment = computed(() => transactions.value[0] || null);
 
 const paymentProviderDisplay = computed(() => {
   const provider = accountSubscription.value?.payment_provider;
@@ -1081,15 +1074,8 @@ onMounted(() => {
               </p>
             </div>
 
-            <div
-              v-if="showPlanDetails"
-              class="space-y-4 border-t border-border/40 pt-4"
-            >
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <DetailItem
-                  :label="$t('BILLING_SETTINGS.SUBSCRIPTION.STATUS')"
-                  :value="subscriptionStatusLabel"
-                />
+            <div v-if="showPlanDetails" class="mt-4 space-y-4">
+              <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <DetailItem
                   :label="$t('BILLING_SETTINGS.SUBSCRIPTION.PLAN_PRICE')"
                   :value="currentPlanPriceLabel"
@@ -1103,11 +1089,6 @@ onMounted(() => {
                   :value="subscriptionPeriodStartValue"
                 />
                 <DetailItem
-                  v-if="nextPaymentRetryValue"
-                  :label="$t('BILLING_SETTINGS.SUBSCRIPTION.NEXT_RETRY')"
-                  :value="nextPaymentRetryValue"
-                />
-                <DetailItem
                   :label="
                     $t('BILLING_SETTINGS.CURRENT_PLAN.DATA_RETENTION_LABEL')
                   "
@@ -1115,60 +1096,14 @@ onMounted(() => {
                 />
               </div>
 
-              <div
-                v-if="lastPayment"
-                class="rounded-lg border border-border/60 bg-muted/30 p-4"
+              <button
+                type="button"
+                class="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground gap-1 transition-colors"
+                @click="showPlanDetails = false"
               >
-                <p class="mb-3 text-sm font-medium text-foreground">
-                  {{ $t('BILLING_SETTINGS.SUBSCRIPTION.LAST_PAYMENT') }}
-                </p>
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <DetailItem
-                    :label="$t('BILLING_SETTINGS.TRANSACTIONS.DATE')"
-                    :value="
-                      formatTransactionDate(
-                        lastPayment.paid_at || lastPayment.created_at
-                      )
-                    "
-                  />
-                  <DetailItem
-                    :label="$t('BILLING_SETTINGS.TRANSACTIONS.AMOUNT')"
-                    :value="formatTransactionAmount(lastPayment)"
-                  />
-                  <DetailItem
-                    :label="$t('BILLING_SETTINGS.TRANSACTIONS.STATUS')"
-                    :value="
-                      lastPayment.status === 'succeeded'
-                        ? $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_SUCCEEDED')
-                        : $t('BILLING_SETTINGS.TRANSACTIONS.STATUS_FAILED')
-                    "
-                  />
-                  <DetailItem
-                    :label="$t('BILLING_SETTINGS.TRANSACTIONS.DESCRIPTION_COL')"
-                    :value="lastPayment.description || '—'"
-                  />
-                </div>
-                <a
-                  v-if="lastPayment.hosted_invoice_url"
-                  :href="lastPayment.hosted_invoice_url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="mt-3 inline-block text-sm text-primary hover:underline"
-                >
-                  {{ $t('BILLING_SETTINGS.TRANSACTIONS.VIEW') }}
-                </a>
-              </div>
-
-              <div class="flex pt-2">
-                <button
-                  type="button"
-                  class="flex items-center text-xs font-semibold text-muted-foreground hover:text-foreground gap-1 transition-colors"
-                  @click="showPlanDetails = false"
-                >
-                  <span class="i-lucide-chevron-up size-4" />
-                  {{ $t('BILLING_SETTINGS.CURRENT_PLAN.HIDE_PLAN_DETAILS') }}
-                </button>
-              </div>
+                <span class="i-lucide-chevron-up size-4" />
+                {{ $t('BILLING_SETTINGS.CURRENT_PLAN.HIDE_PLAN_DETAILS') }}
+              </button>
             </div>
           </BillingCard>
 

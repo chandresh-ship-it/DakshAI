@@ -30,7 +30,6 @@ onMounted(() => {
 });
 
 const isOutgoing = computed(() => messageType.value === MESSAGE_TYPES.OUTGOING);
-const isIncoming = computed(() => !isOutgoing.value);
 
 const { hasTranslations, translationContent } =
   useTranslations(contentAttributes);
@@ -104,20 +103,10 @@ const handleSeeOriginal = () => {
 
 <template>
   <BaseBubble
-    class="w-full"
-    :class="{
-      'bg-n-slate-4': isIncoming,
-      'bg-n-solid-blue': isOutgoing,
-    }"
+    class="w-full bg-card text-card-foreground border border-border shadow-xs"
     data-bubble-name="email"
   >
-    <EmailMeta
-      class="p-3"
-      :class="{
-        'border-b border-n-strong': isIncoming,
-        'border-b border-n-slate-8/20': isOutgoing,
-      }"
-    />
+    <EmailMeta class="p-3 border-b border-border" />
     <section ref="contentContainer" class="p-3">
       <div
         :class="{
@@ -127,16 +116,10 @@ const handleSeeOriginal = () => {
       >
         <div
           v-if="isExpandable && !isExpanded"
-          class="absolute left-0 right-0 bottom-0 h-40 px-8 flex items-end"
-          :class="{
-            'bg-gradient-to-t from-n-slate-4 via-n-slate-4 via-20% to-transparent':
-              isIncoming,
-            'bg-gradient-to-t from-n-solid-blue via-n-solid-blue via-20% to-transparent':
-              isOutgoing,
-          }"
+          class="absolute left-0 right-0 bottom-0 h-40 px-8 flex items-end bg-gradient-to-t from-card via-card via-20% to-transparent"
         >
           <button
-            class="text-n-slate-12 py-2 px-8 mx-auto text-center flex items-center gap-2"
+            class="text-foreground py-2 px-8 mx-auto text-center flex items-center gap-2"
             @click="isExpanded = true"
           >
             <Icon icon="i-lucide-maximize-2" />
@@ -145,7 +128,7 @@ const handleSeeOriginal = () => {
         </div>
         <FormattedContent
           v-if="isOutgoing && content && !hasEmailContent"
-          class="text-n-slate-12"
+          class="text-foreground"
           :content="messageContent"
         />
         <template v-else>

@@ -175,7 +175,7 @@ const toggleContactSidebar = () => {
           </h2>
           <span
             v-if="primaryLabel"
-            class="text-[10px] font-medium px-1.5 py-0 rounded-sm shrink-0 bg-primary text-primary-foreground"
+            class="text-[10px] font-medium px-1.5 py-0 rounded-sm shrink-0 bg-primary text-primary-foreground border border-transparent"
           >
             {{ primaryLabel.title }}
           </span>

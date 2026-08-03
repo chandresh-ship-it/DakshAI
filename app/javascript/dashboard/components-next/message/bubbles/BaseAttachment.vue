@@ -29,7 +29,10 @@ const senderName = computed(() => {
 </script>
 
 <template>
-  <BaseBubble class="overflow-hidden p-3" data-bubble-name="attachment">
+  <BaseBubble
+    class="overflow-hidden p-3 !bg-card !text-card-foreground border border-border shadow-xs"
+    data-bubble-name="attachment"
+  >
     <div class="grid gap-4 min-w-64">
       <div class="grid gap-3">
         <div
@@ -41,7 +44,7 @@ const senderName = computed(() => {
           </slot>
         </div>
         <div class="space-y-1 overflow-hidden">
-          <div v-if="senderName" class="text-n-slate-12 text-sm truncate">
+          <div v-if="senderName" class="text-foreground text-sm truncate">
             {{
               t(senderTranslationKey, {
                 sender: senderName,
@@ -49,10 +52,10 @@ const senderName = computed(() => {
             }}
           </div>
           <slot>
-            <div v-if="title" class="truncate text-sm text-n-slate-12">
+            <div v-if="title" class="truncate text-sm text-foreground">
               {{ title }}
             </div>
-            <div v-if="content" class="truncate text-sm text-n-slate-11">
+            <div v-if="content" class="truncate text-sm text-muted-foreground">
               {{ content }}
             </div>
           </slot>
@@ -64,13 +67,13 @@ const senderName = computed(() => {
           :href="action.href"
           rel="noreferrer noopener nofollow"
           target="_blank"
-          class="w-full block bg-n-solid-3 px-4 py-2 rounded-lg text-sm text-center border border-n-container"
+          class="w-full block bg-muted px-4 py-2 rounded-lg text-sm text-center border border-border text-foreground"
         >
           {{ action.label }}
         </a>
         <button
           v-else
-          class="w-full bg-n-solid-3 px-4 py-2 rounded-lg text-sm text-center border border-n-container"
+          class="w-full bg-muted px-4 py-2 rounded-lg text-sm text-center border border-border text-foreground"
           @click="action.onClick"
         >
           {{ action.label }}

@@ -56,9 +56,10 @@ const statusIcon = computed(() => {
 
 const statusColor = computed(() => {
   const statusIconMap = {
-    [MESSAGE_STATUS.SENT]: 'text-n-slate-10',
-    [MESSAGE_STATUS.DELIVERED]: 'text-n-slate-10',
-    [MESSAGE_STATUS.READ]: 'text-[#7EB6FF]',
+    // Inherit bubble meta color so icons stay visible on primary (white) bubbles
+    [MESSAGE_STATUS.SENT]: 'text-current',
+    [MESSAGE_STATUS.DELIVERED]: 'text-current',
+    [MESSAGE_STATUS.READ]: 'text-sky-300',
   };
 
   return statusIconMap[status];
@@ -81,7 +82,7 @@ const tooltipText = computed(() => {
     v-if="status === MESSAGE_STATUS.PROGRESS"
     v-tooltip.top-start="tooltipText"
     :icon="progessIcon"
-    class="text-n-slate-10"
+    class="text-current"
   />
   <Icon
     v-else
