@@ -93,6 +93,22 @@ const selectedCountLabel = computed(() =>
   })
 );
 
+const allSelected = computed(
+  () =>
+    visibleArticleIds.value.length > 0 &&
+    visibleArticleIds.value.every(id => selectedArticleIds.value.has(id))
+);
+
+const publishedArticleIds = computed(() =>
+  props.articles.filter(a => a.status === 'published').map(a => a.id)
+);
+
+const isAllPublishedSelected = computed(
+  () =>
+    publishedArticleIds.value.length > 0 &&
+    publishedArticleIds.value.every(id => selectedArticleIds.value.has(id))
+);
+
 const bulkTranslateDialogRef = ref(null);
 
 const hasNoArticles = computed(
@@ -100,6 +116,10 @@ const hasNoArticles = computed(
 );
 
 const isLoading = computed(() => isFetching.value || isSwitchingPortal.value);
+
+const showSelectionControls = computed(
+  () => !isLoading.value && props.articles.length > 0
+);
 
 const totalArticlesCount = computed(() => props.meta.allArticlesCount);
 
@@ -191,6 +211,27 @@ const handleToggleSelect = articleId => {
 
 const clearSelection = () => {
   selectedArticleIds.value = new Set();
+};
+
+const toggleSelectCurrentView = () => {
+  if (allSelected.value) {
+    clearSelection();
+    return;
+  }
+  selectedArticleIds.value = new Set(visibleArticleIds.value);
+};
+
+const selectAllPublished = () => {
+  if (isAllPublishedSelected.value) {
+    const next = new Set(selectedArticleIds.value);
+    publishedArticleIds.value.forEach(id => next.delete(id));
+    selectedArticleIds.value = next;
+    return;
+  }
+  selectedArticleIds.value = new Set([
+    ...selectedArticleIds.value,
+    ...publishedArticleIds.value,
+  ]);
 };
 
 const handleTranslateArticle = articleId => {
@@ -297,10 +338,17 @@ watch(
         :categories="categories"
         :allowed-locales="allowedLocales"
         :meta="meta"
+        :show-selection-controls="showSelectionControls"
+        :all-selected="allSelected"
+        :is-all-published-selected="isAllPublishedSelected"
+        :has-selection="selectedArticleIds.size > 0"
         @tab-change="handleTabChange"
         @locale-change="handleLocaleAction"
         @category-change="handleCategoryAction"
         @new-article="navigateToNewArticlePage"
+        @select-current-view="toggleSelectCurrentView"
+        @select-published="selectAllPublished"
+        @clear-selection="clearSelection"
       />
       <CategoryHeaderControls
         v-else-if="showCategoryHeaderControls"

@@ -552,6 +552,14 @@
         "LOCALE": {
           "ALL": "All locales"
         },
+        "SELECTION": {
+          "SELECT": "Select",
+          "SELECT_CURRENT_VIEW": "Select current view",
+          "DESELECT_CURRENT_VIEW": "Deselect current view",
+          "SELECT_ALL_PUBLISHED": "Select all published",
+          "SELECT_PUBLISHED": "Select published",
+          "CLEAR_SELECTION": "Clear selection"
+        },
         "NEW_ARTICLE": "New article"
       },
       "EMPTY_STATE": {

@@ -108,7 +108,7 @@ const articleMenuItems = computed(() => {
 const statusBadgeClass = computed(() => {
   switch (props.status) {
     case 'archived':
-      return 'bg-muted text-muted-foreground';
+      return 'bg-violet-500/15 text-violet-700';
     case 'draft':
       return 'bg-amber-500/15 text-amber-600';
     default:
@@ -171,20 +171,18 @@ const handleClick = id => {
     @click="handleClick(id)"
   >
     <div class="flex min-w-0 flex-1 items-center gap-3 pr-4">
-      <div
-        v-show="selectable && showSelectionControl"
-        class="shrink-0"
-        @click.stop
-      >
+      <div v-if="selectable" class="shrink-0" @click.stop>
         <RelayCheckbox
           :model-value="isSelected"
+          class="opacity-40 transition-opacity group-hover:opacity-100"
+          :class="{ 'opacity-100': isSelected || showSelectionControl }"
           @update:model-value="emit('toggleSelect', id)"
         />
       </div>
 
       <div class="flex min-w-0 flex-1 flex-col gap-1.5">
         <h3
-          class="truncate text-[15px] font-normal text-foreground transition-colors group-hover:text-primary"
+          class="truncate text-[15px] font-semibold text-foreground transition-colors group-hover:text-primary"
         >
           {{ title }}
         </h3>

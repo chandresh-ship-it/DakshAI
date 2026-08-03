@@ -26,6 +26,22 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  showSelectionControls: {
+    type: Boolean,
+    default: false,
+  },
+  allSelected: {
+    type: Boolean,
+    default: false,
+  },
+  isAllPublishedSelected: {
+    type: Boolean,
+    default: false,
+  },
+  hasSelection: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits([
@@ -33,6 +49,9 @@ const emit = defineEmits([
   'localeChange',
   'categoryChange',
   'newArticle',
+  'selectCurrentView',
+  'selectPublished',
+  'clearSelection',
 ]);
 
 const route = useRoute();
@@ -41,6 +60,7 @@ const { updateUISettings } = useUISettings();
 
 const isCategoryMenuOpen = ref(false);
 const isLocaleMenuOpen = ref(false);
+const isSelectMenuOpen = ref(false);
 
 const countKey = tab => {
   if (tab.value === 'all') {
@@ -115,6 +135,43 @@ const localeMenuItems = computed(() => {
   }));
 });
 
+const selectMenuItems = computed(() => {
+  const items = [
+    {
+      label: props.allSelected
+        ? t(
+            'HELP_CENTER.ARTICLES_PAGE.ARTICLES_HEADER.SELECTION.DESELECT_CURRENT_VIEW'
+          )
+        : t(
+            'HELP_CENTER.ARTICLES_PAGE.ARTICLES_HEADER.SELECTION.SELECT_CURRENT_VIEW'
+          ),
+      value: 'current',
+      action: 'select',
+      icon: 'i-lucide-check-square',
+    },
+    {
+      label: t(
+        'HELP_CENTER.ARTICLES_PAGE.ARTICLES_HEADER.SELECTION.SELECT_ALL_PUBLISHED'
+      ),
+      value: 'published',
+      action: 'select',
+      icon: props.isAllPublishedSelected ? 'i-lucide-check' : undefined,
+    },
+  ];
+
+  if (props.hasSelection) {
+    items.push({
+      label: t(
+        'HELP_CENTER.ARTICLES_PAGE.ARTICLES_HEADER.SELECTION.CLEAR_SELECTION'
+      ),
+      value: 'clear',
+      action: 'select',
+    });
+  }
+
+  return items;
+});
+
 const handleLocaleAction = ({ value }) => {
   emit('localeChange', value);
   isLocaleMenuOpen.value = false;
@@ -126,6 +183,17 @@ const handleLocaleAction = ({ value }) => {
 const handleCategoryAction = ({ value }) => {
   emit('categoryChange', value);
   isCategoryMenuOpen.value = false;
+};
+
+const handleSelectAction = ({ value }) => {
+  isSelectMenuOpen.value = false;
+  if (value === 'current') {
+    emit('selectCurrentView');
+  } else if (value === 'published') {
+    emit('selectPublished');
+  } else if (value === 'clear') {
+    emit('clearSelection');
+  }
 };
 
 const handleNewArticle = () => {
@@ -149,11 +217,11 @@ const isTabActive = value => activeTabValue.value === value;
           v-for="tab in tabs"
           :key="tab.value"
           type="button"
-          class="transition-colors"
+          class="border-b-2 pb-0.5 transition-colors"
           :class="
             isTabActive(tab.value)
-              ? 'font-medium text-primary'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'border-primary font-medium text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           "
           @click="handleTabChange(tab)"
         >
@@ -161,6 +229,67 @@ const isTabActive = value => activeTabValue.value === value;
           <span v-if="tab.count != null">({{ tab.count }})</span>
         </button>
       </div>
+
+      <template v-if="showSelectionControls">
+        <div class="hidden h-4 w-px bg-border/60 sm:block" />
+
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <OnClickOutside @trigger="isSelectMenuOpen = false">
+              <RelayButton
+                variant="outline"
+                size="sm"
+                class="h-8 px-2.5 text-[13px] font-medium"
+                @click="isSelectMenuOpen = !isSelectMenuOpen"
+              >
+                <span
+                  class="i-lucide-check-square size-3.5 opacity-70"
+                  aria-hidden="true"
+                />
+                {{
+                  t(
+                    'HELP_CENTER.ARTICLES_PAGE.ARTICLES_HEADER.SELECTION.SELECT'
+                  )
+                }}
+                <span
+                  class="i-lucide-chevron-down size-3.5 opacity-50"
+                  aria-hidden="true"
+                />
+              </RelayButton>
+
+              <DropdownMenu
+                v-if="isSelectMenuOpen"
+                :menu-items="selectMenuItems"
+                class="left-0 top-full mt-2 w-52"
+                @action="handleSelectAction"
+              />
+            </OnClickOutside>
+          </div>
+
+          <RelayButton
+            variant="outline"
+            size="sm"
+            class="h-8 rounded-md px-2.5 text-[12.5px] font-medium transition-colors"
+            :class="
+              isAllPublishedSelected
+                ? 'border-primary/30 bg-primary/10 text-primary'
+                : 'border-border/80 text-muted-foreground hover:text-foreground'
+            "
+            @click="emit('selectPublished')"
+          >
+            <span
+              v-if="isAllPublishedSelected"
+              class="i-lucide-check size-3.5 text-primary"
+              aria-hidden="true"
+            />
+            {{
+              t(
+                'HELP_CENTER.ARTICLES_PAGE.ARTICLES_HEADER.SELECTION.SELECT_PUBLISHED'
+              )
+            }}
+          </RelayButton>
+        </div>
+      </template>
 
       <div class="hidden h-4 w-px bg-border/60 sm:block" />
 
