@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useAlert, useTrack } from 'dashboard/composables';
 import { INBOX_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
 
-import RelayButton from 'dashboard/components-next/relay/Button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import InboxOptionMenu from './InboxOptionMenu.vue';
 import InboxDisplayMenu from './InboxDisplayMenu.vue';
 

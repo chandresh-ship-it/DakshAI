@@ -292,11 +292,11 @@ const selectDueDate = value => {
   fetchTasks();
 };
 
-const toggleTaskStatus = async task => {
+const setTaskCompleted = async (task, completed) => {
   const originalVal = task.completed;
-  task.completed = !task.completed;
+  task.completed = completed;
   try {
-    await TasksAPI.update(task.id, { task: { completed: task.completed } });
+    await TasksAPI.update(task.id, { task: { completed } });
   } catch {
     task.completed = originalVal;
   }
@@ -572,7 +572,7 @@ onMounted(() => {
           <RelayCheckbox
             :model-value="!!task.completed"
             class="mt-1 border-muted-foreground/30"
-            @update:model-value="toggleTaskStatus(task)"
+            @update:model-value="value => setTaskCompleted(task, value)"
           />
           <div class="flex flex-1 flex-col gap-1.5">
             <div class="flex items-start justify-between gap-4">

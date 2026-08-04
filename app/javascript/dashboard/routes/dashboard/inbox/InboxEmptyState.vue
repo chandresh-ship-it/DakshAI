@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useAccount } from 'dashboard/composables/useAccount';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import RelayButton from 'dashboard/components-next/relay/Button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const store = useStore();
 const { t } = useI18n();

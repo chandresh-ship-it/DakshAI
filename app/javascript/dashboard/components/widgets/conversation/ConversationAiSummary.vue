@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useCaptain } from 'dashboard/composables/useCaptain';
 import { useFunctionGetter } from 'dashboard/composables/store';
-import RelayButton from 'dashboard/components-next/relay/Button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   conversationId: {

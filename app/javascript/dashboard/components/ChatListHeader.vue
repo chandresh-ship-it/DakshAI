@@ -7,7 +7,7 @@ import { vOnClickOutside } from '@vueuse/components';
 import wootConstants from 'dashboard/constants/globals';
 
 import SwitchLayout from 'dashboard/routes/dashboard/conversation/search/SwitchLayout.vue';
-import RelayButton from 'dashboard/components-next/relay/Button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   pageTitle: { type: String, required: true },
