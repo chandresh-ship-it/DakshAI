@@ -739,6 +739,7 @@
         "SEND_SMS": "Send SMS",
         "SEND_EMAIL": "Send Email"
       },
+      "STATISTICS_SUCCESS": "{success} / {total} succeeded",
       "EMPTY": {
         "TITLE": "No bulk actions logs found",
         "SUBTITLE": "When you run batch updates, additions, or deletions on your contacts, the progress and results will be tracked here."

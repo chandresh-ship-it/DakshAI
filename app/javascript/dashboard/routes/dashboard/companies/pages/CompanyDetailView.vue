@@ -1,19 +1,19 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
+import { dynamicTime } from 'shared/helpers/timeHelper';
 
 import Policy from 'dashboard/components/policy.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
-import CompaniesDetailsLayout from 'dashboard/components-next/Companies/CompaniesDetailsLayout.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import TabBar from 'dashboard/components-next/tabbar/TabBar.vue';
+import CompaniesDetailsLayout from 'dashboard/components-next/Companies/CompaniesDetailsLayout.vue';
+import CompanyProfileCard from 'dashboard/components-next/Companies/CompanyDetail/CompanyProfileCard.vue';
 import CompanyContactsSidebar from 'dashboard/components-next/Companies/CompanyDetail/CompanyContactsSidebar.vue';
 import CompanyHistorySidebar from 'dashboard/components-next/Companies/CompanyDetail/CompanyHistorySidebar.vue';
 import CompanyNotesSidebar from 'dashboard/components-next/Companies/CompanyDetail/CompanyNotesSidebar.vue';
-import CompanyProfileCard from 'dashboard/components-next/Companies/CompanyDetail/CompanyProfileCard.vue';
 import ConfirmCompanyDeleteDialog from 'dashboard/components-next/Companies/CompanyDetail/ConfirmCompanyDeleteDialog.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 import { useCompaniesStore } from 'dashboard/stores/companies';
 
 const route = useRoute();
@@ -23,7 +23,25 @@ const { t } = useI18n();
 
 const confirmDeleteDialogRef = ref(null);
 const selectedCandidate = ref(null);
-const activeSidebarTab = ref('history');
+const activeTab = ref('overview');
+const isEditingDetails = ref(false);
+
+const DETAIL_TABS = [
+  { value: 'overview', labelKey: 'COMPANIES.DETAIL.TABS.OVERVIEW' },
+  { value: 'contacts', labelKey: 'COMPANIES.DETAIL.TABS.CONTACTS' },
+  { value: 'history', labelKey: 'COMPANIES.DETAIL.TABS.HISTORY' },
+  { value: 'notes', labelKey: 'COMPANIES.DETAIL.TABS.NOTES' },
+];
+
+const detailsForm = reactive({
+  phone: '',
+  email: '',
+  website: '',
+  address: '',
+  state: '',
+  city: '',
+  description: '',
+});
 
 const companyId = computed(() => Number(route.params.companyId));
 const company = computed(() => companiesStore.getRecord(companyId.value));
@@ -49,38 +67,60 @@ const isManagingContacts = computed(
   () => uiFlags.value.creatingContact || uiFlags.value.removingContact
 );
 const isDeletingCompany = computed(() => uiFlags.value.deletingItem);
+const isUpdating = computed(() => uiFlags.value.updatingItem);
 const hasCompany = computed(() => Boolean(company.value?.id));
 const showInitialLoadingState = computed(
   () =>
     !hasCompany.value && (isFetchingCompany.value || isFetchingContacts.value)
 );
 
-const breadcrumbItems = computed(() => [
-  { label: t('COMPANIES.HEADER') },
-  ...(hasCompany.value
-    ? [{ label: company.value?.name || t('COMPANIES.UNNAMED') }]
-    : []),
-]);
+const emptyValue = computed(() => t('COMPANIES.EMPTY_VALUE'));
+const attrs = computed(() => company.value?.additionalAttributes || {});
+const displayName = computed(
+  () => company.value?.name || t('COMPANIES.UNNAMED')
+);
+const aboutText = computed(() => {
+  if (company.value?.description) return company.value.description;
+  return t('COMPANIES.DETAIL.ABOUT.FALLBACK', { name: displayName.value });
+});
 
-const SIDEBAR_TABS_OPTIONS = [
-  { key: 'HISTORY', value: 'history' },
-  { key: 'NOTES', value: 'notes' },
-  { key: 'CONTACTS', value: 'contacts' },
-];
+const websiteHref = computed(() => {
+  const value = detailsForm.website || company.value?.domain;
+  if (!value) return null;
+  return value.startsWith('http') ? value : `https://${value}`;
+});
 
-const sidebarTabs = computed(() =>
-  SIDEBAR_TABS_OPTIONS.map(tab => ({
-    label: {
-      notes: t('COMPANIES.DETAIL.SIDEBAR.TABS.NOTES'),
-      history: t('COMPANIES.DETAIL.SIDEBAR.TABS.HISTORY'),
-      contacts: `${t('COMPANIES.DETAIL.SIDEBAR.TABS.CONTACTS')} (${Number(companyContactsMeta.value.totalCount || 0)})`,
-    }[tab.value],
-    value: tab.value,
-  }))
+const recentContacts = computed(() => companyContacts.value.slice(0, 3));
+const recentConversations = computed(() =>
+  companyConversations.value.slice(0, 3)
 );
 
-const activeSidebarTabIndex = computed(() =>
-  SIDEBAR_TABS_OPTIONS.findIndex(tab => tab.value === activeSidebarTab.value)
+const contactInitials = contact => {
+  const name = contact.name || '';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return (name.slice(0, 2) || '?').toUpperCase();
+};
+
+const syncDetailsForm = current => {
+  const companyAttrs = current?.additionalAttributes || {};
+  detailsForm.phone = companyAttrs.phone || '';
+  detailsForm.email = companyAttrs.email || '';
+  detailsForm.website = companyAttrs.website || current?.domain || '';
+  detailsForm.address = companyAttrs.address || '';
+  detailsForm.state = companyAttrs.state || '';
+  detailsForm.city = companyAttrs.city || '';
+  detailsForm.description = current?.description || '';
+};
+
+watch(
+  company,
+  current => {
+    if (current?.id) syncDetailsForm(current);
+  },
+  { immediate: true, deep: true }
 );
 
 const goToCompaniesIndex = () => {
@@ -99,6 +139,20 @@ const goToCompaniesList = () => {
   goToCompaniesIndex();
 };
 
+const goToContacts = () => {
+  activeTab.value = 'contacts';
+};
+
+const openContact = contactId => {
+  router.push({
+    name: 'contacts_edit',
+    params: {
+      accountId: route.params.accountId,
+      contactId,
+    },
+  });
+};
+
 const loadCompanyContactsPage = async page => {
   if (!companyId.value) return;
   await companiesStore.getCompanyContacts(companyId.value, page);
@@ -112,17 +166,45 @@ const clearSelectedCandidate = () => {
   selectedCandidate.value = null;
 };
 
-const loadSidebarTab = tab => {
-  if (!companyId.value) return;
-  if (tab === 'notes') companiesStore.getCompanyNotes(companyId.value);
-  if (tab === 'history') {
-    companiesStore.getCompanyConversations(companyId.value);
+const domainFromWebsite = website => {
+  if (!website?.trim()) return null;
+  return website
+    .replace(/(https?:\/\/)?(www\.)?/i, '')
+    .split('/')[0]
+    .trim();
+};
+
+const handleSaveDetails = async () => {
+  try {
+    const updated = await companiesStore.update({
+      id: companyId.value,
+      domain: domainFromWebsite(detailsForm.website),
+      description: detailsForm.description.trim() || null,
+      additionalAttributes: {
+        ...attrs.value,
+        phone: detailsForm.phone.trim() || undefined,
+        email: detailsForm.email.trim() || undefined,
+        website: detailsForm.website.trim() || undefined,
+        address: detailsForm.address.trim() || undefined,
+        state: detailsForm.state.trim() || undefined,
+        city: detailsForm.city.trim() || undefined,
+      },
+    });
+    syncDetailsForm(updated);
+    isEditingDetails.value = false;
+    useAlert(t('COMPANIES.DETAIL.PROFILE.MESSAGES.UPDATE_SUCCESS'));
+  } catch {
+    syncDetailsForm(company.value);
+    useAlert(t('COMPANIES.DETAIL.PROFILE.MESSAGES.UPDATE_ERROR'));
   }
 };
 
-const handleSidebarTabChange = tab => {
-  activeSidebarTab.value = tab.value;
-  loadSidebarTab(tab.value);
+const toggleEditDetails = () => {
+  if (isEditingDetails.value) {
+    handleSaveDetails();
+    return;
+  }
+  isEditingDetails.value = true;
 };
 
 const handleContactSearch = async query => {
@@ -147,10 +229,11 @@ const handleConfirmContactSelection = async () => {
     useAlert(message);
     clearSelectedCandidate();
   } catch {
-    const errorMessage = isReassigning
-      ? t('COMPANIES.DETAIL.CONTACTS.MESSAGES.REASSIGN_ERROR')
-      : t('COMPANIES.DETAIL.CONTACTS.MESSAGES.ADD_ERROR');
-    useAlert(errorMessage);
+    useAlert(
+      isReassigning
+        ? t('COMPANIES.DETAIL.CONTACTS.MESSAGES.REASSIGN_ERROR')
+        : t('COMPANIES.DETAIL.CONTACTS.MESSAGES.ADD_ERROR')
+    );
   }
 };
 
@@ -189,7 +272,7 @@ watch(
   async id => {
     companiesStore.resetCompanyDetailState();
     clearSelectedCandidate();
-    activeSidebarTab.value = 'history';
+    activeTab.value = 'overview';
     if (!id) return;
     await Promise.allSettled([
       companiesStore.show(id),
@@ -200,19 +283,27 @@ watch(
   { immediate: true }
 );
 
+watch(activeTab, tab => {
+  if (!companyId.value) return;
+  if (tab === 'notes') companiesStore.getCompanyNotes(companyId.value);
+  if (tab === 'history') {
+    companiesStore.getCompanyConversations(companyId.value);
+  }
+  if (tab === 'contacts') {
+    companiesStore.getCompanyContacts(companyId.value);
+  }
+});
+
 onBeforeUnmount(() => {
   companiesStore.resetCompanyDetailState();
 });
 </script>
 
 <template>
-  <CompaniesDetailsLayout
-    :breadcrumb-items="breadcrumbItems"
-    @back="goToCompaniesList"
-  >
+  <CompaniesDetailsLayout @back="goToCompaniesList">
     <div
       v-if="showInitialLoadingState"
-      class="flex flex-col items-center justify-center gap-3 py-24 text-n-slate-11"
+      class="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground"
     >
       <Spinner />
       <span class="text-sm">{{ t('COMPANIES.DETAIL.LOADING') }}</span>
@@ -220,79 +311,582 @@ onBeforeUnmount(() => {
 
     <div
       v-else-if="!hasCompany"
-      class="flex flex-col items-center justify-center gap-3 px-6 py-24 text-center rounded-2xl border border-n-weak bg-n-solid-2"
+      class="mx-8 my-12 flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card px-6 py-24 text-center"
     >
-      <span class="text-lg font-medium text-n-slate-12">
+      <span class="text-lg font-medium text-foreground">
         {{ t('COMPANIES.DETAIL.EMPTY_STATE.TITLE') }}
       </span>
-      <p class="max-w-md text-sm text-n-slate-11">
+      <p class="max-w-md text-sm text-muted-foreground">
         {{ t('COMPANIES.DETAIL.EMPTY_STATE.SUBTITLE') }}
       </p>
+      <RelayButton variant="outline" class="mt-2" @click="goToCompaniesList">
+        {{ t('COMPANIES.DETAIL.BACK') }}
+      </RelayButton>
     </div>
 
-    <div v-else class="flex flex-col gap-6">
+    <template v-else>
+      <div class="border-b border-border/50 bg-card px-8 pt-6">
+        <RelayButton
+          variant="ghost"
+          size="sm"
+          class="-ml-2 mb-4 h-8 rounded-md px-2 text-[13px] font-medium text-muted-foreground hover:text-foreground"
+          @click="goToCompaniesList"
+        >
+          <span class="i-lucide-arrow-left mr-1.5 size-4" />
+          {{ t('COMPANIES.DETAIL.BACK') }}
+        </RelayButton>
+      </div>
+
       <CompanyProfileCard :company="company" :is-loading="isFetchingCompany" />
 
-      <Policy :permissions="['administrator']">
-        <section
-          class="flex flex-col items-start w-full gap-4 pt-6 border-t border-n-strong"
-        >
-          <div class="flex flex-col gap-2">
-            <h6 class="text-base font-medium text-n-slate-12">
-              {{ t('COMPANIES.DETAIL.DELETE.SECTION_TITLE') }}
-            </h6>
-            <span class="text-sm text-n-slate-11">
-              {{ t('COMPANIES.DETAIL.DELETE.SECTION_DESCRIPTION') }}
-            </span>
+      <div class="flex h-full w-full flex-col">
+        <div class="border-b border-border bg-card px-8">
+          <div class="flex h-14 w-full items-center justify-start gap-8">
+            <button
+              v-for="tab in DETAIL_TABS"
+              :key="tab.value"
+              type="button"
+              class="h-full border-b-2 px-0 text-[14px] font-medium transition-colors"
+              :class="
+                activeTab === tab.value
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              "
+              @click="activeTab = tab.value"
+            >
+              <template v-if="tab.value === 'contacts'">
+                {{
+                  t('COMPANIES.DETAIL.TABS.CONTACTS_WITH_COUNT', {
+                    count: Number(companyContactsMeta.totalCount || 0),
+                  })
+                }}
+              </template>
+              <template v-else>
+                {{
+                  {
+                    overview: t('COMPANIES.DETAIL.TABS.OVERVIEW'),
+                    history: t('COMPANIES.DETAIL.TABS.HISTORY'),
+                    notes: t('COMPANIES.DETAIL.TABS.NOTES'),
+                  }[tab.value]
+                }}
+              </template>
+            </button>
           </div>
-          <Button
-            :label="t('COMPANIES.DETAIL.DELETE.BUTTON')"
-            color="ruby"
-            :disabled="isDeletingCompany"
-            @click="openDeleteCompanyDialog"
-          />
-        </section>
-      </Policy>
-    </div>
+        </div>
 
-    <template #sidebarHeader>
-      <div class="px-6 pt-6 pb-3">
-        <TabBar
-          :tabs="sidebarTabs"
-          :initial-active-tab="activeSidebarTabIndex"
-          class="w-full [&>button]:w-full bg-n-alpha-black2"
-          @tab-changed="handleSidebarTabChange"
-        />
+        <div class="mx-auto w-full max-w-[1600px] p-8">
+          <div v-if="activeTab === 'overview'" class="outline-none">
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div class="flex flex-col gap-6 lg:col-span-2">
+                <div
+                  class="rounded-xl border border-border bg-card p-6 shadow-sm"
+                >
+                  <div class="mb-4 flex items-center gap-3">
+                    <div
+                      class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted"
+                    >
+                      <span
+                        class="i-lucide-building size-4 text-foreground/70"
+                      />
+                    </div>
+                    <h3
+                      class="text-base font-medium tracking-tight text-foreground"
+                    >
+                      {{ t('COMPANIES.DETAIL.ABOUT.TITLE') }}
+                    </h3>
+                  </div>
+                  <p class="text-[14px] leading-relaxed text-muted-foreground">
+                    {{ aboutText }}
+                  </p>
+                </div>
+
+                <div
+                  class="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm"
+                >
+                  <div class="mb-6 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div
+                        class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted"
+                      >
+                        <span
+                          class="i-lucide-contact size-4 text-foreground/70"
+                        />
+                      </div>
+                      <h3
+                        class="text-base font-medium tracking-tight text-foreground"
+                      >
+                        {{ t('COMPANIES.DETAIL.DETAILS_CARD.TITLE') }}
+                      </h3>
+                    </div>
+                    <RelayButton
+                      variant="secondary"
+                      size="sm"
+                      class="flex h-8 items-center rounded-md border border-transparent bg-muted/50 px-3 text-[12px] font-medium text-foreground hover:border-transparent hover:bg-muted"
+                      :disabled="isUpdating"
+                      @click="toggleEditDetails"
+                    >
+                      <span
+                        :class="
+                          isEditingDetails
+                            ? 'i-lucide-check'
+                            : 'i-lucide-pencil'
+                        "
+                        class="mr-1.5 size-3"
+                      />
+                      {{
+                        isEditingDetails
+                          ? t('COMPANIES.DETAIL.DETAILS_CARD.SAVE')
+                          : t('COMPANIES.DETAIL.DETAILS_CARD.EDIT')
+                      }}
+                    </RelayButton>
+                  </div>
+
+                  <div
+                    class="grid grid-cols-1 overflow-hidden rounded-xl border border-border bg-background sm:grid-cols-2"
+                  >
+                    <div
+                      class="flex items-start gap-4 border-b border-border p-5 sm:border-r"
+                    >
+                      <div
+                        class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                      >
+                        <span class="i-lucide-phone size-4" />
+                      </div>
+                      <div class="flex w-full flex-col">
+                        <span
+                          class="mb-1 text-[13px] font-medium text-foreground"
+                        >
+                          {{ t('COMPANIES.DETAIL.DETAILS_CARD.PHONE') }}
+                        </span>
+                        <span
+                          v-if="!isEditingDetails"
+                          class="text-[14px] text-muted-foreground"
+                        >
+                          {{ detailsForm.phone || emptyValue }}
+                        </span>
+                        <RelayInput
+                          v-else
+                          v-model="detailsForm.phone"
+                          class-name="h-8 w-full text-[14px]"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      class="flex items-start gap-4 border-b border-border p-5"
+                    >
+                      <div
+                        class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                      >
+                        <span class="i-lucide-mail size-4" />
+                      </div>
+                      <div class="flex w-full flex-col">
+                        <span
+                          class="mb-1 text-[13px] font-medium text-foreground"
+                        >
+                          {{ t('COMPANIES.DETAIL.DETAILS_CARD.EMAIL') }}
+                        </span>
+                        <span
+                          v-if="!isEditingDetails"
+                          class="text-[14px] text-muted-foreground"
+                        >
+                          {{ detailsForm.email || emptyValue }}
+                        </span>
+                        <RelayInput
+                          v-else
+                          v-model="detailsForm.email"
+                          class-name="h-8 w-full text-[14px]"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      class="flex items-start gap-4 border-b border-border p-5 sm:border-r sm:border-b-0"
+                    >
+                      <div
+                        class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                      >
+                        <span class="i-lucide-globe size-4" />
+                      </div>
+                      <div class="flex w-full flex-col">
+                        <span
+                          class="mb-1 text-[13px] font-medium text-foreground"
+                        >
+                          {{ t('COMPANIES.DETAIL.DETAILS_CARD.WEBSITE') }}
+                        </span>
+                        <a
+                          v-if="!isEditingDetails && websiteHref"
+                          :href="websiteHref"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="flex items-center gap-1.5 text-[14px] text-muted-foreground transition-colors hover:text-primary"
+                        >
+                          {{ detailsForm.website || company.domain }}
+                          <span class="i-lucide-external-link size-3" />
+                        </a>
+                        <span
+                          v-else-if="!isEditingDetails"
+                          class="text-[14px] text-muted-foreground"
+                        >
+                          {{ emptyValue }}
+                        </span>
+                        <RelayInput
+                          v-else
+                          v-model="detailsForm.website"
+                          class-name="h-8 w-full text-[14px]"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      class="flex items-start gap-4 border-b border-border p-5 sm:border-b-0"
+                    >
+                      <div
+                        class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                      >
+                        <span class="i-lucide-map-pin size-4" />
+                      </div>
+                      <div class="flex w-full flex-col">
+                        <span
+                          class="mb-1 text-[13px] font-medium text-foreground"
+                        >
+                          {{ t('COMPANIES.DETAIL.DETAILS_CARD.ADDRESS') }}
+                        </span>
+                        <span
+                          v-if="!isEditingDetails"
+                          class="text-[14px] text-muted-foreground"
+                        >
+                          {{ detailsForm.address || emptyValue }}
+                        </span>
+                        <RelayInput
+                          v-else
+                          v-model="detailsForm.address"
+                          class-name="h-8 w-full text-[14px]"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      class="flex items-start gap-4 border-t border-border p-5 sm:border-r"
+                    >
+                      <div
+                        class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                      >
+                        <span class="i-lucide-map size-4" />
+                      </div>
+                      <div class="flex w-full flex-col">
+                        <span
+                          class="mb-1 text-[13px] font-medium text-foreground"
+                        >
+                          {{ t('COMPANIES.DETAIL.DETAILS_CARD.STATE') }}
+                        </span>
+                        <span
+                          v-if="!isEditingDetails"
+                          class="text-[14px] text-muted-foreground"
+                        >
+                          {{ detailsForm.state || emptyValue }}
+                        </span>
+                        <RelayInput
+                          v-else
+                          v-model="detailsForm.state"
+                          class-name="h-8 w-full text-[14px]"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      class="flex items-start gap-4 border-t border-border p-5"
+                    >
+                      <div
+                        class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                      >
+                        <span class="i-lucide-building-2 size-4" />
+                      </div>
+                      <div class="flex w-full flex-col">
+                        <span
+                          class="mb-1 text-[13px] font-medium text-foreground"
+                        >
+                          {{ t('COMPANIES.DETAIL.DETAILS_CARD.CITY') }}
+                        </span>
+                        <span
+                          v-if="!isEditingDetails"
+                          class="text-[14px] text-muted-foreground"
+                        >
+                          {{ detailsForm.city || emptyValue }}
+                        </span>
+                        <RelayInput
+                          v-else
+                          v-model="detailsForm.city"
+                          class-name="h-8 w-full text-[14px]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="flex flex-1 flex-col rounded-xl border border-border bg-card p-6 shadow-sm"
+                >
+                  <div class="mb-4 flex items-center gap-3">
+                    <div
+                      class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted"
+                    >
+                      <span
+                        class="i-lucide-file-text size-4 text-foreground/70"
+                      />
+                    </div>
+                    <h3
+                      class="text-base font-medium tracking-tight text-foreground"
+                    >
+                      {{ t('COMPANIES.DETAIL.DESCRIPTION.TITLE') }}
+                    </h3>
+                  </div>
+                  <p class="text-[14px] leading-relaxed text-muted-foreground">
+                    {{
+                      company.description ||
+                      t('COMPANIES.DETAIL.DESCRIPTION.EMPTY')
+                    }}
+                  </p>
+                </div>
+
+                <Policy :permissions="['administrator']">
+                  <section
+                    class="flex flex-col items-start gap-4 rounded-xl border border-border bg-card p-6 shadow-sm"
+                  >
+                    <div class="flex flex-col gap-2">
+                      <h6 class="text-base font-medium text-foreground">
+                        {{ t('COMPANIES.DETAIL.DELETE.SECTION_TITLE') }}
+                      </h6>
+                      <span class="text-sm text-muted-foreground">
+                        {{ t('COMPANIES.DETAIL.DELETE.SECTION_DESCRIPTION') }}
+                      </span>
+                    </div>
+                    <RelayButton
+                      variant="destructive"
+                      :disabled="isDeletingCompany"
+                      @click="openDeleteCompanyDialog"
+                    >
+                      {{ t('COMPANIES.DETAIL.DELETE.BUTTON') }}
+                    </RelayButton>
+                  </section>
+                </Policy>
+              </div>
+
+              <div class="flex flex-col gap-6">
+                <div
+                  class="rounded-xl border border-border bg-muted/30 p-6 shadow-sm"
+                >
+                  <div class="mb-6 flex items-center gap-2">
+                    <span class="i-lucide-bar-chart-2 size-4 text-primary" />
+                    <h3
+                      class="text-base font-medium tracking-tight text-foreground"
+                    >
+                      {{ t('COMPANIES.DETAIL.SUMMARY.TITLE') }}
+                    </h3>
+                  </div>
+                  <div
+                    class="grid grid-cols-3 divide-x divide-border/60 text-center"
+                  >
+                    <div class="flex flex-col gap-1.5">
+                      <span
+                        class="text-[12px] font-medium text-muted-foreground"
+                      >
+                        {{ t('COMPANIES.DETAIL.SUMMARY.CONTACTS') }}
+                      </span>
+                      <span class="text-xl font-bold text-foreground">
+                        {{ Number(company.contactsCount || 0) }}
+                      </span>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                      <span
+                        class="text-[12px] font-medium text-muted-foreground"
+                      >
+                        {{ t('COMPANIES.DETAIL.SUMMARY.DEALS') }}
+                      </span>
+                      <span class="text-xl font-bold text-foreground">
+                        {{ emptyValue }}
+                      </span>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                      <span
+                        class="text-[12px] font-medium text-muted-foreground"
+                      >
+                        {{ t('COMPANIES.DETAIL.SUMMARY.OPEN_TASKS') }}
+                      </span>
+                      <span class="text-xl font-bold text-foreground">
+                        {{ emptyValue }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm"
+                >
+                  <div class="mb-6 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="i-lucide-users size-4 text-primary" />
+                      <h3
+                        class="text-base font-medium tracking-tight text-foreground"
+                      >
+                        {{ t('COMPANIES.DETAIL.RECENT_CONTACTS.TITLE') }}
+                      </h3>
+                    </div>
+                    <RelayButton
+                      variant="secondary"
+                      size="sm"
+                      class="h-8 rounded-md border border-transparent bg-muted/50 px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+                      @click="goToContacts"
+                    >
+                      {{ t('COMPANIES.DETAIL.RECENT_CONTACTS.VIEW_ALL') }}
+                    </RelayButton>
+                  </div>
+
+                  <div
+                    v-if="recentContacts.length"
+                    class="flex flex-col space-y-5"
+                  >
+                    <button
+                      v-for="contact in recentContacts"
+                      :key="contact.id"
+                      type="button"
+                      class="flex w-full items-center justify-between text-left"
+                      @click="openContact(contact.id)"
+                    >
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary"
+                        >
+                          {{ contactInitials(contact) }}
+                        </div>
+                        <div class="flex flex-col">
+                          <span class="text-[14px] font-medium text-foreground">
+                            {{
+                              contact.name ||
+                              t('COMPANIES.DETAIL.CONTACTS.UNNAMED_CONTACT')
+                            }}
+                          </span>
+                          <span class="text-[13px] text-muted-foreground">
+                            {{ contact.email || emptyValue }}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                  <p v-else class="text-sm text-muted-foreground">
+                    {{ t('COMPANIES.DETAIL.RECENT_CONTACTS.EMPTY') }}
+                  </p>
+                </div>
+
+                <div
+                  class="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm"
+                >
+                  <div class="mb-6 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="i-lucide-activity size-4 text-primary" />
+                      <h3
+                        class="text-base font-medium tracking-tight text-foreground"
+                      >
+                        {{ t('COMPANIES.DETAIL.ACTIVITY.TITLE') }}
+                      </h3>
+                    </div>
+                    <RelayButton
+                      variant="secondary"
+                      size="sm"
+                      class="h-8 rounded-md border border-transparent bg-muted/50 px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+                      @click="activeTab = 'history'"
+                    >
+                      {{ t('COMPANIES.DETAIL.ACTIVITY.VIEW_ALL') }}
+                    </RelayButton>
+                  </div>
+
+                  <div
+                    v-if="recentConversations.length"
+                    class="flex flex-col space-y-6"
+                  >
+                    <div
+                      v-for="conversation in recentConversations"
+                      :key="conversation.id"
+                      class="flex gap-4"
+                    >
+                      <div
+                        class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+                      >
+                        <span class="i-lucide-message-square size-4" />
+                      </div>
+                      <div class="flex w-full flex-col">
+                        <div class="flex items-center justify-between">
+                          <span class="text-[14px] font-medium text-foreground">
+                            {{
+                              t('COMPANIES.DETAIL.ACTIVITY.CONVERSATION', {
+                                id: conversation.id,
+                              })
+                            }}
+                          </span>
+                          <span class="text-[12px] text-muted-foreground">
+                            {{
+                              conversation.timestamp
+                                ? dynamicTime(conversation.timestamp)
+                                : ''
+                            }}
+                          </span>
+                        </div>
+                        <span class="mt-0.5 text-[13px] text-muted-foreground">
+                          {{
+                            conversation.meta?.sender?.name ||
+                            conversation.meta?.assignee?.name ||
+                            emptyValue
+                          }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <p v-else class="text-sm text-muted-foreground">
+                    {{ t('COMPANIES.DETAIL.ACTIVITY.EMPTY') }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-else-if="activeTab === 'contacts'"
+            class="overflow-hidden rounded-xl border border-border bg-card outline-none"
+          >
+            <CompanyContactsSidebar
+              :company="company"
+              :contacts="companyContacts"
+              :meta="companyContactsMeta"
+              :is-loading="isFetchingContacts"
+              :is-busy="isManagingContacts"
+              :search-results="contactSearchResults"
+              :is-searching="isSearchingContacts"
+              :selected-contact="selectedCandidate"
+              @cancel-contact-selection="clearSelectedCandidate"
+              @confirm-contact-selection="handleConfirmContactSelection"
+              @search="handleContactSearch"
+              @select-contact="contact => (selectedCandidate = contact)"
+              @remove-contact="handleRemoveContact"
+              @update:current-page="loadCompanyContactsPage"
+            />
+          </div>
+
+          <div
+            v-else-if="activeTab === 'history'"
+            class="overflow-hidden rounded-xl border border-border bg-card outline-none"
+          >
+            <CompanyHistorySidebar
+              :conversations="companyConversations"
+              :is-loading="isFetchingConversations"
+            />
+          </div>
+
+          <div
+            v-else-if="activeTab === 'notes'"
+            class="overflow-hidden rounded-xl border border-border bg-card outline-none"
+          >
+            <CompanyNotesSidebar
+              :notes="companyNotes"
+              :is-loading="isFetchingNotes"
+            />
+          </div>
+        </div>
       </div>
-    </template>
-    <template v-if="hasCompany" #sidebar>
-      <CompanyNotesSidebar
-        v-if="activeSidebarTab === 'notes'"
-        :notes="companyNotes"
-        :is-loading="isFetchingNotes"
-      />
-      <CompanyHistorySidebar
-        v-if="activeSidebarTab === 'history'"
-        :conversations="companyConversations"
-        :is-loading="isFetchingConversations"
-      />
-      <CompanyContactsSidebar
-        v-if="activeSidebarTab === 'contacts'"
-        :company="company"
-        :contacts="companyContacts"
-        :meta="companyContactsMeta"
-        :is-loading="isFetchingContacts"
-        :is-busy="isManagingContacts"
-        :search-results="contactSearchResults"
-        :is-searching="isSearchingContacts"
-        :selected-contact="selectedCandidate"
-        @cancel-contact-selection="clearSelectedCandidate"
-        @confirm-contact-selection="handleConfirmContactSelection"
-        @search="handleContactSearch"
-        @select-contact="contact => (selectedCandidate = contact)"
-        @remove-contact="handleRemoveContact"
-        @update:current-page="loadCompanyContactsPage"
-      />
     </template>
 
     <ConfirmCompanyDeleteDialog

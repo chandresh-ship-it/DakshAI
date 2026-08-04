@@ -8,18 +8,29 @@ import { debounce } from '@chatwoot/utils';
 import { useCompaniesStore } from 'dashboard/stores/companies';
 
 import CompaniesListLayout from 'dashboard/components-next/Companies/CompaniesListLayout.vue';
-import CompaniesCard from 'dashboard/components-next/Companies/CompaniesCard/CompaniesCard.vue';
+import CompaniesTable from 'dashboard/components-next/Companies/CompaniesTable.vue';
+import CompanyEmptyState from 'dashboard/components-next/Companies/EmptyState/CompanyEmptyState.vue';
 import CompanyCreateDialog from 'dashboard/components-next/Companies/CompanyCreateDialog.vue';
+import CompanyImportDialog from 'dashboard/components-next/Companies/CompanyImportDialog.vue';
+import CompanyFiltersDrawer from 'dashboard/components-next/Companies/CompanyFiltersDrawer.vue';
+import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
 const DEFAULT_SORT_FIELD = 'name';
 const DEBOUNCE_DELAY = 300;
+const DEFAULT_VISIBLE_COLUMNS = {
+  company: true,
+  industry: true,
+  phone: true,
+  email: true,
+  contacts: true,
+  website: true,
+  owner: true,
+};
 
 const companiesStore = useCompaniesStore();
-
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
-
 const { updateUISettings, uiSettings } = useUISettings();
 
 const companies = computed(() => companiesStore.getCompaniesList);
@@ -29,6 +40,9 @@ const uiFlags = computed(() => companiesStore.getUIFlags);
 const searchQuery = computed(() => route.query?.search || '');
 const searchValue = ref(searchQuery.value);
 const createCompanyDialogRef = ref(null);
+const isImportOpen = ref(false);
+const isFilterOpen = ref(false);
+const activeFilters = ref([]);
 const pageNumber = computed(() => Number(route.query?.page) || 1);
 
 const parseSortSettings = (sortString = '') => {
@@ -50,8 +64,15 @@ const sortState = reactive({
   activeOrdering: initialOrder,
 });
 
-const activeSort = computed(() => sortState.activeSort);
-const activeOrdering = computed(() => sortState.activeOrdering);
+const visibleColumns = computed({
+  get: () =>
+    uiSettings.value?.companies_visible_columns || {
+      ...DEFAULT_VISIBLE_COLUMNS,
+    },
+  set: val => {
+    updateUISettings({ companies_visible_columns: val });
+  },
+});
 
 const isFetchingList = computed(() => uiFlags.value.fetchingList);
 const isCreatingCompany = computed(() => uiFlags.value.creatingItem);
@@ -60,6 +81,63 @@ const buildSortAttr = () =>
   `${sortState.activeOrdering}${sortState.activeSort}`;
 
 const sortParam = computed(() => buildSortAttr());
+
+const hasCompanies = computed(() => companies.value.length > 0);
+const isIndexFirstPage = computed(() => pageNumber.value === 1);
+const showEmptyStateLayout = computed(
+  () =>
+    !searchQuery.value &&
+    !activeFilters.value.length &&
+    !hasCompanies.value &&
+    isIndexFirstPage.value &&
+    !isFetchingList.value
+);
+const showEmptyText = computed(
+  () =>
+    (searchQuery.value || activeFilters.value.length > 0) &&
+    !hasCompanies.value &&
+    !isFetchingList.value
+);
+
+const companyFieldValue = (company, property) => {
+  const attrs = company.additionalAttributes || {};
+  switch (property) {
+    case 'name':
+      return company.name || '';
+    case 'industry':
+      return attrs.industry || '';
+    case 'contacts':
+      return String(company.contactsCount || 0);
+    case 'phone':
+      return attrs.phone || '';
+    case 'email':
+      return attrs.email || '';
+    case 'website':
+      return attrs.website || company.domain || '';
+    case 'owner':
+      return attrs.owner || '';
+    default:
+      return '';
+  }
+};
+
+const matchesFilter = (company, filter) => {
+  const field = String(companyFieldValue(company, filter.property))
+    .toLowerCase()
+    .trim();
+  const value = String(filter.value || '')
+    .toLowerCase()
+    .trim();
+  if (filter.operator === 'not_equal') return field !== value;
+  return field.includes(value) || field === value;
+};
+
+const displayedCompanies = computed(() => {
+  if (!activeFilters.value.length) return companies.value;
+  return companies.value.filter(company =>
+    activeFilters.value.every(filter => matchesFilter(company, filter))
+  );
+});
 
 const updateURLParams = (page, search = '', sort = '') => {
   const query = {
@@ -87,7 +165,6 @@ const fetchCompanies = async (page, search, sort) => {
   const currentSearch = search ?? searchQuery.value;
   const currentSort = sort ?? sortParam.value;
 
-  // Only update URL if arguments were explicitly provided
   if (page !== undefined || search !== undefined || sort !== undefined) {
     updateURLParams(currentPage, currentSearch, currentSort);
   }
@@ -129,6 +206,26 @@ const openCreateCompanyDialog = () => {
   createCompanyDialogRef.value?.dialogRef.open();
 };
 
+const openImportDialog = () => {
+  isImportOpen.value = true;
+};
+
+const openFilters = () => {
+  isFilterOpen.value = true;
+};
+
+const applyFilters = filters => {
+  activeFilters.value = filters;
+};
+
+const clearFilters = () => {
+  activeFilters.value = [];
+};
+
+const removeFilter = index => {
+  activeFilters.value = activeFilters.value.filter((_, i) => i !== index);
+};
+
 const createCompany = async company => {
   try {
     const newCompany = await companiesStore.create(company);
@@ -138,16 +235,6 @@ const createCompany = async company => {
   } catch {
     useAlert(t('COMPANIES.CREATE.MESSAGES.ERROR'));
   }
-};
-
-const handleSort = async ({ sort, order }) => {
-  Object.assign(sortState, { activeSort: sort, activeOrdering: order });
-
-  await updateUISettings({
-    companies_sort_by: buildSortAttr(),
-  });
-
-  fetchCompanies(1, searchValue.value, buildSortAttr());
 };
 
 onMounted(() => {
@@ -165,47 +252,71 @@ onMounted(() => {
   <CompaniesListLayout
     :search-value="searchValue"
     :header-title="t('COMPANIES.HEADER')"
-    :current-page="pageNumber"
-    :total-items="Number(meta.totalCount || 0)"
-    :active-sort="activeSort"
-    :active-ordering="activeOrdering"
-    :is-fetching-list="isFetchingList"
-    :show-pagination-footer="!!companies.length"
-    @update:current-page="onPageChange"
-    @update:sort="handleSort"
+    :header-subtitle="t('COMPANIES.SUBTITLE')"
+    :visible-columns="visibleColumns"
+    :active-filters="activeFilters"
+    :show-toolbar="!showEmptyStateLayout"
+    :is-empty-state="showEmptyStateLayout"
     @search="onSearch"
     @create="openCreateCompanyDialog"
+    @import="openImportDialog"
+    @filter="openFilters"
+    @clear-filters="clearFilters"
+    @remove-filter="removeFilter"
+    @update:visible-columns="visibleColumns = $event"
   >
-    <div v-if="isFetchingList" class="flex items-center justify-center p-8">
-      <span class="text-n-slate-11 text-base">{{
-        t('COMPANIES.LOADING')
-      }}</span>
-    </div>
     <div
-      v-else-if="companies.length === 0"
-      class="flex items-center justify-center p-8"
+      v-if="isFetchingList"
+      class="flex items-center justify-center py-16 text-muted-foreground"
     >
-      <span class="text-n-slate-11 text-base">{{
-        t('COMPANIES.EMPTY_STATE.TITLE')
-      }}</span>
+      <Spinner />
     </div>
-    <div v-else class="flex flex-col gap-4">
-      <CompaniesCard
-        v-for="company in companies"
-        :id="company.id"
-        :key="company.id"
-        :name="company.name"
-        :domain="company.domain"
-        :contacts-count="company.contactsCount || 0"
-        :avatar-url="company.avatarUrl"
-        :last-activity-at="company.lastActivityAt"
-        @show-company="showCompany"
-      />
+
+    <CompanyEmptyState
+      v-else-if="showEmptyStateLayout"
+      @create="openCreateCompanyDialog"
+      @import="openImportDialog"
+    />
+
+    <div
+      v-else-if="showEmptyText"
+      class="flex flex-col items-center justify-center space-y-3 py-16 text-center"
+    >
+      <div
+        class="flex size-12 items-center justify-center rounded-full bg-muted"
+      >
+        <span class="i-lucide-search size-6 text-muted-foreground" />
+      </div>
+      <h3 class="text-lg font-medium text-foreground">
+        {{ t('COMPANIES.EMPTY_STATE.SEARCH_EMPTY_TITLE') }}
+      </h3>
+      <p class="max-w-sm text-sm text-muted-foreground">
+        {{ t('COMPANIES.EMPTY_STATE.SEARCH_EMPTY_SUBTITLE') }}
+      </p>
     </div>
+
+    <CompaniesTable
+      v-else
+      :companies="displayedCompanies"
+      :visible-columns="visibleColumns"
+      :current-page="pageNumber"
+      :total-items="Number(meta.totalCount || 0)"
+      :items-per-page="25"
+      @show-company="showCompany"
+      @update:current-page="onPageChange"
+    />
+
     <CompanyCreateDialog
       ref="createCompanyDialogRef"
       :is-loading="isCreatingCompany"
       @create="createCompany"
+    />
+    <CompanyImportDialog v-model:open="isImportOpen" />
+    <CompanyFiltersDrawer
+      v-model:open="isFilterOpen"
+      :active-filters="activeFilters"
+      @apply="applyFilters"
+      @clear="clearFilters"
     />
   </CompaniesListLayout>
 </template>

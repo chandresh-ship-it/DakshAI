@@ -1,19 +1,111 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { vOnClickOutside } from '@vueuse/components';
 import BulkActionAuditsAPI from 'dashboard/api/bulkActionAudits';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import { RelayButton } from 'dashboard/components-next/relay';
+import { RelayBadge, RelayButton } from 'dashboard/components-next/relay';
 
 const { t } = useI18n();
 
 const audits = ref([]);
 const isLoading = ref(false);
+const openFilter = ref(null);
 
 const statusFilter = ref('');
 const operationFilter = ref('');
 const dateFromFilter = ref('');
 const dateToFilter = ref('');
+
+const OPERATION_META = {
+  add_tag: {
+    icon: 'i-lucide-tag',
+    iconClass: 'bg-primary/10 text-primary',
+  },
+  remove_tag: {
+    icon: 'i-lucide-minus-circle',
+    iconClass: 'bg-muted text-foreground',
+  },
+  delete: {
+    icon: 'i-lucide-trash-2',
+    iconClass: 'bg-destructive/10 text-destructive',
+  },
+  send_sms: {
+    icon: 'i-lucide-message-square',
+    iconClass: 'bg-primary/10 text-primary',
+  },
+  send_email: {
+    icon: 'i-lucide-mail',
+    iconClass: 'bg-primary/10 text-primary',
+  },
+};
+
+const statusOptions = computed(() => [
+  { value: '', label: t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.STATUS') },
+  { value: 'pending', label: t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING') },
+  {
+    value: 'processing',
+    label: t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING'),
+  },
+  {
+    value: 'completed',
+    label: t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.COMPLETED'),
+  },
+  { value: 'failed', label: t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.FAILED') },
+]);
+
+const operationOptions = computed(() => [
+  { value: '', label: t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.OPERATION') },
+  {
+    value: 'add_tag',
+    label: t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.ADD_LABEL'),
+  },
+  {
+    value: 'remove_tag',
+    label: t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.REMOVE_LABEL'),
+  },
+  {
+    value: 'delete',
+    label: t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.DELETE'),
+  },
+  {
+    value: 'send_sms',
+    label: t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_SMS'),
+  },
+  {
+    value: 'send_email',
+    label: t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_EMAIL'),
+  },
+]);
+
+const statusLabel = computed(
+  () =>
+    statusOptions.value.find(item => item.value === statusFilter.value)
+      ?.label || statusOptions.value[0].label
+);
+
+const operationLabel = computed(
+  () =>
+    operationOptions.value.find(item => item.value === operationFilter.value)
+      ?.label || operationOptions.value[0].label
+);
+
+const statusLabelMap = computed(() => ({
+  pending: t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING'),
+  processing: t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING'),
+  completed: t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.COMPLETED'),
+  failed: t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.FAILED'),
+}));
+
+const hasFilters = computed(
+  () =>
+    !!(
+      statusFilter.value ||
+      operationFilter.value ||
+      dateFromFilter.value ||
+      dateToFilter.value
+    )
+);
 
 const fetchAudits = async () => {
   isLoading.value = true;
@@ -47,25 +139,36 @@ const fetchAudits = async () => {
   }
 };
 
+const closeFilterMenus = () => {
+  openFilter.value = null;
+};
+
+const toggleFilter = key => {
+  openFilter.value = openFilter.value === key ? null : key;
+};
+
+const selectStatus = value => {
+  statusFilter.value = value;
+  closeFilterMenus();
+};
+
+const selectOperation = value => {
+  operationFilter.value = value;
+  closeFilterMenus();
+};
+
 const clearFilters = () => {
   statusFilter.value = '';
   operationFilter.value = '';
   dateFromFilter.value = '';
   dateToFilter.value = '';
-  fetchAudits();
 };
-
-const hasFilters = () =>
-  statusFilter.value ||
-  operationFilter.value ||
-  dateFromFilter.value ||
-  dateToFilter.value;
 
 const formatDate = dateString => {
   if (!dateString) return '—';
   return new Date(dateString).toLocaleString(undefined, {
-    month: 'short',
     day: 'numeric',
+    month: 'short',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
@@ -74,13 +177,19 @@ const formatDate = dateString => {
 
 const getStatusClass = status => {
   const classes = {
-    pending: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-    processing: 'bg-primary/10 text-primary',
-    completed: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    pending: 'bg-muted text-muted-foreground',
+    processing: 'bg-muted text-foreground',
+    completed: 'bg-primary/10 text-primary',
     failed: 'bg-destructive/10 text-destructive',
   };
   return classes[status] || 'bg-muted text-muted-foreground';
 };
+
+const getOperationMeta = operation =>
+  OPERATION_META[operation] || {
+    icon: 'i-lucide-zap',
+    iconClass: 'bg-muted text-foreground',
+  };
 
 const getOperationLabel = operation => {
   const labels = {
@@ -93,18 +202,38 @@ const getOperationLabel = operation => {
   return labels[operation] || operation;
 };
 
-const formatStatistics = audit => {
-  if (audit.status === 'pending')
-    return t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING');
-  if (audit.status === 'processing' && !audit.statistics?.total)
-    return t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING');
-
+const getProgress = audit => {
   const stats = audit.statistics || {};
   const total = stats.total || 0;
   const success = stats.success || 0;
+  if (!total) return null;
+  return {
+    success,
+    total,
+    percent: Math.min(100, Math.round((success / total) * 100)),
+  };
+};
 
-  if (total === 0) return '—';
-  return `${success} / ${total} succeeded`;
+const getProgressBarClass = status => {
+  if (status === 'failed') return 'bg-destructive';
+  if (status === 'processing') return 'bg-foreground';
+  return 'bg-primary';
+};
+
+const formatStatistics = audit => {
+  if (audit.status === 'pending') {
+    return t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING');
+  }
+  if (audit.status === 'processing' && !audit.statistics?.total) {
+    return t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING');
+  }
+
+  const progress = getProgress(audit);
+  if (!progress) return '—';
+  return t('CONTACTS_BULK_ACTIONS.AUDIT.STATISTICS_SUCCESS', {
+    success: progress.success,
+    total: progress.total,
+  });
 };
 
 watch([statusFilter, operationFilter, dateFromFilter, dateToFilter], () => {
@@ -117,188 +246,262 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex h-full flex-1 flex-col overflow-auto bg-background p-6">
-    <div class="mb-10 max-w-6xl">
-      <h2 class="text-base font-semibold tracking-tight text-foreground">
+  <div
+    class="flex h-full flex-1 flex-col overflow-y-auto bg-background p-6 relative"
+  >
+    <div class="max-w-6xl">
+      <h2 class="mb-1 text-base font-semibold tracking-tight text-foreground">
         {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TITLE') }}
       </h2>
-      <p class="mt-1 text-[14px] text-muted-foreground">
+      <p class="mb-12 text-[14px] text-muted-foreground">
         {{ t('CONTACTS_BULK_ACTIONS.AUDIT.SUBTITLE') }}
       </p>
-    </div>
 
-    <div
-      class="mb-10 max-w-6xl space-y-6 rounded-xl border border-border bg-card p-6 shadow-sm"
-    >
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <select
-          v-model="statusFilter"
-          class="h-11 w-full rounded-md border border-border bg-background px-4 text-[14px] font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+      <!-- Filters card -->
+      <div
+        class="mb-10 space-y-6 rounded-xl border border-border bg-card p-6 shadow-sm"
+      >
+        <div
+          v-on-click-outside="closeFilterMenus"
+          class="grid grid-cols-1 gap-4 sm:grid-cols-2"
         >
-          <option value="">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.STATUS') }}
-          </option>
-          <option value="pending">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING') }}
-          </option>
-          <option value="processing">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING') }}
-          </option>
-          <option value="completed">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.COMPLETED') }}
-          </option>
-          <option value="failed">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.FAILED') }}
-          </option>
-        </select>
-
-        <select
-          v-model="operationFilter"
-          class="h-11 w-full rounded-md border border-border bg-background px-4 text-[14px] font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
-        >
-          <option value="">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.OPERATION') }}
-          </option>
-          <option value="add_tag">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.ADD_LABEL') }}
-          </option>
-          <option value="remove_tag">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.REMOVE_LABEL') }}
-          </option>
-          <option value="delete">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.DELETE') }}
-          </option>
-          <option value="send_sms">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_SMS') }}
-          </option>
-          <option value="send_email">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_EMAIL') }}
-          </option>
-        </select>
-      </div>
-
-      <div class="flex flex-wrap items-end gap-4">
-        <div class="flex flex-col gap-1.5">
-          <span class="text-xs font-semibold text-muted-foreground">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.DATE_FROM') }}
-          </span>
-          <input
-            v-model="dateFromFilter"
-            type="date"
-            class="h-[38px] w-[180px] rounded-md border border-border bg-background px-3 text-[13px] font-medium text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
-          />
-        </div>
-        <span class="i-lucide-arrow-right mb-2 size-4 text-muted-foreground" />
-        <div class="flex flex-col gap-1.5">
-          <span class="text-xs font-semibold text-muted-foreground">
-            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.DATE_TO') }}
-          </span>
-          <input
-            v-model="dateToFilter"
-            type="date"
-            class="h-[38px] w-[180px] rounded-md border border-border bg-background px-3 text-[13px] font-medium text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
-          />
-        </div>
-        <RelayButton
-          v-if="hasFilters()"
-          variant="ghost"
-          size="sm"
-          class="mb-0.5"
-          @click="clearFilters"
-        >
-          {{ t('CONTACTS_LAYOUT.FILTER.ACTIVE_FILTERS.CLEAR_FILTERS') }}
-        </RelayButton>
-      </div>
-    </div>
-
-    <div
-      v-if="isLoading"
-      class="flex items-center justify-center py-20 text-muted-foreground"
-    >
-      <Spinner />
-    </div>
-
-    <div
-      v-else-if="!audits.length"
-      class="flex max-w-6xl flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 py-20"
-    >
-      <span class="i-lucide-activity mb-4 size-12 text-muted-foreground/50" />
-      <h3 class="mb-1 text-lg font-medium text-foreground">
-        {{ t('CONTACTS_BULK_ACTIONS.AUDIT.EMPTY.TITLE') }}
-      </h3>
-      <p class="max-w-sm text-center text-sm text-muted-foreground">
-        {{ t('CONTACTS_BULK_ACTIONS.AUDIT.EMPTY.SUBTITLE') }}
-      </p>
-    </div>
-
-    <div
-      v-else
-      class="max-w-6xl overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm"
-    >
-      <div class="w-full overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead class="border-b border-border/50 bg-muted/30">
-            <tr>
-              <th class="px-4 py-3 font-medium text-muted-foreground">
-                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.ACTION_NAME') }}
-              </th>
-              <th class="px-4 py-3 font-medium text-muted-foreground">
-                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.OPERATION') }}
-              </th>
-              <th class="px-4 py-3 font-medium text-muted-foreground">
-                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.CREATED_AT') }}
-              </th>
-              <th class="px-4 py-3 font-medium text-muted-foreground">
-                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.COMPLETED_AT') }}
-              </th>
-              <th class="px-4 py-3 font-medium text-muted-foreground">
-                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.STATUS') }}
-              </th>
-              <th class="px-4 py-3 font-medium text-muted-foreground">
-                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.STATISTICS') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border/40">
-            <tr
-              v-for="audit in audits"
-              :key="audit.id"
-              class="transition-colors hover:bg-muted/30"
+          <div class="relative">
+            <RelayButton
+              variant="outline"
+              class="h-11 w-full justify-between rounded-md border-border bg-background px-4 text-[14px] font-medium text-foreground hover:bg-muted/50"
+              :class="{ 'bg-muted/50': openFilter === 'status' }"
+              @click="toggleFilter('status')"
             >
-              <td class="px-4 py-4 font-medium text-foreground">
-                {{ audit.action_label }}
-              </td>
-              <td class="px-4 py-4">
+              <span class="flex min-w-0 items-center gap-2">
                 <span
-                  class="inline-flex items-center rounded-md border border-border/50 bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-                >
-                  {{ getOperationLabel(audit.operation_type) }}
-                </span>
-              </td>
-              <td class="px-4 py-4 text-sm text-muted-foreground">
-                {{ formatDate(audit.created_at) }}
-              </td>
-              <td class="px-4 py-4 text-sm text-muted-foreground">
-                {{ formatDate(audit.completed_at) }}
-              </td>
-              <td class="px-4 py-4">
+                  class="i-lucide-activity size-4 shrink-0 text-muted-foreground"
+                />
+                <span class="truncate">{{ statusLabel }}</span>
+              </span>
+              <span
+                class="i-lucide-chevron-down size-4 shrink-0 text-muted-foreground"
+              />
+            </RelayButton>
+            <div
+              v-if="openFilter === 'status'"
+              class="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+            >
+              <button
+                v-for="option in statusOptions"
+                :key="option.value || 'all-status'"
+                type="button"
+                class="flex w-full cursor-pointer items-center rounded-sm px-3 py-2 text-left text-[13px] text-foreground hover:bg-muted"
+                :class="{ 'bg-muted': statusFilter === option.value }"
+                @click="selectStatus(option.value)"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+          </div>
+
+          <div class="relative">
+            <RelayButton
+              variant="outline"
+              class="h-11 w-full justify-between rounded-md border-border bg-background px-4 text-[14px] font-medium text-foreground hover:bg-muted/50"
+              :class="{ 'bg-muted/50': openFilter === 'operation' }"
+              @click="toggleFilter('operation')"
+            >
+              <span class="flex min-w-0 items-center gap-2">
                 <span
-                  :class="getStatusClass(audit.status)"
-                  class="inline-block min-w-[5rem] rounded-full px-2.5 py-0.5 text-center text-xs font-medium uppercase tracking-wider"
+                  class="i-lucide-zap size-4 shrink-0 text-muted-foreground"
+                />
+                <span class="truncate">{{ operationLabel }}</span>
+              </span>
+              <span
+                class="i-lucide-chevron-down size-4 shrink-0 text-muted-foreground"
+              />
+            </RelayButton>
+            <div
+              v-if="openFilter === 'operation'"
+              class="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+            >
+              <button
+                v-for="option in operationOptions"
+                :key="option.value || 'all-ops'"
+                type="button"
+                class="flex w-full cursor-pointer items-center rounded-sm px-3 py-2 text-left text-[13px] text-foreground hover:bg-muted"
+                :class="{ 'bg-muted': operationFilter === option.value }"
+                @click="selectOperation(option.value)"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-muted-foreground">
+              {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.DATE_FROM') }}
+            </span>
+            <input
+              v-model="dateFromFilter"
+              type="date"
+              class="h-[38px] w-[180px] rounded-md border border-border bg-background px-3 text-[13px] font-medium text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+            />
+          </div>
+
+          <span
+            class="i-lucide-arrow-right mx-2 mt-2 size-4 shrink-0 text-muted-foreground"
+            aria-hidden="true"
+          />
+
+          <div class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-muted-foreground">
+              {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.DATE_TO') }}
+            </span>
+            <input
+              v-model="dateToFilter"
+              type="date"
+              class="h-[38px] w-[180px] rounded-md border border-border bg-background px-3 text-[13px] font-medium text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+            />
+          </div>
+
+          <RelayButton
+            v-if="hasFilters"
+            variant="ghost"
+            size="sm"
+            class="mt-6"
+            @click="clearFilters"
+          >
+            {{ t('CONTACTS_LAYOUT.FILTER.ACTIVE_FILTERS.CLEAR_FILTERS') }}
+          </RelayButton>
+        </div>
+      </div>
+
+      <div
+        v-if="isLoading"
+        class="flex items-center justify-center py-20 text-muted-foreground"
+      >
+        <Spinner />
+      </div>
+
+      <div
+        v-else-if="!audits.length"
+        class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 py-20"
+      >
+        <span class="i-lucide-activity mb-4 size-12 text-muted-foreground/50" />
+        <h3 class="mb-1 text-lg font-medium text-foreground">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.EMPTY.TITLE') }}
+        </h3>
+        <p class="max-w-sm text-center text-sm text-muted-foreground">
+          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.EMPTY.SUBTITLE') }}
+        </p>
+      </div>
+
+      <!-- Logs table -->
+      <div
+        v-else
+        class="mt-8 w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+      >
+        <div class="w-full overflow-x-auto">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="border-b border-border bg-muted/20">
+                <th
+                  class="w-[25%] px-6 py-3 text-[13px] font-medium text-muted-foreground"
                 >
-                  {{
-                    t(
-                      `CONTACTS_BULK_ACTIONS.AUDIT.STATUS.${audit.status.toUpperCase()}`
-                    )
-                  }}
-                </span>
-              </td>
-              <td class="px-4 py-4 text-sm font-medium text-muted-foreground">
-                {{ formatStatistics(audit) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.ACTION_NAME') }}
+                </th>
+                <th
+                  class="w-[15%] px-6 py-3 text-[13px] font-medium text-muted-foreground"
+                >
+                  {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.OPERATION') }}
+                </th>
+                <th
+                  class="w-[15%] px-6 py-3 text-[13px] font-medium text-muted-foreground"
+                >
+                  {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.CREATED_AT') }}
+                </th>
+                <th
+                  class="w-[15%] px-6 py-3 text-[13px] font-medium text-muted-foreground"
+                >
+                  {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.COMPLETED_AT') }}
+                </th>
+                <th
+                  class="w-[15%] px-6 py-3 text-[13px] font-medium text-muted-foreground"
+                >
+                  {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.STATUS') }}
+                </th>
+                <th
+                  class="w-[15%] px-6 py-3 text-[13px] font-medium text-muted-foreground"
+                >
+                  {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.STATISTICS') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody class="text-[13px]">
+              <tr
+                v-for="audit in audits"
+                :key="audit.id"
+                class="border-b border-border/40 transition-colors hover:bg-muted/20"
+              >
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex size-9 shrink-0 items-center justify-center rounded-lg"
+                      :class="getOperationMeta(audit.operation_type).iconClass"
+                    >
+                      <span
+                        class="size-4"
+                        :class="getOperationMeta(audit.operation_type).icon"
+                      />
+                    </div>
+                    <span class="font-medium text-foreground">
+                      {{ audit.action_label }}
+                    </span>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <RelayBadge
+                    variant="outline"
+                    class="border-border/60 font-medium text-muted-foreground"
+                  >
+                    {{ getOperationLabel(audit.operation_type) }}
+                  </RelayBadge>
+                </td>
+                <td class="px-6 py-4 text-muted-foreground">
+                  {{ formatDate(audit.created_at) }}
+                </td>
+                <td class="px-6 py-4 text-muted-foreground">
+                  {{ formatDate(audit.completed_at) }}
+                </td>
+                <td class="px-6 py-4">
+                  <span
+                    class="rounded-md px-2.5 py-1 text-[11px] font-semibold uppercase"
+                    :class="getStatusClass(audit.status)"
+                  >
+                    {{ statusLabelMap[audit.status] || audit.status }}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex w-full max-w-[150px] flex-col gap-1.5">
+                    <span class="text-xs font-medium text-muted-foreground">
+                      {{ formatStatistics(audit) }}
+                    </span>
+                    <div
+                      v-if="getProgress(audit)"
+                      class="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+                    >
+                      <div
+                        class="h-full transition-all"
+                        :class="getProgressBarClass(audit.status)"
+                        :style="{
+                          width: `${getProgress(audit).percent}%`,
+                        }"
+                      />
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>

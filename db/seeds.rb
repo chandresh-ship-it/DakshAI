@@ -146,36 +146,56 @@ unless Rails.env.production?
     InboxMember.create!(user: user, inbox: exotel_inbox) if user
   end
 
-  # Seed Bulk Action Audit Logs for manual testing
-  if BulkActionAudit.count.zero?
-    BulkActionAudit.create!(
-      action_label: 'Add Tag "VIP" to leads',
-      operation_type: 'add_tag',
-      status: :completed,
-      user_id: user.id,
-      account_id: account.id,
-      statistics: { total: 100, success: 95, failed: 5 },
-      completed_at: 10.minutes.ago,
-      created_at: 15.minutes.ago
-    )
-    BulkActionAudit.create!(
-      action_label: 'Remove Tag "Lead" from old contacts',
-      operation_type: 'remove_tag',
-      status: :processing,
-      user_id: user.id,
-      account_id: account.id,
-      statistics: { total: 50, success: 23, failed: 0 },
-      created_at: 1.minute.ago
-    )
-    BulkActionAudit.create!(
-      action_label: 'Delete inactive spam contacts',
-      operation_type: 'delete',
-      status: :failed,
-      user_id: user.id,
-      account_id: account.id,
-      statistics: { total: 120, success: 0, failed: 120 },
-      completed_at: 2.hours.ago,
-      created_at: 2.hours.ago
-    )
+  # Seed Bulk Action Audit Logs for Contacts → Bulk Actions UI testing
+  if account.bulk_action_audits.none?
+    [
+      {
+        action_label: 'Add Tag "VIP" to leads',
+        operation_type: 'add_tag',
+        status: :completed,
+        statistics: { total: 100, success: 95, failed: 5 },
+        completed_at: 10.minutes.ago,
+        created_at: 15.minutes.ago
+      },
+      {
+        action_label: 'Remove Tag "Lead" from old contacts',
+        operation_type: 'remove_tag',
+        status: :processing,
+        statistics: { total: 50, success: 23, failed: 0 },
+        created_at: 1.minute.ago
+      },
+      {
+        action_label: 'Delete inactive spam contacts',
+        operation_type: 'delete',
+        status: :failed,
+        statistics: { total: 120, success: 0, failed: 120 },
+        completed_at: 2.hours.ago,
+        created_at: 2.hours.ago
+      },
+      {
+        action_label: 'Send SMS campaign to nurture list',
+        operation_type: 'send_sms',
+        status: :completed,
+        statistics: { total: 80, success: 80, failed: 0 },
+        completed_at: 45.minutes.ago,
+        created_at: 1.hour.ago
+      },
+      {
+        action_label: 'Send welcome email to new contacts',
+        operation_type: 'send_email',
+        status: :processing,
+        statistics: { total: 200, success: 112, failed: 3 },
+        created_at: 5.minutes.ago
+      },
+      {
+        action_label: 'Add Tag "Newsletter" (queued)',
+        operation_type: 'add_tag',
+        status: :pending,
+        statistics: { total: 40, success: 0, failed: 0 },
+        created_at: 30.seconds.ago
+      }
+    ].each do |attrs|
+      BulkActionAudit.create!(attrs.merge(user_id: user.id, account_id: account.id))
+    end
   end
 end

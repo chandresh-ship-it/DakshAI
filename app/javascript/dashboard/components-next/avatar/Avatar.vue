@@ -198,6 +198,7 @@ watch(
 <template>
   <span
     class="relative inline-flex group/avatar z-0 flex-shrink-0 align-middle"
+    :class="borderRadiusClass"
     :style="containerStyles"
   >
     <!-- Status Badge -->
