@@ -217,11 +217,11 @@ const isTabActive = value => activeTabValue.value === value;
           v-for="tab in tabs"
           :key="tab.value"
           type="button"
-          class="border-b-2 pb-0.5 transition-colors"
+          class="transition-colors"
           :class="
             isTabActive(tab.value)
-              ? 'border-primary font-medium text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'font-medium text-primary'
+              : 'text-muted-foreground hover:text-foreground'
           "
           @click="handleTabChange(tab)"
         >
@@ -239,7 +239,7 @@ const isTabActive = value => activeTabValue.value === value;
               <RelayButton
                 variant="outline"
                 size="sm"
-                class="h-8 px-2.5 text-[13px] font-medium"
+                class="h-8 border-border/80 bg-background px-2.5 text-[13px] font-medium shadow-sm"
                 @click="isSelectMenuOpen = !isSelectMenuOpen"
               >
                 <span
@@ -299,7 +299,7 @@ const isTabActive = value => activeTabValue.value === value;
             <RelayButton
               variant="outline"
               size="sm"
-              class="h-8 px-3 text-[13px] font-normal"
+              class="h-8 border-border bg-background px-3 text-[13px] font-normal shadow-sm"
               @click="isLocaleMenuOpen = !isLocaleMenuOpen"
             >
               {{ activeLocaleName }}
