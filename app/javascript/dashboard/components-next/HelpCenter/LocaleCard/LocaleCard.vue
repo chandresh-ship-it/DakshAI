@@ -76,7 +76,7 @@ const handleAction = ({ action, value }) => {
 
 <template>
   <div
-    class="group flex flex-col justify-between gap-3 rounded-xl border border-border/40 bg-card p-4 transition-all hover:border-border hover:shadow-sm sm:flex-row sm:items-center"
+    class="group flex flex-col justify-between rounded-xl border border-border/40 bg-card p-4 transition-all hover:border-border hover:shadow-sm sm:flex-row sm:items-center"
   >
     <div class="flex items-center gap-3">
       <span class="text-[14px] font-medium text-foreground">
@@ -96,7 +96,7 @@ const handleAction = ({ action, value }) => {
       </span>
     </div>
 
-    <div class="mt-0 flex items-center gap-4 sm:mt-0">
+    <div class="mt-2 flex items-center gap-4 sm:mt-0">
       <div
         class="hidden items-center gap-2 text-[13px] text-muted-foreground sm:flex"
       >

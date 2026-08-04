@@ -151,7 +151,7 @@ onMounted(() => {
   }
 });
 
-defineExpose({ state, isSubmitDisabled });
+defineExpose({ state, isSubmitDisabled, handleSubmit });
 </script>
 
 <template>
@@ -160,7 +160,9 @@ defineExpose({ state, isSubmitDisabled });
       class="flex items-center justify-between p-3 rounded-lg border border-border/40 bg-card"
     >
       <div class="flex flex-col gap-1">
-        <span class="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
+        <span
+          class="text-[12px] font-medium text-muted-foreground uppercase tracking-wider"
+        >
           {{ t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.HEADER.PORTAL') }}
         </span>
         <span class="text-[14px] text-foreground font-medium">
@@ -169,7 +171,9 @@ defineExpose({ state, isSubmitDisabled });
       </div>
       <div class="h-8 w-px bg-border/40" />
       <div class="flex flex-col gap-1 text-right">
-        <span class="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
+        <span
+          class="text-[12px] font-medium text-muted-foreground uppercase tracking-wider"
+        >
           {{ t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.HEADER.LOCALE') }}
         </span>
         <span

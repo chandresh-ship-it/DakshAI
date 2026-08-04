@@ -6,7 +6,8 @@ import { useAlert, useTrack } from 'dashboard/composables';
 import { useRoute } from 'vue-router';
 import { PORTALS_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
 
-import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
+import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import CategoryForm from 'dashboard/components-next/HelpCenter/Pages/CategoryPage/CategoryForm.vue';
 
 const props = defineProps({
@@ -39,7 +40,7 @@ const store = useStore();
 const { t } = useI18n();
 const route = useRoute();
 
-const dialogRef = ref(null);
+const isOpen = ref(false);
 const categoryFormRef = ref(null);
 const isUpdating = ref(false);
 
@@ -49,9 +50,17 @@ const isInvalidForm = computed(() => {
   return isSubmitDisabled;
 });
 
-const handleCategory = async () => {
+const handleClose = () => {
+  isOpen.value = false;
+  emit('close');
+};
+
+const handleCategory = () => {
   if (!categoryFormRef.value) return;
-  const { state } = categoryFormRef.value;
+  categoryFormRef.value.handleSubmit();
+};
+
+const handleFormSubmit = async state => {
   const { id, name, slug, icon, description, locale } = state;
   const categoryData = { name, icon, slug, description };
 
@@ -91,7 +100,7 @@ const handleCategory = async () => {
         : undefined
     );
 
-    dialogRef.value?.close();
+    handleClose();
   } catch (error) {
     const errorMessage =
       error?.message ||
@@ -104,40 +113,86 @@ const handleCategory = async () => {
   }
 };
 
-const handleClose = () => {
-  emit('close');
-};
-
 onMounted(() => {
-  dialogRef.value?.open();
+  isOpen.value = true;
 });
 </script>
 
 <template>
-  <Dialog
-    ref="dialogRef"
-    type="edit"
-    :title="
-      t(
-        `HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.HEADER.${mode.toUpperCase()}`
-      )
-    "
-    :description="
-      t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.HEADER.DESCRIPTION')
-    "
-    :is-loading="isUpdating"
-    :disable-confirm-button="isUpdating || isInvalidForm"
-    @confirm="handleCategory"
-    @close="handleClose"
-  >
-    <CategoryForm
-      ref="categoryFormRef"
-      :mode="mode"
-      :selected-category="selectedCategory"
-      :active-locale-code="activeLocaleCode"
-      :portal-name="portalName"
-      :active-locale-name="activeLocaleName"
-      :show-action-buttons="false"
-    />
-  </Dialog>
+  <TeleportWithDirection to="body">
+    <div
+      v-if="isOpen"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-n-alpha-black1 p-4 backdrop-blur-sm duration-200 animate-in fade-in"
+      @click="handleClose"
+    >
+      <div
+        class="flex w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl duration-200 animate-in zoom-in-95"
+        @click.stop
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/40 bg-muted/20 p-5"
+        >
+          <h2 class="text-lg font-semibold tracking-tight text-foreground">
+            {{
+              t(
+                `HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.HEADER.${mode.toUpperCase()}`
+              )
+            }}
+          </h2>
+          <button
+            class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            @click="handleClose"
+          >
+            <span class="i-lucide-x size-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-5">
+          <p
+            v-if="mode === 'edit'"
+            class="mb-6 text-[13.5px] text-muted-foreground"
+          >
+            {{
+              t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.HEADER.DESCRIPTION')
+            }}
+          </p>
+
+          <CategoryForm
+            ref="categoryFormRef"
+            :mode="mode"
+            :selected-category="selectedCategory"
+            :active-locale-code="activeLocaleCode"
+            :portal-name="portalName"
+            :active-locale-name="activeLocaleName"
+            :show-action-buttons="false"
+            @submit="handleFormSubmit"
+          />
+        </div>
+
+        <div
+          class="flex items-center justify-end gap-3 border-t border-border/40 bg-muted/20 p-5"
+        >
+          <RelayButton
+            variant="outline"
+            class="h-9 px-5 text-[13px]"
+            @click="handleClose"
+          >
+            {{ t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.BUTTONS.CANCEL') }}
+          </RelayButton>
+          <RelayButton
+            class="h-9 border-0 px-5 text-[13px] shadow-sm"
+            :disabled="isUpdating || isInvalidForm"
+            :is-loading="isUpdating"
+            @click="handleCategory"
+          >
+            {{
+              t(
+                `HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.BUTTONS.${mode.toUpperCase()}`
+              )
+            }}
+          </RelayButton>
+        </div>
+      </div>
+    </div>
+  </TeleportWithDirection>
 </template>

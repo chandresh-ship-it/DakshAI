@@ -5,8 +5,13 @@ import { useAccount } from 'dashboard/composables/useAccount';
 import { useOperators } from 'dashboard/components-next/filter/operators';
 import ConditionRow from 'dashboard/components-next/filter/ConditionRow.vue';
 import AutomationActionInput from 'dashboard/components/widgets/AutomationActionInput.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 import {
   generateAutomationPayload,
   getAttributes,
@@ -83,6 +88,9 @@ const isEditMode = computed(() => props.mode === 'edit');
 
 const titleKey = computed(() =>
   isEditMode.value ? 'AUTOMATION.EDIT.TITLE' : 'AUTOMATION.ADD.TITLE'
+);
+const subtitleKey = computed(() =>
+  isEditMode.value ? 'AUTOMATION.EDIT.DESC' : 'AUTOMATION.ADD.DESC'
 );
 const cancelKey = computed(() =>
   isEditMode.value
@@ -244,34 +252,92 @@ defineExpose({ open, close });
     ref="dialogRef"
     width="3xl"
     position="top"
-    :title="$t(titleKey)"
     :show-cancel-button="false"
     :show-confirm-button="false"
     overflow-y-auto
   >
-    <div v-if="automation" class="flex flex-col w-full">
-      <woot-input
-        v-model="automation.name"
-        :label="$t('AUTOMATION.ADD.FORM.NAME.LABEL')"
-        type="text"
-        :class="{ error: errors.name }"
-        :error="errors.name ? $t('AUTOMATION.ADD.FORM.NAME.ERROR') : ''"
-        :placeholder="$t('AUTOMATION.ADD.FORM.NAME.PLACEHOLDER')"
-      />
-      <woot-input
-        v-model="automation.description"
-        :label="$t('AUTOMATION.ADD.FORM.DESC.LABEL')"
-        type="text"
-        :class="{ error: errors.description }"
-        :error="errors.description ? $t('AUTOMATION.ADD.FORM.DESC.ERROR') : ''"
-        :placeholder="$t('AUTOMATION.ADD.FORM.DESC.PLACEHOLDER')"
-      />
-      <div class="mb-6">
-        <label :class="{ error: errors.event_name }">
-          {{ $t('AUTOMATION.ADD.FORM.EVENT.LABEL') }}
+    <div v-if="automation" class="flex w-full flex-col">
+      <div class="mb-6 flex items-start gap-3">
+        <div
+          class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 shadow-sm"
+        >
+          <Icon icon="i-lucide-zap" class="size-5 text-primary" />
+        </div>
+        <div>
+          <h3 class="text-base font-medium text-foreground">
+            {{ $t(titleKey) }}
+          </h3>
+          <p class="mt-0.5 text-[13px] text-muted-foreground">
+            {{ $t(subtitleKey) }}
+          </p>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="automation-name"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('AUTOMATION.ADD.FORM.NAME.LABEL') }}
+          </RelayLabel>
+          <RelayInput
+            id="automation-name"
+            v-model="automation.name"
+            type="text"
+            :placeholder="$t('AUTOMATION.ADD.FORM.NAME.PLACEHOLDER')"
+            :class-name="
+              errors.name
+                ? 'h-9 border-destructive/80 text-[14px] shadow-sm focus-visible:ring-destructive/30'
+                : 'h-9 border-border/80 bg-background text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30'
+            "
+          />
+          <p
+            v-if="errors.name"
+            class="text-[12.5px] font-medium text-destructive"
+          >
+            {{ $t('AUTOMATION.ADD.FORM.NAME.ERROR') }}
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="automation-description"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('AUTOMATION.ADD.FORM.DESC.LABEL') }}
+          </RelayLabel>
+          <RelayInput
+            id="automation-description"
+            v-model="automation.description"
+            type="text"
+            :placeholder="$t('AUTOMATION.ADD.FORM.DESC.PLACEHOLDER')"
+            :class-name="
+              errors.description
+                ? 'h-9 border-destructive/80 text-[14px] shadow-sm focus-visible:ring-destructive/30'
+                : 'h-9 border-border/80 bg-background text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30'
+            "
+          />
+          <p
+            v-if="errors.description"
+            class="text-[12.5px] font-medium text-destructive"
+          >
+            {{ $t('AUTOMATION.ADD.FORM.DESC.ERROR') }}
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <RelayLabel
+            html-for="automation-event"
+            class="text-[13.5px] font-medium text-foreground"
+          >
+            {{ $t('AUTOMATION.ADD.FORM.EVENT.LABEL') }}
+          </RelayLabel>
           <select
+            id="automation-event"
             v-model="automation.event_name"
-            class="m-0"
+            class="flex h-9 w-full rounded-md border border-border/80 bg-background px-3 text-[14px] text-foreground shadow-sm outline-none focus:ring-1 focus:ring-primary/30"
+            :class="{ 'border-destructive/80': errors.event_name }"
             @change="onEventChange()"
           >
             <option
@@ -282,132 +348,143 @@ defineExpose({ open, close });
               {{ event.value }}
             </option>
           </select>
-          <span v-if="errors.event_name" class="message">
+          <p
+            v-if="errors.event_name"
+            class="text-[12.5px] font-medium text-destructive"
+          >
             {{ $t('AUTOMATION.ADD.FORM.EVENT.ERROR') }}
-          </span>
-        </label>
-        <p
-          v-if="!isEditMode && hasAutomationMutated"
-          class="text-xs text-right text-n-teal-10 pt-1"
-        >
-          {{ $t('AUTOMATION.FORM.RESET_MESSAGE') }}
-        </p>
-      </div>
-      <!-- Conditions Start -->
-      <section class="mb-5">
-        <label>
-          {{ $t('AUTOMATION.ADD.FORM.CONDITIONS.LABEL') }}
-        </label>
-        <ul
-          class="grid gap-4 list-none p-3 mb-4 outline outline-1 rounded-xl -outline-offset-1"
-          :class="
-            hasConditionErrors
-              ? 'outline-n-ruby-5 bg-n-ruby-2/50'
-              : 'outline-n-weak dark:outline-n-strong'
-          "
-        >
-          <template v-for="(condition, i) in automation.conditions" :key="i">
-            <ConditionRow
-              v-if="i === 0"
-              ref="conditionsRef"
-              v-model:attribute-key="automation.conditions[i].attribute_key"
-              v-model:filter-operator="automation.conditions[i].filter_operator"
-              v-model:values="automation.conditions[i].values"
-              :filter-types="filterTypes"
-              :show-query-operator="false"
-              @remove="removeFilter(i)"
-            />
-            <ConditionRow
-              v-else
-              ref="conditionsRef"
-              v-model:attribute-key="automation.conditions[i].attribute_key"
-              v-model:filter-operator="automation.conditions[i].filter_operator"
-              v-model:query-operator="
-                automation.conditions[i - 1].query_operator
-              "
-              v-model:values="automation.conditions[i].values"
-              :filter-types="filterTypes"
-              show-query-operator
-              @remove="removeFilter(i)"
-            />
-          </template>
-          <div>
-            <NextButton
-              icon="i-lucide-plus"
-              blue
-              faded
-              sm
-              :label="$t('AUTOMATION.ADD.CONDITION_BUTTON_LABEL')"
-              @click="appendNewCondition"
-            />
-          </div>
-        </ul>
-      </section>
-      <!-- Conditions End -->
-      <!-- Actions Start -->
-      <section>
-        <label>
-          {{ $t('AUTOMATION.ADD.FORM.ACTIONS.LABEL') }}
-        </label>
-        <ul
-          class="grid list-none p-3 mb-4 outline outline-1 rounded-xl -outline-offset-1 border-solid"
-          :class="
-            hasActionErrors
-              ? 'outline-n-ruby-5 bg-n-ruby-2/50'
-              : 'outline-n-weak dark:outline-n-strong'
-          "
-        >
-          <AutomationActionInput
-            v-for="(action, i) in automation.actions"
-            :key="i"
-            v-model="automation.actions[i]"
-            :action-types="automationActionTypes"
-            dropdown-max-height="max-h-[7.5rem]"
-            :dropdown-values="getActionDropdownValues(action.action_name)"
-            :show-action-input="
-              showActionInput(automationActionTypes, action.action_name)
-            "
-            :error-message="
-              errors[`action_${i}`]
-                ? $t(`AUTOMATION.ERRORS.${errors[`action_${i}`]}`)
-                : ''
-            "
-            :initial-file-name="
-              isEditMode ? getFileName(action, automation.files) : ''
-            "
-            @reset-action="resetAction(i)"
-            @remove-action="removeAction(i)"
-          />
-          <div class="pt-2">
-            <NextButton
-              icon="i-lucide-plus"
-              blue
-              faded
-              sm
-              :label="$t('AUTOMATION.ADD.ACTION_BUTTON_LABEL')"
-              @click="appendNewAction"
-            />
-          </div>
-        </ul>
-      </section>
-      <!-- Actions End -->
-      <div class="w-full mt-8">
-        <div class="flex flex-row justify-end w-full gap-2 px-0 py-4">
-          <NextButton
-            faded
-            slate
-            type="reset"
-            :label="$t(cancelKey)"
-            @click.prevent="close"
-          />
-          <NextButton
-            solid
-            blue
-            type="submit"
-            :label="$t(submitKey)"
-            @click="emitSaveAutomation"
-          />
+          </p>
+          <p
+            v-if="!isEditMode && hasAutomationMutated"
+            class="pt-1 text-right text-xs text-muted-foreground"
+          >
+            {{ $t('AUTOMATION.FORM.RESET_MESSAGE') }}
+          </p>
         </div>
+
+        <section class="space-y-3">
+          <div>
+            <h4 class="text-[14px] font-semibold text-foreground">
+              {{ $t('AUTOMATION.ADD.FORM.CONDITIONS.LABEL') }}
+            </h4>
+            <p class="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+              {{ $t('AUTOMATION.ADD.FORM.CONDITIONS.DESC') }}
+            </p>
+          </div>
+          <ul
+            class="mb-0 grid list-none gap-4 rounded-xl border border-border/40 bg-background p-3 shadow-xs"
+            :class="
+              hasConditionErrors ? 'border-destructive/40 bg-destructive/5' : ''
+            "
+          >
+            <template v-for="(condition, i) in automation.conditions" :key="i">
+              <ConditionRow
+                v-if="i === 0"
+                ref="conditionsRef"
+                v-model:attribute-key="automation.conditions[i].attribute_key"
+                v-model:filter-operator="
+                  automation.conditions[i].filter_operator
+                "
+                v-model:values="automation.conditions[i].values"
+                :filter-types="filterTypes"
+                :show-query-operator="false"
+                @remove="removeFilter(i)"
+              />
+              <ConditionRow
+                v-else
+                ref="conditionsRef"
+                v-model:attribute-key="automation.conditions[i].attribute_key"
+                v-model:filter-operator="
+                  automation.conditions[i].filter_operator
+                "
+                v-model:query-operator="
+                  automation.conditions[i - 1].query_operator
+                "
+                v-model:values="automation.conditions[i].values"
+                :filter-types="filterTypes"
+                show-query-operator
+                @remove="removeFilter(i)"
+              />
+            </template>
+            <div>
+              <RelayButton
+                variant="outline"
+                class="h-9 border-dashed border-border text-[13px] font-medium text-muted-foreground shadow-sm hover:bg-muted/50 hover:text-foreground"
+                @click="appendNewCondition"
+              >
+                <Icon icon="i-lucide-plus" class="size-4" />
+                {{ $t('AUTOMATION.ADD.CONDITION_BUTTON_LABEL') }}
+              </RelayButton>
+            </div>
+          </ul>
+        </section>
+
+        <section class="space-y-3">
+          <div>
+            <h4 class="text-[14px] font-semibold text-foreground">
+              {{ $t('AUTOMATION.ADD.FORM.ACTIONS.LABEL') }}
+            </h4>
+            <p class="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+              {{ $t('AUTOMATION.ADD.FORM.ACTIONS.DESC') }}
+            </p>
+          </div>
+          <ul
+            class="mb-0 grid list-none rounded-xl border border-border/40 bg-background p-3 shadow-xs"
+            :class="
+              hasActionErrors ? 'border-destructive/40 bg-destructive/5' : ''
+            "
+          >
+            <AutomationActionInput
+              v-for="(action, i) in automation.actions"
+              :key="i"
+              v-model="automation.actions[i]"
+              :action-types="automationActionTypes"
+              dropdown-max-height="max-h-[7.5rem]"
+              :dropdown-values="getActionDropdownValues(action.action_name)"
+              :show-action-input="
+                showActionInput(automationActionTypes, action.action_name)
+              "
+              :error-message="
+                errors[`action_${i}`]
+                  ? $t(`AUTOMATION.ERRORS.${errors[`action_${i}`]}`)
+                  : ''
+              "
+              :initial-file-name="
+                isEditMode ? getFileName(action, automation.files) : ''
+              "
+              @reset-action="resetAction(i)"
+              @remove-action="removeAction(i)"
+            />
+            <div class="pt-2">
+              <RelayButton
+                variant="outline"
+                class="h-9 border-dashed border-border text-[13px] font-medium text-muted-foreground shadow-sm hover:bg-muted/50 hover:text-foreground"
+                @click="appendNewAction"
+              >
+                <Icon icon="i-lucide-plus" class="size-4" />
+                {{ $t('AUTOMATION.ADD.ACTION_BUTTON_LABEL') }}
+              </RelayButton>
+            </div>
+          </ul>
+        </section>
+      </div>
+
+      <div class="mt-8 flex justify-end gap-3 border-t border-border/40 pt-6">
+        <RelayButton
+          type="button"
+          variant="outline"
+          class="h-9 rounded-lg px-4 text-foreground"
+          @click="close"
+        >
+          {{ $t(cancelKey) }}
+        </RelayButton>
+        <RelayButton
+          type="button"
+          class="h-9 rounded-lg px-4 shadow-sm"
+          @click="emitSaveAutomation"
+        >
+          {{ $t(submitKey) }}
+        </RelayButton>
       </div>
     </div>
   </Dialog>

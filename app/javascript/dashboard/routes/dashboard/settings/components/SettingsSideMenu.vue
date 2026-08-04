@@ -126,13 +126,13 @@ const toggleSection = key => {
             class="relative flex items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors"
             :class="
               item.active
-                ? 'bg-muted text-foreground'
+                ? 'bg-sidebar-accent text-foreground'
                 : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
             "
           >
             <span
               v-if="item.active"
-              class="absolute top-1/2 size-2.5 -translate-y-1/2 rounded-full bg-primary ring-4 ring-background ltr:-left-[21px] rtl:-right-[21px]"
+              class="bg-primary ring-background absolute top-1/2 size-2.5 -translate-y-1/2 rounded-full ring-4 ltr:-left-[21px] rtl:-right-[21px]"
             />
             {{ item.label }}
           </router-link>

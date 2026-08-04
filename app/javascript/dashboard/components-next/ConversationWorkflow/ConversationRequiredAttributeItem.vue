@@ -33,25 +33,23 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <div class="flex justify-between items-center px-4 py-3 w-full">
-    <div class="flex gap-3 items-center">
-      <h5 class="text-heading-3 text-n-slate-12 line-clamp-1">
+  <div class="flex w-full items-center justify-between px-4 py-3">
+    <div class="flex items-center gap-3">
+      <h5 class="text-foreground line-clamp-1 text-sm font-medium">
         {{ attribute.label }}
       </h5>
-      <div class="w-px h-2.5 bg-n-slate-5" />
-      <div class="flex gap-1.5 items-center">
-        <Icon :icon="attributeIcon" class="size-4 text-n-slate-11" />
-        <span class="text-body-para text-n-slate-11">{{ attribute.type }}</span>
+      <div class="bg-border h-2.5 w-px" />
+      <div class="text-muted-foreground flex items-center gap-1.5">
+        <Icon :icon="attributeIcon" class="size-4" />
+        <span class="text-[13px]">{{ attribute.type }}</span>
       </div>
-      <div class="w-px h-2.5 bg-n-slate-5" />
-      <div class="flex gap-1.5 items-center">
-        <Icon icon="i-lucide-key-round" class="size-4 text-n-slate-11" />
-        <span class="text-body-para text-n-slate-11">{{
-          attribute.value
-        }}</span>
+      <div class="bg-border h-2.5 w-px" />
+      <div class="text-muted-foreground flex items-center gap-1.5">
+        <Icon icon="i-lucide-key-round" class="size-4" />
+        <span class="text-[13px]">{{ attribute.value }}</span>
       </div>
     </div>
-    <div class="flex gap-2 items-center">
+    <div class="flex items-center gap-2">
       <Button icon="i-lucide-trash" sm slate ghost @click.stop="handleDelete" />
     </div>
   </div>

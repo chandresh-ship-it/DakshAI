@@ -113,11 +113,6 @@ export const SETTINGS_NAV_SECTIONS = [
         routeName: 'conversation_workflow_index',
       },
       {
-        key: 'automation',
-        labelKey: 'SIDEBAR.AUTOMATION',
-        routeName: 'automation_list',
-      },
-      {
         key: 'bots',
         labelKey: 'SIDEBAR.AGENT_BOTS',
         routeName: 'agent_bots',

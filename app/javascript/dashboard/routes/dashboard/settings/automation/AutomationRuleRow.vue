@@ -1,9 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { messageStamp } from 'shared/helpers/timeHelper';
-import Button from 'dashboard/components-next/button/Button.vue';
-import ToggleSwitch from 'dashboard/components-next/switch/Switch.vue';
-import { BaseTableRow, BaseTableCell } from 'dashboard/components-next/table';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import { RelayButton, RelaySwitch } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   automation: {
@@ -36,59 +35,65 @@ const automationActive = computed({
 </script>
 
 <template>
-  <BaseTableRow :item="automation">
-    <template #default>
-      <BaseTableCell class="max-w-0 w-full">
-        <div class="flex items-center gap-2 min-w-0">
-          <span class="text-body-main text-n-slate-12 truncate">
-            {{ automation.name }}
-          </span>
-          <div class="w-px h-3 rounded-lg bg-n-weak flex-shrink-0" />
-          <span class="text-body-main text-n-slate-11 truncate">
-            {{ automation.description }}
-          </span>
-        </div>
-      </BaseTableCell>
+  <div
+    class="group grid grid-cols-[1.5fr_100px_1fr_120px] items-center px-6 py-4 transition-colors hover:bg-muted/20"
+  >
+    <div class="min-w-0 pr-4">
+      <div class="truncate text-[14px] font-medium text-foreground">
+        {{ automation.name }}
+      </div>
+      <div
+        v-if="automation.description"
+        class="mt-0.5 truncate text-[13px] text-muted-foreground"
+      >
+        {{ automation.description }}
+      </div>
+    </div>
 
-      <BaseTableCell>
-        <ToggleSwitch v-model="automationActive" />
-      </BaseTableCell>
+    <div>
+      <RelaySwitch v-model="automationActive" />
+    </div>
 
-      <BaseTableCell :title="readableDateWithTime(automation.created_on)">
-        <span class="text-body-main text-n-slate-12 whitespace-nowrap">
-          {{ readableDate(automation.created_on) }}
-        </span>
-      </BaseTableCell>
+    <div
+      class="whitespace-nowrap text-[13.5px] text-muted-foreground"
+      :title="readableDateWithTime(automation.created_on)"
+    >
+      {{ readableDate(automation.created_on) }}
+    </div>
 
-      <BaseTableCell align="end">
-        <div class="flex gap-3 justify-end flex-shrink-0">
-          <Button
-            v-tooltip.top="$t('AUTOMATION.FORM.EDIT')"
-            icon="i-woot-edit-pen"
-            slate
-            sm
-            :is-loading="loading"
-            @click="$emit('edit', automation)"
-          />
-          <Button
-            v-tooltip.top="$t('AUTOMATION.CLONE.TOOLTIP')"
-            icon="i-woot-clone"
-            sm
-            slate
-            :is-loading="loading"
-            @click="$emit('clone', automation)"
-          />
-          <Button
-            v-tooltip.top="$t('AUTOMATION.FORM.DELETE')"
-            :is-loading="loading"
-            icon="i-woot-bin"
-            slate
-            sm
-            class="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"
-            @click="$emit('delete', automation)"
-          />
-        </div>
-      </BaseTableCell>
-    </template>
-  </BaseTableRow>
+    <div
+      class="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100"
+    >
+      <RelayButton
+        v-tooltip.top="$t('AUTOMATION.FORM.EDIT')"
+        variant="ghost"
+        size="icon"
+        class="size-8 text-muted-foreground hover:bg-muted hover:text-foreground"
+        :disabled="loading"
+        @click="$emit('edit', automation)"
+      >
+        <Icon icon="i-lucide-pencil" class="size-4" />
+      </RelayButton>
+      <RelayButton
+        v-tooltip.top="$t('AUTOMATION.CLONE.TOOLTIP')"
+        variant="ghost"
+        size="icon"
+        class="size-8 text-muted-foreground hover:bg-muted hover:text-foreground"
+        :disabled="loading"
+        @click="$emit('clone', automation)"
+      >
+        <Icon icon="i-lucide-copy" class="size-4" />
+      </RelayButton>
+      <RelayButton
+        v-tooltip.top="$t('AUTOMATION.FORM.DELETE')"
+        variant="ghost"
+        size="icon"
+        class="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        :disabled="loading"
+        @click="$emit('delete', automation)"
+      >
+        <Icon icon="i-lucide-trash-2" class="size-4" />
+      </RelayButton>
+    </div>
+  </div>
 </template>

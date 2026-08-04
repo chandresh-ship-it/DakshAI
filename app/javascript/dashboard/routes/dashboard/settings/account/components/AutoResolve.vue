@@ -4,10 +4,7 @@ import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useAlert } from 'dashboard/composables';
-import WithLabel from 'v3/components/Form/WithLabel.vue';
-import TextArea from 'next/textarea/TextArea.vue';
-import Switch from 'next/switch/Switch.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelaySwitch } from 'dashboard/components-next/relay';
 import DurationInput from 'next/input/DurationInput.vue';
 import SingleSelect from 'dashboard/components-next/filter/inputs/SingleSelect.vue';
 import { DURATION_UNITS } from 'dashboard/components-next/input/constants';
@@ -31,7 +28,7 @@ const labelOptions = computed(() =>
         id: label.title,
         name: label.title,
         icon: h('span', {
-          class: `size-[12px] ring-1 ring-n-alpha-1 dark:ring-white/20 ring-inset rounded-sm`,
+          class: `size-[12px] ring-1 ring-border ring-inset rounded-sm`,
           style: { backgroundColor: label.color },
         }),
       }))
@@ -55,14 +52,10 @@ watch(
     duration.value = auto_resolve_after;
     message.value = auto_resolve_message;
     ignoreWaiting.value = auto_resolve_ignore_waiting;
-    // find the correct label option from the list
-    // the single select component expects the full label object
-    // in our case, the label id and name are both the same
     labelToApply.value = labelOptions.value.find(
       option => option.name === auto_resolve_label
     );
 
-    // Set unit based on duration and its divisibility
     if (duration.value) {
       if (duration.value % (24 * 60) === 0) {
         unit.value = DURATION_UNITS.DAYS;
@@ -109,6 +102,8 @@ const handleSubmit = async () => {
 const handleDisable = async () => {
   duration.value = null;
   message.value = '';
+  ignoreWaiting.value = false;
+  labelToApply.value = {};
 
   return updateAccountSettings({
     auto_resolve_after: null,
@@ -118,94 +113,114 @@ const handleDisable = async () => {
   });
 };
 
-const toggleAutoResolve = async () => {
-  if (!isEnabled.value) handleDisable();
+const onEnabledChange = val => {
+  isEnabled.value = val;
+  if (!val) handleDisable();
 };
 </script>
 
 <template>
   <div
-    class="flex flex-col w-full outline-1 outline outline-n-container rounded-xl bg-n-solid-2 divide-y divide-n-weak"
+    class="bg-card border-border/60 overflow-hidden rounded-xl border shadow-xs"
   >
-    <div class="flex flex-col gap-2 items-start px-5 py-4">
-      <div class="flex justify-between items-center w-full">
-        <h3 class="text-heading-2 text-n-slate-12">
+    <div class="flex items-start justify-between gap-4 p-5 sm:p-6">
+      <div>
+        <h3 class="text-foreground text-[16px] font-semibold">
           {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.TITLE') }}
         </h3>
-        <div class="flex justify-end">
-          <Switch v-model="isEnabled" @change="toggleAutoResolve" />
-        </div>
+        <p class="text-muted-foreground mt-1.5 text-[13.5px] leading-relaxed">
+          {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.NOTE') }}
+        </p>
       </div>
-      <p class="mb-0 text-body-para text-n-slate-11">
-        {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.NOTE') }}
-      </p>
+      <div class="shrink-0 pt-0.5">
+        <RelaySwitch
+          :model-value="isEnabled"
+          @update:model-value="onEnabledChange"
+        />
+      </div>
     </div>
 
-    <div v-if="isEnabled" class="px-5 py-4">
-      <form class="grid gap-5" @submit.prevent="handleSubmit">
-        <WithLabel
-          :label="t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.DURATION.LABEL')"
-          :help-message="t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.DURATION.HELP')"
-        >
-          <div class="gap-2 w-full grid grid-cols-[3fr_1fr]">
-            <!-- allow 10 mins to 999 days -->
-            <DurationInput
-              v-model="duration"
-              v-model:unit="unit"
-              min="0"
-              max="1438560"
-              class="w-full"
-            />
-          </div>
-        </WithLabel>
-        <WithLabel
-          :label="t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.MESSAGE.LABEL')"
-          :help-message="t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.MESSAGE.HELP')"
-        >
-          <TextArea
+    <div
+      class="border-border/40 space-y-8 border-t bg-muted/5 p-5 transition-opacity duration-300 sm:p-6"
+      :class="
+        !isEnabled
+          ? 'pointer-events-none select-none opacity-50 grayscale-[0.2]'
+          : ''
+      "
+    >
+      <form class="space-y-8" @submit.prevent="handleSubmit">
+        <div class="space-y-2">
+          <label class="text-foreground text-[14px] font-semibold">
+            {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.DURATION.LABEL') }}
+          </label>
+          <DurationInput
+            v-model="duration"
+            v-model:unit="unit"
+            :min="0"
+            :max="1438560"
+            :disabled="!isEnabled"
+          />
+          <p class="text-muted-foreground pt-1 text-[12.5px]">
+            {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.DURATION.HELP') }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-foreground text-[14px] font-semibold">
+            {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.MESSAGE.LABEL') }}
+          </label>
+          <textarea
             v-model="message"
-            class="w-full"
+            :disabled="!isEnabled"
+            rows="4"
+            class="border-border/80 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/30 w-full resize-y rounded-md border bg-background p-3 text-[14px] shadow-xs focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
             :placeholder="
               t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.MESSAGE.PLACEHOLDER')
             "
           />
-        </WithLabel>
-        <WithLabel :label="t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.PREFERENCES')">
-          <div
-            class="rounded-xl border border-n-weak bg-n-solid-1 w-full text-sm text-n-slate-12 divide-y divide-n-weak"
-          >
-            <div class="p-3 h-12 flex items-center justify-between">
-              <span>
-                {{
-                  t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.IGNORE_WAITING.LABEL')
-                }}
-              </span>
-              <Switch v-model="ignoreWaiting" />
-            </div>
-            <div class="p-3 h-12 flex items-center justify-between">
-              <span>
-                {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.LABEL.LABEL') }}
-              </span>
-              <SingleSelect
-                v-model="labelToApply"
-                :options="labelOptions"
-                :placeholder="
-                  $t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.LABEL.PLACEHOLDER')
-                "
-                placeholder-icon="i-lucide-chevron-down"
-                placeholder-trailing-icon
-                variant="faded"
-              />
-            </div>
+          <p class="text-muted-foreground pt-1 text-[12.5px]">
+            {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.MESSAGE.HELP') }}
+          </p>
+        </div>
+
+        <div class="space-y-4 pt-2">
+          <label class="text-foreground text-[14px] font-semibold">
+            {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.PREFERENCES') }}
+          </label>
+
+          <div class="flex items-center justify-between gap-4 py-1">
+            <span class="text-foreground text-[14px] font-medium">
+              {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.IGNORE_WAITING.LABEL') }}
+            </span>
+            <RelaySwitch v-model="ignoreWaiting" :disabled="!isEnabled" />
           </div>
-        </WithLabel>
-        <div class="flex gap-2">
-          <NextButton
-            blue
+
+          <div class="flex items-center justify-between gap-4 py-1">
+            <span class="text-foreground text-[14px] font-medium">
+              {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.LABEL.LABEL') }}
+            </span>
+            <SingleSelect
+              v-model="labelToApply"
+              :options="labelOptions"
+              :placeholder="
+                $t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.LABEL.PLACEHOLDER')
+              "
+              placeholder-icon="i-lucide-chevron-down"
+              placeholder-trailing-icon
+              variant="faded"
+              class="w-[180px]"
+            />
+          </div>
+        </div>
+
+        <div class="border-border/40 border-t pt-4">
+          <RelayButton
             type="submit"
-            :is-loading="isSubmitting"
-            :label="t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.UPDATE_BUTTON')"
-          />
+            class="h-9 px-5 font-medium shadow-xs"
+            :disabled="isSubmitting || !isEnabled"
+          >
+            {{ t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.UPDATE_BUTTON') }}
+          </RelayButton>
         </div>
       </form>
     </div>

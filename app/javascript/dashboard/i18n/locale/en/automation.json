@@ -10,6 +10,7 @@
     "NO_RESULTS": "No automation rules found matching your search",
     "ADD": {
       "TITLE": "Add Automation Rule",
+      "DESC": "Automate routine work with conditions and actions",
       "SUBMIT": "Create",
       "CANCEL_BUTTON_TEXT": "Cancel",
       "FORM": {
@@ -29,10 +30,12 @@
           "ERROR": "Event is required"
         },
         "CONDITIONS": {
-          "LABEL": "Conditions"
+          "LABEL": "Conditions",
+          "DESC": "Define when this automation should run. All matching conditions will be evaluated in order."
         },
         "ACTIONS": {
-          "LABEL": "Actions"
+          "LABEL": "Actions",
+          "DESC": "Define the actions that should be executed when the conditions match. They will be executed in order."
         }
       },
       "CONDITION_BUTTON_LABEL": "Add Condition",
@@ -49,7 +52,9 @@
         "CREATED_ON": "Created on",
         "ACTIONS": "Actions"
       },
-      "404": "No automation rules found"
+      "404": "No automation rules found",
+      "EMPTY_TITLE": "No automation rules found",
+      "EMPTY_DESC": "Create an automation to streamline routine tasks like labeling and assigning conversations."
     },
     "DELETE": {
       "TITLE": "Delete Automation Rule",
@@ -68,6 +73,7 @@
     },
     "EDIT": {
       "TITLE": "Edit Automation Rule",
+      "DESC": "Update conditions and actions for this automation",
       "SUBMIT": "Update",
       "CANCEL_BUTTON_TEXT": "Cancel",
       "API": {

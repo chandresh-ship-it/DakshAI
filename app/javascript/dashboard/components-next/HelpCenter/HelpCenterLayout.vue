@@ -64,11 +64,8 @@ const togglePortalSwitcher = () => {
     <div
       class="mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden p-4 pb-12 sm:p-8"
     >
-      <div
-        v-if="showHeaderTitle"
-        class="mb-8 mt-2 flex shrink-0 flex-col gap-6"
-      >
-        <div v-if="activePortalName" class="relative">
+      <div v-if="showHeaderTitle" class="mb-6 flex w-full items-center gap-2">
+        <div v-if="activePortalName" class="relative shrink-0">
           <OnClickOutside @trigger="showPortalSwitcher = false">
             <RelayButton
               variant="outline"
@@ -84,14 +81,22 @@ const togglePortalSwitcher = () => {
 
             <PortalSwitcher
               v-if="showPortalSwitcher"
-              class="absolute ltr:left-0 rtl:right-0 top-11"
+              class="absolute ltr:left-0 rtl:right-0 top-11 z-50"
               @close="showPortalSwitcher = false"
               @create-portal="createPortalDialogRef.dialogRef.open()"
             />
           </OnClickOutside>
           <CreatePortalDialog ref="createPortalDialogRef" />
         </div>
-        <slot name="header-actions" />
+
+        <div
+          v-if="activePortalName"
+          class="hidden h-4 w-px bg-border sm:block"
+        />
+
+        <div class="flex-1 min-w-0">
+          <slot name="header-actions" />
+        </div>
       </div>
       <div v-else class="shrink-0">
         <slot name="header-actions" />

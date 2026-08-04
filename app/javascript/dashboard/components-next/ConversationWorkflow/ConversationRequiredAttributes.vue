@@ -6,10 +6,10 @@ import { useRouter } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useAlert } from 'dashboard/composables';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import ConversationRequiredAttributeItem from 'dashboard/components-next/ConversationWorkflow/ConversationRequiredAttributeItem.vue';
-import ConversationRequiredEmpty from 'dashboard/components-next/Conversation/ConversationRequiredEmpty.vue';
 import BasePaywallModal from 'dashboard/routes/dashboard/settings/components/BasePaywallModal.vue';
 
 const props = defineProps({
@@ -123,27 +123,31 @@ const handleDelete = attribute => {
 <template>
   <div
     v-if="isEnabled || showPaywall"
-    class="flex flex-col w-full outline-1 outline outline-n-container rounded-xl bg-n-solid-2 divide-y divide-n-weak"
+    class="bg-card border-border/60 overflow-hidden rounded-xl border shadow-xs"
     @click="handleClick"
   >
-    <div class="flex flex-col gap-2 items-start px-5 py-4">
-      <div class="flex justify-between items-center w-full">
-        <div class="flex flex-col gap-2">
-          <h3 class="text-heading-2 text-n-slate-12">
+    <div class="p-5 sm:p-6">
+      <div
+        class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"
+      >
+        <div>
+          <h3 class="text-foreground text-[16px] font-semibold">
             {{ $t('CONVERSATION_WORKFLOW.REQUIRED_ATTRIBUTES.TITLE') }}
           </h3>
-          <p class="mb-0 text-body-para text-n-slate-11">
+          <p class="text-muted-foreground mt-1.5 text-[13.5px] leading-relaxed">
             {{ $t('CONVERSATION_WORKFLOW.REQUIRED_ATTRIBUTES.DESCRIPTION') }}
           </p>
         </div>
         <div v-if="isEnabled" v-on-clickaway="closeDropdown" class="relative">
-          <Button
-            icon="i-lucide-circle-plus"
-            :label="$t('CONVERSATION_WORKFLOW.REQUIRED_ATTRIBUTES.ADD.TITLE')"
-            :is-loading="isSaving"
+          <RelayButton
+            variant="outline"
+            class="border-primary/20 text-primary hover:border-primary/40 hover:bg-primary/5 hover:text-primary h-9 shrink-0 font-medium transition-all"
             :disabled="isSaving || attributeOptions.length === 0"
             @click="handleAddAttributesClick"
-          />
+          >
+            <Icon icon="i-lucide-plus" class="size-4" />
+            {{ $t('CONVERSATION_WORKFLOW.REQUIRED_ATTRIBUTES.ADD.TITLE') }}
+          </RelayButton>
           <DropdownMenu
             v-if="showDropdown"
             :menu-items="attributeOptions"
@@ -158,29 +162,39 @@ const handleDelete = attribute => {
           />
         </div>
       </div>
+
+      <template v-if="isEnabled">
+        <div
+          v-if="conversationRequiredAttributes.length === 0"
+          class="border-border/80 bg-muted/10 flex items-center justify-center rounded-lg border border-dashed p-6 sm:p-8"
+        >
+          <p class="text-muted-foreground text-[14px] font-medium">
+            {{ $t('CONVERSATION_WORKFLOW.REQUIRED_ATTRIBUTES.NO_ATTRIBUTES') }}
+          </p>
+        </div>
+
+        <div
+          v-else
+          class="border-border/40 divide-y overflow-hidden rounded-lg border"
+        >
+          <ConversationRequiredAttributeItem
+            v-for="attribute in conversationRequiredAttributes"
+            :key="attribute.value"
+            :attribute="attribute"
+            @delete="handleDelete"
+          />
+        </div>
+      </template>
+
+      <BasePaywallModal
+        v-else
+        class="mx-auto my-8"
+        feature-prefix="CONVERSATION_WORKFLOW.REQUIRED_ATTRIBUTES"
+        :i18n-key="i18nKey"
+        :is-on-chatwoot-cloud="isOnChatwootCloud"
+        :is-super-admin="isSuperAdmin"
+        @upgrade="goToBillingSettings"
+      />
     </div>
-
-    <template v-if="isEnabled">
-      <ConversationRequiredEmpty
-        v-if="conversationRequiredAttributes.length === 0"
-      />
-
-      <ConversationRequiredAttributeItem
-        v-for="attribute in conversationRequiredAttributes"
-        :key="attribute.value"
-        :attribute="attribute"
-        @delete="handleDelete"
-      />
-    </template>
-
-    <BasePaywallModal
-      v-else
-      class="mx-auto my-8"
-      feature-prefix="CONVERSATION_WORKFLOW.REQUIRED_ATTRIBUTES"
-      :i18n-key="i18nKey"
-      :is-on-chatwoot-cloud="isOnChatwootCloud"
-      :is-super-admin="isSuperAdmin"
-      @upgrade="goToBillingSettings"
-    />
   </div>
 </template>

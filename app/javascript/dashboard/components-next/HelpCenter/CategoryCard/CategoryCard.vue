@@ -76,7 +76,7 @@ const handleAction = ({ action, value }) => {
 
 <template>
   <div
-    class="group flex flex-col justify-between gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:shadow-sm sm:flex-row sm:items-center"
+    class="group flex flex-col justify-between gap-3 rounded-xl border border-border/40 bg-card p-4 transition-all hover:border-border hover:shadow-sm sm:flex-row sm:items-center"
   >
     <div class="flex min-w-0 flex-1 items-center gap-3.5">
       <div
@@ -94,10 +94,9 @@ const handleAction = ({ action, value }) => {
         >
           {{ title }}
         </h3>
-        <div
-          class="hidden size-1 shrink-0 rounded-full bg-muted-foreground/40 sm:block"
-          aria-hidden="true"
-        />
+        <span class="hidden text-[10px] text-muted-foreground/40 sm:inline"
+          >•</span
+        >
         <p
           class="min-w-0 flex-1 truncate text-[13px]"
           :class="

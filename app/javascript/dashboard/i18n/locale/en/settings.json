@@ -352,7 +352,7 @@
     "TOGGLE_SIDEBAR": "Toggle sidebar",
     "COLLAPSE_SIDEBAR": "Collapse sidebar",
     "EXPAND_SIDEBAR": "Expand sidebar",
-    "CANNED_RESPONSES": "Canned Responses",
+    "CANNED_RESPONSES": "Quick Replies",
     "INTEGRATIONS": "Integrations",
     "PROFILE_SETTINGS": "Profile Settings",
     "ACCOUNT_SETTINGS": "Account Settings",
@@ -410,7 +410,7 @@
     "DOCS": "Read docs",
     "SECURITY": "Security",
     "CAPTAIN_AI": "Relay AI",
-    "CONVERSATION_WORKFLOW": "Conversation Workflow",
+    "CONVERSATION_WORKFLOW": "Workflows",
     "SETTINGS_NAV": "Settings navigation",
     "SETTINGS_SECTIONS": {
       "GENERAL": "General",

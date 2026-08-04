@@ -76,17 +76,21 @@
     "ACCESS_TOKEN": {
       "TITLE": "Access Token",
       "DESCRIPTION": "Copy the access token and save it securely",
+      "COPY": "Copy",
+      "RESET": "Reset",
       "COPY_SUCCESSFUL": "Access token copied to clipboard",
       "RESET_SUCCESS": "Access token regenerated successfully",
       "RESET_ERROR": "Unable to regenerate access token. Please try again"
     },
     "FORM": {
+      "SUBTITLE": "Create a new bot to automate tasks and connect with external services.",
       "AVATAR": {
         "LABEL": "Bot avatar"
       },
       "NAME": {
         "LABEL": "Bot name",
-        "PLACEHOLDER": "Enter bot name",
+        "PLACEHOLDER": "Enter a descriptive name for your bot",
+        "HELP": "Choose a name that helps your team easily identify this bot.",
         "REQUIRED": "Bot name is required"
       },
       "DESCRIPTION": {
