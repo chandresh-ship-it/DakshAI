@@ -14,7 +14,6 @@ import { useConfig } from 'dashboard/composables/useConfig';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
-import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import { RelayButton, RelayCheckbox } from 'dashboard/components-next/relay';
 
 const props = defineProps({
@@ -140,9 +139,29 @@ const authorName = computed(() => {
   return props.author?.name || props.author?.availableName || '';
 });
 
-const authorThumbnailSrc = computed(() => {
-  return props.author?.thumbnail;
+const authorInitial = computed(() => {
+  const name = authorName.value;
+  return name ? name.charAt(0).toUpperCase() : '?';
 });
+
+const authorAvatarColor = computed(() => {
+  const name = authorName.value;
+  if (!name) return 'bg-muted text-foreground';
+  const code = name.charCodeAt(0) % 5;
+  const colors = [
+    'bg-primary/10 text-primary',
+    'bg-primary/20 text-primary',
+    'bg-violet-500/10 text-violet-700',
+    'bg-amber-500/10 text-amber-600',
+    'bg-muted text-foreground',
+  ];
+  return colors[code];
+});
+
+const authorAvatarClass = computed(
+  () =>
+    `flex size-4 shrink-0 items-center justify-center rounded-full text-[9px] font-medium ${authorAvatarColor.value}`
+);
 
 const lastUpdatedAt = computed(() => {
   return dynamicTime(props.updatedAt);
@@ -182,7 +201,7 @@ const handleClick = id => {
 
       <div class="flex min-w-0 flex-1 flex-col gap-1.5">
         <h3
-          class="truncate text-[15px] font-semibold text-foreground transition-colors group-hover:text-primary"
+          class="truncate text-[15px] font-normal text-foreground transition-colors group-hover:text-primary"
         >
           {{ title }}
         </h3>
@@ -191,12 +210,9 @@ const handleClick = id => {
           class="flex flex-wrap items-center gap-3 text-[13px] text-muted-foreground"
         >
           <div class="flex items-center gap-1.5">
-            <Avatar
-              :name="authorName"
-              :src="authorThumbnailSrc"
-              :size="16"
-              rounded-full
-            />
+            <div :class="authorAvatarClass">
+              {{ authorInitial }}
+            </div>
             <span>{{ authorName || '-' }}</span>
           </div>
           <span class="text-[10px] text-muted-foreground/40">•</span>
