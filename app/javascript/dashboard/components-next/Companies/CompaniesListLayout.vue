@@ -35,12 +35,20 @@ const emit = defineEmits([
 
 <template>
   <section class="relative flex h-full w-full overflow-hidden bg-background/50">
-    <div class="flex h-full w-full flex-col">
+    <div
+      class="flex-1 overflow-y-auto"
+      :class="isEmptyState ? 'px-4 py-12 md:py-16' : 'p-8'"
+    >
       <div
-        v-if="!isEmptyState"
-        class="mx-auto w-full max-w-[1600px] shrink-0 px-8 pt-8"
+        class="mx-auto w-full"
+        :class="
+          isEmptyState
+            ? 'max-w-5xl'
+            : 'max-w-[1600px] space-y-6 animate-in fade-in duration-500'
+        "
       >
         <CompanyHeader
+          v-if="!isEmptyState"
           :search-value="searchValue"
           :header-title="headerTitle"
           :header-subtitle="headerSubtitle"
@@ -55,23 +63,8 @@ const emit = defineEmits([
           @remove-filter="emit('removeFilter', $event)"
           @update:visible-columns="emit('update:visibleColumns', $event)"
         />
+        <slot />
       </div>
-
-      <main
-        class="flex-1 overflow-y-auto"
-        :class="isEmptyState ? 'px-4 py-12 md:py-16' : 'px-8 pb-8'"
-      >
-        <div
-          class="mx-auto w-full"
-          :class="
-            isEmptyState
-              ? 'max-w-5xl'
-              : 'max-w-[1600px] animate-in fade-in duration-500'
-          "
-        >
-          <slot />
-        </div>
-      </main>
     </div>
   </section>
 </template>

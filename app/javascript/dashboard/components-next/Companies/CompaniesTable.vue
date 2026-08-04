@@ -60,7 +60,7 @@ const openCompany = id => {
 
 <template>
   <div
-    class="mt-6 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xs"
+    class="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xs"
   >
     <div class="overflow-x-auto">
       <table class="w-full whitespace-nowrap text-left text-sm">
@@ -106,7 +106,7 @@ const openCompany = id => {
                   <Avatar
                     :name="displayName(company)"
                     :src="company.avatarUrl || null"
-                    :size="36"
+                    :size="24"
                     hide-offline-status
                   />
                 </div>

@@ -138,6 +138,7 @@ const onImport = async file => {
         </div>
       </div>
 
+      <!-- Main tabs: absolute bar for consistency with button tabs (border-b-2 fails on buttons) -->
       <nav class="mt-6 flex items-center gap-6 overflow-x-auto" role="tablist">
         <router-link
           v-for="tab in tabs"
@@ -145,14 +146,19 @@ const onImport = async file => {
           :to="tab.path"
           role="tab"
           :aria-selected="isActive(tab)"
-          class="relative shrink-0 border-b-2 px-1 pb-3 pt-2 text-sm font-medium transition-colors"
+          class="relative -mb-px shrink-0 px-1 pb-3 pt-2 text-sm font-medium transition-colors"
           :class="
             isActive(tab)
-              ? 'border-primary text-foreground'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
           "
         >
           {{ tab.name }}
+          <span
+            v-if="isActive(tab)"
+            class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+            aria-hidden="true"
+          />
         </router-link>
       </nav>
     </header>

@@ -139,9 +139,9 @@
       },
       "ABOUT": {
         "TITLE": "About Company",
-        "FALLBACK": "{name} is focused on building innovative digital products that help businesses scale and grow in the modern world."
-      },
-      "DETAILS_CARD": {
+      "FALLBACK": "{name} is focused on building innovative digital products that help businesses scale and grow in the modern world. Their solutions empower organizations to streamline workflows, enhance user experiences, and achieve sustainable growth through cutting-edge technology."
+    },
+    "DETAILS_CARD": {
         "TITLE": "Company Details",
         "EDIT": "Edit",
         "SAVE": "Save",
@@ -154,7 +154,8 @@
       },
       "DESCRIPTION": {
         "TITLE": "Description",
-        "EMPTY": "No description added yet."
+        "EMPTY": "No description added yet.",
+        "FALLBACK": "A global tech company delivering world-class software, cloud and digital transformation services to enterprises and fast-growing startups."
       },
       "SUMMARY": {
         "TITLE": "Company Summary",

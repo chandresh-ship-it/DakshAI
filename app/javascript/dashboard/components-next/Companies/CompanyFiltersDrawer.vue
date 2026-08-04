@@ -112,6 +112,7 @@ const applyFilters = () => {
   <Teleport to="body">
     <div
       v-if="open"
+      data-relay
       class="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm transition-all duration-300"
       @click.self="close"
     >
@@ -137,7 +138,7 @@ const applyFilters = () => {
             <div
               v-for="(draft, index) in filterDrafts"
               :key="draft.id"
-              class="relative flex flex-col gap-3 rounded-xl border border-border/80 bg-muted/10 p-4 shadow-sm"
+              class="relative flex flex-col gap-3 rounded-xl border border-border bg-muted/10 p-4 shadow-sm"
             >
               <span
                 v-if="index > 0"
@@ -153,7 +154,7 @@ const applyFilters = () => {
                 >
                   <RelayButton
                     variant="outline"
-                    class="h-9 w-full justify-between border-border/80 bg-background px-3 text-sm font-medium shadow-sm hover:bg-muted/50"
+                    class="h-9 w-full justify-between border-border bg-background px-3 text-sm font-medium shadow-sm hover:bg-muted/50"
                     @click="
                       openPropertyMenu =
                         openPropertyMenu === draft.id ? null : draft.id
@@ -183,7 +184,7 @@ const applyFilters = () => {
                 <RelayButton
                   variant="ghost"
                   size="icon"
-                  class="size-9 shrink-0 rounded-md border border-border/50 bg-background text-muted-foreground hover:text-destructive"
+                  class="size-9 shrink-0 rounded-md border border-border bg-background text-muted-foreground hover:text-destructive"
                   @click="removeFilterDraft(index)"
                 >
                   <span class="i-lucide-trash-2 size-4" />
@@ -196,7 +197,7 @@ const applyFilters = () => {
               >
                 <RelayButton
                   variant="outline"
-                  class="h-9 w-full justify-between border-border/80 bg-background px-3 text-sm font-medium text-primary shadow-sm hover:bg-muted/50"
+                  class="h-9 w-full justify-between border-border bg-background px-3 text-sm font-medium text-primary shadow-sm hover:bg-muted/50"
                   @click="
                     openOperatorMenu =
                       openOperatorMenu === draft.id ? null : draft.id
@@ -231,8 +232,8 @@ const applyFilters = () => {
                   class-name="h-9 w-full bg-background text-sm shadow-sm"
                   :class="
                     showFilterErrors && !String(draft.value || '').trim()
-                      ? 'border-destructive/60'
-                      : 'border-border/80'
+                      ? 'border-destructive'
+                      : 'border-border'
                   "
                   @update:model-value="showFilterErrors = false"
                 />

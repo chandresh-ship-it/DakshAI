@@ -663,7 +663,21 @@
       "FORM_ASSIGNEE": "Assignee",
       "FORM_CONTACT": "Associated Contact",
       "FORM_CONTACT_PLACEHOLDER": "Select contact",
-      "FORM_DUE_DATE": "Due Date"
+      "FORM_DUE_DATE": "Due Date",
+      "FORM_DUE_DATE_PLACEHOLDER": "dd-mm-yyyy --:-- --",
+      "FORM_CLEAR": "Clear",
+      "FORM_TODAY": "Today",
+      "FORM_CANCEL": "Cancel",
+      "FORM_CONFIRM": "Confirm",
+      "WEEKDAY": {
+        "MO": "Mo",
+        "TU": "Tu",
+        "WE": "We",
+        "TH": "Th",
+        "FR": "Fr",
+        "SA": "Sa",
+        "SU": "Su"
+      }
     },
     "COMPANIES_VIEW": {
       "TITLE": "Companies",

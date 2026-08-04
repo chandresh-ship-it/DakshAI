@@ -2,15 +2,28 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { vOnClickOutside } from '@vueuse/components';
+import {
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameDay,
+  isSameMonth,
+  parse,
+  setHours,
+  setMinutes,
+  startOfMonth,
+  startOfWeek,
+  subMonths,
+} from 'date-fns';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
-import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import {
   RelayBadge,
   RelayButton,
   RelayCheckbox,
   RelayInput,
-  RelayLabel,
 } from 'dashboard/components-next/relay';
 import TasksAPI from 'dashboard/api/tasks';
 
@@ -28,15 +41,142 @@ const assigneeFilter = ref('any');
 const statusFilter = ref('all');
 const dueDateFilter = ref('any');
 
-const taskDialogRef = ref(null);
+const isTaskModalOpen = ref(false);
 const editingTask = ref(null);
+const duePickerMonth = ref(startOfMonth(new Date()));
 const taskForm = ref({
   title: '',
   description: '',
   assigneeId: '',
   contactId: '',
   dueDate: '',
+  dueTimeHour: '12',
+  dueTimeMinute: '00',
+  dueTimePeriod: 'PM',
 });
+
+const emptyTaskForm = () => {
+  const now = new Date();
+  let hour = now.getHours();
+  const period = hour >= 12 ? 'PM' : 'AM';
+  let hour12 = hour % 12;
+  if (hour12 === 0) hour12 = 12;
+
+  return {
+    title: '',
+    description: '',
+    assigneeId: '',
+    contactId: '',
+    dueDate: '',
+    dueTimeHour: String(hour12).padStart(2, '0'),
+    dueTimeMinute: String(now.getMinutes()).padStart(2, '0'),
+    dueTimePeriod: period,
+  };
+};
+
+const parseDueAtToForm = dueAt => {
+  if (!dueAt) return emptyTaskForm();
+
+  const date = new Date(dueAt);
+  let hour = date.getHours();
+  const period = hour >= 12 ? 'PM' : 'AM';
+  let hour12 = hour % 12;
+  if (hour12 === 0) hour12 = 12;
+
+  return {
+    dueDate: format(date, 'dd-MM-yyyy'),
+    dueTimeHour: String(hour12).padStart(2, '0'),
+    dueTimeMinute: String(date.getMinutes()).padStart(2, '0'),
+    dueTimePeriod: period,
+  };
+};
+
+const buildDueAtIso = () => {
+  const { dueDate, dueTimeHour, dueTimeMinute, dueTimePeriod } = taskForm.value;
+  if (!dueDate) return null;
+
+  const parsed = parse(dueDate, 'dd-MM-yyyy', new Date());
+  let hour = Number(dueTimeHour);
+  if (dueTimePeriod === 'AM') {
+    if (hour === 12) hour = 0;
+  } else if (hour !== 12) {
+    hour += 12;
+  }
+
+  return setMinutes(
+    setHours(parsed, hour),
+    Number(dueTimeMinute)
+  ).toISOString();
+};
+
+const isTaskFormValid = computed(
+  () =>
+    taskForm.value.title.trim() !== '' &&
+    taskForm.value.description.trim() !== ''
+);
+
+const dueDateTriggerLabel = computed(() => {
+  if (!taskForm.value.dueDate) {
+    return t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_DUE_DATE_PLACEHOLDER');
+  }
+
+  return `${taskForm.value.dueDate} ${taskForm.value.dueTimeHour}:${taskForm.value.dueTimeMinute} ${taskForm.value.dueTimePeriod}`;
+});
+
+const duePickerMonthLabel = computed(() =>
+  format(duePickerMonth.value, 'MMMM, yyyy')
+);
+
+const calendarDays = computed(() => {
+  const start = startOfWeek(startOfMonth(duePickerMonth.value), {
+    weekStartsOn: 1,
+  });
+  const end = endOfWeek(endOfMonth(duePickerMonth.value), { weekStartsOn: 1 });
+  return eachDayOfInterval({ start, end });
+});
+
+const selectedDueDate = computed(() => {
+  if (!taskForm.value.dueDate) return null;
+  return parse(taskForm.value.dueDate, 'dd-MM-yyyy', new Date());
+});
+
+const weekdayLabels = computed(() => [
+  t('CONTACTS_LAYOUT.TASKS_VIEW.WEEKDAY.MO'),
+  t('CONTACTS_LAYOUT.TASKS_VIEW.WEEKDAY.TU'),
+  t('CONTACTS_LAYOUT.TASKS_VIEW.WEEKDAY.WE'),
+  t('CONTACTS_LAYOUT.TASKS_VIEW.WEEKDAY.TH'),
+  t('CONTACTS_LAYOUT.TASKS_VIEW.WEEKDAY.FR'),
+  t('CONTACTS_LAYOUT.TASKS_VIEW.WEEKDAY.SA'),
+  t('CONTACTS_LAYOUT.TASKS_VIEW.WEEKDAY.SU'),
+]);
+
+const hourOptions = Array.from({ length: 12 }, (_, index) =>
+  String(index + 1).padStart(2, '0')
+);
+const minuteOptions = Array.from({ length: 60 }, (_, index) =>
+  String(index).padStart(2, '0')
+);
+
+const selectDueCalendarDay = day => {
+  taskForm.value.dueDate = format(day, 'dd-MM-yyyy');
+};
+
+const clearDueDate = () => {
+  taskForm.value.dueDate = '';
+};
+
+const setDueDateToday = () => {
+  const today = new Date();
+  duePickerMonth.value = startOfMonth(today);
+  taskForm.value.dueDate = format(today, 'dd-MM-yyyy');
+};
+
+const shiftDuePickerMonth = direction => {
+  duePickerMonth.value =
+    direction === 'prev'
+      ? subMonths(duePickerMonth.value, 1)
+      : addMonths(duePickerMonth.value, 1);
+};
 
 const agents = useMapGetter('agents/getAgents');
 const contacts = useMapGetter('contacts/getContactsList');
@@ -304,28 +444,36 @@ const setTaskCompleted = async (task, completed) => {
 
 const openAddTaskDialog = () => {
   editingTask.value = null;
-  taskForm.value = {
-    title: '',
-    description: '',
-    assigneeId: '',
-    contactId: '',
-    dueDate: '',
-  };
+  taskForm.value = emptyTaskForm();
+  duePickerMonth.value = startOfMonth(new Date());
   closeMenus();
-  taskDialogRef.value.open();
+  isTaskModalOpen.value = true;
 };
 
 const openEditTaskDialog = task => {
   editingTask.value = task;
+  const dueParts = parseDueAtToForm(task.due_at);
   taskForm.value = {
     title: task.title,
     description: task.description || '',
     assigneeId: task.assignee_id ? task.assignee_id.toString() : '',
     contactId: task.contacts?.[0]?.id ? task.contacts[0].id.toString() : '',
-    dueDate: task.due_at ? task.due_at.slice(0, 16) : '',
+    dueDate: dueParts.dueDate,
+    dueTimeHour: dueParts.dueTimeHour,
+    dueTimeMinute: dueParts.dueTimeMinute,
+    dueTimePeriod: dueParts.dueTimePeriod,
   };
+  duePickerMonth.value = dueParts.dueDate
+    ? startOfMonth(parse(dueParts.dueDate, 'dd-MM-yyyy', new Date()))
+    : startOfMonth(new Date());
   closeMenus();
-  taskDialogRef.value.open();
+  isTaskModalOpen.value = true;
+};
+
+const closeTaskModal = () => {
+  isTaskModalOpen.value = false;
+  openFilter.value = null;
+  editingTask.value = null;
 };
 
 const handleDeleteTask = async id => {
@@ -340,12 +488,14 @@ const handleDeleteTask = async id => {
 };
 
 const handleSaveTask = async () => {
+  if (!isTaskFormValid.value) return;
+
   const payload = {
     task: {
       title: taskForm.value.title,
       description: taskForm.value.description,
       assignee_id: taskForm.value.assigneeId || null,
-      due_at: taskForm.value.dueDate || null,
+      due_at: buildDueAtIso(),
       contact_ids: taskForm.value.contactId
         ? [Number(taskForm.value.contactId)]
         : [],
@@ -359,7 +509,7 @@ const handleSaveTask = async () => {
       await TasksAPI.create(payload);
     }
     fetchTasks();
-    taskDialogRef.value.close();
+    closeTaskModal();
   } catch {
     // Ignore error
   }
@@ -411,22 +561,29 @@ onMounted(() => {
         </RelayButton>
       </div>
 
-      <!-- Timeframe tabs -->
+      <!-- Timeframe tabs: absolute bar — global button { border-0 } kills border-b-2 -->
       <div class="mb-4 border-b border-border/60">
-        <div class="flex items-center gap-6">
+        <div class="flex items-center gap-6" role="tablist">
           <button
             v-for="tab in timeframeTabs"
             :key="tab.value"
             type="button"
-            class="border-b-2 px-1 pb-2.5 text-[14px] font-medium transition-colors"
+            role="tab"
+            :aria-selected="activeTab === tab.value"
+            class="relative -mb-px rounded-none px-1 pb-2.5 text-[14px] font-medium transition-colors"
             :class="
               activeTab === tab.value
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             "
             @click="setTab(tab.value)"
           >
             {{ tab.label }}
+            <span
+              v-if="activeTab === tab.value"
+              class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+              aria-hidden="true"
+            />
           </button>
         </div>
       </div>
@@ -678,127 +835,323 @@ onMounted(() => {
       </div>
     </div>
 
-    <Dialog
-      ref="taskDialogRef"
-      :title="
-        editingTask
-          ? t('CONTACTS_LAYOUT.TASKS_VIEW.EDIT_TASK')
-          : t('CONTACTS_LAYOUT.TASKS_VIEW.ADD_TASK')
-      "
-      width="md"
-      @confirm="handleSaveTask"
-    >
-      <div class="space-y-5 pt-2">
-        <div class="flex flex-col gap-1.5">
-          <RelayLabel>
-            {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_TITLE') }}
-          </RelayLabel>
-          <RelayInput
-            v-model="taskForm.title"
-            :placeholder="
-              t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_TITLE_PLACEHOLDER')
-            "
-            class-name="h-10 rounded-md border-border/80 text-[14px] shadow-sm"
-          />
-        </div>
+    <Teleport to="body">
+      <div
+        v-if="isTaskModalOpen"
+        data-relay
+        class="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-background/80 p-4 backdrop-blur-sm sm:items-center sm:p-6"
+        @click.self="closeTaskModal"
+      >
+        <div
+          class="flex w-full max-w-[480px] animate-in fade-in zoom-in-95 flex-col rounded-2xl border border-border bg-card shadow-xl duration-200"
+        >
+          <div class="border-b border-border px-6 py-5">
+            <h2 class="text-base font-semibold tracking-tight text-foreground">
+              {{
+                editingTask
+                  ? t('CONTACTS_LAYOUT.TASKS_VIEW.EDIT_TASK')
+                  : t('CONTACTS_LAYOUT.TASKS_VIEW.ADD_TASK')
+              }}
+            </h2>
+          </div>
 
-        <div class="flex flex-col gap-1.5">
-          <RelayLabel>
-            {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_DESCRIPTION') }}
-          </RelayLabel>
-          <textarea
-            v-model="taskForm.description"
-            :placeholder="
-              t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_DESCRIPTION_PLACEHOLDER')
-            "
-            class="min-h-[100px] w-full resize-y rounded-md border border-border/80 bg-background p-3 text-[14px] text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
-          />
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div class="relative flex flex-col gap-1.5">
-            <RelayLabel>
-              {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_ASSIGNEE') }}
-            </RelayLabel>
-            <RelayButton
-              variant="outline"
-              class="h-10 w-full justify-between rounded-md border-border/80 bg-background px-3 text-[14px] font-normal shadow-sm hover:bg-muted/50"
-              @click="toggleFilter('formAssignee')"
-            >
-              <span class="truncate">
-                {{ getAgentOptionLabel(taskForm.assigneeId) }}
-              </span>
-              <span class="i-lucide-chevron-down size-4 opacity-50" />
-            </RelayButton>
-            <div
-              v-if="openFilter === 'formAssignee'"
-              class="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md"
-            >
-              <button
-                v-for="option in agentOptions"
-                :key="`assignee-${option.value || 'none'}`"
-                type="button"
-                class="flex w-full cursor-pointer items-center rounded-sm px-3 py-2 text-left text-[13px] hover:bg-muted"
-                @click="
-                  taskForm.assigneeId = option.value;
-                  closeMenus();
+          <div class="space-y-5 p-6" @click="closeMenus">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[13.5px] font-medium text-foreground">
+                {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_TITLE') }}
+              </label>
+              <RelayInput
+                v-model="taskForm.title"
+                :placeholder="
+                  t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_TITLE_PLACEHOLDER')
                 "
+                class-name="h-10 rounded-md border-border bg-background text-[14px] shadow-sm focus-visible:ring-primary/30"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[13.5px] font-medium text-foreground">
+                {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_DESCRIPTION') }}
+              </label>
+              <textarea
+                v-model="taskForm.description"
+                :placeholder="
+                  t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_DESCRIPTION_PLACEHOLDER')
+                "
+                class="min-h-[100px] w-full resize-y rounded-md border border-solid border-border bg-background p-3 text-[14px] text-foreground shadow-sm outline-none placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="relative flex flex-col gap-1.5">
+                <label class="text-[13.5px] font-medium text-foreground">
+                  {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_ASSIGNEE') }}
+                </label>
+                <RelayButton
+                  variant="outline"
+                  class="h-10 w-full justify-between rounded-md border-border bg-background px-3 text-[14px] font-normal text-foreground shadow-sm hover:bg-muted/50"
+                  @click.stop="toggleFilter('formAssignee')"
+                >
+                  <span class="truncate">
+                    {{ getAgentOptionLabel(taskForm.assigneeId) }}
+                  </span>
+                  <span class="i-lucide-chevron-down size-4 opacity-50" />
+                </RelayButton>
+                <div
+                  v-if="openFilter === 'formAssignee'"
+                  class="absolute left-0 right-0 top-full z-[70] mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md"
+                  @click.stop
+                >
+                  <button
+                    v-for="option in agentOptions"
+                    :key="`assignee-${option.value || 'none'}`"
+                    type="button"
+                    class="flex w-full cursor-pointer items-center rounded-sm px-3 py-2 text-left text-[13px] hover:bg-muted"
+                    @click="
+                      taskForm.assigneeId = option.value;
+                      closeMenus();
+                    "
+                  >
+                    {{ option.label }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="relative flex flex-col gap-1.5">
+                <label class="text-[13.5px] font-medium text-foreground">
+                  {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_CONTACT') }}
+                </label>
+                <RelayButton
+                  variant="outline"
+                  class="h-10 w-full justify-between rounded-md border-border bg-background px-3 text-[14px] font-normal shadow-sm hover:bg-muted/50"
+                  :class="
+                    !taskForm.contactId
+                      ? 'text-muted-foreground'
+                      : 'text-foreground'
+                  "
+                  @click.stop="toggleFilter('formContact')"
+                >
+                  <span class="truncate">
+                    {{ getContactOptionLabel(taskForm.contactId) }}
+                  </span>
+                  <span class="i-lucide-chevron-down size-4 opacity-50" />
+                </RelayButton>
+                <div
+                  v-if="openFilter === 'formContact'"
+                  class="absolute left-0 right-0 top-full z-[70] mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md"
+                  @click.stop
+                >
+                  <button
+                    v-for="option in contactOptions"
+                    :key="`contact-${option.value || 'none'}`"
+                    type="button"
+                    class="flex w-full cursor-pointer items-center rounded-sm px-3 py-2 text-left text-[13px] hover:bg-muted"
+                    @click="
+                      taskForm.contactId = option.value;
+                      closeMenus();
+                    "
+                  >
+                    {{ option.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="relative flex flex-col gap-1.5">
+              <label class="text-[13.5px] font-medium text-foreground">
+                {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_DUE_DATE') }}
+              </label>
+              <RelayButton
+                variant="outline"
+                class="h-10 w-full justify-between rounded-md border-border bg-background px-3 text-[14px] font-normal shadow-sm hover:bg-muted/50"
+                :class="
+                  !taskForm.dueDate
+                    ? 'text-muted-foreground'
+                    : 'text-foreground'
+                "
+                @click.stop="toggleFilter('formDueDate')"
               >
-                {{ option.label }}
-              </button>
+                <span class="truncate">{{ dueDateTriggerLabel }}</span>
+                <span
+                  class="i-lucide-calendar size-4 text-foreground opacity-50"
+                />
+              </RelayButton>
+
+              <div
+                v-if="openFilter === 'formDueDate'"
+                class="absolute left-0 top-full z-[70] mt-1 w-auto rounded-xl border border-border bg-popover p-4 shadow-xl"
+                @click.stop
+              >
+                <div class="flex gap-4">
+                  <div class="flex w-[220px] flex-col gap-3">
+                    <div class="mb-2 flex items-center justify-between">
+                      <div
+                        class="-ml-2 flex cursor-default items-center gap-1 rounded-md px-2 py-1"
+                      >
+                        <span class="text-[13px] font-semibold text-foreground">
+                          {{ duePickerMonthLabel }}
+                        </span>
+                        <span
+                          class="i-lucide-chevron-down size-3.5 text-muted-foreground"
+                        />
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <button
+                          type="button"
+                          class="flex size-7 cursor-pointer items-center justify-center rounded-md hover:bg-muted"
+                          @click="shiftDuePickerMonth('prev')"
+                        >
+                          <span
+                            class="i-lucide-arrow-up size-4 text-muted-foreground"
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          class="flex size-7 cursor-pointer items-center justify-center rounded-md hover:bg-muted"
+                          @click="shiftDuePickerMonth('next')"
+                        >
+                          <span
+                            class="i-lucide-arrow-down size-4 text-muted-foreground"
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div
+                      class="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-muted-foreground"
+                    >
+                      <div v-for="dayLabel in weekdayLabels" :key="dayLabel">
+                        {{ dayLabel }}
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-y-1 text-[13px]">
+                      <button
+                        v-for="day in calendarDays"
+                        :key="day.toISOString()"
+                        type="button"
+                        class="flex size-8 items-center justify-center rounded-md p-0 font-medium outline-none"
+                        :class="
+                          !isSameMonth(day, duePickerMonth)
+                            ? 'cursor-default text-muted-foreground/30'
+                            : selectedDueDate && isSameDay(day, selectedDueDate)
+                              ? 'cursor-pointer bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
+                              : 'cursor-pointer text-foreground hover:bg-muted'
+                        "
+                        :disabled="!isSameMonth(day, duePickerMonth)"
+                        @click="selectDueCalendarDay(day)"
+                      >
+                        {{ format(day, 'd') }}
+                      </button>
+                    </div>
+
+                    <div
+                      class="mt-1 flex items-center justify-between border-t border-border pt-3"
+                    >
+                      <button
+                        type="button"
+                        class="cursor-pointer text-[13px] font-medium text-primary hover:underline"
+                        @click="clearDueDate"
+                      >
+                        {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_CLEAR') }}
+                      </button>
+                      <button
+                        type="button"
+                        class="cursor-pointer p-0 text-[13px] font-medium text-primary hover:underline focus:bg-transparent"
+                        @click="setDueDateToday"
+                      >
+                        {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_TODAY') }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="flex w-[120px] gap-1 border-l border-border pl-4">
+                    <div
+                      class="flex h-[280px] flex-1 flex-col gap-1 overflow-y-auto pr-1 [scrollbar-width:none]"
+                    >
+                      <button
+                        v-for="hour in hourOptions"
+                        :key="`hour-${hour}`"
+                        type="button"
+                        class="w-full rounded py-1.5 text-center text-[13px] font-medium transition-colors"
+                        :class="
+                          taskForm.dueTimeHour === hour
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'text-foreground hover:bg-muted'
+                        "
+                        @click="taskForm.dueTimeHour = hour"
+                      >
+                        {{ hour }}
+                      </button>
+                    </div>
+                    <div
+                      class="flex h-[280px] flex-1 flex-col gap-1 overflow-y-auto pr-1 [scrollbar-width:none]"
+                    >
+                      <button
+                        v-for="minute in minuteOptions"
+                        :key="`minute-${minute}`"
+                        type="button"
+                        class="w-full rounded py-1.5 text-center text-[13px] font-medium transition-colors"
+                        :class="
+                          taskForm.dueTimeMinute === minute
+                            ? 'bg-primary/20 text-primary'
+                            : 'text-foreground hover:bg-muted'
+                        "
+                        @click="taskForm.dueTimeMinute = minute"
+                      >
+                        {{ minute }}
+                      </button>
+                    </div>
+                    <div class="flex flex-1 flex-col gap-1">
+                      <button
+                        type="button"
+                        class="w-full rounded py-1.5 text-center text-[13px] font-medium transition-colors"
+                        :class="
+                          taskForm.dueTimePeriod === 'AM'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'text-foreground hover:bg-muted'
+                        "
+                        @click="taskForm.dueTimePeriod = 'AM'"
+                      >
+                        {{ 'AM' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="w-full rounded py-1.5 text-center text-[13px] font-medium transition-colors"
+                        :class="
+                          taskForm.dueTimePeriod === 'PM'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'text-foreground hover:bg-muted'
+                        "
+                        @click="taskForm.dueTimePeriod = 'PM'"
+                      >
+                        {{ 'PM' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="relative flex flex-col gap-1.5">
-            <RelayLabel>
-              {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_CONTACT') }}
-            </RelayLabel>
+          <div class="mt-auto flex gap-4 border-t border-border px-6 py-4">
             <RelayButton
               variant="outline"
-              class="h-10 w-full justify-between rounded-md border-border/80 bg-background px-3 text-[14px] font-normal shadow-sm hover:bg-muted/50"
-              :class="
-                !taskForm.contactId
-                  ? 'text-muted-foreground'
-                  : 'text-foreground'
-              "
-              @click="toggleFilter('formContact')"
+              class="h-9 flex-1 border-border bg-background text-sm font-medium shadow-sm hover:bg-muted"
+              @click="closeTaskModal"
             >
-              <span class="truncate">
-                {{ getContactOptionLabel(taskForm.contactId) }}
-              </span>
-              <span class="i-lucide-chevron-down size-4 opacity-50" />
+              {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_CANCEL') }}
             </RelayButton>
-            <div
-              v-if="openFilter === 'formContact'"
-              class="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md"
+            <RelayButton
+              class="h-9 flex-1 text-sm font-medium shadow-sm disabled:pointer-events-none disabled:opacity-50"
+              :disabled="!isTaskFormValid"
+              @click="handleSaveTask"
             >
-              <button
-                v-for="option in contactOptions"
-                :key="`contact-${option.value || 'none'}`"
-                type="button"
-                class="flex w-full cursor-pointer items-center rounded-sm px-3 py-2 text-left text-[13px] hover:bg-muted"
-                @click="
-                  taskForm.contactId = option.value;
-                  closeMenus();
-                "
-              >
-                {{ option.label }}
-              </button>
-            </div>
+              {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_CONFIRM') }}
+            </RelayButton>
           </div>
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <RelayLabel>
-            {{ t('CONTACTS_LAYOUT.TASKS_VIEW.FORM_DUE_DATE') }}
-          </RelayLabel>
-          <input
-            v-model="taskForm.dueDate"
-            type="datetime-local"
-            class="h-10 w-full rounded-md border border-border/80 bg-background px-3 text-[14px] text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
-          />
         </div>
       </div>
-    </Dialog>
+    </Teleport>
   </div>
 </template>

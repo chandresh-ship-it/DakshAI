@@ -3,13 +3,15 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
-import { RelayBadge } from 'dashboard/components-next/relay';
+import { RelayBadge, RelayButton } from 'dashboard/components-next/relay';
 import { useCompaniesStore } from 'dashboard/stores/companies';
 
 const props = defineProps({
   company: { type: Object, default: () => ({}) },
   isLoading: { type: Boolean, default: false },
 });
+
+const emit = defineEmits(['back']);
 
 const { t } = useI18n();
 const companiesStore = useCompaniesStore();
@@ -33,11 +35,12 @@ const displayName = computed(
 const avatarSource = computed(
   () => avatarPreviewUrl.value || props.company?.avatarUrl || ''
 );
-const subtitle = computed(
-  () =>
-    props.company?.description ||
-    t('COMPANIES.DETAIL.ABOUT.FALLBACK', { name: displayName.value })
-);
+const subtitle = computed(() => {
+  if (props.company?.description) return props.company.description;
+  const domain = props.company?.domain;
+  if (domain) return domain;
+  return '';
+});
 
 watch(
   () => [props.company?.id, props.company?.name, props.company?.avatarUrl],
@@ -102,10 +105,22 @@ const commitNameEdit = async () => {
     v-else-if="company?.id"
     class="flex shrink-0 flex-col border-b border-border/50 bg-card px-8 py-6"
   >
+    <div class="mb-4">
+      <RelayButton
+        variant="ghost"
+        size="sm"
+        class="-ml-2 h-8 rounded-md px-2 text-[13px] font-medium text-muted-foreground hover:text-foreground"
+        @click="emit('back')"
+      >
+        <span class="i-lucide-arrow-left mr-1.5 size-4" />
+        {{ t('COMPANIES.DETAIL.BACK') }}
+      </RelayButton>
+    </div>
+
     <div class="flex items-start justify-between">
       <div class="flex items-center gap-5">
         <div
-          class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/80 bg-background p-1 shadow-sm"
+          class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-background p-1 shadow-sm"
         >
           <Avatar
             :name="displayName"

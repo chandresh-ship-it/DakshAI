@@ -1,6 +1,8 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { vOnClickOutside } from '@vueuse/components';
+import { useMapGetter } from 'dashboard/composables/store';
 import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 
 defineProps({
@@ -10,10 +12,12 @@ defineProps({
 const emit = defineEmits(['create']);
 const { t } = useI18n();
 
+const agents = useMapGetter('agents/getAgents');
 const isOpen = ref(false);
 const showErrors = ref(false);
 const logoInput = ref(null);
 const logoPreview = ref('');
+const openMenu = ref(null);
 
 const form = reactive({
   name: '',
@@ -30,6 +34,10 @@ const form = reactive({
 
 const isFormValid = computed(() => form.name.trim() !== '');
 
+const agentNames = computed(() =>
+  (agents.value || []).map(agent => agent.name).filter(Boolean)
+);
+
 const resetForm = () => {
   form.name = '';
   form.phone = '';
@@ -43,6 +51,7 @@ const resetForm = () => {
   form.members = '';
   logoPreview.value = '';
   showErrors.value = false;
+  openMenu.value = null;
 };
 
 const open = () => {
@@ -66,6 +75,10 @@ const domainFromWebsite = website => {
     .replace(/(https?:\/\/)?(www\.)?/i, '')
     .split('/')[0]
     .trim();
+};
+
+const handleDisabledSubmitClick = () => {
+  if (!isFormValid.value) showErrors.value = true;
 };
 
 const handleSubmit = () => {
@@ -96,6 +109,15 @@ const onSuccess = () => {
   close();
 };
 
+const toggleMenu = key => {
+  openMenu.value = openMenu.value === key ? null : key;
+};
+
+const selectAgent = (field, name) => {
+  form[field] = name;
+  openMenu.value = null;
+};
+
 const dialogRef = {
   open,
   close,
@@ -108,14 +130,16 @@ defineExpose({ dialogRef, open, close, onSuccess });
   <Teleport to="body">
     <div
       v-if="isOpen"
+      data-relay
       class="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm transition-all duration-300"
       @click.self="close"
     >
       <div
         class="flex max-h-[90vh] w-full max-w-2xl animate-in fade-in zoom-in-95 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200"
+        @click="openMenu = null"
       >
         <div
-          class="flex shrink-0 items-center justify-between border-b border-border/40 p-6"
+          class="flex shrink-0 items-center justify-between border-b border-border p-6"
         >
           <div>
             <h2 class="text-lg font-semibold tracking-tight text-foreground">
@@ -145,7 +169,7 @@ defineExpose({ dialogRef, open, close, onSuccess });
             <div class="mb-2 flex items-center gap-4">
               <button
                 type="button"
-                class="flex size-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-border/80 bg-muted/30 transition-colors hover:bg-muted/50"
+                class="flex size-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted/30 transition-colors hover:bg-muted/50"
                 @click="logoInput?.click()"
               >
                 <img
@@ -192,8 +216,9 @@ defineExpose({ dialogRef, open, close, onSuccess });
             <RelayInput
               v-model="form.name"
               :placeholder="t('COMPANIES.CREATE.FIELDS.NAME_PLACEHOLDER')"
-              class-name="h-10 w-full rounded-md border-border/80 bg-background text-[14px] shadow-sm"
+              class-name="h-10 w-full rounded-md border-border bg-background text-[14px] shadow-sm"
               :disabled="isLoading"
+              @update:model-value="showErrors = false"
             />
             <p
               v-if="showErrors && !form.name.trim()"
@@ -203,28 +228,98 @@ defineExpose({ dialogRef, open, close, onSuccess });
             </p>
           </div>
 
-          <div class="flex flex-col gap-1.5">
+          <div
+            v-on-click-outside="() => openMenu === 'owner' && (openMenu = null)"
+            class="relative flex flex-col gap-1.5"
+            @click.stop
+          >
             <label class="text-[13.5px] font-medium text-foreground">
               {{ t('COMPANIES.CREATE.FIELDS.OWNER') }}
             </label>
-            <RelayInput
-              v-model="form.owner"
-              :placeholder="t('COMPANIES.CREATE.FIELDS.OWNER_PLACEHOLDER')"
-              class-name="h-10 w-full rounded-md border-border/80 bg-background text-[14px] shadow-sm"
+            <RelayButton
+              variant="outline"
+              class="h-10 w-full justify-between rounded-md border-border bg-background px-3 text-[14px] font-normal shadow-sm"
+              :class="form.owner ? 'text-foreground' : 'text-muted-foreground'"
               :disabled="isLoading"
-            />
+              @click="toggleMenu('owner')"
+            >
+              {{ form.owner || t('COMPANIES.CREATE.FIELDS.OWNER_PLACEHOLDER') }}
+              <span class="i-lucide-chevron-down size-4 opacity-50" />
+            </RelayButton>
+            <div
+              v-if="openMenu === 'owner'"
+              class="absolute left-0 top-full z-[70] mt-1 max-h-48 w-full min-w-[240px] overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md"
+            >
+              <button
+                v-for="name in agentNames"
+                :key="`owner-${name}`"
+                type="button"
+                class="flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
+                @click="selectAgent('owner', name)"
+              >
+                <span>{{ name }}</span>
+                <span
+                  v-if="form.owner === name"
+                  class="i-lucide-check size-4 text-primary"
+                />
+              </button>
+              <p
+                v-if="!agentNames.length"
+                class="px-2 py-1.5 text-sm text-muted-foreground"
+              >
+                {{ t('COMPANIES.CREATE.FIELDS.OWNER_PLACEHOLDER') }}
+              </p>
+            </div>
           </div>
 
-          <div class="flex flex-col gap-1.5">
+          <div
+            v-on-click-outside="
+              () => openMenu === 'members' && (openMenu = null)
+            "
+            class="relative flex flex-col gap-1.5"
+            @click.stop
+          >
             <label class="text-[13.5px] font-medium text-foreground">
               {{ t('COMPANIES.CREATE.FIELDS.MEMBERS') }}
             </label>
-            <RelayInput
-              v-model="form.members"
-              :placeholder="t('COMPANIES.CREATE.FIELDS.MEMBERS_PLACEHOLDER')"
-              class-name="h-10 w-full rounded-md border-border/80 bg-background text-[14px] shadow-sm"
+            <RelayButton
+              variant="outline"
+              class="h-10 w-full justify-between rounded-md border-border bg-background px-3 text-[14px] font-normal shadow-sm"
+              :class="
+                form.members ? 'text-foreground' : 'text-muted-foreground'
+              "
               :disabled="isLoading"
-            />
+              @click="toggleMenu('members')"
+            >
+              {{
+                form.members || t('COMPANIES.CREATE.FIELDS.MEMBERS_PLACEHOLDER')
+              }}
+              <span class="i-lucide-chevron-down size-4 opacity-50" />
+            </RelayButton>
+            <div
+              v-if="openMenu === 'members'"
+              class="absolute left-0 top-full z-[70] mt-1 max-h-48 w-full min-w-[240px] overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md"
+            >
+              <button
+                v-for="name in agentNames"
+                :key="`member-${name}`"
+                type="button"
+                class="flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
+                @click="selectAgent('members', name)"
+              >
+                <span>{{ name }}</span>
+                <span
+                  v-if="form.members === name"
+                  class="i-lucide-check size-4 text-primary"
+                />
+              </button>
+              <p
+                v-if="!agentNames.length"
+                class="px-2 py-1.5 text-sm text-muted-foreground"
+              >
+                {{ t('COMPANIES.CREATE.FIELDS.MEMBERS_PLACEHOLDER') }}
+              </p>
+            </div>
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -235,7 +330,7 @@ defineExpose({ dialogRef, open, close, onSuccess });
               v-model="form.phone"
               type="tel"
               :placeholder="t('COMPANIES.CREATE.FIELDS.PHONE_PLACEHOLDER')"
-              class-name="h-10 w-full rounded-md border-border/80 bg-background text-[14px] shadow-sm"
+              class-name="h-10 w-full rounded-md border-border bg-background text-[14px] shadow-sm"
               :disabled="isLoading"
             />
           </div>
@@ -248,7 +343,7 @@ defineExpose({ dialogRef, open, close, onSuccess });
               v-model="form.email"
               type="email"
               :placeholder="t('COMPANIES.CREATE.FIELDS.EMAIL_PLACEHOLDER')"
-              class-name="h-10 w-full rounded-md border-border/80 bg-background text-[14px] shadow-sm"
+              class-name="h-10 w-full rounded-md border-border bg-background text-[14px] shadow-sm"
               :disabled="isLoading"
             />
           </div>
@@ -260,7 +355,7 @@ defineExpose({ dialogRef, open, close, onSuccess });
             <RelayInput
               v-model="form.website"
               :placeholder="t('COMPANIES.CREATE.FIELDS.WEBSITE_PLACEHOLDER')"
-              class-name="h-10 w-full rounded-md border-border/80 bg-background text-[14px] shadow-sm"
+              class-name="h-10 w-full rounded-md border-border bg-background text-[14px] shadow-sm"
               :disabled="isLoading"
             />
           </div>
@@ -272,7 +367,7 @@ defineExpose({ dialogRef, open, close, onSuccess });
             <RelayInput
               v-model="form.address"
               :placeholder="t('COMPANIES.CREATE.FIELDS.ADDRESS_PLACEHOLDER')"
-              class-name="h-10 w-full rounded-md border-border/80 bg-background text-[14px] shadow-sm"
+              class-name="h-10 w-full rounded-md border-border bg-background text-[14px] shadow-sm"
               :disabled="isLoading"
             />
           </div>
@@ -281,12 +376,17 @@ defineExpose({ dialogRef, open, close, onSuccess });
             <label class="text-[13.5px] font-medium text-foreground">
               {{ t('COMPANIES.CREATE.FIELDS.STATE') }}
             </label>
-            <RelayInput
-              v-model="form.state"
-              :placeholder="t('COMPANIES.CREATE.FIELDS.STATE_PLACEHOLDER')"
-              class-name="h-10 w-full rounded-md border-border/80 bg-background text-[14px] shadow-sm"
-              :disabled="isLoading"
-            />
+            <div class="relative w-full">
+              <RelayInput
+                v-model="form.state"
+                :placeholder="t('COMPANIES.CREATE.FIELDS.STATE_PLACEHOLDER')"
+                class-name="h-10 w-full rounded-md border-border bg-background pr-9 text-[14px] shadow-sm"
+                :disabled="isLoading"
+              />
+              <span
+                class="i-lucide-chevron-down pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              />
+            </div>
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -296,7 +396,7 @@ defineExpose({ dialogRef, open, close, onSuccess });
             <RelayInput
               v-model="form.city"
               :placeholder="t('COMPANIES.CREATE.FIELDS.CITY_PLACEHOLDER')"
-              class-name="h-10 w-full rounded-md border-border/80 bg-background text-[14px] shadow-sm"
+              class-name="h-10 w-full rounded-md border-border bg-background text-[14px] shadow-sm"
               :disabled="isLoading"
             />
           </div>
@@ -314,7 +414,7 @@ defineExpose({ dialogRef, open, close, onSuccess });
                 t('COMPANIES.CREATE.FIELDS.DESCRIPTION_PLACEHOLDER')
               "
               :disabled="isLoading"
-              class="min-h-[80px] w-full resize-y rounded-md border border-border/80 bg-background p-3 text-[14px] text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
+              class="min-h-[80px] w-full resize-y rounded-md border border-border bg-background p-3 text-[14px] text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30 disabled:opacity-50"
             />
           </div>
         </div>
@@ -329,13 +429,15 @@ defineExpose({ dialogRef, open, close, onSuccess });
           >
             {{ t('COMPANIES.CREATE.ACTIONS.CANCEL') }}
           </RelayButton>
-          <RelayButton
-            class="text-sm font-medium shadow-sm"
-            :disabled="!isFormValid || isLoading"
-            @click="handleSubmit"
-          >
-            {{ t('COMPANIES.CREATE.ACTIONS.SAVE') }}
-          </RelayButton>
+          <div @click="handleDisabledSubmitClick">
+            <RelayButton
+              class="text-sm font-medium shadow-sm"
+              :disabled="!isFormValid || isLoading"
+              @click="handleSubmit"
+            >
+              {{ t('COMPANIES.CREATE.ACTIONS.SAVE') }}
+            </RelayButton>
+          </div>
         </div>
       </div>
     </div>
