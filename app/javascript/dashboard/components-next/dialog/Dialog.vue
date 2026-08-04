@@ -91,9 +91,12 @@ const open = () => {
 };
 
 const close = () => {
+  // Idempotent: parents often call close() from @close; without this guard
+  // that re-enters forever (Maximum call stack size exceeded).
+  if (!isOpen.value) return;
+  isOpen.value = false;
   emit('close');
   dialogRef.value?.close();
-  isOpen.value = false;
 };
 
 // Only close if the close event originated from this dialog,
@@ -129,16 +132,17 @@ defineExpose({ open, close });
       <OnClickOutside @trigger="handleClickOutside">
         <form
           ref="dialogContentRef"
-          class="flex flex-col w-full h-auto gap-6 p-6 overflow-visible text-start align-middle transition-all duration-300 ease-in-out transform bg-n-surface-1 shadow-xl rounded-xl"
+          data-relay
+          class="flex h-auto w-full flex-col gap-6 overflow-visible rounded-xl border border-border bg-card p-6 text-start align-middle shadow-xl transition-all duration-300 ease-in-out transform"
           @submit.prevent="confirm"
           @click.stop
         >
           <div v-if="title || description" class="flex flex-col gap-2">
-            <h3 class="text-base font-medium leading-6 text-n-slate-12">
+            <h3 class="text-base font-semibold leading-6 text-foreground">
               {{ title }}
             </h3>
             <slot name="description">
-              <p v-if="description" class="mb-0 text-sm text-n-slate-11">
+              <p v-if="description" class="mb-0 text-sm text-muted-foreground">
                 {{ description }}
               </p>
             </slot>
@@ -178,7 +182,7 @@ defineExpose({ open, close });
 
 <style scoped>
 dialog::backdrop {
-  @apply bg-n-alpha-black1 backdrop-blur-[4px];
+  @apply bg-n-alpha-black2 backdrop-blur-[4px];
 }
 
 .dialog-position-top {

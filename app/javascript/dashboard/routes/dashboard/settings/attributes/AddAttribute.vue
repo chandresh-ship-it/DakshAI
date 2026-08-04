@@ -1,301 +1,414 @@
-<script>
+<script setup>
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
-import { mapGetters } from 'vuex';
 import { useAlert } from 'dashboard/composables';
+import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { convertToAttributeSlug } from 'dashboard/helper/commons.js';
 import { normalizeRegexPattern } from 'shared/helpers/Validators';
-import { ATTRIBUTE_MODELS, ATTRIBUTE_TYPES } from './constants';
-
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { OnClickOutside } from '@vueuse/components';
+import { ATTRIBUTE_TYPES } from './constants';
 import TagInput from 'dashboard/components-next/taginput/TagInput.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayCheckbox,
+} from 'dashboard/components-next/relay';
 
-export default {
-  components: {
-    NextButton,
-    TagInput,
+const props = defineProps({
+  onClose: {
+    type: Function,
+    default: () => {},
   },
-  props: {
-    onClose: {
-      type: Function,
-      default: () => {},
+  selectedAttributeModelTab: {
+    type: Number,
+    default: 0,
+  },
+});
+
+const { t } = useI18n();
+const store = useStore();
+const uiFlags = useMapGetter('attributes/getUIFlags');
+
+const displayName = ref('');
+const description = ref('');
+const attributeModel = ref(props.selectedAttributeModelTab || 0);
+const attributeType = ref(0);
+const attributeKey = ref('');
+const regexPattern = ref('');
+const regexCue = ref('');
+const regexEnabled = ref(false);
+const values = ref([]);
+const tagInputTouched = ref(false);
+const showModelDropdown = ref(false);
+const showTypeDropdown = ref(false);
+
+const rules = {
+  displayName: { required, minLength: minLength(1) },
+  description: { required },
+  attributeModel: { required },
+  attributeType: { required },
+  attributeKey: {
+    required,
+    isKey(value) {
+      return !(value.indexOf(' ') >= 0);
     },
-    // Passes 0 or 1 based on the selected AttributeModel tab selected in the UI
-    // Needs a better data type, todo: refactor this component later
-    selectedAttributeModelTab: {
-      type: Number,
-      default: 0,
-    },
   },
-  setup() {
-    return { v$: useVuelidate() };
+};
+
+const v$ = useVuelidate(rules, {
+  displayName,
+  description,
+  attributeModel,
+  attributeType,
+  attributeKey,
+});
+
+const models = computed(() => [
+  {
+    id: 0,
+    option: t('ATTRIBUTES_MGMT.ATTRIBUTE_MODELS.CONVERSATION'),
   },
-  data() {
-    return {
-      displayName: '',
-      description: '',
-      // Using the prop as default. There is no side effect here as the component
-      // is destroyed completely when the modal is closed. The prop doesn't change
-      // dynamically when the modal is active.
-      attributeModel: this.selectedAttributeModelTab || 0,
-      attributeType: 0,
-      attributeKey: '',
-      regexPattern: null,
-      regexCue: null,
-      regexEnabled: false,
-      values: [],
-      show: true,
-      tagInputTouched: false,
+  {
+    id: 1,
+    option: t('ATTRIBUTES_MGMT.ATTRIBUTE_MODELS.CONTACT'),
+  },
+]);
+
+const types = computed(() =>
+  ATTRIBUTE_TYPES.map(item => {
+    const labels = {
+      TEXT: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.TEXT'),
+      NUMBER: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.NUMBER'),
+      LINK: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.LINK'),
+      DATE: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.DATE'),
+      LIST: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.LIST'),
+      CHECKBOX: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.CHECKBOX'),
     };
-  },
+    return {
+      ...item,
+      option: labels[item.key] || item.key,
+    };
+  })
+);
 
-  computed: {
-    ...mapGetters({
-      uiFlags: 'getUIFlags',
-    }),
-    models() {
-      return ATTRIBUTE_MODELS.map(item => ({
-        ...item,
-        option: this.$t(`ATTRIBUTES_MGMT.ATTRIBUTE_MODELS.${item.key}`),
-      }));
-    },
-    types() {
-      return ATTRIBUTE_TYPES.map(item => ({
-        ...item,
-        option: this.$t(`ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.${item.key}`),
-      }));
-    },
-    isTagInputEmpty() {
-      return this.isAttributeTypeList && this.values.length === 0;
-    },
-    isTagInputInvalid() {
-      return this.tagInputTouched && this.isTagInputEmpty;
-    },
-    attributeListValues() {
-      return this.values;
-    },
-    isButtonDisabled() {
-      return (
-        this.v$.displayName.$invalid ||
-        this.v$.description.$invalid ||
-        this.uiFlags.isCreating ||
-        this.isTagInputEmpty
-      );
-    },
-    keyErrorMessage() {
-      if (!this.v$.attributeKey.isKey) {
-        return this.$t('ATTRIBUTES_MGMT.ADD.FORM.KEY.IN_VALID');
-      }
-      return this.$t('ATTRIBUTES_MGMT.ADD.FORM.KEY.ERROR');
-    },
-    isAttributeTypeList() {
-      return this.attributeType === 6;
-    },
-    isAttributeTypeText() {
-      return this.attributeType === 0;
-    },
-    isRegexEnabled() {
-      return this.regexEnabled;
-    },
-  },
+const selectedModelLabel = computed(
+  () =>
+    models.value.find(item => item.id === attributeModel.value)?.option || ''
+);
 
-  validations: {
-    displayName: { required, minLength: minLength(1) },
-    description: { required },
-    attributeModel: { required },
-    attributeType: { required },
-    attributeKey: {
-      required,
-      isKey(value) {
-        return !(value.indexOf(' ') >= 0);
-      },
-    },
-  },
+const selectedTypeLabel = computed(
+  () => types.value.find(item => item.id === attributeType.value)?.option || ''
+);
 
-  watch: {
-    attributeType() {
-      this.tagInputTouched = false;
-      this.values = [];
-    },
-  },
+const isAttributeTypeList = computed(() => attributeType.value === 6);
+const isAttributeTypeText = computed(() => attributeType.value === 0);
+const isTagInputEmpty = computed(
+  () => isAttributeTypeList.value && values.value.length === 0
+);
+const isTagInputInvalid = computed(
+  () => tagInputTouched.value && isTagInputEmpty.value
+);
 
-  methods: {
-    onDisplayNameChange() {
-      this.attributeKey = convertToAttributeSlug(this.displayName);
-    },
-    toggleRegexEnabled() {
-      this.regexEnabled = !this.regexEnabled;
-    },
-    async addAttributes() {
-      this.v$.$touch();
-      if (this.v$.$invalid) {
-        return;
-      }
-      if (!this.regexEnabled) {
-        this.regexPattern = null;
-        this.regexCue = null;
-      }
-      try {
-        await this.$store.dispatch('attributes/create', {
-          attribute_display_name: this.displayName,
-          attribute_description: this.description,
-          attribute_model: this.attributeModel,
-          attribute_display_type: this.attributeType,
-          attribute_key: this.attributeKey,
-          attribute_values: this.attributeListValues,
-          regex_pattern: normalizeRegexPattern(this.regexPattern),
-          regex_cue: this.regexCue,
-        });
-        this.alertMessage = this.$t('ATTRIBUTES_MGMT.ADD.API.SUCCESS_MESSAGE');
-        this.onClose();
-      } catch (error) {
-        const errorMessage = error?.message;
-        this.alertMessage =
-          errorMessage || this.$t('ATTRIBUTES_MGMT.ADD.API.ERROR_MESSAGE');
-      } finally {
-        useAlert(this.alertMessage);
-      }
-    },
-  },
+const keyErrorMessage = computed(() => {
+  if (!v$.value.attributeKey.isKey) {
+    return t('ATTRIBUTES_MGMT.ADD.FORM.KEY.IN_VALID');
+  }
+  return t('ATTRIBUTES_MGMT.ADD.FORM.KEY.ERROR');
+});
+
+const isButtonDisabled = computed(
+  () =>
+    v$.value.displayName.$invalid ||
+    v$.value.description.$invalid ||
+    v$.value.attributeKey.$invalid ||
+    uiFlags.value.isCreating ||
+    isTagInputEmpty.value
+);
+
+watch(attributeType, () => {
+  tagInputTouched.value = false;
+  values.value = [];
+});
+
+watch(displayName, value => {
+  attributeKey.value = convertToAttributeSlug(value);
+});
+
+const selectModel = id => {
+  attributeModel.value = id;
+  showModelDropdown.value = false;
+};
+
+const selectType = id => {
+  attributeType.value = id;
+  showTypeDropdown.value = false;
+};
+
+const addAttributes = async () => {
+  v$.value.$touch();
+  if (v$.value.$invalid || isTagInputEmpty.value) {
+    if (isAttributeTypeList.value) tagInputTouched.value = true;
+    return;
+  }
+
+  let pattern = regexPattern.value;
+  let cue = regexCue.value;
+  if (!regexEnabled.value) {
+    pattern = null;
+    cue = null;
+  }
+
+  try {
+    await store.dispatch('attributes/create', {
+      attribute_display_name: displayName.value,
+      attribute_description: description.value,
+      attribute_model: attributeModel.value,
+      attribute_display_type: attributeType.value,
+      attribute_key: attributeKey.value,
+      attribute_values: values.value,
+      regex_pattern: normalizeRegexPattern(pattern || null),
+      regex_cue: cue || null,
+    });
+    useAlert(t('ATTRIBUTES_MGMT.ADD.API.SUCCESS_MESSAGE'));
+    props.onClose();
+  } catch (error) {
+    useAlert(error?.message || t('ATTRIBUTES_MGMT.ADD.API.ERROR_MESSAGE'));
+  }
 };
 </script>
 
 <template>
-  <woot-modal v-model:show="show" :on-close="onClose">
-    <div class="flex flex-col h-auto overflow-auto">
-      <woot-modal-header :header-title="$t('ATTRIBUTES_MGMT.ADD.TITLE')" />
-
-      <form class="flex w-full" @submit.prevent="addAttributes">
-        <div class="w-full">
-          <label :class="{ error: v$.attributeModel.$error }">
-            {{ $t('ATTRIBUTES_MGMT.ADD.FORM.MODEL.LABEL') }}
-            <select v-model="attributeModel">
-              <option v-for="model in models" :key="model.id" :value="model.id">
-                {{ model.option }}
-              </option>
-            </select>
-            <span v-if="v$.attributeModel.$error" class="message">
-              {{ $t('ATTRIBUTES_MGMT.ADD.FORM.MODEL.ERROR') }}
-            </span>
-          </label>
-          <woot-input
-            v-model="displayName"
-            :label="$t('ATTRIBUTES_MGMT.ADD.FORM.NAME.LABEL')"
-            type="text"
-            :class="{ error: v$.displayName.$error }"
-            :error="
-              v$.displayName.$error
-                ? $t('ATTRIBUTES_MGMT.ADD.FORM.NAME.ERROR')
-                : ''
-            "
-            :placeholder="$t('ATTRIBUTES_MGMT.ADD.FORM.NAME.PLACEHOLDER')"
-            @update:model-value="onDisplayNameChange"
-            @blur="v$.displayName.$touch"
-          />
-          <woot-input
-            v-model="attributeKey"
-            :label="$t('ATTRIBUTES_MGMT.ADD.FORM.KEY.LABEL')"
-            type="text"
-            :class="{ error: v$.attributeKey.$error }"
-            :error="v$.attributeKey.$error ? keyErrorMessage : ''"
-            :placeholder="$t('ATTRIBUTES_MGMT.ADD.FORM.KEY.PLACEHOLDER')"
-            @blur="v$.attributeKey.$touch"
-          />
-          <label :class="{ error: v$.description.$error }">
-            {{ $t('ATTRIBUTES_MGMT.ADD.FORM.DESC.LABEL') }}
-            <textarea
-              v-model="description"
-              rows="3"
-              type="text"
-              :placeholder="$t('ATTRIBUTES_MGMT.ADD.FORM.DESC.PLACEHOLDER')"
-              @blur="v$.description.$touch"
-            />
-            <span v-if="v$.description.$error" class="message">
-              {{ $t('ATTRIBUTES_MGMT.ADD.FORM.DESC.ERROR') }}
-            </span>
-          </label>
-          <label :class="{ error: v$.attributeType.$error }">
-            {{ $t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LABEL') }}
-            <select v-model="attributeType">
-              <option v-for="type in types" :key="type.id" :value="type.id">
-                {{ type.option }}
-              </option>
-            </select>
-            <span v-if="v$.attributeType.$error" class="message">
-              {{ $t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.ERROR') }}
-            </span>
-          </label>
-          <div v-if="isAttributeTypeList" class="mb-4">
-            <label class="mb-1 block">
-              {{ $t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.LABEL') }}
-            </label>
-            <div
-              class="rounded-xl border px-3 py-2"
-              :class="isTagInputInvalid ? 'border-n-ruby-9' : 'border-n-weak'"
-            >
-              <TagInput
-                v-model="values"
-                :placeholder="
-                  $t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.PLACEHOLDER')
-                "
-                allow-create
-                @blur="tagInputTouched = true"
-              />
-            </div>
-            <label
-              v-show="isTagInputInvalid"
-              class="text-n-ruby-9 dark:text-n-ruby-9 text-sm font-normal mt-1"
-            >
-              {{ $t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.ERROR') }}
-            </label>
-          </div>
-          <div v-if="isAttributeTypeText">
-            <input
-              v-model="regexEnabled"
-              type="checkbox"
-              @input="toggleRegexEnabled"
-            />
-            {{ $t('ATTRIBUTES_MGMT.ADD.FORM.ENABLE_REGEX.LABEL') }}
-          </div>
-          <woot-input
-            v-if="isAttributeTypeText && isRegexEnabled"
-            v-model="regexPattern"
-            :label="$t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_PATTERN.LABEL')"
-            type="text"
-            :placeholder="
-              $t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_PATTERN.PLACEHOLDER')
-            "
-          />
-          <woot-input
-            v-if="isAttributeTypeText && isRegexEnabled"
-            v-model="regexCue"
-            :label="$t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_CUE.LABEL')"
-            type="text"
-            :placeholder="$t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_CUE.PLACEHOLDER')"
-          />
-          <div class="flex flex-row justify-end w-full gap-2 px-0 py-2">
-            <NextButton
-              faded
-              slate
-              type="reset"
-              :label="$t('ATTRIBUTES_MGMT.ADD.CANCEL_BUTTON_TEXT')"
-              @click.prevent="onClose"
-            />
-            <NextButton
-              type="submit"
-              :label="$t('ATTRIBUTES_MGMT.ADD.SUBMIT')"
-              :disabled="isButtonDisabled"
-            />
-          </div>
-        </div>
-      </form>
+  <!-- Break out of Dialog p-6 to match NewRelay header / body / footer chrome -->
+  <div class="-m-6 flex max-h-[90vh] flex-col">
+    <div
+      class="flex shrink-0 items-center justify-between border-b border-border/40 bg-background/50 p-5"
+    >
+      <h3 class="text-[16px] font-semibold text-foreground">
+        {{ t('ATTRIBUTES_MGMT.ADD.TITLE') }}
+      </h3>
+      <button
+        type="button"
+        class="text-muted-foreground transition-colors hover:text-foreground"
+        @click="onClose()"
+      >
+        <Icon icon="i-lucide-x" class="size-5" />
+      </button>
     </div>
-  </woot-modal>
-</template>
 
-<style lang="scss" scoped>
-.key-value {
-  padding: 0 0.5rem 0.5rem 0;
-  font-family: monospace;
-}
-</style>
+    <!--
+      Use a div (not <form>): Dialog already wraps content in a <form>.
+      Nested forms are invalid HTML and the Create submit would hit Dialog's
+      empty confirm handler instead of addAttributes.
+    -->
+    <div class="space-y-5 overflow-y-auto p-6">
+      <div class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.MODEL.LABEL') }}
+        </label>
+        <OnClickOutside @trigger="showModelDropdown = false">
+          <div class="relative">
+            <button
+              type="button"
+              class="flex h-10 w-full items-center justify-between rounded-md border border-border/80 bg-background px-3 text-left text-[14px] text-foreground shadow-sm outline-none transition-colors focus:ring-1 focus:ring-primary/30"
+              @click="showModelDropdown = !showModelDropdown"
+            >
+              {{ selectedModelLabel }}
+              <Icon
+                icon="i-lucide-chevron-down"
+                class="size-4 text-muted-foreground"
+              />
+            </button>
+            <div
+              v-if="showModelDropdown"
+              class="absolute left-0 top-full z-50 mt-1 w-full overflow-hidden rounded-md border border-border/80 bg-card py-1 shadow-lg"
+            >
+              <button
+                v-for="model in models"
+                :key="model.id"
+                type="button"
+                class="w-full px-3 py-1.5 text-left text-[13.5px] transition-colors"
+                :class="
+                  attributeModel === model.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                "
+                @click="selectModel(model.id)"
+              >
+                {{ model.option }}
+              </button>
+            </div>
+          </div>
+        </OnClickOutside>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.NAME.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="displayName"
+          type="text"
+          :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.NAME.PLACEHOLDER')"
+          class-name="h-10 rounded-md border-border/80 bg-background text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30"
+          @blur="v$.displayName.$touch()"
+        />
+        <p v-if="v$.displayName.$error" class="text-[12.5px] text-destructive">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.NAME.ERROR') }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.KEY.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="attributeKey"
+          type="text"
+          :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.KEY.PLACEHOLDER')"
+          class-name="h-10 rounded-md border-border/80 bg-background text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30"
+          @blur="v$.attributeKey.$touch()"
+        />
+        <p v-if="v$.attributeKey.$error" class="text-[12.5px] text-destructive">
+          {{ keyErrorMessage }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.DESC.LABEL') }}
+        </label>
+        <textarea
+          v-model="description"
+          rows="3"
+          :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.DESC.PLACEHOLDER')"
+          class="min-h-[80px] w-full resize-y rounded-md border border-border/80 bg-background p-3 text-[14px] text-foreground shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+          @blur="v$.description.$touch()"
+        />
+        <p v-if="v$.description.$error" class="text-[12.5px] text-destructive">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.DESC.ERROR') }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LABEL') }}
+        </label>
+        <OnClickOutside @trigger="showTypeDropdown = false">
+          <div class="relative">
+            <button
+              type="button"
+              class="flex h-10 w-full items-center justify-between rounded-md border border-border/80 bg-background px-3 text-left text-[14px] text-foreground shadow-sm outline-none transition-colors focus:ring-1 focus:ring-primary/30"
+              @click="showTypeDropdown = !showTypeDropdown"
+            >
+              {{ selectedTypeLabel }}
+              <Icon
+                icon="i-lucide-chevron-down"
+                class="size-4 text-muted-foreground"
+              />
+            </button>
+            <div
+              v-if="showTypeDropdown"
+              class="absolute left-0 top-full z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-border/80 bg-card py-1 shadow-lg"
+            >
+              <button
+                v-for="type in types"
+                :key="type.id"
+                type="button"
+                class="w-full px-3 py-1.5 text-left text-[13.5px] transition-colors"
+                :class="
+                  attributeType === type.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                "
+                @click="selectType(type.id)"
+              >
+                {{ type.option }}
+              </button>
+            </div>
+          </div>
+        </OnClickOutside>
+      </div>
+
+      <div v-if="isAttributeTypeList" class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.LABEL') }}
+        </label>
+        <div
+          class="rounded-md border px-3 py-2"
+          :class="isTagInputInvalid ? 'border-destructive' : 'border-border/80'"
+        >
+          <TagInput
+            v-model="values"
+            :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.PLACEHOLDER')"
+            allow-create
+            @blur="tagInputTouched = true"
+          />
+        </div>
+        <p v-if="isTagInputInvalid" class="text-[12.5px] text-destructive">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.ERROR') }}
+        </p>
+      </div>
+
+      <div v-if="isAttributeTypeText" class="flex items-center gap-3 pt-2">
+        <RelayCheckbox v-model="regexEnabled" />
+        <span class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.ENABLE_REGEX.LABEL') }}
+        </span>
+      </div>
+
+      <div
+        v-if="isAttributeTypeText && regexEnabled"
+        class="flex flex-col gap-2.5"
+      >
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_PATTERN.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="regexPattern"
+          type="text"
+          :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_PATTERN.PLACEHOLDER')"
+          class-name="h-10 rounded-md border-border/80 bg-background text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30"
+        />
+      </div>
+
+      <div
+        v-if="isAttributeTypeText && regexEnabled"
+        class="flex flex-col gap-2.5"
+      >
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_CUE.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="regexCue"
+          type="text"
+          :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_CUE.PLACEHOLDER')"
+          class-name="h-10 rounded-md border-border/80 bg-background text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30"
+        />
+      </div>
+    </div>
+
+    <div
+      class="flex shrink-0 justify-end gap-3 border-t border-border/40 bg-background/50 p-5"
+    >
+      <RelayButton
+        type="button"
+        variant="outline"
+        class="border-border bg-muted hover:bg-muted/80"
+        @click="onClose()"
+      >
+        {{ t('ATTRIBUTES_MGMT.ADD.CANCEL_BUTTON_TEXT') }}
+      </RelayButton>
+      <RelayButton
+        type="button"
+        class="px-5"
+        :disabled="isButtonDisabled"
+        @click="addAttributes"
+      >
+        {{ t('ATTRIBUTES_MGMT.ADD.SUBMIT') }}
+      </RelayButton>
+    </div>
+  </div>
+</template>

@@ -7,12 +7,12 @@ import { useAlert } from 'dashboard/composables';
 import { useAccount } from 'dashboard/composables/useAccount';
 import samlSettingsAPI from 'dashboard/api/samlSettings';
 
-import SectionLayout from '../../account/components/SectionLayout.vue';
-import WithLabel from 'v3/components/Form/WithLabel.vue';
-import TextInput from 'next/input/Input.vue';
-import TextArea from 'next/textarea/TextArea.vue';
-import Switch from 'next/switch/Switch.vue';
-import NextButton from 'next/button/Button.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelaySwitch,
+} from 'dashboard/components-next/relay';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import SamlInfoSection from './SamlInfoSection.vue';
 import SamlAttributeMap from './SamlAttributeMap.vue';
 
@@ -41,6 +41,10 @@ const validations = {
 const v$ = useVuelidate(validations, formState);
 
 const hasFeature = computed(() => isCloudFeatureEnabled('saml'));
+
+const showForm = computed(
+  () => hasFeature.value && isEnabled.value && !isLoading.value
+);
 
 const ssoUrlError = computed(() =>
   v$.value.ssoUrl.$error
@@ -92,7 +96,6 @@ const saveSamlSettings = async settings => {
     isSubmitting.value = true;
 
     if (isEnabled.value && formState.ssoUrl) {
-      // Create or update settings based on existing id
       let response;
       if (id.value) {
         response = await samlSettingsAPI.update(settings);
@@ -100,7 +103,6 @@ const saveSamlSettings = async settings => {
         response = await samlSettingsAPI.create(settings);
       }
 
-      // Update local state with response data including fingerprint and id
       if (response?.data) {
         id.value = response.data.id;
         fingerprint.value = response.data.fingerprint || '';
@@ -109,12 +111,10 @@ const saveSamlSettings = async settings => {
 
       useAlert(t('SECURITY_SETTINGS.SAML.API.SUCCESS'));
     } else {
-      // Disable/delete settings
       await samlSettingsAPI.delete();
       useAlert(t('SECURITY_SETTINGS.SAML.API.DISABLED'));
     }
   } catch (error) {
-    // Handle backend validation errors
     if (error.response?.data?.errors) {
       const errorMessages = error.response.data.errors;
       const firstError = Array.isArray(errorMessages)
@@ -152,12 +152,12 @@ const handleDisable = async () => {
   formState.idpEntityId = '';
   fingerprint.value = '';
 
-  // the empty save will delete the SAML settings item
   await saveSamlSettings({});
 };
 
-const toggleSaml = async () => {
-  if (!isEnabled.value) {
+const onEnabledChange = async enabled => {
+  isEnabled.value = enabled;
+  if (!enabled) {
     await handleDisable();
   }
 };
@@ -168,86 +168,118 @@ onMounted(() => {
 </script>
 
 <template>
-  <SectionLayout
-    :title="t('SECURITY_SETTINGS.SAML.TITLE')"
-    :description="t('SECURITY_SETTINGS.SAML.NOTE')"
-    beta
-    :hide-content="!hasFeature || !isEnabled || isLoading"
-    class="max-w-2xl ltr:mr-auto rtl:ml-auto"
-  >
-    <template #headerActions>
-      <div class="flex justify-end">
-        <Switch
-          v-model="isEnabled"
-          :disabled="isLoading"
-          @change="toggleSaml"
+  <div class="space-y-6">
+    <div class="flex flex-col justify-between gap-8 md:flex-row md:items-start">
+      <div class="max-w-xl">
+        <div class="mb-2 flex items-center gap-2">
+          <h3 class="text-[15px] font-medium text-foreground">
+            {{ t('SECURITY_SETTINGS.SAML.TITLE') }}
+          </h3>
+          <span
+            v-tooltip.top="t('GENERAL.BETA_DESCRIPTION')"
+            class="rounded-full border border-primary/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary"
+          >
+            {{ t('GENERAL.BETA') }}
+          </span>
+        </div>
+        <p class="text-[13px] leading-relaxed text-muted-foreground">
+          {{ t('SECURITY_SETTINGS.SAML.NOTE') }}
+        </p>
+      </div>
+      <div class="shrink-0 pt-0.5">
+        <RelaySwitch
+          :model-value="isEnabled"
+          :disabled="isLoading || !hasFeature"
+          @update:model-value="onEnabledChange"
         />
       </div>
-    </template>
+    </div>
 
-    <SamlInfoSection
-      class="mb-5"
-      :fingerprint="fingerprint"
-      :sp-entity-id="spEntityId"
-    />
-    <SamlAttributeMap class="mb-5" />
+    <div v-if="showForm" class="space-y-6">
+      <SamlInfoSection :fingerprint="fingerprint" :sp-entity-id="spEntityId">
+        <template #footer>
+          <SamlAttributeMap />
+        </template>
+      </SamlInfoSection>
 
-    <form class="grid gap-5" @submit.prevent="handleSubmit">
-      <WithLabel
-        name="ssoUrl"
-        :label="t('SECURITY_SETTINGS.SAML.SSO_URL.LABEL')"
-        :help-message="t('SECURITY_SETTINGS.SAML.SSO_URL.HELP')"
-        :has-error="v$.ssoUrl.$error"
-        :error-message="ssoUrlError"
-        required
-      >
-        <TextInput
-          v-model="formState.ssoUrl"
-          class="w-full"
-          type="url"
-          :placeholder="t('SECURITY_SETTINGS.SAML.SSO_URL.PLACEHOLDER')"
-        />
-      </WithLabel>
+      <form class="space-y-6" @submit.prevent="handleSubmit">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[13px] font-semibold text-foreground" for="ssoUrl">
+            {{ t('SECURITY_SETTINGS.SAML.SSO_URL.LABEL') }}
+          </label>
+          <RelayInput
+            id="ssoUrl"
+            v-model="formState.ssoUrl"
+            type="url"
+            :placeholder="t('SECURITY_SETTINGS.SAML.SSO_URL.PLACEHOLDER')"
+            class-name="h-[38px] rounded-lg border-border/80 bg-background text-[13px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30"
+          />
+          <p v-if="ssoUrlError" class="text-[12.5px] text-destructive">
+            {{ ssoUrlError }}
+          </p>
+          <p v-else class="text-[12.5px] text-muted-foreground">
+            {{ t('SECURITY_SETTINGS.SAML.SSO_URL.HELP') }}
+          </p>
+        </div>
 
-      <WithLabel
-        name="idpEntityId"
-        :label="t('SECURITY_SETTINGS.SAML.IDP_ENTITY_ID.LABEL')"
-        :help-message="t('SECURITY_SETTINGS.SAML.IDP_ENTITY_ID.HELP')"
-        :has-error="v$.idpEntityId.$error"
-        :error-message="idpEntityIdError"
-        required
-      >
-        <TextInput
-          v-model="formState.idpEntityId"
-          class="w-full"
-          :placeholder="t('SECURITY_SETTINGS.SAML.IDP_ENTITY_ID.PLACEHOLDER')"
-        />
-      </WithLabel>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-[13px] font-semibold text-foreground"
+            for="idpEntityId"
+          >
+            {{ t('SECURITY_SETTINGS.SAML.IDP_ENTITY_ID.LABEL') }}
+          </label>
+          <RelayInput
+            id="idpEntityId"
+            v-model="formState.idpEntityId"
+            :placeholder="t('SECURITY_SETTINGS.SAML.IDP_ENTITY_ID.PLACEHOLDER')"
+            class-name="h-[38px] rounded-lg border-border/80 bg-background text-[13px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30"
+          />
+          <p v-if="idpEntityIdError" class="text-[12.5px] text-destructive">
+            {{ idpEntityIdError }}
+          </p>
+          <p v-else class="text-[12.5px] text-muted-foreground">
+            {{ t('SECURITY_SETTINGS.SAML.IDP_ENTITY_ID.HELP') }}
+          </p>
+        </div>
 
-      <WithLabel
-        name="certificate"
-        :label="t('SECURITY_SETTINGS.SAML.CERTIFICATE.LABEL')"
-        :help-message="t('SECURITY_SETTINGS.SAML.CERTIFICATE.HELP')"
-        :has-error="v$.certificate.$error"
-        :error-message="certificateError"
-        required
-      >
-        <TextArea
-          v-model="formState.certificate"
-          class="w-full"
-          rows="8"
-          :placeholder="t('SECURITY_SETTINGS.SAML.CERTIFICATE.PLACEHOLDER')"
-        />
-      </WithLabel>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-[13px] font-semibold text-foreground"
+            for="certificate"
+          >
+            {{ t('SECURITY_SETTINGS.SAML.CERTIFICATE.LABEL') }}
+          </label>
+          <textarea
+            id="certificate"
+            v-model="formState.certificate"
+            rows="4"
+            class="h-24 w-full resize-none rounded-lg border border-border/80 bg-background p-3 font-mono text-[13px] text-foreground shadow-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+            :placeholder="t('SECURITY_SETTINGS.SAML.CERTIFICATE.PLACEHOLDER')"
+          />
+          <p v-if="certificateError" class="text-[12.5px] text-destructive">
+            {{ certificateError }}
+          </p>
+          <p v-else class="text-[12.5px] text-muted-foreground">
+            {{ t('SECURITY_SETTINGS.SAML.CERTIFICATE.HELP') }}
+          </p>
+        </div>
 
-      <div class="flex gap-2">
-        <NextButton
-          blue
-          type="submit"
-          :is-loading="isSubmitting"
-          :label="t('SECURITY_SETTINGS.SAML.UPDATE_BUTTON')"
-        />
-      </div>
-    </form>
-  </SectionLayout>
+        <div class="pt-2">
+          <RelayButton
+            type="submit"
+            class="h-9 px-5 font-medium shadow-sm"
+            :disabled="isSubmitting"
+          >
+            <Icon
+              v-if="isSubmitting"
+              icon="i-lucide-loader-2"
+              class="size-4 animate-spin"
+            />
+            {{ t('SECURITY_SETTINGS.SAML.UPDATE_BUTTON') }}
+          </RelayButton>
+        </div>
+      </form>
+    </div>
+  </div>
 </template>

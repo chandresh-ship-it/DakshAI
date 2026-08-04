@@ -154,18 +154,27 @@ export const SETTINGS_NAV_SECTIONS = [
     items: [
       {
         key: 'apps',
-        labelKey: 'SIDEBAR.INTEGRATIONS',
+        labelKey: 'SIDEBAR.INTEGRATION_APPS',
         routeName: 'settings_applications',
         activeOn: [
           'settings_applications',
           'settings_applications_integration',
           'settings_integrations_dashboard_apps',
-          'settings_integrations_webhook',
           'settings_integrations_slack',
           'settings_integrations_linear',
           'settings_integrations_notion',
           'settings_integrations_shopify',
         ],
+      },
+      {
+        key: 'api_keys',
+        labelKey: 'SIDEBAR.INTEGRATION_API_KEYS',
+        routeName: 'settings_integrations_api_keys',
+      },
+      {
+        key: 'webhooks',
+        labelKey: 'SIDEBAR.INTEGRATION_WEBHOOKS',
+        routeName: 'settings_integrations_webhook',
       },
     ],
   },

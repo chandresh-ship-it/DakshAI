@@ -5,6 +5,7 @@ import IntegrationHooks from './IntegrationHooks.vue';
 import Index from './Index.vue';
 import Webhook from './Webhooks/Index.vue';
 import DashboardApps from './DashboardApps/Index.vue';
+import ApiKeys from './ApiKeys/Index.vue';
 import Slack from './Slack.vue';
 import Linear from './Linear.vue';
 import Notion from './Notion.vue';
@@ -30,6 +31,15 @@ export default {
           path: 'dashboard_apps',
           component: DashboardApps,
           name: 'settings_integrations_dashboard_apps',
+          meta: {
+            featureFlag: FEATURE_FLAGS.INTEGRATIONS,
+            permissions: ['administrator'],
+          },
+        },
+        {
+          path: 'api_keys',
+          component: ApiKeys,
+          name: 'settings_integrations_api_keys',
           meta: {
             featureFlag: FEATURE_FLAGS.INTEGRATIONS,
             permissions: ['administrator'],

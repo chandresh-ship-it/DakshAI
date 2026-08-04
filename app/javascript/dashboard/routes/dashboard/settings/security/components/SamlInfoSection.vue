@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { useAlert } from 'dashboard/composables';
 import { useAccount } from 'dashboard/composables/useAccount';
-import NextButton from 'next/button/Button.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const props = defineProps({
   fingerprint: {
@@ -60,43 +60,50 @@ const handleCopy = async text => {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center gap-2">
-      <h3 class="text-sm font-medium text-n-slate-12">
-        {{ t('SECURITY_SETTINGS.SAML.INFO_SECTION.TITLE') }}
-      </h3>
+  <div>
+    <h4
+      class="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-foreground"
+    >
+      {{ t('SECURITY_SETTINGS.SAML.INFO_SECTION.TITLE') }}
       <i
         v-tooltip.top="t('SECURITY_SETTINGS.SAML.INFO_SECTION.TOOLTIP')"
-        class="i-lucide-info text-n-slate-10 w-4 h-4 cursor-help"
+        class="i-lucide-info size-3.5 cursor-help text-muted-foreground"
       />
-    </div>
-    <section
-      class="rounded-xl border border-n-weak bg-n-solid-1 w-full text-sm text-n-slate-12 divide-y divide-n-weak"
+    </h4>
+    <div
+      class="divide-y divide-border overflow-hidden rounded-lg border border-border bg-background"
     >
       <div
         v-for="item in visibleInfoItems"
         :key="item.key"
-        class="ps-4 pe-1 py-1 flex justify-between items-center"
+        class="flex flex-col justify-between gap-3 p-3 sm:flex-row sm:items-center"
       >
-        <div class="flex items-center gap-2">
-          <span class="text-n-slate-11 w-32 flex items-center gap-1">
-            {{ item.label }}
-            <i
-              v-tooltip.top="item.tooltip"
-              class="i-lucide-info text-n-slate-9 w-3 h-3 cursor-help"
-            />
+        <span
+          class="flex w-[160px] shrink-0 items-center gap-1 text-[13px] text-muted-foreground"
+        >
+          {{ item.label }}
+          <i
+            v-tooltip.top="item.tooltip"
+            class="i-lucide-info inline size-3.5 cursor-help"
+          />
+        </span>
+        <div class="flex w-full items-center gap-3 sm:w-auto">
+          <span
+            class="max-w-[280px] truncate text-[13px] text-foreground lg:max-w-[400px]"
+          >
+            {{ item.value }}
           </span>
-          <span class="flex-1">{{ item.value }}</span>
+          <button
+            type="button"
+            class="shrink-0 p-1 text-muted-foreground transition-colors hover:text-foreground"
+            :aria-label="t('SECURITY_SETTINGS.SAML.COPY')"
+            @click="handleCopy(item.value)"
+          >
+            <Icon icon="i-lucide-copy" class="size-3.5" />
+          </button>
         </div>
-        <NextButton
-          type="button"
-          ghost
-          sm
-          slate
-          icon="i-lucide-copy"
-          @click="handleCopy(item.value)"
-        />
       </div>
-    </section>
+      <slot name="footer" />
+    </div>
   </div>
 </template>

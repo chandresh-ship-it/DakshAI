@@ -1,285 +1,322 @@
-<script>
+<script setup>
+import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useVuelidate } from '@vuelidate/core';
-import { useAlert } from 'dashboard/composables';
 import { required, minLength } from '@vuelidate/validators';
+import { useAlert } from 'dashboard/composables';
+import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { getRegexp, normalizeRegexPattern } from 'shared/helpers/Validators';
 import { ATTRIBUTE_TYPES } from './constants';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 import TagInput from 'dashboard/components-next/taginput/TagInput.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayCheckbox,
+} from 'dashboard/components-next/relay';
 
-export default {
-  components: {
-    NextButton,
-    TagInput,
+const props = defineProps({
+  selectedAttribute: {
+    type: Object,
+    default: () => ({}),
   },
-  props: {
-    selectedAttribute: {
-      type: Object,
-      default: () => {},
-    },
-    isUpdating: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ['onClose'],
-  setup() {
-    return { v$: useVuelidate() };
-  },
-  data() {
-    return {
-      displayName: '',
-      description: '',
-      attributeType: 0,
-      regexPattern: null,
-      regexCue: null,
-      regexEnabled: false,
-      show: true,
-      attributeKey: '',
-      values: [],
-      tagInputTouched: false,
-    };
-  },
-  validations: {
-    displayName: { required },
-    attributeType: { required },
-    description: { required, minLength: minLength(1) },
-    attributeKey: {
-      required,
-      isKey(value) {
-        return !(value.indexOf(' ') >= 0);
-      },
-    },
-  },
-  computed: {
-    types() {
-      return ATTRIBUTE_TYPES.map(item => ({
-        ...item,
-        option: this.$t(`ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.${item.key}`),
-      }));
-    },
-    setAttributeListValue() {
-      return this.selectedAttribute.attribute_values || [];
-    },
-    updatedAttributeListValues() {
-      return this.values;
-    },
-    isButtonDisabled() {
-      return this.v$.description.$invalid || this.isTagInputEmpty;
-    },
-    isTagInputEmpty() {
-      return this.isAttributeTypeList && this.values.length === 0;
-    },
-    isTagInputInvalid() {
-      return this.tagInputTouched && this.isTagInputEmpty;
-    },
+});
 
-    pageTitle() {
-      return `${this.$t('ATTRIBUTES_MGMT.EDIT.TITLE')} - ${
-        this.selectedAttribute.attribute_display_name
-      }`;
-    },
-    selectedAttributeType() {
-      return this.types.find(
-        item =>
-          item.key.toLowerCase() ===
-          this.selectedAttribute.attribute_display_type
-      )?.id;
-    },
-    keyErrorMessage() {
-      if (!this.v$.attributeKey.isKey) {
-        return this.$t('ATTRIBUTES_MGMT.ADD.FORM.KEY.IN_VALID');
-      }
-      return this.$t('ATTRIBUTES_MGMT.ADD.FORM.KEY.ERROR');
-    },
-    isAttributeTypeList() {
-      return this.attributeType === 6;
-    },
-    isAttributeTypeText() {
-      return this.attributeType === 0;
-    },
-    isRegexEnabled() {
-      return this.regexEnabled;
-    },
-  },
-  mounted() {
-    this.setFormValues();
-  },
-  methods: {
-    onClose() {
-      this.$emit('onClose');
-    },
-    setFormValues() {
-      const regexPattern = this.selectedAttribute.regex_pattern
-        ? getRegexp(this.selectedAttribute.regex_pattern).toString()
-        : null;
-      this.displayName = this.selectedAttribute.attribute_display_name;
-      this.description = this.selectedAttribute.attribute_description;
-      this.attributeType = this.selectedAttributeType;
-      this.attributeKey = this.selectedAttribute.attribute_key;
-      this.regexPattern = regexPattern;
-      this.regexCue = this.selectedAttribute.regex_cue;
-      this.regexEnabled = regexPattern != null;
-      this.values = this.setAttributeListValue;
-    },
-    async editAttributes() {
-      this.v$.$touch();
-      if (this.v$.$invalid) {
-        return;
-      }
-      if (!this.regexEnabled) {
-        this.regexPattern = null;
-        this.regexCue = null;
-      }
-      try {
-        await this.$store.dispatch('attributes/update', {
-          id: this.selectedAttribute.id,
-          attribute_description: this.description,
-          attribute_display_name: this.displayName,
-          attribute_values: this.updatedAttributeListValues,
-          regex_pattern: normalizeRegexPattern(this.regexPattern),
-          regex_cue: this.regexCue,
-        });
-        this.alertMessage = this.$t('ATTRIBUTES_MGMT.EDIT.API.SUCCESS_MESSAGE');
-        this.onClose();
-      } catch (error) {
-        const errorMessage = error?.message;
-        this.alertMessage =
-          errorMessage || this.$t('ATTRIBUTES_MGMT.EDIT.API.ERROR_MESSAGE');
-      } finally {
-        useAlert(this.alertMessage);
-      }
-    },
-    toggleRegexEnabled() {
-      this.regexEnabled = !this.regexEnabled;
+const emit = defineEmits(['close']);
+
+const { t } = useI18n();
+const store = useStore();
+const uiFlags = useMapGetter('attributes/getUIFlags');
+
+const displayName = ref('');
+const description = ref('');
+const attributeType = ref(0);
+const regexPattern = ref('');
+const regexCue = ref('');
+const regexEnabled = ref(false);
+const attributeKey = ref('');
+const values = ref([]);
+const tagInputTouched = ref(false);
+
+const rules = {
+  displayName: { required },
+  attributeType: { required },
+  description: { required, minLength: minLength(1) },
+  attributeKey: {
+    required,
+    isKey(value) {
+      return !(value.indexOf(' ') >= 0);
     },
   },
 };
+
+const v$ = useVuelidate(rules, {
+  displayName,
+  description,
+  attributeType,
+  attributeKey,
+});
+
+const types = computed(() =>
+  ATTRIBUTE_TYPES.map(item => {
+    const labels = {
+      TEXT: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.TEXT'),
+      NUMBER: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.NUMBER'),
+      LINK: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.LINK'),
+      DATE: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.DATE'),
+      LIST: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.LIST'),
+      CHECKBOX: t('ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.CHECKBOX'),
+    };
+    return {
+      ...item,
+      option: labels[item.key] || item.key,
+    };
+  })
+);
+
+const selectedTypeLabel = computed(
+  () => types.value.find(item => item.id === attributeType.value)?.option || ''
+);
+
+const isAttributeTypeList = computed(() => attributeType.value === 6);
+const isAttributeTypeText = computed(() => attributeType.value === 0);
+const isTagInputEmpty = computed(
+  () => isAttributeTypeList.value && values.value.length === 0
+);
+const isTagInputInvalid = computed(
+  () => tagInputTouched.value && isTagInputEmpty.value
+);
+
+const keyErrorMessage = computed(() => {
+  if (!v$.value.attributeKey.isKey) {
+    return t('ATTRIBUTES_MGMT.ADD.FORM.KEY.IN_VALID');
+  }
+  return t('ATTRIBUTES_MGMT.ADD.FORM.KEY.ERROR');
+});
+
+const isButtonDisabled = computed(
+  () =>
+    v$.value.displayName.$invalid ||
+    v$.value.description.$invalid ||
+    isTagInputEmpty.value ||
+    uiFlags.value.isUpdating
+);
+
+const pageTitle = computed(
+  () =>
+    `${t('ATTRIBUTES_MGMT.EDIT.TITLE')} - ${
+      props.selectedAttribute.attribute_display_name || ''
+    }`
+);
+
+const setFormValues = () => {
+  const pattern = props.selectedAttribute.regex_pattern
+    ? getRegexp(props.selectedAttribute.regex_pattern).toString()
+    : null;
+  const typeId = types.value.find(
+    item =>
+      item.key.toLowerCase() === props.selectedAttribute.attribute_display_type
+  )?.id;
+
+  displayName.value = props.selectedAttribute.attribute_display_name;
+  description.value = props.selectedAttribute.attribute_description;
+  attributeType.value = typeId ?? 0;
+  attributeKey.value = props.selectedAttribute.attribute_key;
+  regexPattern.value = pattern || '';
+  regexCue.value = props.selectedAttribute.regex_cue || '';
+  regexEnabled.value = pattern != null;
+  values.value = [...(props.selectedAttribute.attribute_values || [])];
+};
+
+const onClose = () => emit('close');
+
+const editAttributes = async () => {
+  v$.value.$touch();
+  if (v$.value.$invalid || isTagInputEmpty.value) {
+    if (isAttributeTypeList.value) tagInputTouched.value = true;
+    return;
+  }
+
+  let pattern = regexPattern.value;
+  let cue = regexCue.value;
+  if (!regexEnabled.value) {
+    pattern = null;
+    cue = null;
+  }
+
+  try {
+    await store.dispatch('attributes/update', {
+      id: props.selectedAttribute.id,
+      attribute_description: description.value,
+      attribute_display_name: displayName.value,
+      attribute_values: values.value,
+      regex_pattern: normalizeRegexPattern(pattern || null),
+      regex_cue: cue || null,
+    });
+    useAlert(t('ATTRIBUTES_MGMT.EDIT.API.SUCCESS_MESSAGE'));
+    onClose();
+  } catch (error) {
+    useAlert(error?.message || t('ATTRIBUTES_MGMT.EDIT.API.ERROR_MESSAGE'));
+  }
+};
+
+onMounted(setFormValues);
 </script>
 
 <template>
-  <div class="flex flex-col h-auto overflow-auto">
-    <woot-modal-header :header-title="pageTitle" />
-    <form class="flex flex-col w-full" @submit.prevent="editAttributes">
-      <div class="w-full">
-        <woot-input
+  <div class="-m-6 flex max-h-[90vh] flex-col">
+    <div
+      class="flex shrink-0 items-center justify-between border-b border-border/40 bg-background/50 p-5"
+    >
+      <h3 class="text-[16px] font-semibold text-foreground">
+        {{ pageTitle }}
+      </h3>
+      <button
+        type="button"
+        class="text-muted-foreground transition-colors hover:text-foreground"
+        @click="onClose"
+      >
+        <Icon icon="i-lucide-x" class="size-5" />
+      </button>
+    </div>
+
+    <div class="space-y-5 overflow-y-auto p-6">
+      <div class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.NAME.LABEL') }}
+        </label>
+        <RelayInput
           v-model="displayName"
-          :label="$t('ATTRIBUTES_MGMT.ADD.FORM.NAME.LABEL')"
           type="text"
-          :class="{ error: v$.displayName.$error }"
-          :error="
-            v$.displayName.$error
-              ? $t('ATTRIBUTES_MGMT.ADD.FORM.NAME.ERROR')
-              : ''
-          "
-          :placeholder="$t('ATTRIBUTES_MGMT.ADD.FORM.NAME.PLACEHOLDER')"
-          @blur="v$.displayName.$touch"
+          :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.NAME.PLACEHOLDER')"
+          class-name="h-10 rounded-md border-border/80 bg-background text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30"
+          @blur="v$.displayName.$touch()"
         />
-        <woot-input
+        <p v-if="v$.displayName.$error" class="text-[12.5px] text-destructive">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.NAME.ERROR') }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.KEY.LABEL') }}
+        </label>
+        <RelayInput
           v-model="attributeKey"
-          :label="$t('ATTRIBUTES_MGMT.ADD.FORM.KEY.LABEL')"
           type="text"
-          :class="{ error: v$.attributeKey.$error }"
-          :error="v$.attributeKey.$error ? keyErrorMessage : ''"
-          :placeholder="$t('ATTRIBUTES_MGMT.ADD.FORM.KEY.PLACEHOLDER')"
-          readonly
-          @blur="v$.attributeKey.$touch"
+          disabled
+          :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.KEY.PLACEHOLDER')"
+          class-name="h-10 rounded-md border-border/80 bg-background text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30"
         />
-        <label :class="{ error: v$.description.$error }">
-          {{ $t('ATTRIBUTES_MGMT.ADD.FORM.DESC.LABEL') }}
-          <textarea
-            v-model="description"
-            rows="5"
-            type="text"
-            :placeholder="$t('ATTRIBUTES_MGMT.ADD.FORM.DESC.PLACEHOLDER')"
-            @blur="v$.description.$touch"
-          />
-          <span v-if="v$.description.$error" class="message">
-            {{ $t('ATTRIBUTES_MGMT.ADD.FORM.DESC.ERROR') }}
-          </span>
+        <p v-if="v$.attributeKey.$error" class="text-[12.5px] text-destructive">
+          {{ keyErrorMessage }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.DESC.LABEL') }}
         </label>
-        <label :class="{ error: v$.attributeType.$error }">
-          {{ $t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LABEL') }}
-          <select v-model="attributeType" disabled>
-            <option v-for="type in types" :key="type.id" :value="type.id">
-              {{ type.option }}
-            </option>
-          </select>
-          <span v-if="v$.attributeType.$error" class="message">
-            {{ $t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.ERROR') }}
-          </span>
+        <textarea
+          v-model="description"
+          rows="5"
+          :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.DESC.PLACEHOLDER')"
+          class="min-h-[80px] w-full resize-y rounded-md border border-border/80 bg-background p-3 text-[14px] text-foreground shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+          @blur="v$.description.$touch()"
+        />
+        <p v-if="v$.description.$error" class="text-[12.5px] text-destructive">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.DESC.ERROR') }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LABEL') }}
         </label>
-        <div v-if="isAttributeTypeList" class="mb-4">
-          <label class="mb-1 block">
-            {{ $t('ATTRIBUTES_MGMT.EDIT.TYPE.LIST.LABEL') }}
-          </label>
-          <div
-            class="rounded-xl border px-3 py-2"
-            :class="isTagInputInvalid ? 'border-n-ruby-9' : 'border-n-weak'"
-          >
-            <TagInput
-              v-model="values"
-              :placeholder="
-                $t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.PLACEHOLDER')
-              "
-              allow-create
-              @blur="tagInputTouched = true"
-            />
-          </div>
-          <label
-            v-show="isTagInputInvalid"
-            class="text-n-ruby-9 dark:text-n-ruby-9 text-sm font-normal mt-1"
-          >
-            {{ $t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.ERROR') }}
-          </label>
+        <div
+          class="flex h-10 w-full items-center justify-between rounded-md border border-border/80 bg-muted/40 px-3 text-left text-[14px] text-muted-foreground shadow-sm"
+        >
+          {{ selectedTypeLabel }}
         </div>
-        <div v-if="isAttributeTypeText">
-          <input
-            v-model="regexEnabled"
-            type="checkbox"
-            @input="toggleRegexEnabled"
+      </div>
+
+      <div v-if="isAttributeTypeList" class="flex flex-col gap-2.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.EDIT.TYPE.LIST.LABEL') }}
+        </label>
+        <div
+          class="rounded-md border px-3 py-2"
+          :class="isTagInputInvalid ? 'border-destructive' : 'border-border/80'"
+        >
+          <TagInput
+            v-model="values"
+            :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.PLACEHOLDER')"
+            allow-create
+            @blur="tagInputTouched = true"
           />
-          {{ $t('ATTRIBUTES_MGMT.ADD.FORM.ENABLE_REGEX.LABEL') }}
         </div>
-        <woot-input
-          v-if="isAttributeTypeText && isRegexEnabled"
+        <p v-if="isTagInputInvalid" class="text-[12.5px] text-destructive">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.ERROR') }}
+        </p>
+      </div>
+
+      <div v-if="isAttributeTypeText" class="flex items-center gap-3 pt-2">
+        <RelayCheckbox v-model="regexEnabled" />
+        <span class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.ENABLE_REGEX.LABEL') }}
+        </span>
+      </div>
+
+      <div
+        v-if="isAttributeTypeText && regexEnabled"
+        class="flex flex-col gap-2.5"
+      >
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_PATTERN.LABEL') }}
+        </label>
+        <RelayInput
           v-model="regexPattern"
-          :label="$t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_PATTERN.LABEL')"
           type="text"
-          :placeholder="
-            $t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_PATTERN.PLACEHOLDER')
-          "
+          :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_PATTERN.PLACEHOLDER')"
+          class-name="h-10 rounded-md border-border/80 bg-background text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30"
         />
-        <woot-input
-          v-if="isAttributeTypeText && isRegexEnabled"
+      </div>
+
+      <div
+        v-if="isAttributeTypeText && regexEnabled"
+        class="flex flex-col gap-2.5"
+      >
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_CUE.LABEL') }}
+        </label>
+        <RelayInput
           v-model="regexCue"
-          :label="$t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_CUE.LABEL')"
           type="text"
-          :placeholder="$t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_CUE.PLACEHOLDER')"
+          :placeholder="t('ATTRIBUTES_MGMT.ADD.FORM.REGEX_CUE.PLACEHOLDER')"
+          class-name="h-10 rounded-md border-border/80 bg-background text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30"
         />
       </div>
-      <div class="flex flex-row justify-end w-full gap-2 px-0 py-2">
-        <NextButton
-          faded
-          slate
-          type="reset"
-          :label="$t('ATTRIBUTES_MGMT.ADD.CANCEL_BUTTON_TEXT')"
-          @click.prevent="onClose"
-        />
-        <NextButton
-          type="submit"
-          :label="$t('ATTRIBUTES_MGMT.EDIT.UPDATE_BUTTON_TEXT')"
-          :is-loading="isUpdating"
-          :disabled="isButtonDisabled"
-        />
-      </div>
-    </form>
+    </div>
+
+    <div
+      class="flex shrink-0 justify-end gap-3 border-t border-border/40 bg-background/50 p-5"
+    >
+      <RelayButton
+        type="button"
+        variant="outline"
+        class="border-border bg-muted hover:bg-muted/80"
+        @click="onClose"
+      >
+        {{ t('ATTRIBUTES_MGMT.ADD.CANCEL_BUTTON_TEXT') }}
+      </RelayButton>
+      <RelayButton
+        type="button"
+        class="px-5"
+        :disabled="isButtonDisabled"
+        @click="editAttributes"
+      >
+        {{ t('ATTRIBUTES_MGMT.EDIT.UPDATE_BUTTON_TEXT') }}
+      </RelayButton>
+    </div>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.key-value {
-  padding: 0 0.5rem 0.5rem 0;
-  font-family: monospace;
-}
-</style>

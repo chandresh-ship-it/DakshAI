@@ -27,7 +27,7 @@ const openBilling = () => {
 
 <template>
   <div
-    class="w-full max-w-5xl mx-auto h-full max-h-[28rem] grid place-content-center"
+    class="mx-auto grid h-full max-h-[28rem] w-full max-w-5xl place-content-center"
   >
     <BasePaywallModal
       class="mx-auto"

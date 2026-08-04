@@ -99,10 +99,10 @@ const onRemove = () => {
           {{ $t('INTEGRATION_SETTINGS.DETAILS') }}
         </RelayButton>
         <RelayButton
-          v-if="enabled"
           variant="ghost"
           size="sm"
-          class="h-8 px-4 text-xs font-semibold text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+          class="h-8 px-4 text-xs font-semibold text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+          :disabled="!enabled"
           @click="onRemove"
         >
           {{ $t('INTEGRATION_SETTINGS.REMOVE') }}

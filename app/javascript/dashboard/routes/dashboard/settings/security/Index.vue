@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
+import { useI18n } from 'vue-i18n';
 import SettingsLayout from '../SettingsLayout.vue';
 import SamlSettings from './components/SamlSettings.vue';
 import SamlPaywall from './components/SamlPaywall.vue';
@@ -8,6 +8,8 @@ import SamlPaywall from './components/SamlPaywall.vue';
 import { usePolicy } from 'dashboard/composables/usePolicy';
 import { INSTALLATION_TYPES } from 'dashboard/constants/installationTypes';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
+
+const { t } = useI18n();
 const { shouldShow, shouldShowPaywall } = usePolicy();
 
 const allowedLoginMethods = computed(
@@ -31,20 +33,23 @@ const showPaywall = computed(() => shouldShowPaywall('saml'));
 </script>
 
 <template>
-  <SettingsLayout :loading-message="$t('ATTRIBUTES_MGMT.LOADING')">
-    <template #header>
-      <BaseSettingsHeader
-        :title="$t('SECURITY_SETTINGS.TITLE')"
-        :description="$t('SECURITY_SETTINGS.DESCRIPTION')"
-        :link-text="$t('SECURITY_SETTINGS.LINK_TEXT')"
-        feature-name="saml"
-      />
-    </template>
+  <SettingsLayout>
     <template #body>
-      <SamlPaywall v-if="showPaywall" />
-      <SamlSettings v-else-if="shouldShowSaml" />
-      <div v-else class="mt-6 text-sm text-slate-600">
-        {{ $t('SECURITY_SETTINGS.SAML_DISABLED_MESSAGE') }}
+      <div class="mt-2 space-y-6">
+        <div>
+          <h2 class="text-base font-medium text-foreground">
+            {{ t('SECURITY_SETTINGS.TITLE') }}
+          </h2>
+          <p class="mt-0.5 text-[13px] text-muted-foreground">
+            {{ t('SECURITY_SETTINGS.DESCRIPTION') }}
+          </p>
+        </div>
+
+        <SamlPaywall v-if="showPaywall" />
+        <SamlSettings v-else-if="shouldShowSaml" />
+        <p v-else class="text-sm text-muted-foreground">
+          {{ t('SECURITY_SETTINGS.SAML_DISABLED_MESSAGE') }}
+        </p>
       </div>
     </template>
   </SettingsLayout>

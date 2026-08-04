@@ -1,10 +1,12 @@
 <script setup>
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import Icon from 'next/icon/Icon.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const { t } = useI18n();
 const isExpanded = ref(false);
+
+const attributes = ['email', 'first_name', 'last_name'];
 
 const toggleExpanded = () => {
   isExpanded.value = !isExpanded.value;
@@ -12,39 +14,38 @@ const toggleExpanded = () => {
 </script>
 
 <template>
-  <section
-    class="rounded-xl border border-n-weak bg-n-solid-1 w-full text-sm text-n-slate-12 mb-5 overflow-hidden"
+  <div
+    class="bg-muted/10 transition-colors"
+    :class="{ 'bg-muted/20': isExpanded }"
   >
     <button
       type="button"
-      class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-n-solid-2 transition-colors"
+      class="flex w-full items-center justify-between p-3 text-left"
       @click="toggleExpanded"
     >
-      <h4 class="font-medium text-n-slate-12">
+      <span class="text-[13px] font-medium text-foreground">
         {{ t('SECURITY_SETTINGS.SAML.ATTRIBUTE_MAPPING.TITLE') }}
-      </h4>
+      </span>
       <Icon
         icon="i-lucide-chevron-down"
-        class="transition-transform duration-200"
+        class="size-4 text-muted-foreground transition-transform"
         :class="{ 'rotate-180': isExpanded }"
       />
     </button>
 
-    <div
-      class="transition-[height] duration-200 ease-in-out overflow-hidden"
-      :class="isExpanded ? 'h-auto' : 'h-0'"
-    >
-      <div class="px-4 pb-3">
-        <p class="text-n-slate-11 mb-2">
-          {{ t('SECURITY_SETTINGS.SAML.ATTRIBUTE_MAPPING.DESCRIPTION') }}
-        </p>
-        <!-- eslint-disable vue/no-bare-strings-in-template -->
-        <ul class="list-none text-n-slate-12 space-y-1">
-          <li><code class="px-1 rounded bg-n-slate-3">email</code></li>
-          <li><code class="px-1 rounded bg-n-slate-3">first_name</code></li>
-          <li><code class="px-1 rounded bg-n-slate-3">last_name</code></li>
-        </ul>
+    <div v-if="isExpanded" class="p-3 pt-0">
+      <p class="mb-3 text-[12.5px] text-muted-foreground">
+        {{ t('SECURITY_SETTINGS.SAML.ATTRIBUTE_MAPPING.DESCRIPTION') }}
+      </p>
+      <div class="flex flex-col gap-2">
+        <div
+          v-for="attribute in attributes"
+          :key="attribute"
+          class="w-fit rounded border border-border bg-background px-2 py-1 font-mono text-[12px] text-foreground shadow-xs"
+        >
+          {{ attribute }}
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 </template>

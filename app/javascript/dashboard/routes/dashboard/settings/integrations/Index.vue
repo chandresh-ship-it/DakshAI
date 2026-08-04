@@ -3,13 +3,11 @@ import { useStoreGetters, useStore } from 'dashboard/composables/store';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
-import { useBranding } from 'shared/composables/useBranding';
 import { picoSearch } from '@scmmishra/pico-search';
 import IntegrationItem from './IntegrationItem.vue';
 import SettingsLayout from '../SettingsLayout.vue';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
-import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 
 const FILTERS = {
@@ -21,7 +19,6 @@ const FILTERS = {
 const store = useStore();
 const getters = useStoreGetters();
 const { t } = useI18n();
-const { replaceInstallationName } = useBranding();
 
 const searchQuery = ref('');
 const activeFilter = ref(FILTERS.ALL);
@@ -101,18 +98,8 @@ const confirmDeletion = async () => {
     :is-loading="uiFlags.isFetching"
     :loading-message="$t('INTEGRATION_SETTINGS.LOADING')"
   >
-    <template #header>
-      <BaseSettingsHeader
-        :title="$t('INTEGRATION_SETTINGS.HEADER')"
-        :description="
-          replaceInstallationName($t('INTEGRATION_SETTINGS.DESCRIPTION'))
-        "
-        :link-text="$t('INTEGRATION_SETTINGS.LEARN_MORE')"
-        feature-name="integrations"
-      />
-    </template>
     <template #body>
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col space-y-10">
         <div
           class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"
         >
