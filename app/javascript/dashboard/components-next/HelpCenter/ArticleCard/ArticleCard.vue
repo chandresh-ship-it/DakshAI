@@ -108,11 +108,11 @@ const articleMenuItems = computed(() => {
 const statusBadgeClass = computed(() => {
   switch (props.status) {
     case 'archived':
-      return 'bg-violet-500/15 text-violet-700';
+      return 'bg-violet-500/10 text-violet-700 border border-violet-500/20';
     case 'draft':
-      return 'bg-amber-500/15 text-amber-600';
+      return 'bg-amber-500/10 text-amber-600 border border-amber-500/20';
     default:
-      return 'bg-primary/10 text-primary';
+      return 'bg-primary/10 text-primary border border-primary/20';
   }
 });
 
@@ -160,11 +160,11 @@ const handleClick = id => {
 
 <template>
   <div
-    class="group relative flex cursor-pointer flex-col justify-between gap-3 rounded-xl border p-5 transition-all sm:flex-row sm:items-center"
+    class="group relative flex cursor-pointer flex-col justify-between gap-3 rounded-xl border p-4 transition-all sm:flex-row sm:items-center"
     :class="
       isSelected
         ? 'border-primary/60 bg-primary/5 shadow-sm'
-        : 'border-border bg-card hover:shadow-sm'
+        : 'border-border/40 bg-card hover:border-border hover:shadow-sm'
     "
     @mouseenter="emit('hover', true)"
     @mouseleave="emit('hover', false)"
@@ -216,8 +216,8 @@ const handleClick = id => {
       </div>
     </div>
 
-    <div class="flex shrink-0 flex-col items-end gap-1">
-      <div class="flex items-center gap-1.5">
+    <div class="flex shrink-0 flex-col items-end gap-1.5">
+      <div class="flex items-center gap-2">
         <span
           class="rounded px-2 py-0.5 text-[12px] font-medium"
           :class="statusBadgeClass"
@@ -232,7 +232,7 @@ const handleClick = id => {
           <RelayButton
             variant="ghost"
             size="icon"
-            class="size-7 border border-transparent text-muted-foreground hover:border-transparent hover:bg-muted hover:text-foreground"
+            class="size-7 border border-border text-muted-foreground hover:border-transparent hover:bg-muted hover:text-foreground"
             @click="toggleDropdown()"
           >
             <span class="i-lucide-ellipsis-vertical size-3.5" />
