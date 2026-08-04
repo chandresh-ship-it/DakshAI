@@ -73,15 +73,17 @@ const closeMobileSidebar = () => {
 
 <template>
   <section
-    class="flex w-full h-full overflow-hidden justify-evenly bg-n-surface-1"
+    class="flex h-full w-full justify-evenly overflow-hidden bg-background"
   >
     <div
-      class="flex flex-col w-full h-full transition-all duration-300 ltr:2xl:ml-56 rtl:2xl:mr-56"
+      class="flex h-full w-full flex-col transition-all duration-300 ltr:2xl:ml-56 rtl:2xl:mr-56"
     >
-      <header class="sticky top-0 z-10 px-6 3xl:px-0">
-        <div class="w-full mx-auto max-w-[40.625rem]">
+      <header
+        class="sticky top-0 z-10 border-b border-border/40 bg-background px-6 3xl:px-0"
+      >
+        <div class="mx-auto w-full max-w-[40.625rem]">
           <div
-            class="flex flex-col xs:flex-row items-start xs:items-center justify-between w-full py-7 gap-2"
+            class="flex w-full flex-col items-start justify-between gap-2 py-5 xs:flex-row xs:items-center"
           >
             <Breadcrumb
               :items="breadcrumbItems"
@@ -118,8 +120,8 @@ const closeMobileSidebar = () => {
           </div>
         </div>
       </header>
-      <main class="flex-1 px-6 overflow-y-auto 3xl:px-px">
-        <div class="w-full py-4 mx-auto max-w-[40.625rem]">
+      <main class="flex-1 overflow-y-auto bg-muted/10 px-6 3xl:px-px">
+        <div class="mx-auto w-full max-w-[40.625rem] py-4">
           <slot name="default" />
         </div>
       </main>
@@ -128,7 +130,7 @@ const closeMobileSidebar = () => {
     <!-- Desktop sidebar -->
     <div
       v-if="slots.sidebar"
-      class="hidden lg:block overflow-y-auto justify-end min-w-52 w-full py-6 max-w-md border-l border-n-weak bg-n-solid-2"
+      class="hidden max-w-md min-w-52 w-full justify-end overflow-y-auto border-l border-border/40 bg-card py-6 lg:block"
     >
       <slot name="sidebar" />
     </div>
@@ -136,16 +138,15 @@ const closeMobileSidebar = () => {
     <!-- Mobile sidebar container -->
     <div
       v-if="slots.sidebar"
-      class="lg:hidden fixed top-0 ltr:right-0 rtl:left-0 h-full z-50 flex justify-end transition-all duration-200 ease-in-out"
+      class="fixed top-0 z-50 flex h-full justify-end transition-all duration-200 ease-in-out ltr:right-0 rtl:left-0 lg:hidden"
       :class="isContactSidebarOpen ? 'w-full' : 'w-16'"
     >
-      <!-- Toggle button -->
       <div
         v-on-click-outside="[
           closeMobileSidebar,
           { ignore: ['#contact-sidebar-content'] },
         ]"
-        class="flex items-start p-1 w-fit h-fit relative order-1 xs:top-24 top-28 transition-all bg-n-solid-2 border border-n-weak duration-500 ease-in-out"
+        class="relative order-1 top-28 flex h-fit w-fit items-start border border-border bg-card p-1 transition-all duration-500 ease-in-out xs:top-24"
         :class="[
           isContactSidebarOpen
             ? 'justify-end ltr:rounded-l-full rtl:rounded-r-full ltr:rounded-r-none rtl:rounded-l-none'
@@ -157,7 +158,7 @@ const closeMobileSidebar = () => {
           slate
           sm
           class="!rounded-full rtl:rotate-180"
-          :class="{ 'bg-n-alpha-2': isContactSidebarOpen }"
+          :class="{ 'bg-accent': isContactSidebarOpen }"
           :icon="
             isContactSidebarOpen
               ? 'i-lucide-panel-right-close'
@@ -179,7 +180,7 @@ const closeMobileSidebar = () => {
         <div
           v-if="isContactSidebarOpen"
           id="contact-sidebar-content"
-          class="order-2 w-[85%] sm:w-[50%] bg-n-solid-2 ltr:border-l rtl:border-r border-n-weak overflow-y-auto py-6 shadow-lg"
+          class="order-2 w-[85%] overflow-y-auto border-border/40 bg-card py-6 shadow-lg sm:w-[50%] ltr:border-l rtl:border-r"
         >
           <slot name="sidebar" />
         </div>

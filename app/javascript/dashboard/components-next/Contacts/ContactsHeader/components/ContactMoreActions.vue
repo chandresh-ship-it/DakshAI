@@ -12,12 +12,6 @@ const { t } = useI18n();
 const { checkPermissions } = usePolicy();
 
 const contactMenuItems = computed(() => [
-  {
-    label: t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.ADD_CONTACT'),
-    action: 'add',
-    value: 'add',
-    icon: 'i-lucide-plus',
-  },
   ...(checkPermissions(['administrator', 'contact_manage'])
     ? [
         {
@@ -30,39 +24,31 @@ const contactMenuItems = computed(() => [
         },
       ]
     : []),
-  ...(checkPermissions(['administrator', 'contact_manage'])
-    ? [
-        {
-          label: t(
-            'CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.IMPORT_CONTACT'
-          ),
-          action: 'import',
-          value: 'import',
-          icon: 'i-lucide-download',
-        },
-      ]
-    : []),
 ]);
 const showActionsDropdown = ref(false);
 
 const handleContactAction = ({ action }) => {
-  if (action === 'add') {
+  if (action === 'export') {
+    emit('export');
+  } else if (action === 'add') {
     emit('add');
   } else if (action === 'import') {
     emit('import');
-  } else if (action === 'export') {
-    emit('export');
   }
 };
 </script>
 
 <template>
-  <div v-on-clickaway="() => (showActionsDropdown = false)" class="relative">
+  <div
+    v-on-clickaway="() => (showActionsDropdown = false)"
+    class="relative"
+    :class="{ hidden: !contactMenuItems.length }"
+  >
     <RelayButton
-      variant="ghost"
+      variant="outline"
       size="icon"
-      class="size-8"
-      :class="showActionsDropdown ? 'bg-n-alpha-2' : ''"
+      class="size-10 rounded-lg shadow-sm"
+      :class="showActionsDropdown ? 'bg-accent' : ''"
       @click="showActionsDropdown = !showActionsDropdown"
     >
       <span class="i-lucide-ellipsis-vertical size-4" />

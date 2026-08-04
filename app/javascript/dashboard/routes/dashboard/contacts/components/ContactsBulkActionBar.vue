@@ -81,20 +81,20 @@ const handleRemoveLabels = labels => {
 
 <template>
   <div
-    class="sticky top-0 z-10 bg-gradient-to-b from-n-background from-90% to-transparent pb-2 pt-1"
+    class="mb-4 flex shrink-0 items-center justify-between border-b border-border/40 bg-muted/30 px-0 py-3 animate-in fade-in duration-200"
   >
     <BulkSelectBar
       v-model="selectionModel"
       :all-items="allItems"
       :select-all-label="selectAllLabel"
       :selected-count-label="selectedCountLabel"
-      class="justify-between py-2 ltr:!pr-3 rtl:!pl-3"
+      class="!mb-0 w-full justify-between !rounded-none !border-0 !bg-transparent !px-0 !py-0 !shadow-none"
     >
       <template #primaryActions>
         <RelayButton
           variant="ghost"
           size="sm"
-          class="px-1"
+          class="ml-2 h-8 border border-border/60 text-muted-foreground hover:border-transparent hover:text-foreground"
           @click="emit('clearSelection')"
         >
           {{ t('CONTACTS_BULK_ACTIONS.CLEAR_SELECTION') }}
@@ -115,18 +115,16 @@ const handleRemoveLabels = labels => {
             :disabled="!selectedCount"
             @remove="handleRemoveLabels"
           />
-          <div class="h-3 w-px rounded-lg bg-n-weak" />
           <Policy :permissions="['administrator']">
             <RelayButton
-              v-tooltip.bottom="t('CONTACTS_BULK_ACTIONS.DELETE_CONTACTS')"
-              variant="destructive"
+              variant="outline"
               size="sm"
-              class="px-2"
+              class="h-8 gap-2 border-border/80 bg-background font-medium text-destructive shadow-sm hover:bg-destructive/10 hover:text-destructive"
               :disabled="!selectedCount || isLoading"
               :aria-label="t('CONTACTS_BULK_ACTIONS.DELETE_CONTACTS')"
               @click="emit('deleteSelected')"
             >
-              <span class="i-lucide-trash size-4" />
+              <span class="i-lucide-trash size-3.5" />
               <span class="hidden md:inline">
                 {{ t('CONTACTS_BULK_ACTIONS.DELETE_CONTACTS') }}
               </span>

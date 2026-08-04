@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
-import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 
 const props = defineProps({
   visibleColumns: {
@@ -45,31 +44,26 @@ const toggleColumn = (key, checked) => {
 </script>
 
 <template>
-  <div class="p-4 w-60 max-h-96 flex flex-col gap-2 bg-n-surface-1">
+  <div class="flex max-h-96 w-56 flex-col gap-1 p-2">
     <div
-      class="text-xs font-semibold text-n-slate-11 uppercase tracking-wider mb-2"
+      class="flex cursor-not-allowed items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground opacity-70"
     >
-      {{ t('CONTACTS_LAYOUT.FILTER.MANAGE_COLUMNS') }}
+      <span class="i-lucide-check size-4 opacity-100" />
+      <span>{{ t('CONTACTS_LAYOUT.FILTER.NAME') }}</span>
     </div>
-    <div class="flex flex-col gap-2.5 overflow-y-auto">
-      <label
-        class="flex items-center gap-2 text-sm text-n-slate-12 cursor-not-allowed opacity-70"
-      >
-        <Checkbox disabled model-value />
-        <span>{{ t('CONTACTS_LAYOUT.FILTER.NAME') }}</span>
-      </label>
 
-      <label
-        v-for="col in allColumns"
-        :key="col.key"
-        class="flex items-center gap-2 text-sm text-n-slate-12 cursor-pointer hover:text-n-slate-12"
-      >
-        <Checkbox
-          :model-value="visibleColumns.includes(col.key)"
-          @change="event => toggleColumn(col.key, event.target.checked)"
-        />
-        <span>{{ col.label }}</span>
-      </label>
-    </div>
+    <button
+      v-for="col in allColumns"
+      :key="col.key"
+      type="button"
+      class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-accent"
+      @click="toggleColumn(col.key, !visibleColumns.includes(col.key))"
+    >
+      <span
+        class="i-lucide-check size-4"
+        :class="visibleColumns.includes(col.key) ? 'opacity-100' : 'opacity-0'"
+      />
+      <span>{{ col.label }}</span>
+    </button>
   </div>
 </template>

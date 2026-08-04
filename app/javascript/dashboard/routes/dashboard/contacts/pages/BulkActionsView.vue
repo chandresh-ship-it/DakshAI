@@ -3,7 +3,7 @@ import { ref, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BulkActionAuditsAPI from 'dashboard/api/bulkActionAudits';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const { t } = useI18n();
 
@@ -29,7 +29,6 @@ const fetchAudits = async () => {
     const response = await BulkActionAuditsAPI.get(params);
     let data = response.data || [];
 
-    // Local filtering for Date Range
     if (dateFromFilter.value) {
       const fromDate = new Date(dateFromFilter.value);
       data = data.filter(audit => new Date(audit.created_at) >= fromDate);
@@ -41,7 +40,7 @@ const fetchAudits = async () => {
     }
 
     audits.value = data;
-  } catch (error) {
+  } catch {
     // Ignore error
   } finally {
     isLoading.value = false;
@@ -56,8 +55,14 @@ const clearFilters = () => {
   fetchAudits();
 };
 
+const hasFilters = () =>
+  statusFilter.value ||
+  operationFilter.value ||
+  dateFromFilter.value ||
+  dateToFilter.value;
+
 const formatDate = dateString => {
-  if (!dateString) return '-';
+  if (!dateString) return '—';
   return new Date(dateString).toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -69,15 +74,12 @@ const formatDate = dateString => {
 
 const getStatusClass = status => {
   const classes = {
-    pending:
-      'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-500',
-    processing:
-      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-500',
-    completed:
-      'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-500',
-    failed: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-500',
+    pending: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+    processing: 'bg-primary/10 text-primary',
+    completed: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    failed: 'bg-destructive/10 text-destructive',
   };
-  return classes[status] || 'bg-slate-100 text-slate-800';
+  return classes[status] || 'bg-muted text-muted-foreground';
 };
 
 const getOperationLabel = operation => {
@@ -101,7 +103,7 @@ const formatStatistics = audit => {
   const total = stats.total || 0;
   const success = stats.success || 0;
 
-  if (total === 0) return '-';
+  if (total === 0) return '—';
   return `${success} / ${total} succeeded`;
 };
 
@@ -115,198 +117,189 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    class="flex flex-col justify-between flex-1 h-full m-0 overflow-auto bg-n-surface-1 p-6"
-  >
-    <!-- Header -->
-    <div class="flex flex-col mb-6">
-      <h1 class="text-2xl font-semibold text-n-slate-12">
+  <div class="flex h-full flex-1 flex-col overflow-auto bg-background p-6">
+    <div class="mb-10 max-w-6xl">
+      <h2 class="text-base font-semibold tracking-tight text-foreground">
         {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TITLE') }}
-      </h1>
-      <p class="text-sm text-n-slate-11 mt-1">
+      </h2>
+      <p class="mt-1 text-[14px] text-muted-foreground">
         {{ t('CONTACTS_BULK_ACTIONS.AUDIT.SUBTITLE') }}
       </p>
     </div>
 
-    <!-- Filters Row -->
     <div
-      class="flex flex-wrap items-center gap-3 mb-6 bg-n-slate-2 p-3 rounded-lg border border-n-slate-4"
+      class="mb-10 max-w-6xl space-y-6 rounded-xl border border-border bg-card p-6 shadow-sm"
     >
-      <!-- Status Filter -->
-      <select
-        v-model="statusFilter"
-        class="px-3 py-1.5 text-sm rounded-lg border border-n-slate-4 bg-n-surface-1 text-n-slate-12 focus:outline-none focus:border-n-brand"
-      >
-        <option value="">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.STATUS') }}
-        </option>
-        <option value="pending">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING') }}
-        </option>
-        <option value="processing">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING') }}
-        </option>
-        <option value="completed">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.COMPLETED') }}
-        </option>
-        <option value="failed">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.FAILED') }}
-        </option>
-      </select>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <select
+          v-model="statusFilter"
+          class="h-11 w-full rounded-md border border-border bg-background px-4 text-[14px] font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+        >
+          <option value="">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.STATUS') }}
+          </option>
+          <option value="pending">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PENDING') }}
+          </option>
+          <option value="processing">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.PROCESSING') }}
+          </option>
+          <option value="completed">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.COMPLETED') }}
+          </option>
+          <option value="failed">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.STATUS.FAILED') }}
+          </option>
+        </select>
 
-      <!-- Operation Filter -->
-      <select
-        v-model="operationFilter"
-        class="px-3 py-1.5 text-sm rounded-lg border border-n-slate-4 bg-n-surface-1 text-n-slate-12 focus:outline-none focus:border-n-brand"
-      >
-        <option value="">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.OPERATION') }}
-        </option>
-        <option value="add_tag">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.ADD_LABEL') }}
-        </option>
-        <option value="remove_tag">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.REMOVE_LABEL') }}
-        </option>
-        <option value="delete">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.DELETE') }}
-        </option>
-        <option value="send_sms">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_SMS') }}
-        </option>
-        <option value="send_email">
-          {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_EMAIL') }}
-        </option>
-      </select>
-
-      <!-- Date Range -->
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-n-slate-11 font-medium">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.DATE_FROM') }}:</span>
-        <input
-          v-model="dateFromFilter"
-          type="date"
-          class="px-3 py-1.5 text-sm rounded-lg border border-n-slate-4 bg-n-surface-1 text-n-slate-12 focus:outline-none focus:border-n-brand"
-        />
+        <select
+          v-model="operationFilter"
+          class="h-11 w-full rounded-md border border-border bg-background px-4 text-[14px] font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+        >
+          <option value="">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.OPERATION') }}
+          </option>
+          <option value="add_tag">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.ADD_LABEL') }}
+          </option>
+          <option value="remove_tag">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.REMOVE_LABEL') }}
+          </option>
+          <option value="delete">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.DELETE') }}
+          </option>
+          <option value="send_sms">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_SMS') }}
+          </option>
+          <option value="send_email">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.OPERATION.SEND_EMAIL') }}
+          </option>
+        </select>
       </div>
 
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-n-slate-11 font-medium">{{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.DATE_TO') }}:</span>
-        <input
-          v-model="dateToFilter"
-          type="date"
-          class="px-3 py-1.5 text-sm rounded-lg border border-n-slate-4 bg-n-surface-1 text-n-slate-12 focus:outline-none focus:border-n-brand"
-        />
+      <div class="flex flex-wrap items-end gap-4">
+        <div class="flex flex-col gap-1.5">
+          <span class="text-xs font-semibold text-muted-foreground">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.DATE_FROM') }}
+          </span>
+          <input
+            v-model="dateFromFilter"
+            type="date"
+            class="h-[38px] w-[180px] rounded-md border border-border bg-background px-3 text-[13px] font-medium text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+          />
+        </div>
+        <span class="i-lucide-arrow-right mb-2 size-4 text-muted-foreground" />
+        <div class="flex flex-col gap-1.5">
+          <span class="text-xs font-semibold text-muted-foreground">
+            {{ t('CONTACTS_BULK_ACTIONS.AUDIT.FILTER.DATE_TO') }}
+          </span>
+          <input
+            v-model="dateToFilter"
+            type="date"
+            class="h-[38px] w-[180px] rounded-md border border-border bg-background px-3 text-[13px] font-medium text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+          />
+        </div>
+        <RelayButton
+          v-if="hasFilters()"
+          variant="ghost"
+          size="sm"
+          class="mb-0.5"
+          @click="clearFilters"
+        >
+          {{ t('CONTACTS_LAYOUT.FILTER.ACTIVE_FILTERS.CLEAR_FILTERS') }}
+        </RelayButton>
       </div>
-
-      <!-- Clear Button -->
-      <Button
-        v-if="statusFilter || operationFilter || dateFromFilter || dateToFilter"
-        label="Clear Filters"
-        variant="ghost"
-        color="slate"
-        size="sm"
-        @click="clearFilters"
-      />
     </div>
 
-    <!-- Loading State -->
     <div
       v-if="isLoading"
-      class="flex items-center justify-center py-20 text-n-slate-11"
+      class="flex items-center justify-center py-20 text-muted-foreground"
     >
       <Spinner />
     </div>
 
-    <!-- Empty State -->
     <div
       v-else-if="!audits.length"
-      class="flex flex-col items-center justify-center py-20 border border-dashed rounded-lg border-n-slate-4 bg-n-slate-2"
+      class="flex max-w-6xl flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 py-20"
     >
-      <span class="i-lucide-activity size-12 text-n-slate-8 mb-4" />
-      <h3 class="text-lg font-medium text-n-slate-12 mb-1">
+      <span class="i-lucide-activity mb-4 size-12 text-muted-foreground/50" />
+      <h3 class="mb-1 text-lg font-medium text-foreground">
         {{ t('CONTACTS_BULK_ACTIONS.AUDIT.EMPTY.TITLE') }}
       </h3>
-      <p class="text-sm text-n-slate-11 text-center max-w-sm">
+      <p class="max-w-sm text-center text-sm text-muted-foreground">
         {{ t('CONTACTS_BULK_ACTIONS.AUDIT.EMPTY.SUBTITLE') }}
       </p>
     </div>
 
-    <!-- Table Grid -->
     <div
       v-else
-      class="w-full border rounded-lg border-n-slate-4 bg-n-surface-1 overflow-x-auto"
+      class="max-w-6xl overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm"
     >
-      <table class="w-full text-left border-collapse table-auto">
-        <thead>
-          <tr
-            class="border-b border-n-slate-4 bg-n-slate-2 text-n-slate-11 text-xs font-semibold uppercase tracking-wider"
-          >
-            <th class="p-3 text-sm font-semibold capitalize text-n-slate-12">
-              {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.ACTION_NAME') }}
-            </th>
-            <th class="p-3 text-sm font-semibold capitalize text-n-slate-12">
-              {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.OPERATION') }}
-            </th>
-            <th class="p-3 text-sm font-semibold capitalize text-n-slate-12">
-              {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.CREATED_AT') }}
-            </th>
-            <th class="p-3 text-sm font-semibold capitalize text-n-slate-12">
-              {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.COMPLETED_AT') }}
-            </th>
-            <th class="p-3 text-sm font-semibold capitalize text-n-slate-12">
-              {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.STATUS') }}
-            </th>
-            <th class="p-3 text-sm font-semibold capitalize text-n-slate-12">
-              {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.STATISTICS') }}
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-n-slate-3 text-sm text-n-slate-12">
-          <tr
-            v-for="audit in audits"
-            :key="audit.id"
-            class="hover:bg-n-slate-2 transition-colors"
-          >
-            <!-- Action Name -->
-            <td class="p-3 font-medium text-n-slate-12">
-              {{ audit.action_label }}
-            </td>
-            <!-- Operation -->
-            <td class="p-3">
-              <span
-                class="px-2 py-0.5 text-xs rounded-full bg-n-slate-3 text-n-slate-11 font-medium border border-n-slate-4"
-              >
-                {{ getOperationLabel(audit.operation_type) }}
-              </span>
-            </td>
-            <!-- Created At -->
-            <td class="p-3 text-n-slate-11 font-mono text-xs">
-              {{ formatDate(audit.created_at) }}
-            </td>
-            <!-- Completed At -->
-            <td class="p-3 text-n-slate-11 font-mono text-xs">
-              {{ formatDate(audit.completed_at) }}
-            </td>
-            <!-- Status -->
-            <td class="p-3">
-              <span
-                :class="getStatusClass(audit.status)"
-                class="px-2.5 py-0.5 text-xs rounded-full font-medium inline-block uppercase tracking-wider text-center min-w-[5rem]"
-              >
-                {{
-                  t(
-                    `CONTACTS_BULK_ACTIONS.AUDIT.STATUS.${audit.status.toUpperCase()}`
-                  )
-                }}
-              </span>
-            </td>
-            <!-- Statistics -->
-            <td class="p-3 text-n-slate-11 font-medium">
-              {{ formatStatistics(audit) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-border/50 bg-muted/30">
+            <tr>
+              <th class="px-4 py-3 font-medium text-muted-foreground">
+                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.ACTION_NAME') }}
+              </th>
+              <th class="px-4 py-3 font-medium text-muted-foreground">
+                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.OPERATION') }}
+              </th>
+              <th class="px-4 py-3 font-medium text-muted-foreground">
+                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.CREATED_AT') }}
+              </th>
+              <th class="px-4 py-3 font-medium text-muted-foreground">
+                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.COMPLETED_AT') }}
+              </th>
+              <th class="px-4 py-3 font-medium text-muted-foreground">
+                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.STATUS') }}
+              </th>
+              <th class="px-4 py-3 font-medium text-muted-foreground">
+                {{ t('CONTACTS_BULK_ACTIONS.AUDIT.TABLE.STATISTICS') }}
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/40">
+            <tr
+              v-for="audit in audits"
+              :key="audit.id"
+              class="transition-colors hover:bg-muted/30"
+            >
+              <td class="px-4 py-4 font-medium text-foreground">
+                {{ audit.action_label }}
+              </td>
+              <td class="px-4 py-4">
+                <span
+                  class="inline-flex items-center rounded-md border border-border/50 bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                >
+                  {{ getOperationLabel(audit.operation_type) }}
+                </span>
+              </td>
+              <td class="px-4 py-4 text-sm text-muted-foreground">
+                {{ formatDate(audit.created_at) }}
+              </td>
+              <td class="px-4 py-4 text-sm text-muted-foreground">
+                {{ formatDate(audit.completed_at) }}
+              </td>
+              <td class="px-4 py-4">
+                <span
+                  :class="getStatusClass(audit.status)"
+                  class="inline-block min-w-[5rem] rounded-full px-2.5 py-0.5 text-center text-xs font-medium uppercase tracking-wider"
+                >
+                  {{
+                    t(
+                      `CONTACTS_BULK_ACTIONS.AUDIT.STATUS.${audit.status.toUpperCase()}`
+                    )
+                  }}
+                </span>
+              </td>
+              <td class="px-4 py-4 text-sm font-medium text-muted-foreground">
+                {{ formatStatistics(audit) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>

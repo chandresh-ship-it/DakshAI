@@ -4,18 +4,10 @@ import ContactHeader from '../ContactHeader.vue';
 
 // Base state controls
 const searchValue = ref('');
-const activeSort = ref('last_activity_at');
-const activeOrdering = ref('');
 
 const onSearch = value => {
   searchValue.value = value;
   console.log('🔍 Search:', value);
-};
-
-const onSort = ({ sort, order }) => {
-  activeSort.value = sort;
-  activeOrdering.value = order;
-  console.log('🔄 Sort changed:', { sort, order });
 };
 
 const onFilter = () => {
@@ -50,11 +42,8 @@ const onExport = () => {
           header-title="Contacts"
           button-label="Message"
           :search-value="searchValue"
-          :active-sort="activeSort"
-          :active-ordering="activeOrdering"
           @search="onSearch"
           @filter="onFilter"
-          @update:sort="onSort"
           @message="onMessage"
           @add="onAdd"
           @import="onImport"
@@ -70,11 +59,8 @@ const onExport = () => {
           header-title="Contacts"
           button-label="Message"
           :search-value="searchValue"
-          :active-sort="activeSort"
-          :active-ordering="activeOrdering"
           @search="onSearch"
           @filter="onFilter"
-          @update:sort="onSort"
           @message="onMessage"
           @add="onAdd"
           @import="onImport"
@@ -90,11 +76,8 @@ const onExport = () => {
           header-title="Segment: VIP Customers"
           button-label="Message"
           :search-value="searchValue"
-          :active-sort="activeSort"
-          :active-ordering="activeOrdering"
           @search="onSearch"
           @filter="onFilter"
-          @update:sort="onSort"
           @message="onMessage"
           @add="onAdd"
           @import="onImport"

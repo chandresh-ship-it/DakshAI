@@ -3,14 +3,9 @@ import { ref, computed, unref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useRouter } from 'vue-router';
-import { useAlert, useTrack } from 'dashboard/composables';
-import { CONTACTS_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
+import { useAlert } from 'dashboard/composables';
 import filterQueryGenerator from 'dashboard/helper/filterQueryGenerator';
 import contactFilterItems from 'dashboard/routes/dashboard/contacts/contactFilterItems';
-import {
-  DuplicateContactException,
-  ExceptionWithMessage,
-} from 'shared/helpers/CustomErrors';
 import { generateValuesForEditCustomViews } from 'dashboard/helper/customViewsHelper';
 import countries from 'shared/constants/countries';
 import {
@@ -19,9 +14,7 @@ import {
 } from 'dashboard/composables/useTransformKeys';
 
 import ContactsHeader from 'dashboard/components-next/Contacts/ContactsHeader/ContactHeader.vue';
-import AddContactDrawer from 'dashboard/components-next/Contacts/Drawers/AddContactDrawer.vue';
 import ContactExportDialog from 'dashboard/components-next/Contacts/ContactsForm/ContactExportDialog.vue';
-import ContactImportDialog from 'dashboard/components-next/Contacts/ContactsForm/ContactImportDialog.vue';
 import CreateSegmentDialog from 'dashboard/components-next/Contacts/ContactsForm/CreateSegmentDialog.vue';
 import DeleteSegmentDialog from 'dashboard/components-next/Contacts/ContactsForm/DeleteSegmentDialog.vue';
 import ContactsFilter from 'dashboard/components-next/filter/ContactsFilter.vue';
@@ -29,8 +22,6 @@ import ContactsFilter from 'dashboard/components-next/filter/ContactsFilter.vue'
 const props = defineProps({
   showSearch: { type: Boolean, default: true },
   searchValue: { type: String, default: '' },
-  activeSort: { type: String, default: 'last_activity_at' },
-  activeOrdering: { type: String, default: '' },
   headerTitle: { type: String, default: '' },
   segmentsId: { type: [String, Number], default: 0 },
   activeSegment: { type: Object, default: null },
@@ -39,20 +30,13 @@ const props = defineProps({
   isActiveView: { type: Boolean, default: false },
 });
 
-const emit = defineEmits([
-  'update:sort',
-  'search',
-  'applyFilter',
-  'clearFilters',
-]);
+const emit = defineEmits(['search', 'applyFilter', 'clearFilters']);
 
 const { t } = useI18n();
 const store = useStore();
 const router = useRouter();
 
-const addContactDrawerRef = ref(null);
 const contactExportDialogRef = ref(null);
-const contactImportDialogRef = ref(null);
 const createSegmentDialogRef = ref(null);
 const deleteSegmentDialogRef = ref(null);
 
@@ -68,57 +52,12 @@ const hasActiveSegments = computed(
 );
 const activeSegmentName = computed(() => props.activeSegment?.name);
 
-const openCreateNewContactDialog = () => {
-  addContactDrawerRef.value?.open();
-};
-const openContactImportDialog = () =>
-  contactImportDialogRef.value?.dialogRef.open();
 const openContactExportDialog = () =>
   contactExportDialogRef.value?.dialogRef.open();
 const openCreateSegmentDialog = () =>
   createSegmentDialogRef.value?.dialogRef.open();
 const openDeleteSegmentDialog = () =>
   deleteSegmentDialogRef.value?.dialogRef.open();
-
-const onCreate = async contact => {
-  try {
-    await store.dispatch('contacts/create', contact);
-    addContactDrawerRef.value?.close();
-    useAlert(
-      t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.SUCCESS_MESSAGE')
-    );
-  } catch (error) {
-    const i18nPrefix = 'CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION';
-    if (error instanceof DuplicateContactException) {
-      if (error.data.includes('email')) {
-        useAlert(t(`${i18nPrefix}.EMAIL_ADDRESS_DUPLICATE`));
-      } else if (error.data.includes('phone_number')) {
-        useAlert(t(`${i18nPrefix}.PHONE_NUMBER_DUPLICATE`));
-      }
-    } else if (error instanceof ExceptionWithMessage) {
-      useAlert(error.data);
-    } else {
-      useAlert(t(`${i18nPrefix}.ERROR_MESSAGE`));
-    }
-  }
-};
-
-const onImport = async file => {
-  try {
-    await store.dispatch('contacts/import', file);
-    contactImportDialogRef.value?.dialogRef.close();
-    useAlert(
-      t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.SUCCESS_MESSAGE')
-    );
-    useTrack(CONTACTS_EVENTS.IMPORT_SUCCESS);
-  } catch (error) {
-    useAlert(
-      error.message ??
-        t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.ERROR_MESSAGE')
-    );
-    useTrack(CONTACTS_EVENTS.IMPORT_FAILURE);
-  }
-};
 
 const onExport = async query => {
   try {
@@ -147,7 +86,6 @@ const onCreateSegment = async payload => {
     );
     const segmentId = response?.data?.id;
     if (!segmentId) return;
-    // Navigate to the created segment
     router.push({
       name: 'contacts_dashboard_segments_index',
       params: { segmentId },
@@ -176,7 +114,7 @@ const onDeleteSegment = async payload => {
     useAlert(
       t('CONTACTS_LAYOUT.HEADER.ACTIONS.FILTERS.DELETE_SEGMENT.SUCCESS_MESSAGE')
     );
-  } catch (error) {
+  } catch {
     useAlert(
       t('CONTACTS_LAYOUT.HEADER.ACTIONS.FILTERS.DELETE_SEGMENT.ERROR_MESSAGE')
     );
@@ -274,8 +212,6 @@ defineExpose({
   <ContactsHeader
     :show-search="showSearch"
     :search-value="searchValue"
-    :active-sort="activeSort"
-    :active-ordering="activeOrdering"
     :header-title="headerTitle"
     :is-segments-view="hasActiveSegments"
     :is-label-view="isLabelView"
@@ -283,17 +219,17 @@ defineExpose({
     :has-active-filters="hasAppliedFilters"
     :button-label="t('CONTACTS_LAYOUT.HEADER.MESSAGE_BUTTON')"
     @search="emit('search', $event)"
-    @update:sort="emit('update:sort', $event)"
-    @add="openCreateNewContactDialog"
-    @import="openContactImportDialog"
     @export="openContactExportDialog"
     @filter="onToggleFilters"
     @create-segment="openCreateSegmentDialog"
     @delete-segment="openDeleteSegmentDialog"
   >
+    <template #columns>
+      <slot name="columns" />
+    </template>
     <template #filter>
       <div
-        class="absolute mt-1 ltr:-right-52 rtl:-left-52 sm:ltr:right-0 sm:rtl:left-0 top-full"
+        class="absolute mt-1 ltr:-right-52 rtl:-left-52 sm:ltr:right-0 sm:rtl:left-0 top-full z-50"
       >
         <ContactsFilter
           v-if="showFiltersModal"
@@ -309,9 +245,7 @@ defineExpose({
     </template>
   </ContactsHeader>
 
-  <AddContactDrawer ref="addContactDrawerRef" @create="onCreate" />
   <ContactExportDialog ref="contactExportDialogRef" @export="onExport" />
-  <ContactImportDialog ref="contactImportDialogRef" @import="onImport" />
   <CreateSegmentDialog ref="createSegmentDialogRef" @create="onCreateSegment" />
   <DeleteSegmentDialog ref="deleteSegmentDialogRef" @delete="onDeleteSegment" />
 </template>

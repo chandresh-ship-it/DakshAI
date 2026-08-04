@@ -187,7 +187,6 @@ const getTeamUnreadCount = useMapGetter(
   'conversationUnreadCounts/getTeamUnreadCount'
 );
 const teams = useMapGetter('teams/getMyTeams');
-const contactCustomViews = useMapGetter('customViews/getContactCustomViews');
 const conversationCustomViews = useMapGetter(
   'customViews/getConversationCustomViews'
 );
@@ -387,66 +386,31 @@ const primaryMenuItems = computed(() => {
       icon: 'i-lucide-users',
       children: [
         {
-          name: 'All Contacts',
+          name: 'Contacts',
           label: t('SIDEBAR.CONTACTS'),
           to: accountScopedRoute(
             'contacts_dashboard_index',
             {},
             { page: 1, search: undefined }
           ),
-          activeOn: ['contacts_dashboard_index', 'contacts_edit'],
-        },
-        {
-          name: 'Active',
-          label: t('SIDEBAR.ACTIVE'),
-          to: accountScopedRoute('contacts_dashboard_active'),
-          activeOn: ['contacts_dashboard_active'],
+          activeOn: [
+            'contacts_dashboard_index',
+            'contacts_dashboard_active',
+            'contacts_dashboard_segments_index',
+            'contacts_dashboard_labels_index',
+            'contacts_dashboard_bulk_actions',
+            'contacts_dashboard_tasks',
+            'contacts_dashboard_companies',
+            'contacts_edit',
+            'contacts_edit_segment',
+            'contacts_edit_label',
+          ],
         },
         {
           name: 'Companies',
           label: t('SIDEBAR.COMPANIES'),
-          to: accountScopedRoute('contacts_dashboard_companies'),
-          activeOn: ['contacts_dashboard_companies'],
-        },
-        {
-          name: 'Segments',
-          icon: 'i-lucide-group',
-          label: t('SIDEBAR.CUSTOM_VIEWS_SEGMENTS'),
-          children: contactCustomViews.value.map(view => ({
-            name: `${view.name}-${view.id}`,
-            label: view.name,
-            to: accountScopedRoute(
-              'contacts_dashboard_segments_index',
-              { segmentId: view.id },
-              { page: 1 }
-            ),
-            activeOn: [
-              'contacts_dashboard_segments_index',
-              'contacts_edit_segment',
-            ],
-          })),
-        },
-        {
-          name: 'Tagged With',
-          icon: 'i-lucide-tag',
-          label: t('SIDEBAR.TAGGED_WITH'),
-          children: labels.value.map(label => ({
-            name: `${label.title}-${label.id}`,
-            label: label.title,
-            icon: h('span', {
-              class: `size-[8px] rounded-sm`,
-              style: { backgroundColor: label.color },
-            }),
-            to: accountScopedRoute(
-              'contacts_dashboard_labels_index',
-              { label: label.title },
-              { page: 1, search: undefined }
-            ),
-            activeOn: [
-              'contacts_dashboard_labels_index',
-              'contacts_edit_label',
-            ],
-          })),
+          to: accountScopedRoute('companies_dashboard_index'),
+          activeOn: ['companies_dashboard_index', 'companies_dashboard_show'],
         },
       ],
     },

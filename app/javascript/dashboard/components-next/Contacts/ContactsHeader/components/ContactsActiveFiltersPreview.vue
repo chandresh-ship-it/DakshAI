@@ -50,20 +50,24 @@ const activeFilterQueryData = computed(() => {
 </script>
 
 <template>
-  <ActiveFilterPreview
-    :applied-filters="activeFilterQueryData"
-    :max-visible-filters="2"
-    :more-filters-label="
-      t('CONTACTS_LAYOUT.FILTER.ACTIVE_FILTERS.MORE_FILTERS', {
-        count: activeFilterQueryData.length - 2,
-      })
-    "
-    :clear-button-label="
-      t('CONTACTS_LAYOUT.FILTER.ACTIVE_FILTERS.CLEAR_FILTERS')
-    "
-    :show-clear-button="!hasActiveSegments"
-    class="max-w-5xl"
-    @open-filter="emit('openFilter')"
-    @clear-filters="emit('clearFilters')"
-  />
+  <div
+    class="flex items-center justify-between border-b border-border/40 bg-muted/10 px-6 py-2.5"
+  >
+    <ActiveFilterPreview
+      :applied-filters="activeFilterQueryData"
+      :max-visible-filters="4"
+      :more-filters-label="
+        t('CONTACTS_LAYOUT.FILTER.ACTIVE_FILTERS.MORE_FILTERS', {
+          count: activeFilterQueryData.length - 4,
+        })
+      "
+      :clear-button-label="
+        t('CONTACTS_LAYOUT.FILTER.ACTIVE_FILTERS.CLEAR_FILTERS')
+      "
+      :show-clear-button="!hasActiveSegments"
+      class="max-w-none flex-1"
+      @open-filter="emit('openFilter')"
+      @clear-filters="emit('clearFilters')"
+    />
+  </div>
 </template>

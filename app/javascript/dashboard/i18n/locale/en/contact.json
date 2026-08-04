@@ -294,9 +294,12 @@
   "CONTACTS_LAYOUT": {
     "HEADER": {
       "TITLE": "Contacts",
+      "DESCRIPTION": "All your contacts in one place",
       "SEARCH_TITLE": "Search contacts",
       "ACTIVE_TITLE": "Active contacts",
-      "SEARCH_PLACEHOLDER": "Search...",
+      "SEARCH_PLACEHOLDER": "Search contacts by name, email, phone, company...",
+      "FILTERS_BUTTON": "Filters",
+      "COLUMNS_BUTTON": "Columns",
       "MESSAGE_BUTTON": "Message",
       "SEND_MESSAGE": "Send message",
       "BLOCK_CONTACT": "Block contact",
@@ -313,7 +316,7 @@
       },
       "ACTIONS": {
         "CONTACT_CREATION": {
-          "ADD_CONTACT": "Add contact",
+          "ADD_CONTACT": "Add Contact",
           "EXPORT_CONTACT": "Export contacts",
           "IMPORT_CONTACT": "Import contacts",
           "SAVE_CONTACT": "Save contact",
@@ -424,6 +427,7 @@
     },
     "CARD": {
       "OF": "of",
+      "UNNAMED_CONTACT": "Unnamed Contact",
       "VIEW_DETAILS": "View details",
       "EDIT_DETAILS_FORM": {
         "TITLE": "Edit contact details",
@@ -584,12 +588,23 @@
       }
     },
     "EMPTY_STATE": {
-      "TITLE": "No contacts found in this account",
-      "SUBTITLE": "Start adding new contacts by clicking on the button below",
+      "TITLE": "No contacts yet",
+      "SUBTITLE": "Every conversation, lead, and customer starts with a contact. Import your existing contacts or create one to begin.",
       "BUTTON_LABEL": "Add contact",
-      "SEARCH_EMPTY_STATE_TITLE": "No contacts matches your search 🔍",
-      "LIST_EMPTY_STATE_TITLE": "No contacts available in this view 📋",
-      "ACTIVE_EMPTY_STATE_TITLE": "No contacts are active at the moment 🌙"
+      "IMPORT_CSV": "Import CSV",
+      "IMPORT_CSV_HINT": "Upload a file",
+      "ADD_MANUALLY": "Add Manually",
+      "ADD_MANUALLY_HINT": "Create one by one",
+      "GETTING_STARTED": "Getting Started",
+      "STEP_BADGE": "Step 2 of 4",
+      "STEP_WORKSPACE": "Create Workspace",
+      "STEP_IMPORT": "Import Contacts",
+      "STEP_CHANNEL": "Connect Channel",
+      "STEP_MESSAGE": "Send First Message",
+      "SEARCH_EMPTY_STATE_TITLE": "No matches found",
+      "SEARCH_EMPTY_STATE_SUBTITLE": "We couldn't find any contacts matching your search. Try clearing search or add a new contact.",
+      "LIST_EMPTY_STATE_TITLE": "No contacts available in this view",
+      "ACTIVE_EMPTY_STATE_TITLE": "No contacts are active at the moment"
     },
     "LOAD_MORE": "Load more",
     "ADD_CONTACT_DRAWER": {

@@ -20,7 +20,7 @@ import ContactsBulkActionBar from '../components/ContactsBulkActionBar.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Popover from 'dashboard/components-next/popover/Popover.vue';
 import ColumnManager from 'dashboard/components-next/Contacts/ColumnManager.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import BulkActionsAPI from 'dashboard/api/bulkActions';
 
 const DEFAULT_SORT_FIELD = 'last_activity_at';
@@ -537,7 +537,7 @@ onMounted(async () => {
 
 <template>
   <div
-    class="flex flex-col justify-between flex-1 h-full m-0 overflow-auto bg-n-surface-1"
+    class="flex flex-col justify-between flex-1 h-full m-0 overflow-auto bg-transparent"
   >
     <ContactsListLayout
       :search-value="searchValue"
@@ -545,8 +545,6 @@ onMounted(async () => {
       :current-page="currentPage"
       :total-items="totalItems"
       :show-pagination-footer="!isFetchingList && hasContacts && !isSearchView"
-      :active-sort="sortState.activeSort"
-      :active-ordering="sortState.activeOrdering"
       :active-segment="activeSegment"
       :segments-id="activeSegmentId"
       :is-fetching-list="isFetchingList"
@@ -554,18 +552,34 @@ onMounted(async () => {
       :use-infinite-scroll="isSearchView"
       :has-more="hasMore"
       :is-loading-more="isLoadingMore"
+      :show-toolbar="!showEmptyStateLayout"
       @update:current-page="onPageChange"
       @search="
         value => searchContacts(value, 1, false, { clearSelection: false })
       "
-      @update:sort="handleSort"
       @apply-filter="fetchSavedOrAppliedFilteredContact"
       @clear-filters="fetchContacts"
       @load-more="loadMoreSearchResults"
     >
+      <template #columns>
+        <Popover align="end">
+          <RelayButton
+            variant="outline"
+            class="h-10 gap-2 rounded-lg px-3 text-sm font-medium shadow-sm"
+          >
+            <span class="i-lucide-columns-3 size-4" />
+            {{ t('CONTACTS_LAYOUT.HEADER.COLUMNS_BUTTON') }}
+            <span class="i-lucide-chevron-down size-3 opacity-50" />
+          </RelayButton>
+          <template #content>
+            <ColumnManager v-model:visible-columns="visibleColumns" />
+          </template>
+        </Popover>
+      </template>
+
       <div
         v-if="isFetchingList && !(isSearchView && hasContacts)"
-        class="flex items-center justify-center py-10 text-n-slate-11"
+        class="flex items-center justify-center py-10 text-muted-foreground"
       >
         <Spinner />
       </div>
@@ -584,51 +598,38 @@ onMounted(async () => {
         />
         <ContactEmptyState
           v-if="showEmptyStateLayout"
-          class="pt-14"
           :title="t('CONTACTS_LAYOUT.EMPTY_STATE.TITLE')"
           :subtitle="t('CONTACTS_LAYOUT.EMPTY_STATE.SUBTITLE')"
-          :button-label="t('CONTACTS_LAYOUT.EMPTY_STATE.BUTTON_LABEL')"
           @create="createContact"
         />
 
         <div
           v-else-if="showEmptyText"
-          class="flex items-center justify-center py-10"
+          class="flex flex-col items-center justify-center space-y-3 py-16 text-center"
         >
-          <span class="text-base text-n-slate-11">
+          <div
+            class="flex size-12 items-center justify-center rounded-full bg-muted"
+          >
+            <span class="i-lucide-search size-6 text-muted-foreground" />
+          </div>
+          <h3 class="text-lg font-medium text-foreground">
             {{ emptyStateMessage }}
-          </span>
+          </h3>
+          <p v-if="searchQuery" class="max-w-sm text-sm text-muted-foreground">
+            {{ t('CONTACTS_LAYOUT.EMPTY_STATE.SEARCH_EMPTY_STATE_SUBTITLE') }}
+          </p>
         </div>
 
-        <div v-else class="flex flex-col gap-4 pt-4 pb-6">
-          <div class="flex items-center justify-between px-6 mb-2">
-            <span class="text-xs text-n-slate-11 font-medium">
-              {{
-                t('CONTACTS_BULK_ACTIONS.SELECTED_COUNT', {
-                  count: selectedCount,
-                })
-              }}
-            </span>
-            <Popover align="end">
-              <Button
-                label="Manage Fields"
-                icon="i-lucide-settings-2"
-                variant="ghost"
-                color="slate"
-                size="sm"
-              />
-              <template #content>
-                <ColumnManager v-model:visible-columns="visibleColumns" />
-              </template>
-            </Popover>
-          </div>
-
+        <div v-else class="flex flex-col">
           <ContactsTable
             :contacts="contacts"
             :selected-contact-ids="selectedContactIds"
             :visible-columns="visibleColumns"
+            :active-sort="sortState.activeSort"
+            :active-ordering="sortState.activeOrdering"
             @toggle-contact="toggleContactSelection"
             @toggle-all="toggleSelectAll"
+            @update:sort="handleSort"
           />
           <Dialog
             v-if="selectedCount"
