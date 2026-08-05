@@ -11,12 +11,14 @@ import PaginationButton from './PaginationButton.vue';
 import CustomSnoozeModal from 'dashboard/components/CustomSnoozeModal.vue';
 import { emitter } from 'shared/helpers/mitt';
 import { RelayButton } from 'dashboard/components-next/relay';
+import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 
 export default {
   components: {
     PaginationButton,
     RelayButton,
     CustomSnoozeModal,
+    DropdownMenu,
   },
   props: {
     totalLength: {
@@ -38,12 +40,31 @@ export default {
     return { uiSettings, updateUISettings };
   },
   data() {
-    return { showCustomSnoozeModal: false };
+    return { 
+      showCustomSnoozeModal: false,
+      showMoreActionsDropdown: false,
+    };
   },
   computed: {
     ...mapGetters({ meta: 'notifications/getMeta' }),
     isContactSidebarOpen() {
       return this.uiSettings.is_contact_sidebar_open;
+    },
+    moreActionsItems() {
+      return [
+        {
+          icon: 'i-lucide-bell-minus',
+          label: this.$t('INBOX.ACTION_HEADER.SNOOZE'),
+          action: 'snooze',
+          value: 'snooze',
+        },
+        {
+          icon: 'i-lucide-trash-2',
+          label: this.$t('INBOX.ACTION_HEADER.DELETE'),
+          action: 'delete',
+          value: 'delete',
+        },
+      ];
     },
   },
   mounted() {
@@ -117,6 +138,14 @@ export default {
         is_copilot_panel_open: false,
       });
     },
+    handleActionClick({ action }) {
+      this.showMoreActionsDropdown = false;
+      if (action === 'snooze') {
+        this.openSnoozeNotificationModal();
+      } else if (action === 'delete') {
+        this.deleteNotification();
+      }
+    },
   },
 };
 </script>
@@ -155,24 +184,23 @@ export default {
         @next="onClickNext"
         @prev="onClickPrev"
       />
-      <RelayButton
-        variant="ghost"
-        size="icon"
-        class="h-8 w-8 text-muted-foreground hover:text-foreground"
-        :aria-label="$t('INBOX.ACTION_HEADER.SNOOZE')"
-        @click="openSnoozeNotificationModal"
-      >
-        <span class="i-lucide-bell-minus size-4" />
-      </RelayButton>
-      <RelayButton
-        variant="ghost"
-        size="icon"
-        class="h-8 w-8 text-muted-foreground hover:text-foreground"
-        :aria-label="$t('INBOX.ACTION_HEADER.DELETE')"
-        @click="deleteNotification"
-      >
-        <span class="i-lucide-trash-2 size-4" />
-      </RelayButton>
+      <div v-on-clickaway="() => { showMoreActionsDropdown = false }" class="relative flex items-center group">
+        <RelayButton
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8 text-muted-foreground hover:text-foreground"
+          :aria-label="$t('CONVERSATION.HEADER.MORE_ACTIONS')"
+          @click="showMoreActionsDropdown = !showMoreActionsDropdown"
+        >
+          <span class="i-lucide-more-horizontal size-4" />
+        </RelayButton>
+        <DropdownMenu
+          v-if="showMoreActionsDropdown"
+          :menu-items="moreActionsItems"
+          class="mt-1 ltr:right-0 rtl:left-0 top-full"
+          @action="handleActionClick"
+        />
+      </div>
       <div class="w-px h-4 bg-border mx-1" />
       <RelayButton
         variant="ghost"

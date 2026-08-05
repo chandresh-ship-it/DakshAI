@@ -43,18 +43,18 @@ export default {
   <div class="flex gap-2 items-center">
     <div class="flex gap-1 items-center">
       <NextButton
-        icon="i-lucide-chevron-up"
+        icon="i-lucide-chevron-left"
         xs
         slate
-        faded
+        ghost
         :disabled="isUpDisabled"
         @click="handleUpClick"
       />
       <NextButton
-        icon="i-lucide-chevron-down"
+        icon="i-lucide-chevron-right"
         xs
         slate
-        faded
+        ghost
         :disabled="isDownDisabled"
         @click="handleDownClick"
       />
