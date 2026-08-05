@@ -277,7 +277,7 @@ export default {
 
 <template>
   <div
-    class="px-3 py-2 flex items-center justify-between border-t border-border bg-muted/20"
+    class="px-3 py-2 flex items-center justify-between bg-transparent"
     :class="wrapClass"
   >
     <div class="left-wrap">
@@ -412,7 +412,6 @@ export default {
         @click="onSend"
       >
         {{ sendButtonText }}
-        <span class="i-lucide-corner-down-left size-3.5 opacity-70" />
       </button>
     </div>
   </div>

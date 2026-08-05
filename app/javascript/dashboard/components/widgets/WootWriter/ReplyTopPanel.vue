@@ -59,6 +59,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    contactName: {
+      type: String,
+      default: '',
+    },
   },
   emits: [
     'setReplyMode',
@@ -189,7 +193,7 @@ export default {
         :disabled="disabled || isReplyRestricted"
         @click="handleReplyClick"
       >
-        {{ $t('CONVERSATION.REPLYBOX.REPLY') }}
+        {{ contactName ? `Reply to ${contactName}` : $t('CONVERSATION.REPLYBOX.REPLY') }}
         <span
           v-if="isReplyActive"
           class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
