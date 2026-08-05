@@ -17,7 +17,7 @@ export const validateAuthenticateRoutePermission = async (to, next) => {
 
   if (!isLoggedIn) {
     window.location.assign('/app/login');
-    return '';
+    return next(false);
   }
 
   const { accounts = [], account_id: accountId } = user;
