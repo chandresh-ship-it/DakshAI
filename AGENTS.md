@@ -39,7 +39,8 @@
   - Do not use scoped CSS  
   - Do not use inline styles  
   - Always use Tailwind utility classes  
-- **Colors**: Refer to `tailwind.config.js` for color definitions
+- **Colors**: Use semantic tokens (`bg-primary`, `text-foreground`, `border-input`, `text-muted-foreground`, etc.) — never hardcode hex or invent one-off colors. Full mapping: `app/javascript/dashboard/components-next/relay/TOKENS.md`.
+- **New/redesigned dashboard UI**: Follow the Relay design system — `app/javascript/dashboard/components-next/relay/DESIGN.md`. Use `RelayButton`, `RelayInput`, `RelayLabel`, `RelaySwitch`, `RelayCheckbox`, `RelayBadge`, `RelayTabs*` from `dashboard/components-next/relay` instead of legacy `woot-*` / `WootButton` / `WootModal` widgets.
 
 ## General Guidelines
 
@@ -84,7 +85,8 @@
   - Other languages are handled by the community
   - Backend i18n → `en.yml`, Frontend i18n → `en.json`
 - **Frontend**:
-  - Use `components-next/` for message bubbles (the rest is being deprecated)
+  - New/redesigned dashboard UI: use the Relay design system under `components-next/relay/` (see Styling section).
+  - `components-next/` also houses message bubbles. Legacy `components/` widgets (`woot-*`, scoped-CSS forms) are being phased out in favor of Relay — do not add new usages of them.
 
 ## Ruby Best Practices
 
@@ -111,27 +113,3 @@ Practical checklist for any change impacting core logic or public APIs
 ## Branding / White-labeling note
 
 - For user-facing strings that currently contain "newrelay" but should adapt to branded/self-hosted installs, prefer applying `replaceInstallationName` from `shared/composables/useBranding` in the UI layer (for example tooltip and suggestion labels) instead of adding hardcoded brand-specific copy.
-
-## gstack (REQUIRED — global install)
-
-**Before doing ANY work, verify gstack is installed:**
-
-```bash
-test -d ~/.claude/skills/gstack/bin && echo "GSTACK_OK" || echo "GSTACK_MISSING"
-```
-
-If GSTACK_MISSING: STOP. Do not proceed. Tell the user:
-
-> gstack is required for all AI-assisted work in this repo.
-> Install it:
-> ```bash
-> git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
-> cd ~/.claude/skills/gstack && ./setup --team
-> ```
-> Then restart your AI coding tool.
-
-Do not skip skills, ignore gstack errors, or work around missing gstack.
-
-Using gstack skills: After install, skills like /qa, /ship, /review, /investigate,
-and /browse are available. Use /browse for all web browsing.
-Use ~/.claude/skills/gstack/... for gstack file paths (the global path).
