@@ -3,7 +3,7 @@ import { mapGetters } from 'vuex';
 import { useAlert, useTrack } from 'dashboard/composables';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { getUnixTime } from 'date-fns';
-import { CMD_SNOOZE_NOTIFICATION } from 'dashboard/helper/commandbar/events';
+import { CMD_SNOOZE_NOTIFICATION, CMD_REOPEN_CONVERSATION, CMD_RESOLVE_CONVERSATION } from 'dashboard/helper/commandbar/events';
 import wootConstants from 'dashboard/constants/globals';
 import { findSnoozeTime } from 'dashboard/helper/snoozeHelpers';
 import { INBOX_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
@@ -40,7 +40,7 @@ export default {
     return { uiSettings, updateUISettings };
   },
   data() {
-    return { 
+    return {
       showCustomSnoozeModal: false,
       showMoreActionsDropdown: false,
     };
@@ -51,20 +51,57 @@ export default {
       return this.uiSettings.is_contact_sidebar_open;
     },
     moreActionsItems() {
-      return [
-        {
-          icon: 'i-lucide-bell-minus',
-          label: this.$t('INBOX.ACTION_HEADER.SNOOZE'),
-          action: 'snooze',
-          value: 'snooze',
-        },
-        {
-          icon: 'i-lucide-trash-2',
-          label: this.$t('INBOX.ACTION_HEADER.DELETE'),
-          action: 'delete',
-          value: 'delete',
-        },
-      ];
+      const items = [];
+      const currentChat = this.$store.getters.getSelectedChat;
+      if (!currentChat) return items;
+
+      const isOpen = currentChat.status === wootConstants.STATUS_TYPE.OPEN;
+      const isResolved = currentChat.status === wootConstants.STATUS_TYPE.RESOLVED;
+      const isPending = currentChat.status === wootConstants.STATUS_TYPE.PENDING;
+      const isSnoozed = currentChat.status === wootConstants.STATUS_TYPE.SNOOZED;
+
+      if (isOpen || isPending || isSnoozed) {
+        items.push({
+          icon: 'i-lucide-check-circle',
+          label: this.$t('CONVERSATION.HEADER.RESOLVE_ACTION'),
+          action: 'resolve',
+          value: 'resolve',
+        });
+      }
+
+      if (isResolved || isPending || isSnoozed) {
+        items.push({
+          icon: 'i-lucide-rotate-ccw',
+          label: isResolved ? this.$t('CONVERSATION.HEADER.REOPEN_ACTION') : this.$t('CONVERSATION.HEADER.OPEN_ACTION'),
+          action: 'open',
+          value: 'open',
+        });
+      }
+
+      if (!isPending) {
+        items.push({
+          icon: 'i-lucide-circle-dot-dashed',
+          label: this.$t('CONVERSATION.RESOLVE_DROPDOWN.MARK_PENDING'),
+          action: 'pending',
+          value: 'pending',
+        });
+      }
+
+      items.push({
+        icon: 'i-lucide-bell-minus',
+        label: this.$t('INBOX.ACTION_HEADER.SNOOZE'),
+        action: 'snooze',
+        value: 'snooze',
+      });
+
+      items.push({
+        icon: 'i-lucide-trash-2',
+        label: this.$t('INBOX.ACTION_HEADER.DELETE'),
+        action: 'delete',
+        value: 'delete',
+      });
+
+      return items;
     },
   },
   mounted() {
@@ -140,10 +177,23 @@ export default {
     },
     handleActionClick({ action }) {
       this.showMoreActionsDropdown = false;
+      const currentChatId = this.$store.getters.getSelectedChat?.id;
+
       if (action === 'snooze') {
         this.openSnoozeNotificationModal();
       } else if (action === 'delete') {
         this.deleteNotification();
+      } else if (action === 'resolve') {
+        emitter.emit(CMD_RESOLVE_CONVERSATION);
+      } else if (action === 'open') {
+        emitter.emit(CMD_REOPEN_CONVERSATION);
+      } else if (action === 'pending') {
+        this.$store.dispatch('toggleStatus', {
+          conversationId: currentChatId,
+          status: wootConstants.STATUS_TYPE.PENDING,
+        }).then(() => {
+          useAlert(this.$t('CONVERSATION.CHANGE_STATUS'));
+        });
       }
     },
   },
@@ -184,7 +234,14 @@ export default {
         @next="onClickNext"
         @prev="onClickPrev"
       />
-      <div v-on-clickaway="() => { showMoreActionsDropdown = false }" class="relative flex items-center group">
+      <div
+        v-on-clickaway="
+          () => {
+            showMoreActionsDropdown = false;
+          }
+        "
+        class="relative flex items-center group"
+      >
         <RelayButton
           variant="ghost"
           size="icon"

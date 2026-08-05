@@ -43,7 +43,7 @@ export default {
   <div class="flex gap-2 items-center">
     <div class="flex gap-1 items-center">
       <NextButton
-        icon="i-lucide-chevron-left"
+        icon="i-lucide-chevron-up"
         xs
         slate
         ghost
@@ -51,7 +51,7 @@ export default {
         @click="handleUpClick"
       />
       <NextButton
-        icon="i-lucide-chevron-right"
+        icon="i-lucide-chevron-down"
         xs
         slate
         ghost
