@@ -191,34 +191,36 @@ onMounted(async () => {
         :empty-state-message="$t('INBOX.LIST.NO_MESSAGES_AVAILABLE')"
       />
     </div>
-    <div v-else class="flex flex-col w-full h-full">
-      <InboxItemHeader
-        :total-length="totalNotificationCount"
-        :current-index="activeNotificationIndex"
-        :active-notification="activeNotification"
-        @next="onClickNext"
-        @prev="onClickPrev"
-      />
-      <div
-        v-if="isConversationLoading"
-        class="flex items-center flex-1 my-4 justify-center bg-n-solid-1"
-      >
-        <Spinner class="text-n-brand" />
-      </div>
-      <div v-else class="flex h-[calc(100%-48px)] min-w-0">
-        <ConversationBox
-          class="flex-1 [&.conversation-details-wrap]:!border-0"
-          is-inbox-view
-          :inbox-id="inboxId"
-          :is-on-expanded-layout="false"
-        >
-          <SidepanelSwitch v-if="currentChat.id" />
-        </ConversationBox>
-        <ConversationSidebar
-          v-if="isContactPanelOpen"
-          :current-chat="currentChat"
+    <div v-else class="flex flex-row w-full h-full min-w-0">
+      <div class="flex flex-col flex-1 min-w-0 h-full">
+        <InboxItemHeader
+          :total-length="totalNotificationCount"
+          :current-index="activeNotificationIndex"
+          :active-notification="activeNotification"
+          @next="onClickNext"
+          @prev="onClickPrev"
         />
+        <div
+          v-if="isConversationLoading"
+          class="flex items-center flex-1 my-4 justify-center bg-n-solid-1"
+        >
+          <Spinner class="text-n-brand" />
+        </div>
+        <div v-else class="flex flex-1 min-w-0 h-full">
+          <ConversationBox
+            class="flex-1 [&.conversation-details-wrap]:!border-0"
+            is-inbox-view
+            :inbox-id="inboxId"
+            :is-on-expanded-layout="false"
+          >
+            <SidepanelSwitch v-if="currentChat.id" />
+          </ConversationBox>
+        </div>
       </div>
+      <ConversationSidebar
+        v-if="isContactPanelOpen"
+        :current-chat="currentChat"
+      />
     </div>
   </div>
 </template>
