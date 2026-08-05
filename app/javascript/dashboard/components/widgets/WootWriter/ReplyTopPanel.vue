@@ -176,7 +176,7 @@ export default {
 
 <template>
   <div
-    class="flex items-center justify-between h-10 px-4 border-b border-border gap-4"
+    class="flex items-center justify-between h-10 px-4 border-b border-border gap-4 bg-background"
     role="tablist"
   >
     <div class="flex items-center gap-6 h-full">
@@ -207,7 +207,7 @@ export default {
         class="relative h-full px-0 text-sm font-semibold transition-colors"
         :class="
           isNoteActive
-            ? 'text-foreground'
+            ? 'text-amber-500'
             : 'text-muted-foreground hover:text-foreground'
         "
         :disabled="disabled"
@@ -216,7 +216,7 @@ export default {
         {{ $t('CONVERSATION.REPLYBOX.PRIVATE_NOTE') }}
         <span
           v-if="isNoteActive"
-          class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+          class="absolute inset-x-0 bottom-0 h-0.5 bg-amber-500"
           aria-hidden="true"
         />
       </button>
