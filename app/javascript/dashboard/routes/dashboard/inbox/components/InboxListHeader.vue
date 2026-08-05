@@ -83,10 +83,12 @@ const onFilterChange = option => {
   <div
     class="flex items-center justify-between w-full gap-1 h-14 border-b border-border/60 px-4 shrink-0 bg-card"
   >
-    <div class="flex items-center gap-2 min-w-0 flex-1">
+    <div class="flex items-center min-w-0 flex-1">
       <h1 class="text-base font-semibold text-foreground truncate min-w-0">
         {{ t('INBOX.LIST.TITLE') }}
       </h1>
+    </div>
+    <div class="relative flex items-center gap-2">
       <div class="relative">
         <RelayButton
           variant="outline"
@@ -100,12 +102,10 @@ const onFilterChange = option => {
         <InboxDisplayMenu
           v-if="showInboxDisplayMenu"
           v-on-clickaway="openInboxDisplayMenu"
-          class="absolute mt-1.5 top-full ltr:left-0 rtl:right-0 z-50"
+          class="absolute mt-1.5 top-full ltr:right-0 rtl:left-0 z-50"
           @filter="onFilterChange"
         />
       </div>
-    </div>
-    <div class="relative flex items-center gap-1">
       <RelayButton
         variant="outline"
         size="icon"

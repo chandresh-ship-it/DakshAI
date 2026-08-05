@@ -36,7 +36,7 @@ const isHighlighted = computed(() => props.isActive || props.hasActiveChild);
     :title="label"
     :class="
       isHighlighted
-        ? 'bg-transparent font-medium text-sidebar-primary hover:bg-transparent hover:text-sidebar-primary'
+        ? 'bg-sidebar-primary/10 font-medium text-sidebar-primary hover:bg-sidebar-primary/15'
         : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
     "
     @click.stop="emit('toggle')"
