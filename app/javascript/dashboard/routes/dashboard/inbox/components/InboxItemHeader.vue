@@ -208,21 +208,21 @@ export default {
       <RelayButton
         variant="ghost"
         size="icon"
-        class="h-8 w-8 text-muted-foreground hover:text-foreground xl:hidden"
+        class="h-7 w-7 text-muted-foreground hover:text-foreground xl:hidden"
         :aria-label="$t('INBOX.ACTION_HEADER.BACK')"
         @click="onClickGoToInboxList"
       >
-        <span class="i-lucide-arrow-left size-4" />
+        <span class="i-lucide-arrow-left size-3.5" />
       </RelayButton>
       <!-- Ensure left back arrow shows even on desktop if needed, though mockup has it -->
       <RelayButton
         variant="ghost"
         size="icon"
-        class="h-8 w-8 text-muted-foreground hover:text-foreground hidden xl:flex"
+        class="h-7 w-7 text-muted-foreground hover:text-foreground hidden xl:flex"
         :aria-label="$t('INBOX.ACTION_HEADER.BACK')"
         @click="onClickGoToInboxList"
       >
-        <span class="i-lucide-arrow-left size-4" />
+        <span class="i-lucide-arrow-left size-3.5" />
       </RelayButton>
     </div>
 
@@ -245,11 +245,11 @@ export default {
         <RelayButton
           variant="ghost"
           size="icon"
-          class="h-8 w-8 text-muted-foreground hover:text-foreground"
+          class="h-7 w-7 text-muted-foreground hover:text-foreground"
           :aria-label="$t('CONVERSATION.HEADER.MORE_ACTIONS')"
           @click="showMoreActionsDropdown = !showMoreActionsDropdown"
         >
-          <span class="i-lucide-more-horizontal size-4" />
+          <span class="i-lucide-more-horizontal size-3.5" />
         </RelayButton>
         <DropdownMenu
           v-if="showMoreActionsDropdown"
@@ -266,7 +266,7 @@ export default {
         :class="{ 'bg-accent text-accent-foreground': isContactSidebarOpen }"
         @click="toggleContactSidebar"
       >
-        <span class="i-lucide-panel-right size-4" />
+        <span class="i-lucide-panel-right size-3.5" />
       </RelayButton>
     </div>
     <woot-modal

@@ -40,8 +40,17 @@ export default {
 </script>
 
 <template>
-  <div class="flex gap-2 items-center">
-    <div class="flex gap-1 items-center">
+  <div class="flex gap-2.5 items-center">
+    <div class="flex items-center gap-1 whitespace-nowrap text-xs text-muted-foreground font-medium">
+      <span class="tabular-nums text-foreground">
+        {{ totalLength <= 1 ? '1' : currentIndex }}
+      </span>
+      <span v-if="totalLength > 1" class="relative -top-px">/</span>
+      <span v-if="totalLength > 1" class="tabular-nums">
+        {{ totalLength }}
+      </span>
+    </div>
+    <div class="flex gap-0.5 items-center">
       <NextButton
         icon="i-lucide-chevron-up"
         xs
@@ -58,20 +67,6 @@ export default {
         :disabled="isDownDisabled"
         @click="handleDownClick"
       />
-    </div>
-    <div class="flex items-center gap-1 whitespace-nowrap">
-      <span class="text-sm font-medium text-n-slate-12 tabular-nums">
-        {{ totalLength <= 1 ? '1' : currentIndex }}
-      </span>
-      <span
-        v-if="totalLength > 1"
-        class="text-sm text-n-slate-9 relative -top-px"
-      >
-        /
-      </span>
-      <span v-if="totalLength > 1" class="text-sm text-n-slate-9 tabular-nums">
-        {{ totalLength }}
-      </span>
     </div>
   </div>
 </template>
