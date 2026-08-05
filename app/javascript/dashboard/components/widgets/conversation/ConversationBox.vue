@@ -91,7 +91,7 @@ export default {
 
 <template>
   <div
-    class="conversation-details-wrap flex flex-col min-w-0 w-full bg-muted/10 dark:bg-background relative"
+    class="conversation-details-wrap flex flex-col min-w-0 w-full bg-background relative"
     :class="{
       'border-l rtl:border-l-0 rtl:border-r border-border': !isOnExpandedLayout,
     }"

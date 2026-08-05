@@ -510,7 +510,7 @@ export default {
         />
       </template>
     </MessageList>
-    <div class="flex relative flex-col bg-card">
+    <div class="flex relative flex-col bg-transparent">
       <div
         v-if="isAnyoneTyping"
         class="absolute flex items-center w-full h-0 -top-7"
