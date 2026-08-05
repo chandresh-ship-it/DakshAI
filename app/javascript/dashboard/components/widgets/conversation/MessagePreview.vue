@@ -66,26 +66,26 @@ export default {
       <fluent-icon
         v-if="isMessagePrivate"
         size="16"
-        class="-mt-0.5 align-middle text-n-slate-11 inline-block"
+        class="-mt-0.5 align-middle text-muted-foreground inline-block"
         icon="lock-closed"
       />
       <fluent-icon
         v-else-if="messageByAgent"
         size="16"
-        class="-mt-0.5 align-middle text-n-slate-11 inline-block"
+        class="-mt-0.5 align-middle text-muted-foreground inline-block"
         icon="arrow-reply"
       />
       <fluent-icon
         v-else-if="isMessageAnActivity"
         size="16"
-        class="-mt-0.5 align-middle text-n-slate-11 inline-block"
+        class="-mt-0.5 align-middle text-muted-foreground inline-block"
         icon="info"
       />
     </template>
     <span v-if="message.content && isMessageSticker">
       <fluent-icon
         size="16"
-        class="-mt-0.5 align-middle inline-block text-n-slate-11"
+        class="-mt-0.5 align-middle inline-block text-muted-foreground"
         icon="image"
       />
       {{ $t('CHAT_LIST.ATTACHMENTS.image.CONTENT') }}
@@ -97,7 +97,7 @@ export default {
       <fluent-icon
         v-if="attachmentIcon && showMessageType"
         size="16"
-        class="-mt-0.5 align-middle inline-block text-n-slate-11"
+        class="-mt-0.5 align-middle inline-block text-muted-foreground"
         :icon="attachmentIcon"
       />
       {{ $t(`${attachmentMessageContent}`) }}

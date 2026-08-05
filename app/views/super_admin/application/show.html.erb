@@ -18,48 +18,55 @@ as well as a link to its edit page.
 
 <% content_for(:title) { t("administrate.actions.show_resource", name: page.page_title) } %>
 
-<header class="main-content__header">
-  <h1 class="main-content__page-title">
-    <%= content_for(:title) %>
-  </h1>
+<div class="space-y-6">
+  <header class="flex items-center justify-between pb-4 border-b border-border/40">
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">
+      <%= content_for(:title) %>
+    </h1>
 
-  <div>
-    <%= link_to(
-      "Edit",
-      [:edit, namespace, page.resource],
-      class: "button",
-    ) if accessible_action?(page.resource, :edit) %>
+    <div class="flex items-center gap-2">
+      <%= link_to(
+        "Edit",
+        [:edit, namespace, page.resource],
+        class: "inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+      ) if accessible_action?(page.resource, :edit) %>
 
-    <%= link_to(
-      t("administrate.actions.destroy"),
-      [namespace, page.resource],
-      class: "button button--danger",
-      method: :delete,
-      data: { confirm: t("administrate.actions.confirm") }
-    ) if accessible_action?(page.resource, :destroy) %>
-  </div>
-</header>
+      <%= link_to(
+        t("administrate.actions.destroy"),
+        [namespace, page.resource],
+        class: "inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+        method: :delete,
+        data: { confirm: t("administrate.actions.confirm") }
+      ) if accessible_action?(page.resource, :destroy) %>
+    </div>
+  </header>
 
-<section class="main-content__body">
-  <dl>
-    <% page.attributes.each do |title, attributes| %>
-      <fieldset class="<%= "field-unit--nested" if title.present? %>">
+  <section class="rounded-xl border border-border bg-card text-card-foreground shadow-xs overflow-hidden">
+    <div class="divide-y divide-border/50">
+      <% page.attributes.each do |title, attributes| %>
         <% if title.present? %>
-          <legend><%= t "helpers.label.#{page.resource_name}.#{title}", default: title %></legend>
+          <div class="bg-muted/30 px-6 py-3">
+            <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              <%= t "helpers.label.#{page.resource_name}.#{title}", default: title %>
+            </h3>
+          </div>
         <% end %>
 
         <% attributes.each do |attribute| %>
-          <dt class="attribute-label" id="<%= attribute.name %>">
-          <%= t(
-            "helpers.label.#{resource_name}.#{attribute.name}",
-            default: page.resource.class.human_attribute_name(attribute.name),
-          ) %>
-          </dt>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 px-6 py-4 hover:bg-muted/10 transition-colors">
+            <div class="text-sm font-medium text-muted-foreground" id="<%= attribute.name %>">
+              <%= t(
+                "helpers.label.#{resource_name}.#{attribute.name}",
+                default: page.resource.class.human_attribute_name(attribute.name),
+              ) %>
+            </div>
 
-          <dd class="attribute-data attribute-data--<%=attribute.html_class%>"
-              ><%= render_field attribute, page: page %></dd>
+            <div class="text-sm text-foreground md:col-span-2 attribute-data attribute-data--<%=attribute.html_class%> break-words">
+              <%= render_field attribute, page: page %>
+            </div>
+          </div>
         <% end %>
-      </fieldset>
-    <% end %>
-  </dl>
-</section>
+      <% end %>
+    </div>
+  </section>
+</div>

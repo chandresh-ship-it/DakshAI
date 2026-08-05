@@ -9,6 +9,7 @@ import {
 
 import ChatListHeader from './ChatListHeader.vue';
 import ConversationList from './ConversationList.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import ConversationFilter from 'next/filter/ConversationFilter.vue';
 import SaveCustomView from 'next/filter/SaveCustomView.vue';
@@ -75,7 +76,6 @@ const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ALL);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
 const showAdvancedFilters = ref(false);
-const showTabMoreMenu = ref(false);
 
 const STATUS_TAB_MAP = {
   new: wootConstants.STATUS_TYPE.OPEN,
@@ -83,6 +83,8 @@ const STATUS_TAB_MAP = {
   'on-hold': wootConstants.STATUS_TYPE.SNOOZED,
   closed: wootConstants.STATUS_TYPE.RESOLVED,
 };
+const STATUS_TABS_ORDER = ['new', 'in-progress', 'on-hold', 'closed'];
+const activeStatusTab = ref('new');
 // chatsOnView is to store the chats that are currently visible on the screen,
 // which mirrors the conversationList.
 const chatsOnView = ref([]);
@@ -188,6 +190,13 @@ const assigneeTabItems = computed(() => {
     key,
     name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
     count: conversationStats.value[countKey] || 0,
+  }));
+});
+
+const statusTabItems = computed(() => {
+  return STATUS_TABS_ORDER.map(key => ({
+    key,
+    name: t(`CHAT_LIST.STATUS_TABS.${key.toUpperCase().replace('-', '_')}`),
   }));
 });
 
@@ -372,6 +381,9 @@ function setFiltersFromUISettings() {
   const { conversations_filter_by: filterBy = {} } = uiSettings.value;
   const { status, order_by: orderBy } = filterBy;
   activeStatus.value = status || wootConstants.STATUS_TYPE.OPEN;
+  activeStatusTab.value =
+    STATUS_TABS_ORDER.find(key => STATUS_TAB_MAP[key] === activeStatus.value) ||
+    'new';
   activeSortBy.value = Object.values(wootConstants.SORT_BY_TYPE).includes(
     orderBy
   )
@@ -614,7 +626,9 @@ function onBasicFilterChange(value, type) {
 
 function onStatusTabChange(tabValue) {
   const status = STATUS_TAB_MAP[tabValue];
-  if (!status || status === activeStatus.value) return;
+  if (!status) return;
+  activeStatusTab.value = tabValue;
+  if (status === activeStatus.value) return;
   onBasicFilterChange(status, 'status');
 }
 
@@ -886,22 +900,73 @@ watch(conversationFilters, (newVal, oldVal) => {
     ]"
   >
     <slot />
-    <ChatListHeader
-      :page-title="pageTitle"
-      :page-subtitle="pageSubtitle"
-      :has-applied-filters="hasAppliedFilters"
-      :has-active-folders="hasActiveFolders"
-      :active-assignee-tab="activeAssigneeTab"
-      :is-on-expanded-layout="isOnExpandedLayout"
-      :conversation-stats="conversationStats"
-      :is-list-loading="chatListLoading && !conversationList.length"
-      @add-folders="onClickOpenAddFoldersModal"
-      @delete-folders="onClickOpenDeleteFoldersModal"
-      @filters-modal="onToggleAdvanceFiltersModal"
-      @reset-filters="resetAndFetchData"
-      @basic-filter-change="onBasicFilterChange"
-      @assignee-change="updateAssigneeTab"
-    />
+    <div
+      class="flex items-center justify-between px-4 border-b border-border h-14 shrink-0"
+    >
+      <div
+        v-if="!hasAppliedFiltersOrActiveFolders"
+        class="flex items-center gap-6 h-full flex-1 min-w-0 overflow-x-auto"
+        role="tablist"
+      >
+        <button
+          v-for="tab in statusTabItems"
+          :key="tab.key"
+          type="button"
+          role="tab"
+          :aria-selected="activeStatusTab === tab.key"
+          class="h-full px-0 border-b-2 border-transparent text-sm font-medium transition-colors shrink-0"
+          :class="
+            activeStatusTab === tab.key
+              ? 'border-primary text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          "
+          @click="onStatusTabChange(tab.key)"
+        >
+          {{ tab.name }}
+        </button>
+      </div>
+      <h1
+        v-else
+        class="text-base font-medium truncate text-foreground flex items-center gap-1.5 min-w-0"
+        :title="pageSubtitle ? `${pageTitle} / ${pageSubtitle}` : pageTitle"
+      >
+        <span class="truncate">{{ pageTitle }}</span>
+        <span
+          v-if="pageSubtitle"
+          class="text-[14px] font-medium text-muted-foreground truncate"
+        >
+          / {{ pageSubtitle }}
+        </span>
+      </h1>
+
+      <div class="flex items-center gap-2 pl-4 shrink-0">
+        <RelayButton
+          v-if="!hasAppliedFiltersOrActiveFolders && conversationList.length"
+          variant="ghost"
+          size="sm"
+          class="text-xs h-8 text-muted-foreground hover:text-foreground"
+          @click="toggleSelectAll(!allConversationsSelected)"
+        >
+          {{
+            allConversationsSelected
+              ? t('CHAT_LIST.DESELECT_ALL')
+              : t('CHAT_LIST.SELECT_ALL')
+          }}
+        </RelayButton>
+        <ChatListHeader
+          :has-applied-filters="hasAppliedFilters"
+          :has-active-folders="hasActiveFolders"
+          :active-assignee-tab="activeAssigneeTab"
+          :is-on-expanded-layout="isOnExpandedLayout"
+          @add-folders="onClickOpenAddFoldersModal"
+          @delete-folders="onClickOpenDeleteFoldersModal"
+          @filters-modal="onToggleAdvanceFiltersModal"
+          @reset-filters="resetAndFetchData"
+          @basic-filter-change="onBasicFilterChange"
+          @assignee-change="updateAssigneeTab"
+        />
+      </div>
+    </div>
 
     <TeleportWithDirection
       v-if="showAddFoldersModal"
@@ -923,75 +988,6 @@ watch(conversationFilters, (newVal, oldVal) => {
       :open-last-item-after-delete="openLastItemAfterDeleteInFolder"
       @close="onCloseDeleteFoldersModal"
     />
-
-    <div v-if="!hasAppliedFiltersOrActiveFolders" class="px-4 pt-2 shrink-0">
-      <div
-        class="flex items-center gap-4 border-b border-border"
-        role="tablist"
-      >
-        <div class="flex items-center gap-4 flex-1 min-w-0 overflow-x-auto">
-          <button
-            v-for="tab in assigneeTabItems"
-            :key="tab.key"
-            type="button"
-            role="tab"
-            :aria-selected="activeAssigneeTab === tab.key"
-            class="relative -mb-px px-0 pb-2.5 text-sm font-medium transition-colors shrink-0"
-            :class="
-              activeAssigneeTab === tab.key
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            "
-            @click="updateAssigneeTab(tab.key)"
-          >
-            {{ tab.name }}
-            <span
-              v-if="activeAssigneeTab === tab.key"
-              class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
-              aria-hidden="true"
-            />
-          </button>
-        </div>
-        <div class="relative shrink-0">
-          <button
-            type="button"
-            class="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
-            :aria-label="t('CHAT_LIST.MORE_OPTIONS')"
-            @click="showTabMoreMenu = !showTabMoreMenu"
-          >
-            <span class="i-lucide-ellipsis size-4" />
-          </button>
-          <div
-            v-if="showTabMoreMenu"
-            class="absolute right-0 mt-1.5 z-50 w-40 rounded-md border border-border bg-popover p-1 shadow-md"
-            @mouseleave="showTabMoreMenu = false"
-          >
-            <button
-              type="button"
-              class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted"
-              @click="
-                onStatusTabChange('closed');
-                showTabMoreMenu = false;
-              "
-            >
-              <span class="i-lucide-archive size-4 text-muted-foreground" />
-              {{ t('CHAT_LIST.FILTER_MENU.ARCHIVED') }}
-            </button>
-            <button
-              type="button"
-              class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted"
-              @click="
-                onStatusTabChange('on-hold');
-                showTabMoreMenu = false;
-              "
-            >
-              <span class="i-lucide-alarm-clock size-4 text-muted-foreground" />
-              {{ t('CHAT_LIST.FILTER_MENU.SNOOZED') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <p
       v-if="!chatListLoading && !conversationList.length"

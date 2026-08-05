@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getLastMessage } from 'dashboard/helper/conversationHelper';
 import { dynamicTime, shortTimestamp } from 'shared/helpers/timeHelper';
@@ -29,7 +29,6 @@ const emit = defineEmits([
 ]);
 
 const { t } = useI18n();
-const hovered = ref(false);
 const accountLabels = useMapGetter('labels/getLabels');
 
 const unreadCount = computed(() => props.chat.unread_count);
@@ -104,14 +103,6 @@ const statusDotClass = computed(() => {
   return 'bg-primary';
 });
 
-const onThumbnailHover = () => {
-  hovered.value = !props.hideThumbnail;
-};
-
-const onThumbnailLeave = () => {
-  hovered.value = false;
-};
-
 const onSelectConversation = checked => {
   if (checked) {
     emit('selectConversation', props.chat.id, props.inbox.id);
@@ -124,34 +115,32 @@ const selectedModel = computed({
   get: () => props.selected,
   set: value => onSelectConversation(value),
 });
-
-watch(
-  () => props.chat.id,
-  () => {
-    hovered.value = false;
-  }
-);
 </script>
 
 <template>
   <div
-    class="flex gap-3 p-3 mx-2 my-1 rounded-lg text-left transition-colors relative cursor-pointer group"
+    class="flex gap-3 px-4 py-3 border-b border-border/60 text-left transition-colors relative cursor-pointer group"
     :class="[
       isActiveChat
         ? 'bg-primary/5'
         : selected
-          ? 'bg-muted'
-          : 'hover:bg-accent/50',
+          ? 'bg-primary/10'
+          : 'hover:bg-muted/40',
       compact ? 'px-2' : '',
     ]"
     @click="$emit('click', $event)"
     @contextmenu="$emit('contextmenu', $event)"
   >
     <div
-      class="relative shrink-0 mt-0.5"
-      @mouseenter="onThumbnailHover"
-      @mouseleave="onThumbnailLeave"
+      v-if="!hideThumbnail"
+      class="flex items-center justify-center shrink-0 size-4 mt-1.5"
+      :class="selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+      @click.stop
     >
+      <Checkbox v-model="selectedModel" />
+    </div>
+
+    <div class="relative shrink-0 mt-0.5">
       <Avatar
         v-if="!hideThumbnail"
         :name="currentContact.name"
@@ -160,18 +149,7 @@ watch(
         :status="currentContact.availability_status"
         hide-offline-status
         rounded-full
-      >
-        <template #overlay="{ size }">
-          <label
-            v-if="hovered || selected"
-            class="flex items-center justify-center rounded-full cursor-pointer absolute inset-0 z-10 backdrop-blur-[2px]"
-            :style="{ width: `${size}px`, height: `${size}px` }"
-            @click.stop
-          >
-            <Checkbox v-model="selectedModel" />
-          </label>
-        </template>
-      </Avatar>
+      />
     </div>
 
     <div class="flex-1 min-w-0 flex flex-col gap-1">
@@ -179,7 +157,7 @@ watch(
         <div class="flex items-center gap-2 min-w-0">
           <span
             class="text-sm truncate text-foreground"
-            :class="hasUnread ? 'font-semibold' : 'font-semibold'"
+            :class="hasUnread ? 'font-semibold' : 'font-medium'"
           >
             {{ currentContact.name }}
           </span>
