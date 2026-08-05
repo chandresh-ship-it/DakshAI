@@ -9,7 +9,7 @@ import { useI18n } from 'vue-i18n';
 
 import MessageFormatter from 'shared/helpers/MessageFormatter.js';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
-import { MESSAGE_VARIANTS, ORIENTATION } from '../constants';
+import { MESSAGE_VARIANTS } from '../constants';
 
 const props = defineProps({
   hideMeta: { type: Boolean, default: false },
@@ -18,72 +18,46 @@ const props = defineProps({
 defineOptions({ inheritAttrs: false });
 
 const attrs = useAttrs();
-const { variant, orientation, inReplyTo, shouldGroupWithNext } =
-  useMessageContext();
+const { variant, inReplyTo, shouldGroupWithNext } = useMessageContext();
 const { t } = useI18n();
 
 // Colored fill lives ONLY on the inner surface (never the meta wrapper).
 // Agent/bot/template text: solid primary + white. Media/email override via attrs.
 const varaintBaseMap = {
-  // Non-important so media/email can override with !bg-card / !bg-transparent
   [MESSAGE_VARIANTS.AGENT]:
-    'bg-primary text-primary-foreground border-transparent',
+    'bg-transparent text-foreground border-transparent w-full',
   [MESSAGE_VARIANTS.PRIVATE]:
-    'bg-n-solid-amber text-n-amber-12 [&_.prosemirror-mention-node]:font-semibold',
+    'bg-amber-500/10 text-foreground border-transparent w-full',
   [MESSAGE_VARIANTS.USER]:
-    'bg-card text-card-foreground border border-border shadow-xs',
-  [MESSAGE_VARIANTS.ACTIVITY]: 'bg-n-alpha-1 text-muted-foreground text-sm',
+    'bg-transparent text-foreground border-transparent w-full',
+  [MESSAGE_VARIANTS.ACTIVITY]:
+    'bg-muted/50 text-muted-foreground text-sm w-full',
   [MESSAGE_VARIANTS.BOT]:
-    'bg-primary text-primary-foreground border-transparent',
+    'bg-transparent text-foreground border-transparent w-full',
   [MESSAGE_VARIANTS.TEMPLATE]:
-    'bg-primary text-primary-foreground border-transparent',
-  [MESSAGE_VARIANTS.ERROR]: 'bg-n-ruby-4 text-n-ruby-12',
+    'bg-transparent text-foreground border-transparent w-full',
+  [MESSAGE_VARIANTS.ERROR]: 'bg-destructive/10 text-destructive w-full',
   [MESSAGE_VARIANTS.EMAIL]: 'w-full',
   [MESSAGE_VARIANTS.UNSUPPORTED]:
-    'bg-n-solid-amber/70 border border-dashed border-n-amber-12 text-n-amber-12',
-};
-
-const orientationMap = {
-  [ORIENTATION.LEFT]:
-    'left-bubble rounded-xl ltr:rounded-bl-sm rtl:rounded-br-sm',
-  [ORIENTATION.RIGHT]:
-    'right-bubble rounded-xl ltr:rounded-br-sm rtl:rounded-bl-sm',
-  [ORIENTATION.CENTER]: 'rounded-md',
+    'bg-amber-500/10 border border-dashed border-amber-500/50 text-amber-500 w-full',
 };
 
 const flexOrientationClass = computed(() => {
-  const map = {
-    [ORIENTATION.LEFT]: 'justify-start',
-    [ORIENTATION.RIGHT]: 'justify-end',
-    [ORIENTATION.CENTER]: 'justify-center',
-  };
-
-  return map[orientation.value];
+  return 'justify-start w-full';
 });
 
 const wrapperAlignClass = computed(() => {
-  const map = {
-    [ORIENTATION.LEFT]: 'items-start',
-    [ORIENTATION.RIGHT]: 'items-end',
-    [ORIENTATION.CENTER]: 'items-center',
-  };
-
-  return map[orientation.value];
+  return 'items-start w-full';
 });
 
 const messageClass = computed(() => {
   const classToApply = [varaintBaseMap[variant.value]];
 
-  if (variant.value !== MESSAGE_VARIANTS.ACTIVITY) {
-    classToApply.push(orientationMap[orientation.value]);
-  } else {
-    classToApply.push('rounded-lg');
+  if (variant.value === MESSAGE_VARIANTS.ACTIVITY) {
+    classToApply.push('rounded-lg px-4 py-2 my-2');
   }
 
-  // Content-sized surface so primary never stretches behind the timestamp row
-  if (variant.value !== MESSAGE_VARIANTS.EMAIL) {
-    classToApply.push('w-fit max-w-full');
-  }
+  classToApply.push('w-full');
 
   return classToApply;
 });
@@ -120,14 +94,8 @@ const replyToPreview = computed(() => {
 
 <template>
   <div
-    class="text-sm min-w-0 flex flex-col gap-1.5 bg-transparent"
-    :class="[
-      wrapperAlignClass,
-      {
-        'max-w-lg': variant !== MESSAGE_VARIANTS.EMAIL,
-        'w-full': variant === MESSAGE_VARIANTS.EMAIL,
-      },
-    ]"
+    class="text-sm min-w-0 flex flex-col gap-1.5 bg-transparent w-full"
+    :class="[wrapperAlignClass]"
   >
     <div v-bind="attrs" :class="messageClass">
       <div

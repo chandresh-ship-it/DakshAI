@@ -189,64 +189,72 @@ export default {
       </a>
     </div>
 
-    <div class="flex justify-between items-start gap-3 w-full">
-      <div class="flex flex-col items-center gap-2 shrink-0">
+    <div class="flex flex-col gap-6 w-full">
+      <div class="flex items-center gap-3 w-full">
         <Avatar
           v-if="showAvatar"
           :src="contact.thumbnail"
           :name="contact.name"
           :status="contact.availability_status"
-          :size="64"
+          :size="48"
           hide-offline-status
           rounded-full
         />
-        <InlineInput
-          v-if="isEditingName"
-          ref="nameInput"
-          v-model="editName"
-          custom-input-class="!text-sm !font-semibold text-center"
-          class="!w-fit"
-          @enter-press="saveNameEdit"
-          @escape-press="cancelNameEdit"
-          @blur="saveNameEdit"
-        />
-        <h2
-          v-else-if="showAvatar"
-          class="group/name text-sm font-semibold text-foreground text-center leading-tight cursor-pointer"
-          :title="$t('CONTACT_PANEL.CLICK_TO_EDIT')"
-          @click="startEditingName"
-        >
-          {{ contact.name }}
-        </h2>
+        <div class="flex flex-col min-w-0">
+          <InlineInput
+            v-if="isEditingName"
+            ref="nameInput"
+            v-model="editName"
+            custom-input-class="!text-base !font-semibold"
+            class="!w-fit"
+            @enter-press="saveNameEdit"
+            @escape-press="cancelNameEdit"
+            @blur="saveNameEdit"
+          />
+          <h2
+            v-else-if="showAvatar"
+            class="group/name text-base font-semibold text-foreground truncate cursor-pointer"
+            :title="$t('CONTACT_PANEL.CLICK_TO_EDIT')"
+            @click="startEditingName"
+          >
+            {{ contact.name }}
+          </h2>
+        </div>
       </div>
 
-      <div
-        class="flex flex-col items-end gap-2 text-xs text-muted-foreground text-right mt-1 min-w-0 flex-1"
-      >
-        <span
-          v-if="contact.email"
-          class="flex items-center justify-end gap-1.5 w-full truncate"
+      <div class="flex flex-col gap-3 w-full">
+        <h4
+          class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
         >
-          <span class="truncate">{{ contact.email }}</span>
-          <span class="i-lucide-mail size-3 shrink-0" />
-        </span>
-        <span
-          v-if="contact.phone_number"
-          class="flex items-center justify-end gap-1.5 w-full truncate"
-        >
-          <span class="truncate">{{ contact.phone_number }}</span>
-          <span class="i-lucide-phone size-3 shrink-0" />
-        </span>
-        <span
+          Contact Details
+        </h4>
+
+        <div v-if="contact.email" class="flex flex-col gap-1 w-full">
+          <span class="text-xs text-muted-foreground">Email</span>
+          <span class="text-sm text-foreground truncate">{{
+            contact.email
+          }}</span>
+        </div>
+
+        <div v-if="contact.phone_number" class="flex flex-col gap-1 w-full">
+          <span class="text-xs text-muted-foreground">Phone Number</span>
+          <span class="text-sm text-foreground truncate">{{
+            contact.phone_number
+          }}</span>
+        </div>
+
+        <div
           v-if="location || additionalAttributes.location"
-          class="mt-1 truncate w-full text-right"
-          v-html="location || additionalAttributes.location"
-        />
-        <SocialIcons
-          v-if="socialProfiles"
-          :social-profiles="socialProfiles"
-          class="mt-1"
-        />
+          class="flex flex-col gap-1 w-full"
+        >
+          <span class="text-xs text-muted-foreground">Location</span>
+          <span
+            class="text-sm text-foreground truncate"
+            v-html="location || additionalAttributes.location"
+          />
+        </div>
+
+        <SocialIcons v-if="socialProfiles" :social-profiles="socialProfiles" />
       </div>
     </div>
 

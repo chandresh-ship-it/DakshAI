@@ -1,6 +1,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import { useAlert, useTrack } from 'dashboard/composables';
+import { useUISettings } from 'dashboard/composables/useUISettings';
 import { getUnixTime } from 'date-fns';
 import { CMD_SNOOZE_NOTIFICATION } from 'dashboard/helper/commandbar/events';
 import wootConstants from 'dashboard/constants/globals';
@@ -9,14 +10,12 @@ import { INBOX_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
 import PaginationButton from './PaginationButton.vue';
 import CustomSnoozeModal from 'dashboard/components/CustomSnoozeModal.vue';
 import { emitter } from 'shared/helpers/mitt';
-import BackButton from 'dashboard/components/widgets/BackButton.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 export default {
   components: {
     PaginationButton,
-    NextButton,
-    BackButton,
+    RelayButton,
     CustomSnoozeModal,
   },
   props: {
@@ -34,11 +33,18 @@ export default {
     },
   },
   emits: ['next', 'prev'],
+  setup() {
+    const { uiSettings, updateUISettings } = useUISettings();
+    return { uiSettings, updateUISettings };
+  },
   data() {
     return { showCustomSnoozeModal: false };
   },
   computed: {
     ...mapGetters({ meta: 'notifications/getMeta' }),
+    isContactSidebarOpen() {
+      return this.uiSettings.is_contact_sidebar_open;
+    },
   },
   mounted() {
     emitter.on(CMD_SNOOZE_NOTIFICATION, this.onCmdSnoozeNotification);
@@ -105,20 +111,43 @@ export default {
     onClickGoToInboxList() {
       this.$router.replace({ name: 'inbox_view' });
     },
+    toggleContactSidebar() {
+      this.updateUISettings({
+        is_contact_sidebar_open: !this.isContactSidebarOpen,
+        is_copilot_panel_open: false,
+      });
+    },
   },
 };
 </script>
 
 <template>
   <div
-    class="flex items-center justify-between w-full gap-2 border-b px-3 h-12 rtl:border-r border-n-weak flex-shrink-0 bg-n-surface-1"
+    class="flex items-center justify-between w-full px-4 h-[60px] border-b border-border bg-card shrink-0"
   >
-    <div class="flex items-center gap-4">
-      <BackButton
-        compact
-        :button-label="$t('INBOX.ACTION_HEADER.BACK')"
-        class="xl:hidden flex"
-      />
+    <div class="flex items-center">
+      <RelayButton
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8 text-muted-foreground hover:text-foreground xl:hidden"
+        :aria-label="$t('INBOX.ACTION_HEADER.BACK')"
+        @click="onClickGoToInboxList"
+      >
+        <span class="i-lucide-arrow-left size-4" />
+      </RelayButton>
+      <!-- Ensure left back arrow shows even on desktop if needed, though mockup has it -->
+      <RelayButton
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8 text-muted-foreground hover:text-foreground hidden xl:flex"
+        :aria-label="$t('INBOX.ACTION_HEADER.BACK')"
+        @click="onClickGoToInboxList"
+      >
+        <span class="i-lucide-arrow-left size-4" />
+      </RelayButton>
+    </div>
+
+    <div class="flex items-center gap-3">
       <PaginationButton
         v-if="totalLength > 1"
         :total-length="totalLength"
@@ -126,26 +155,34 @@ export default {
         @next="onClickNext"
         @prev="onClickPrev"
       />
-    </div>
-    <div class="flex items-center gap-2">
-      <NextButton
-        :label="$t('INBOX.ACTION_HEADER.SNOOZE')"
-        icon="i-lucide-bell-minus"
-        slate
-        xs
-        faded
-        class="[&>.truncate]:hidden md:[&>.truncate]:block"
+      <RelayButton
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8 text-muted-foreground hover:text-foreground"
+        :aria-label="$t('INBOX.ACTION_HEADER.SNOOZE')"
         @click="openSnoozeNotificationModal"
-      />
-      <NextButton
-        :label="$t('INBOX.ACTION_HEADER.DELETE')"
-        icon="i-lucide-trash-2"
-        slate
-        xs
-        faded
-        class="[&>.truncate]:hidden md:[&>.truncate]:block"
+      >
+        <span class="i-lucide-bell-minus size-4" />
+      </RelayButton>
+      <RelayButton
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8 text-muted-foreground hover:text-foreground"
+        :aria-label="$t('INBOX.ACTION_HEADER.DELETE')"
         @click="deleteNotification"
-      />
+      >
+        <span class="i-lucide-trash-2 size-4" />
+      </RelayButton>
+      <div class="w-px h-4 bg-border mx-1" />
+      <RelayButton
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8 text-muted-foreground hover:text-foreground"
+        :class="{ 'bg-accent text-accent-foreground': isContactSidebarOpen }"
+        @click="toggleContactSidebar"
+      >
+        <span class="i-lucide-panel-right size-4" />
+      </RelayButton>
     </div>
     <woot-modal
       v-model:show="showCustomSnoozeModal"

@@ -110,34 +110,22 @@ watch(
 </script>
 
 <template>
-  <div class="px-4 pt-1 pb-2">
+  <div class="px-6 py-2">
     <div
-      class="bg-card border border-border/60 rounded-xl p-4 shadow-sm flex flex-col gap-4"
+      class="bg-card border border-border rounded-xl p-5 shadow-sm flex flex-col gap-4"
     >
-      <div class="flex flex-col gap-1">
-        <h3
-          class="font-medium text-foreground text-[14px] flex items-center gap-2"
-        >
-          <span class="i-lucide-sparkles size-4 text-primary shrink-0" />
-          <span>{{ t('CONVERSATION.AI_SUMMARY.TITLE') }}</span>
-        </h3>
-        <span class="text-[11px] text-muted-foreground">
-          {{ lastUpdatedLabel }}
-        </span>
+      <div
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-full w-fit"
+      >
+        <span class="i-lucide-sparkles size-3.5" />
+        <span class="text-xs font-semibold uppercase tracking-wider">{{
+          t('CONVERSATION.AI_SUMMARY.TITLE')
+        }}</span>
       </div>
 
-      <ul v-if="summaryBullets.length" class="flex flex-col gap-2.5">
-        <li
-          v-for="(item, index) in summaryBullets"
-          :key="`${index}-${item}`"
-          class="flex items-start gap-3 text-[13px] text-foreground/80 leading-snug"
-        >
-          <span
-            class="size-1.5 rounded-full bg-foreground/30 mt-1.5 shrink-0"
-          />
-          <span>{{ item }}</span>
-        </li>
-      </ul>
+      <p v-if="summaryText" class="text-sm text-foreground/90 leading-relaxed">
+        {{ summaryText }}
+      </p>
       <p v-else class="text-[13px] text-muted-foreground">
         {{ t('CONVERSATION.AI_SUMMARY.EMPTY') }}
       </p>
@@ -146,51 +134,25 @@ watch(
         {{ errorMessage }}
       </p>
 
-      <div
-        class="flex flex-col gap-1.5 border border-primary/20 bg-primary/5 rounded-xl overflow-hidden p-0.5"
+      <RelayButton
+        class="w-full gap-2 rounded-full mt-2"
+        :disabled="!captainTasksEnabled || isGenerating"
+        @click="generateSummary"
       >
-        <div
-          class="flex items-center gap-3 p-2.5 cursor-pointer hover:bg-primary/5 transition-colors rounded-lg"
-        >
-          <div
-            class="size-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0"
-          >
-            <span class="i-lucide-lightbulb size-4 text-primary" />
-          </div>
-          <div class="flex flex-col flex-1 min-w-0">
-            <span class="text-[13px] font-medium text-primary">
-              {{ t('CONVERSATION.AI_SUMMARY.NEXT_BEST_ACTION') }}
-            </span>
-            <span class="text-[13px] text-foreground truncate mt-0.5">
-              {{ nextBestAction }}
-            </span>
-          </div>
-          <span class="i-lucide-chevron-right size-4 text-muted-foreground" />
-        </div>
-
-        <div class="px-2 pb-2">
-          <RelayButton
-            variant="outline"
-            class="w-full gap-2 text-[13px] font-medium text-primary border-primary/20 hover:bg-primary/5 hover:text-primary bg-background"
-            :disabled="!captainTasksEnabled || isGenerating"
-            @click="generateSummary"
-          >
-            <span
-              class="size-3.5"
-              :class="
-                isGenerating
-                  ? 'i-lucide-loader-2 animate-spin'
-                  : 'i-lucide-refresh-cw'
-              "
-            />
-            {{
-              isGenerating
-                ? t('CONVERSATION.AI_SUMMARY.GENERATING')
-                : t('CONVERSATION.AI_SUMMARY.GENERATE')
-            }}
-          </RelayButton>
-        </div>
-      </div>
+        <span
+          class="size-4"
+          :class="
+            isGenerating
+              ? 'i-lucide-loader-2 animate-spin'
+              : 'i-lucide-sparkles'
+          "
+        />
+        {{
+          isGenerating
+            ? t('CONVERSATION.AI_SUMMARY.GENERATING')
+            : t('CONVERSATION.AI_SUMMARY.GENERATE')
+        }}
+      </RelayButton>
     </div>
   </div>
 </template>

@@ -402,7 +402,7 @@ export default {
     <div class="right-wrap">
       <button
         type="submit"
-        class="inline-flex items-center gap-2 h-8 px-4 rounded-md text-sm font-semibold shadow-xs transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        class="inline-flex items-center gap-2 h-8 px-4 rounded-full text-sm font-semibold shadow-xs transition-colors disabled:opacity-50 disabled:pointer-events-none"
         :class="
           isNote
             ? 'bg-amber-500 text-white hover:bg-amber-600'

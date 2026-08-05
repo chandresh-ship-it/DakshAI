@@ -36,10 +36,10 @@ const showListFilterMenu = ref(false);
 const showTabMoreMenu = ref(false);
 const selectedIds = ref(new Set());
 
-// Starred notification ids are persisted in UI settings so favourites survive
+// Starred conversation ids are persisted in UI settings so favourites survive
 // reloads and stay in sync across the agent's sessions.
 const starredIds = computed(
-  () => new Set(uiSettings.value?.starred_notification_ids || [])
+  () => new Set(uiSettings.value?.starred_conversation_ids || [])
 );
 
 const STATUS_TAB_MAP = {
@@ -106,7 +106,7 @@ const viewCounts = computed(() => {
     ).length,
     // Counted from the loaded list rather than the saved id set, so the badge
     // always matches what the Starred view actually renders.
-    starred: items.filter(n => starredIds.value.has(n.id)).length,
+    starred: items.filter(n => starredIds.value.has(n.primaryActor?.id)).length,
     snoozed: items.filter(
       n => n.snoozedUntil || n.primaryActor?.status === 'snoozed'
     ).length,
@@ -129,7 +129,7 @@ const filteredNotifications = computed(() => {
         n.primaryActor?.meta?.assignee?.id === currentUserId
     );
   } else if (view === 'starred') {
-    items = items.filter(n => starredIds.value.has(n.id));
+    items = items.filter(n => starredIds.value.has(n.primaryActor?.id));
   } else if (view === 'snoozed') {
     items = items.filter(
       n => n.snoozedUntil || n.primaryActor?.status === 'snoozed'
@@ -181,13 +181,17 @@ const statusTabs = computed(() => [
   { value: 'closed', label: t('INBOX.TABS.CLOSED') },
 ]);
 
-const isStarred = notificationId => starredIds.value.has(notificationId);
+const isStarred = notificationItem =>
+  starredIds.value.has(notificationItem.primaryActor?.id);
 
 const toggleStar = notificationItem => {
   const next = new Set(starredIds.value);
-  if (next.has(notificationItem.id)) next.delete(notificationItem.id);
-  else next.add(notificationItem.id);
-  updateUISettings({ starred_notification_ids: [...next] });
+  const conversationId = notificationItem.primaryActor?.id;
+  if (!conversationId) return;
+
+  if (next.has(conversationId)) next.delete(conversationId);
+  else next.add(conversationId);
+  updateUISettings({ starred_conversation_ids: [...next] });
 };
 
 const toggleSelect = notificationItem => {
@@ -465,15 +469,20 @@ onMounted(() => {
               type="button"
               role="tab"
               :aria-selected="activeStatusTab === tab.value"
-              class="h-14 px-0 text-sm font-medium border-b-2 transition-colors shrink-0"
+              class="relative h-14 px-1 text-sm font-medium transition-colors shrink-0"
               :class="
                 activeStatusTab === tab.value
-                  ? 'border-primary text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
+                  ? 'text-foreground font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
               "
               @click="activeStatusTab = tab.value"
             >
               {{ tab.label }}
+              <!-- Active Bottom Border Indicator -->
+              <span
+                v-if="activeStatusTab === tab.value"
+                class="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-primary"
+              />
             </button>
           </div>
 
@@ -630,7 +639,7 @@ onMounted(() => {
             :is-active="
               currentConversationId === notificationItem.primaryActor?.id
             "
-            :is-starred="isStarred(notificationItem.id)"
+            :is-starred="isStarred(notificationItem)"
             :is-selected="selectedIds.has(notificationItem.id)"
             class="inbox-card"
             :class="{

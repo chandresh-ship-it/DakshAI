@@ -4,6 +4,8 @@ import { useI18n } from 'vue-i18n';
 import { dynamicTime, shortTimestamp } from 'shared/helpers/timeHelper';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import InboxContextMenu from 'dashboard/routes/dashboard/inbox/components/InboxContextMenu.vue';
+import { useMapGetter } from 'dashboard/composables/store';
+import { getInboxIconByType } from 'dashboard/helper/inbox';
 
 const props = defineProps({
   inboxItem: { type: Object, default: () => ({}) },
@@ -33,6 +35,17 @@ const meta = computed(() => primaryActor.value?.meta || {});
 const sender = computed(() => meta.value?.sender || {});
 const isUnread = computed(() => !props.inboxItem?.readAt);
 
+const inboxesList = useMapGetter('inboxes/getInboxes');
+const inbox = computed(() =>
+  (inboxesList.value || []).find(i => i.id === primaryActor.value?.inboxId)
+);
+const channelIcon = computed(() => {
+  if (!inbox.value) return '';
+  const type = inbox.value.channel_type || inbox.value.channelType;
+  const medium = inbox.value.medium;
+  return getInboxIconByType(type, medium, 'fill');
+});
+
 const contactName = computed(() => sender.value?.name || t('INBOX.NO_CONTENT'));
 const contactThumbnail = computed(() => sender.value?.thumbnail || '');
 const contactStatus = computed(() => sender.value?.availabilityStatus || null);
@@ -56,7 +69,7 @@ const snippet = computed(() => {
 });
 
 const snippetWithSeparator = computed(() =>
-  snippet.value ? `– ${snippet.value}` : ''
+  snippet.value ? `- ${snippet.value}` : ''
 );
 
 const attachments = computed(() => {
@@ -194,22 +207,28 @@ onBeforeMount(contextMenuActions.close);
         {{ contactName }}
       </span>
       <span
+        v-if="channelIcon"
+        class="shrink-0 flex items-center justify-center size-3.5 rounded-full bg-primary/10 text-primary"
+      >
+        <span :class="channelIcon" class="size-2.5" />
+      </span>
+      <span
         v-if="contactStatus === 'online'"
-        class="size-1.5 rounded-full bg-primary shrink-0"
+        class="size-1.5 rounded-full bg-primary shrink-0 ml-0.5"
       />
     </div>
 
     <!-- Subject & Snippet -->
-    <div class="flex-1 min-w-0 flex items-center gap-2 truncate">
+    <div class="flex-1 min-w-0 truncate text-[14px]">
       <span
-        class="text-[14px] text-foreground truncate"
+        class="text-foreground pr-1"
         :class="isUnread ? 'font-bold' : 'font-medium'"
       >
         {{ subject }}
       </span>
       <span
         v-if="snippetWithSeparator"
-        class="text-[14px] text-muted-foreground truncate hidden sm:inline"
+        class="text-muted-foreground hidden sm:inline"
       >
         {{ snippetWithSeparator }}
       </span>

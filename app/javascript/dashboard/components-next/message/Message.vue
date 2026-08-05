@@ -248,27 +248,11 @@ const flexOrientationClass = computed(() => {
 });
 
 const gridClass = computed(() => {
-  const map = {
-    [ORIENTATION.LEFT]: 'grid grid-cols-1fr',
-    [ORIENTATION.RIGHT]: 'grid grid-cols-[1fr_24px]',
-  };
-
-  return map[orientation.value];
+  return 'flex flex-col w-full';
 });
 
 const gridTemplate = computed(() => {
-  const map = {
-    [ORIENTATION.LEFT]: `
-      "bubble"
-      "meta"
-    `,
-    [ORIENTATION.RIGHT]: `
-      "bubble avatar"
-      "meta spacer"
-    `,
-  };
-
-  return map[orientation.value];
+  return '';
 });
 
 const shouldGroupWithNext = computed(() => {
@@ -278,10 +262,7 @@ const shouldGroupWithNext = computed(() => {
 });
 
 const shouldShowAvatar = computed(() => {
-  if (props.messageType === MESSAGE_TYPES.ACTIVITY) return false;
-  if (orientation.value === ORIENTATION.LEFT) return false;
-
-  return true;
+  return false; // Removed avatar from individual messages, it's now in the ConversationHeader
 });
 
 const componentToRender = computed(() => {
@@ -537,39 +518,13 @@ provideMessageContext({
     </div>
     <div
       v-else
-      :class="[
-        gridClass,
-        {
-          'gap-y-2': contentAttributes.externalError,
-          'w-full': variant === MESSAGE_VARIANTS.EMAIL,
-        },
-      ]"
-      class="gap-x-2"
-      :style="{
-        gridTemplateAreas: gridTemplate,
-      }"
+      class="flex flex-col w-full min-w-0"
+      @contextmenu="openContextMenu($event)"
     >
-      <div
-        v-if="!shouldGroupWithNext && shouldShowAvatar"
-        v-tooltip.left-end="avatarTooltip"
-        class="[grid-area:avatar] flex items-end"
-      >
-        <Avatar v-bind="avatarInfo" :size="24" />
-      </div>
-      <div
-        class="[grid-area:bubble] flex min-w-0"
-        :class="{
-          'ltr:ml-8 rtl:mr-8 justify-end': orientation === ORIENTATION.RIGHT,
-          'ltr:mr-8 rtl:ml-8': orientation === ORIENTATION.LEFT,
-        }"
-        @contextmenu="openContextMenu($event)"
-      >
-        <Component :is="componentToRender" />
-      </div>
+      <Component :is="componentToRender" />
       <MessageError
         v-if="contentAttributes.externalError"
-        class="[grid-area:meta]"
-        :class="flexOrientationClass"
+        class="flex justify-start w-full mt-2"
         :error="contentAttributes.externalError"
         @retry="emit('retry')"
       />
