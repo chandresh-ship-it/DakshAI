@@ -46,16 +46,18 @@ to display a collection of resources in an HTML table.
           <% end %>
         </th>
       <% end %>
-      <% [existing_action?(collection_presenter.resource_name, :edit),
-          existing_action?(collection_presenter.resource_name, :destroy)].count(true).times do %>
-        <th scope="col" class="px-4 py-3 align-middle font-medium"></th>
+      <% has_actions = existing_action?(collection_presenter.resource_name, :edit) || existing_action?(collection_presenter.resource_name, :destroy) %>
+      <% if has_actions %>
+        <th scope="col" class="px-4 py-3 align-middle font-medium text-right">
+          <span class="sr-only">Actions</span>
+        </th>
       <% end %>
     </tr>
   </thead>
 
   <tbody>
     <% resources.each do |resource| %>
-      <tr class="js-table-row border-b border-border hover:bg-muted/50 transition-colors"
+      <tr class="js-table-row border-b border-border last:border-0 hover:bg-muted/50 transition-colors"
           tabindex="0"
           <% if existing_action? collection_presenter.resource_name, :show %>
             <%= %(role=link data-url=#{polymorphic_path([namespace, resource])}) %>
@@ -73,22 +75,33 @@ to display a collection of resources in an HTML table.
           </td>
         <% end %>
 
-        <% if existing_action? collection_presenter.resource_name, :edit %>
-          <td class="px-4 py-3 align-middle text-right"><%= link_to(
-            t("administrate.actions.edit"),
-            [:edit, namespace, resource],
-            class: "text-primary hover:underline",
-          ) if authorized_action? resource, :edit%></td>
-        <% end %>
+        <% has_actions = existing_action?(collection_presenter.resource_name, :edit) || existing_action?(collection_presenter.resource_name, :destroy) %>
+        <% if has_actions %>
+          <td class="px-4 py-3 align-middle text-right">
+            <div class="flex items-center justify-end gap-1">
+              <% if existing_action? collection_presenter.resource_name, :edit %>
+                <%= link_to(
+                  [:edit, namespace, resource],
+                  class: "text-muted-foreground hover:text-primary transition-colors inline-flex p-1.5 rounded-md hover:bg-primary/10",
+                  title: t("administrate.actions.edit")
+                ) do %>
+                  <span class="i-lucide-pen-line size-4 block"></span>
+                <% end if authorized_action? resource, :edit %>
+              <% end %>
 
-        <% if existing_action? collection_presenter.resource_name, :destroy %>
-          <td class="px-4 py-3 align-middle text-right"><%= link_to(
-            t("administrate.actions.destroy"),
-            [namespace, resource],
-            class: "text-destructive hover:underline",
-            method: :delete,
-            data: { confirm: t("administrate.actions.confirm") }
-          ) if authorized_action? resource, :destroy %></td>
+              <% if existing_action? collection_presenter.resource_name, :destroy %>
+                <%= link_to(
+                  [namespace, resource],
+                  class: "text-muted-foreground hover:text-destructive transition-colors inline-flex p-1.5 rounded-md hover:bg-destructive/10",
+                  method: :delete,
+                  data: { confirm: t("administrate.actions.confirm") },
+                  title: t("administrate.actions.destroy")
+                ) do %>
+                  <span class="i-lucide-trash-2 size-4 block"></span>
+                <% end if authorized_action? resource, :destroy %>
+              <% end %>
+            </div>
+          </td>
         <% end %>
       </tr>
     <% end %>
