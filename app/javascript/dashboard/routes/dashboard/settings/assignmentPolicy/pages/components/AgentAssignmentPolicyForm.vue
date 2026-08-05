@@ -210,7 +210,7 @@ defineExpose({
 
 <template>
   <form class="flex w-full flex-col" @submit.prevent="handleSubmit">
-    <div class="space-y-6">
+    <div class="flex-1 space-y-6 overflow-y-auto p-5">
       <div class="flex flex-col gap-1.5">
         <RelayLabel
           html-for="assignment-policy-name"
@@ -313,57 +313,48 @@ defineExpose({
           v-model:fair-distribution-window="state.fairDistributionWindow"
         />
       </div>
-    </div>
 
-    <div
-      class="mt-8 flex items-center justify-end gap-3 border-t border-border/40 pt-5"
-    >
-      <RelayButton
-        type="button"
-        variant="ghost"
-        class="h-10 rounded-md border border-border/40 px-5 text-[14px] font-semibold text-muted-foreground hover:border-transparent hover:bg-muted"
-        @click="emit('cancel')"
+      <div
+        v-if="showInboxSection"
+        class="flex flex-col gap-4 border-t border-border/40 pt-4"
       >
-        {{ t(`${BASE_KEY}.FORM.CANCEL_BUTTON`) }}
-      </RelayButton>
-      <RelayButton
-        type="submit"
-        class="h-10 rounded-md px-6 text-[14px] font-semibold shadow-sm"
-        :disabled="!isNameValid || isLoading"
-      >
-        {{ buttonLabel }}
-      </RelayButton>
-    </div>
-
-    <div
-      v-if="showInboxSection"
-      class="mt-6 flex flex-col gap-4 border-t border-border/40 pt-4"
-    >
-      <div class="flex w-full items-end justify-between gap-4">
-        <div class="flex flex-col items-start gap-1 py-1">
-          <label class="py-1 text-sm font-medium text-foreground">
-            {{ t(`${BASE_KEY}.FORM.INBOXES.LABEL`) }}
-          </label>
-          <p class="mb-0 text-sm text-muted-foreground">
-            {{ t(`${BASE_KEY}.FORM.INBOXES.DESCRIPTION`) }}
-          </p>
+        <div class="flex w-full items-end justify-between gap-4">
+          <div class="flex flex-col items-start gap-1 py-1">
+            <label class="py-1 text-sm font-medium text-foreground">
+              {{ t(`${BASE_KEY}.FORM.INBOXES.LABEL`) }}
+            </label>
+            <p class="mb-0 text-sm text-muted-foreground">
+              {{ t(`${BASE_KEY}.FORM.INBOXES.DESCRIPTION`) }}
+            </p>
+          </div>
+          <AddDataDropdown
+            :label="t(`${BASE_KEY}.FORM.INBOXES.ADD_BUTTON`)"
+            :search-placeholder="
+              t(`${BASE_KEY}.FORM.INBOXES.DROPDOWN.SEARCH_PLACEHOLDER`)
+            "
+            :items="inboxList"
+            @add="$emit('addInbox', $event)"
+          />
         </div>
-        <AddDataDropdown
-          :label="t(`${BASE_KEY}.FORM.INBOXES.ADD_BUTTON`)"
-          :search-placeholder="
-            t(`${BASE_KEY}.FORM.INBOXES.DROPDOWN.SEARCH_PLACEHOLDER`)
-          "
-          :items="inboxList"
-          @add="$emit('addInbox', $event)"
+        <DataTable
+          :items="policyInboxes"
+          :is-fetching="isInboxLoading"
+          :empty-state-message="t(`${BASE_KEY}.FORM.INBOXES.EMPTY_STATE`)"
+          @delete="$emit('deleteInbox', $event)"
+          @navigate="$emit('navigateToInbox', $event)"
         />
       </div>
-      <DataTable
-        :items="policyInboxes"
-        :is-fetching="isInboxLoading"
-        :empty-state-message="t(`${BASE_KEY}.FORM.INBOXES.EMPTY_STATE`)"
-        @delete="$emit('deleteInbox', $event)"
-        @navigate="$emit('navigateToInbox', $event)"
-      />
+    </div>
+
+    <div
+      class="flex justify-end gap-3 border-t border-border/40 bg-background/50 p-5"
+    >
+      <RelayButton type="button" variant="outline" @click="emit('cancel')">
+        {{ t(`${BASE_KEY}.FORM.CANCEL_BUTTON`) }}
+      </RelayButton>
+      <RelayButton type="submit" :disabled="!isNameValid || isLoading">
+        {{ buttonLabel }}
+      </RelayButton>
     </div>
   </form>
 </template>

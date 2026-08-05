@@ -411,7 +411,7 @@
         "CLEAR_FILTERS": "Clear filters",
         "UPDATE_SEGMENT": "Update segment",
         "APPLY_FILTERS": "Apply filters",
-        "ADD_FILTER": "Add filter"
+        "ADD_FILTER": "Add filter condition"
       },
       "TITLE": "Filter contacts",
       "MANAGE_COLUMNS": "Manage Columns",
@@ -519,6 +519,66 @@
         }
       }
     },
+    "DETAIL": {
+      "BACK": "Back",
+      "LOADING": "Loading contact…",
+      "EMPTY_STATE": {
+        "TITLE": "Contact not found",
+        "SUBTITLE": "This contact may have been deleted or you do not have access."
+      },
+      "ACTIONS": {
+        "SCHEDULE_MEETING": "Schedule a Meeting",
+        "LOG_ACTIVITY": "Log Activity",
+        "EMAIL": "Email",
+        "CALL": "Call Contact"
+      },
+      "ABOUT": {
+        "TITLE": "About",
+        "EDIT": "Edit contact",
+        "EMAIL": "Email Address",
+        "PHONE": "Phone Number",
+        "ADDRESS": "Address",
+        "SOCIALS": "Socials",
+        "SOCIAL_LINKS": "Social links",
+        "FULL_NAME": "Full Name",
+        "HANDLE": "handle",
+        "ADD_SOCIAL": "Add social link",
+        "CANCEL": "Cancel",
+        "SAVE": "Save",
+        "STATUS_PROPERTIES": "Status & Properties",
+        "TAGS": "Tags",
+        "EMPTY": "Not provided"
+      },
+      "LOG_ACTIVITY": {
+        "TITLE": "Log Activity",
+        "SUBTITLE": "Record a call, meeting, or email for {name}.",
+        "TYPE": "Activity Type",
+        "TYPES": {
+          "CALL": "Call",
+          "MEETING": "Meeting",
+          "EMAIL": "Email"
+        },
+        "DATE": "Date",
+        "NOTES": "Notes",
+        "NOTES_PLACEHOLDER": "Describe the activity...",
+        "CANCEL": "Cancel",
+        "SUBMIT": "Log Activity",
+        "GAP_MESSAGE": "Activity logging is not connected yet. Your note was not saved."
+      },
+      "SCHEDULE_MEETING": {
+        "TITLE": "Schedule a Meeting",
+        "SUBTITLE": "Plan a meeting with {name}.",
+        "MEETING_TITLE": "Title",
+        "TITLE_PLACEHOLDER": "Meeting title",
+        "DATE": "Date",
+        "TIME": "Time",
+        "NOTES": "Notes",
+        "NOTES_PLACEHOLDER": "Add agenda or context...",
+        "CANCEL": "Cancel",
+        "SUBMIT": "Schedule Meeting",
+        "GAP_MESSAGE": "Meeting scheduling is not connected yet. Your meeting was not saved."
+      }
+    },
     "SIDEBAR": {
       "TABS": {
         "ATTRIBUTES": "Attributes",
@@ -527,12 +587,24 @@
         "MERGE": "Merge"
       },
       "HISTORY": {
-        "EMPTY_STATE": "There are no previous conversations associated to this contact"
+        "EMPTY_STATE": "There are no previous conversations associated to this contact",
+        "EMAIL_SENT": "Email Sent",
+        "CONVERSATION": "Conversation",
+        "OUTBOUND": "Outbound",
+        "INBOUND": "Inbound",
+        "FROM": "From",
+        "TO": "To",
+        "FROM_LABEL": "From: {name}",
+        "TO_LABEL": "To: {name}",
+        "OPEN": "Open",
+        "UNKNOWN_AGENT": "Agent",
+        "CONTACT": "Contact"
       },
       "ATTRIBUTES": {
         "SEARCH_PLACEHOLDER": "Search for attributes",
         "UNUSED_ATTRIBUTES": "{count} Used attribute | {count} Unused attributes",
         "EMPTY_STATE": "There are no contact custom attributes available in this account. You can create a custom attribute in settings.",
+        "EMPTY_PLACEHOLDER": "Custom fields and attributes for this contact will appear here.",
         "YES": "Yes",
         "NO": "No",
         "TRIGGER": {
@@ -556,7 +628,17 @@
       },
       "MERGE": {
         "TITLE": "Merge contact",
+        "TITLE_NEW": "Merge Contacts",
         "DESCRIPTION": "Combine two profiles into one, including all attributes and conversations. In case of conflict, the primary contact’s attributes will take precedence.",
+        "SELECT_LABEL": "Select contact to merge",
+        "SEARCH_BY": "Search by name or email...",
+        "SELECT_HELP_PREFIX": "Select a duplicate contact to merge into ",
+        "SELECT_HELP_SUFFIX": ".",
+        "WARNING": "The selected contact will be permanently deleted after the merge is complete. All emails, notes, and activity will be transferred to this primary record.",
+        "PREVIEW_TITLE": "Merge Preview",
+        "PREVIEW_SUBTITLE": "Review the changes before confirming the merge. This action cannot be undone.",
+        "PRIMARY_BADGE": "PRIMARY",
+        "DELETED_BADGE": "WILL BE DELETED",
         "PRIMARY": "Primary contact",
         "PRIMARY_HELP_LABEL": "To be saved",
         "PRIMARY_REQUIRED_ERROR": "Please select a contact to merge with before proceeding",
@@ -571,19 +653,27 @@
         "IS_SEARCHING": "Searching...",
         "BUTTONS": {
           "CANCEL": "Cancel",
-          "CONFIRM": "Merge contact"
+          "CONFIRM": "Merge contact",
+          "PREVIEW": "Preview Merge",
+          "CONFIRM_MERGE": "Confirm Merge"
         }
       },
       "NOTES": {
-        "PLACEHOLDER": "Add a note",
+        "PLACEHOLDER": "Write a note...",
         "WROTE": "wrote",
         "YOU": "You",
-        "SAVE": "Save note",
+        "SAVE": "Save Note",
+        "CANCEL": "Cancel",
+        "EDIT": "Edit",
+        "DELETE": "Delete",
         "ADD_NOTE": "Add contact note",
+        "ADD_NOTE_BUTTON": "Add Note",
         "EXPAND": "Expand",
         "COLLAPSE": "Collapse",
         "NO_NOTES": "No notes, you can add notes from the contact details page.",
         "EMPTY_STATE": "There are no notes associated to this contact. You can add a note by typing in the box above.",
+        "EMPTY_TITLE": "No notes yet",
+        "EMPTY_HINT": "Click 'Add Note' to leave a private internal note about this contact.",
         "CONVERSATION_EMPTY_STATE": "There are no notes yet. Use the Add note button to create one."
       }
     },
@@ -608,23 +698,57 @@
     },
     "LOAD_MORE": "Load more",
     "ADD_CONTACT_DRAWER": {
-      "TITLE": "Add Contact",
-      "FIRST_NAME": "First name",
-      "LAST_NAME": "Last name",
+      "TITLE": "Create Contact",
+      "SUBTITLE": "Add a new lead or customer to your workspace.",
+      "PROFILE_PICTURE": "Profile Picture",
+      "UPLOAD_PICTURE": "Upload Picture",
+      "AVATAR_HINT": "JPG, PNG or SVG. Max size 2MB.",
+      "FIRST_NAME": "First Name",
+      "LAST_NAME": "Last Name",
+      "FIRST_NAME_PLACEHOLDER": "e.g. Jane",
+      "LAST_NAME_PLACEHOLDER": "e.g. Doe",
+      "FIRST_NAME_REQUIRED": "First Name is required",
+      "LAST_NAME_REQUIRED": "Last Name is required",
       "EMAIL": "Email",
-      "PHONE": "Phone",
+      "EMAIL_PLACEHOLDER": "e.g. jane@company.com",
+      "EMAIL_REQUIRED": "Email is required",
+      "ADDITIONAL_EMAIL_PLACEHOLDER": "e.g. jane.secondary@company.com",
+      "PHONE": "Phone Number",
+      "PHONE_PLACEHOLDER": "e.g. +1 (555) 123-4567",
+      "ADDITIONAL_PHONE_PLACEHOLDER": "e.g. +1 (555) 987-6543",
+      "COMPANY": "Company",
+      "COMPANY_PLACEHOLDER": "Search existing company...",
+      "MORE_DETAILS": "More Details",
       "CONTACT_TYPE": "Contact type",
+      "CONTACT_TYPES": {
+        "VISITOR": "Visitor",
+        "LEAD": "Lead",
+        "CUSTOMER": "Customer"
+      },
       "TIMEZONE": "Time zone",
+      "TAGS": "Tags",
+      "TAGS_PLACEHOLDER": "e.g. VIP, Follow-up",
+      "OWNER": "Owner",
+      "OWNER_PLACEHOLDER": "Select owner",
+      "OWNER_UNASSIGNED": "Unassigned",
+      "SEARCH_PLACEHOLDER": "Search...",
+      "COMMUNICATION_PREFERENCES": "Communication Preferences",
+      "PREF_EMAIL": "Email",
+      "PREF_SMS": "SMS",
+      "PREF_WHATSAPP": "WhatsApp",
+      "PREF_MARKETING_EMAILS": "Marketing Emails",
+      "REQUIRED_MARK": "*",
+      "ADD_EMAIL": "Add email address",
+      "ADD_PHONE": "Add phone number",
+      "CANCEL": "Cancel",
+      "CREATE": "Create Contact",
       "DND_ALL": "DND all channels",
       "CHANNELS": "Channels",
       "EMAIL_CHANNEL": "Email",
       "SMS_CHANNEL": "Text messages",
       "CALLS_CHANNEL": "Calls & voicemail",
       "INBOUND_CHANNEL": "Inbound calls and SMS",
-      "ADD_EMAIL": "Add email",
-      "ADD_PHONE": "Add phone",
       "OR_SEPARATOR": "OR",
-      "CANCEL": "Cancel",
       "SAVE_ADD_ANOTHER": "Save and add another",
       "SAVE": "Save"
     },
@@ -774,6 +898,14 @@
   },
 
   "COMPOSE_NEW_CONVERSATION": {
+    "TITLE": "New Message",
+    "ACTIONS": {
+      "MINIMIZE": "Minimize",
+      "RESTORE": "Restore",
+      "FULLSCREEN": "Full screen",
+      "EXIT_FULLSCREEN": "Exit full screen",
+      "CLOSE": "Close"
+    },
     "CONTACT_SEARCH": {
       "ERROR_MESSAGE": "We couldn’t complete the search. Please try again."
     },
@@ -783,25 +915,29 @@
       "ERROR_MESSAGE": "An error occurred while creating the conversation. Please try again later.",
       "NO_INBOX_ALERT": "There are no available inboxes to start a conversation with this contact.",
       "CONTACT_SELECTOR": {
-        "LABEL": "To:",
-        "TAG_INPUT_PLACEHOLDER": "Enter at least 2 characters to search by name, email, or phone number",
+        "LABEL": "To",
+        "TAG_INPUT_PLACEHOLDER": "To",
         "CONTACT_CREATING": "Creating contact..."
       },
       "INBOX_SELECTOR": {
-        "LABEL": "Via:",
-        "BUTTON": "Show inboxes"
+        "LABEL": "Via",
+        "BUTTON": "Select inbox"
       },
       "EMAIL_OPTIONS": {
-        "SUBJECT_LABEL": "Subject :",
-        "SUBJECT_PLACEHOLDER": "Enter your email subject here",
-        "CC_LABEL": "Cc:",
+        "SUBJECT_LABEL": "Subject",
+        "SUBJECT_PLACEHOLDER": "Subject",
+        "CC_LABEL": "Cc",
         "CC_PLACEHOLDER": "Enter at least 2 characters to search by email",
-        "BCC_LABEL": "Bcc:",
+        "CC_BUTTON": "Cc",
+        "BCC_LABEL": "Bcc",
         "BCC_PLACEHOLDER": "Enter at least 2 characters to search by email",
         "BCC_BUTTON": "Bcc"
       },
       "MESSAGE_EDITOR": {
-        "PLACEHOLDER": "Write your message here..."
+        "PLACEHOLDER": "Write something..."
+      },
+      "AI_BAR": {
+        "PLACEHOLDER": "Describe your message..."
       },
       "WHATSAPP_OPTIONS": {
         "LABEL": "Select template",
@@ -824,8 +960,16 @@
         }
       },
       "ACTION_BUTTONS": {
-        "DISCARD": "Discard",
-        "SEND": "Send ({keyCode})"
+        "DISCARD": "Discard draft",
+        "SEND": "Send",
+        "SEND_NOW": "Send now",
+        "SEND_OPTIONS": "More send options",
+        "FORMATTING": "Formatting options",
+        "ATTACH": "Attach files",
+        "LINK": "Insert link",
+        "EMOJI": "Insert emoji",
+        "IMAGE": "Insert photo",
+        "SIGNATURE": "Toggle signature"
       }
     }
   }

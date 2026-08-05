@@ -256,46 +256,46 @@ onBeforeUnmount(() => {
     <LoadingState v-if="showLoader" :message="processingMessage" />
 
     <div v-else>
-      <div class="flex flex-col items-start mb-6 text-start">
-        <div class="flex justify-start mb-6">
+      <div class="mb-6 flex flex-col items-start text-start">
+        <div class="mb-6 flex justify-start">
           <div
-            class="flex size-11 items-center justify-center rounded-full bg-n-alpha-2"
+            class="flex size-11 items-center justify-center rounded-full border border-border/40 bg-card shadow-xs"
           >
-            <Icon icon="i-woot-whatsapp" class="text-n-slate-10 size-6" />
+            <Icon icon="i-woot-whatsapp" class="size-6 text-muted-foreground" />
           </div>
         </div>
 
-        <h3 class="mb-2 text-base font-medium text-n-slate-12">
+        <h3 class="mb-2 text-base font-semibold text-foreground">
           {{ $t('INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.TITLE') }}
         </h3>
-        <p class="text-sm leading-[24px] text-n-slate-12">
+        <p class="text-[13px] leading-relaxed text-muted-foreground">
           {{ $t('INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.DESC') }}
         </p>
       </div>
 
-      <div class="flex flex-col gap-2 mb-6">
+      <div class="mb-6 flex flex-col gap-2">
         <div
           v-for="benefit in benefits"
           :key="benefit.key"
-          class="flex gap-2 items-center text-sm text-n-slate-11"
+          class="flex items-center gap-2 text-[13px] text-muted-foreground"
         >
-          <Icon icon="i-lucide-check" class="text-n-slate-11 size-4" />
+          <Icon icon="i-lucide-check" class="size-4 text-primary" />
           {{ benefit.text }}
         </div>
       </div>
 
-      <div class="flex flex-col gap-2 mb-6">
+      <div class="mb-6 flex flex-col gap-2">
         <I18nT
           keypath="INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.LEARN_MORE.TEXT"
           tag="span"
-          class="text-sm text-n-slate-11"
+          class="text-[13px] text-muted-foreground"
         >
           <template #link>
             <a
               :href="globalConstants.WHATSAPP_EMBEDDED_SIGNUP_DOCS_URL"
               target="_blank"
               rel="noopener noreferrer"
-              class="underline text-n-brand"
+              class="font-medium text-primary underline hover:no-underline"
             >
               {{
                 $t(
@@ -307,7 +307,7 @@ onBeforeUnmount(() => {
         </I18nT>
       </div>
 
-      <div class="flex mt-4">
+      <div class="mt-4 flex">
         <NextButton
           :disabled="isAuthenticating"
           :is-loading="isAuthenticating"

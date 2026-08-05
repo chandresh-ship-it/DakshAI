@@ -5,12 +5,16 @@ import { useAlert } from 'dashboard/composables';
 import { required } from '@vuelidate/validators';
 import router from '../../../../index';
 import PageHeader from '../../SettingsSubPageHeader.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
+
+const INPUT_CLASS =
+  'h-10 rounded-md border-border/80 bg-background px-4 text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30';
 
 export default {
   components: {
     PageHeader,
-    NextButton,
+    RelayButton,
+    RelayInput,
   },
   setup() {
     return { v$: useVuelidate() };
@@ -18,6 +22,7 @@ export default {
   data() {
     return {
       botToken: '',
+      inputClass: INPUT_CLASS,
     };
   },
   computed: {
@@ -65,40 +70,38 @@ export default {
 </script>
 
 <template>
-  <div class="h-full w-full p-6 col-span-6">
+  <div class="w-full max-w-2xl">
     <PageHeader
       :header-title="$t('INBOX_MGMT.ADD.TELEGRAM_CHANNEL.TITLE')"
       :header-content="$t('INBOX_MGMT.ADD.TELEGRAM_CHANNEL.DESC')"
     />
-    <form
-      class="flex flex-wrap flex-col mx-0"
-      @submit.prevent="createChannel()"
-    >
-      <div class="flex-shrink-0 flex-grow-0">
-        <label :class="{ error: v$.botToken.$error }">
+    <form class="space-y-6" @submit.prevent="createChannel()">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
           {{ $t('INBOX_MGMT.ADD.TELEGRAM_CHANNEL.BOT_TOKEN.LABEL') }}
-          <input
-            v-model="botToken"
-            type="text"
-            :placeholder="
-              $t('INBOX_MGMT.ADD.TELEGRAM_CHANNEL.BOT_TOKEN.PLACEHOLDER')
-            "
-            @blur="v$.botToken.$touch"
-          />
         </label>
-        <p class="help-text">
+        <RelayInput
+          v-model="botToken"
+          type="text"
+          :placeholder="
+            $t('INBOX_MGMT.ADD.TELEGRAM_CHANNEL.BOT_TOKEN.PLACEHOLDER')
+          "
+          :class-name="inputClass"
+          @blur="v$.botToken.$touch"
+        />
+        <p class="text-[12.5px] text-muted-foreground">
           {{ $t('INBOX_MGMT.ADD.TELEGRAM_CHANNEL.BOT_TOKEN.SUBTITLE') }}
         </p>
       </div>
 
-      <div class="w-full mt-4">
-        <NextButton
-          :is-loading="uiFlags.isCreating"
+      <div class="pt-4">
+        <RelayButton
           type="submit"
-          solid
-          blue
-          :label="$t('INBOX_MGMT.ADD.TELEGRAM_CHANNEL.SUBMIT_BUTTON')"
-        />
+          class="shadow-sm"
+          :disabled="uiFlags.isCreating"
+        >
+          {{ $t('INBOX_MGMT.ADD.TELEGRAM_CHANNEL.SUBMIT_BUTTON') }}
+        </RelayButton>
       </div>
     </form>
   </div>

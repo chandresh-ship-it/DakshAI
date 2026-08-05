@@ -90,7 +90,7 @@ defineExpose({
         height="13"
         viewBox="0 0 10 13"
         fill="none"
-        :class="isSlaMissed ? 'fill-n-ruby-10' : 'fill-n-slate-9'"
+        :class="isSlaMissed ? 'fill-destructive' : 'fill-muted-foreground'"
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -101,7 +101,7 @@ defineExpose({
 
     <span
       class="text-sm truncate"
-      :class="isSlaMissed ? 'text-n-ruby-11' : 'text-n-slate-11'"
+      :class="isSlaMissed ? 'text-destructive' : 'text-muted-foreground'"
     >
       {{ `${slaStatusText}: ${slaStatus.threshold}` }}
     </span>

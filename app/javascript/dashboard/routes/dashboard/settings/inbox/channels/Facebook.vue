@@ -221,80 +221,86 @@ export default {
 </script>
 
 <template>
-  <div class="w-full h-full col-span-6 p-6 overflow-auto">
+  <div class="w-full max-w-2xl overflow-auto">
     <div
       v-if="!hasLoginStarted"
-      class="flex flex-col items-center justify-center h-full text-center"
+      class="flex flex-col items-center justify-center py-16 text-center"
     >
       <a href="#" @click="startLogin()">
         <img
-          class="w-auto h-10 rounded-md"
+          class="h-10 w-auto rounded-md"
           src="~dashboard/assets/images/channels/facebook_login.png"
           alt="Facebook-logo"
         />
       </a>
-      <p class="py-6">
+      <p
+        class="max-w-md py-6 text-[13px] leading-relaxed text-muted-foreground"
+      >
         {{ replaceInstallationName($t('INBOX_MGMT.ADD.FB.HELP')) }}
       </p>
     </div>
     <div v-else>
-      <div v-if="hasError" class="max-w-lg mx-auto text-center">
-        <h5>{{ errorStateMessage }}</h5>
+      <div v-if="hasError" class="mx-auto max-w-lg text-center">
+        <h5 class="text-base font-semibold text-foreground">
+          {{ errorStateMessage }}
+        </h5>
         <p
           v-if="errorStateDescription"
           v-dompurify-html="errorStateDescription"
+          class="mt-2 text-[13px] text-muted-foreground"
         />
       </div>
       <LoadingState v-else-if="showLoader" :message="emptyStateMessage" />
       <form
         v-else
-        class="flex flex-col flex-wrap mx-0"
+        class="flex flex-col space-y-6"
         @submit.prevent="createChannel()"
       >
-        <div class="w-full">
-          <PageHeader
-            :header-title="$t('INBOX_MGMT.ADD.DETAILS.TITLE')"
-            :header-content="
-              replaceInstallationName($t('INBOX_MGMT.ADD.DETAILS.DESC'))
-            "
+        <PageHeader
+          :header-title="$t('INBOX_MGMT.ADD.DETAILS.TITLE')"
+          :header-content="
+            replaceInstallationName($t('INBOX_MGMT.ADD.DETAILS.DESC'))
+          "
+        />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[13.5px] font-medium text-foreground">
+            {{ $t('INBOX_MGMT.ADD.FB.CHOOSE_PAGE') }}
+          </label>
+          <ComboBox
+            :model-value="selectedPage.id"
+            :options="comboBoxPageOptions"
+            :placeholder="$t('INBOX_MGMT.ADD.FB.PICK_A_VALUE')"
+            :has-error="v$.selectedPage.$error"
+            @update:model-value="setPageName"
           />
+          <p
+            v-if="v$.selectedPage.$error"
+            class="text-[12.5px] text-destructive"
+          >
+            {{ $t('INBOX_MGMT.ADD.FB.CHOOSE_PLACEHOLDER') }}
+          </p>
         </div>
-        <div class="w-3/5">
-          <div class="w-full mb-2">
-            <div class="input-wrap" :class="{ error: v$.selectedPage.$error }">
-              <span class="text-n-slate-12 text-start">
-                {{ $t('INBOX_MGMT.ADD.FB.CHOOSE_PAGE') }}
-              </span>
-              <ComboBox
-                :model-value="selectedPage.id"
-                :options="comboBoxPageOptions"
-                :placeholder="$t('INBOX_MGMT.ADD.FB.PICK_A_VALUE')"
-                :has-error="v$.selectedPage.$error"
-                class="[&>div>button]:!bg-n-alpha-black2 mt-1"
-                @update:model-value="setPageName"
-              />
-              <span v-if="v$.selectedPage.$error" class="message mt-0.5">
-                {{ $t('INBOX_MGMT.ADD.FB.CHOOSE_PLACEHOLDER') }}
-              </span>
-            </div>
-          </div>
-          <div class="w-full">
-            <label :class="{ error: v$.pageName.$error }">
-              {{ $t('INBOX_MGMT.ADD.FB.INBOX_NAME') }}
-              <input
-                v-model="pageName"
-                type="text"
-                :placeholder="$t('INBOX_MGMT.ADD.FB.PICK_NAME')"
-                @input="v$.pageName.$touch"
-              />
-              <span v-if="v$.pageName.$error" class="message">
-                {{ $t('INBOX_MGMT.ADD.FB.ADD_NAME') }}
-              </span>
-            </label>
-          </div>
-          <div class="w-full text-right">
-            <NextButton :label="$t('INBOX_MGMT.ADD.FB.CREATE_INBOX')" />
-          </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[13.5px] font-medium text-foreground">
+            {{ $t('INBOX_MGMT.ADD.FB.INBOX_NAME') }}
+          </label>
+          <input
+            v-model="pageName"
+            type="text"
+            :placeholder="$t('INBOX_MGMT.ADD.FB.PICK_NAME')"
+            class="h-10 w-full rounded-md border border-border/80 bg-background px-4 text-[14px] text-foreground shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+            @input="v$.pageName.$touch"
+          />
+          <p v-if="v$.pageName.$error" class="text-[12.5px] text-destructive">
+            {{ $t('INBOX_MGMT.ADD.FB.ADD_NAME') }}
+          </p>
+        </div>
+        <div class="pt-2">
+          <NextButton
+            type="submit"
+            :label="$t('INBOX_MGMT.ADD.FB.CREATE_INBOX')"
+            class="shadow-sm"
+          />
         </div>
       </form>
     </div>

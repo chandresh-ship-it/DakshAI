@@ -4,12 +4,12 @@ import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
-import EmptyState from '../../../../components/widgets/EmptyState.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 import DuplicateInboxBanner from './channels/instagram/DuplicateInboxBanner.vue';
 import EmailInboxFinish from './channels/emailChannels/EmailInboxFinish.vue';
 import { useInbox } from 'dashboard/composables/useInbox';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
+import { RelayButton } from 'dashboard/components-next/relay';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -100,6 +100,10 @@ const message = computed(() => {
   return t('INBOX_MGMT.FINISH.MESSAGE');
 });
 
+const showEmailFinish = computed(
+  () => isAnEmailChannel.value && !currentInbox.value.provider
+);
+
 async function generateQRCode(platform, identifier) {
   if (!identifier || !identifier.trim()) {
     // eslint-disable-next-line no-console
@@ -166,39 +170,51 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="overflow-auto col-span-6 p-6 w-full h-full">
+  <div
+    class="mx-auto flex w-full max-w-md flex-col items-center justify-center text-center"
+  >
     <DuplicateInboxBanner
       v-if="hasDuplicateInstagramInbox"
       :content="$t('INBOX_MGMT.ADD.INSTAGRAM.NEW_INBOX_SUGGESTION')"
     />
-    <EmptyState
-      :title="$t('INBOX_MGMT.FINISH.TITLE')"
-      :message="isAnEmailChannel && !currentInbox.provider ? '' : message"
-      :button-text="$t('INBOX_MGMT.FINISH.BUTTON_TEXT')"
+
+    <div
+      class="mb-6 flex size-20 items-center justify-center rounded-full border border-green-100 bg-green-50 shadow-sm dark:border-green-900/40 dark:bg-green-950/40"
     >
-      <div class="w-full text-center">
-        <div class="my-4 mx-auto max-w-[70%]">
-          <woot-code
-            v-if="currentInbox.web_widget_script"
-            :script="currentInbox.web_widget_script"
-          />
-        </div>
-        <div class="w-[50%] max-w-[50%] ml-[25%]">
-          <woot-code
-            v-if="isATwilioWhatsAppChannel"
-            lang="html"
-            :script="currentInbox.callback_webhook_url"
-          />
-        </div>
-        <div
-          v-if="shouldShowWhatsAppWebhookDetails"
-          class="w-[50%] max-w-[50%] ml-[25%]"
-        >
-          <p class="mt-8 font-medium text-n-slate-11">
+      <Icon icon="i-lucide-check" class="size-10 text-green-600" />
+    </div>
+
+    <h2 class="mb-3 text-2xl font-bold tracking-tight text-foreground">
+      {{ $t('INBOX_MGMT.FINISH.TITLE') }}
+    </h2>
+    <p
+      v-if="!showEmailFinish"
+      class="mb-8 text-[14px] leading-relaxed text-muted-foreground"
+    >
+      {{ message }}
+    </p>
+
+    <div class="w-full space-y-6">
+      <div v-if="currentInbox.web_widget_script" class="w-full text-left">
+        <woot-code :script="currentInbox.web_widget_script" />
+      </div>
+
+      <div v-if="isATwilioWhatsAppChannel" class="w-full text-left">
+        <woot-code lang="html" :script="currentInbox.callback_webhook_url" />
+      </div>
+
+      <div
+        v-if="shouldShowWhatsAppWebhookDetails"
+        class="w-full space-y-4 text-left"
+      >
+        <div>
+          <p class="mb-2 text-[13.5px] font-medium text-foreground">
             {{ $t('INBOX_MGMT.ADD.WHATSAPP.API_CALLBACK.WEBHOOK_URL') }}
           </p>
           <woot-code lang="html" :script="currentInbox.callback_webhook_url" />
-          <p class="mt-8 font-medium text-n-slate-11">
+        </div>
+        <div>
+          <p class="mb-2 text-[13.5px] font-medium text-foreground">
             {{
               $t(
                 'INBOX_MGMT.ADD.WHATSAPP.API_CALLBACK.WEBHOOK_VERIFICATION_TOKEN'
@@ -210,98 +226,92 @@ onMounted(() => {
             :script="currentInbox.provider_config.webhook_verify_token"
           />
         </div>
-        <div class="w-[50%] max-w-[50%] ml-[25%]">
-          <woot-code
-            v-if="isALineChannel"
-            lang="html"
-            :script="currentInbox.callback_webhook_url"
-          />
-        </div>
-        <div class="w-[50%] max-w-[50%] ml-[25%]">
-          <woot-code
-            v-if="isASmsInbox"
-            lang="html"
-            :script="currentInbox.callback_webhook_url"
-          />
-        </div>
-        <EmailInboxFinish
-          v-if="isAnEmailChannel && !currentInbox.provider"
-          :inbox="currentInbox"
-          :inbox-id="$route.params.inbox_id"
-        />
-        <div
-          v-if="isAWhatsAppChannel && qrCodes.whatsapp"
-          class="flex flex-col gap-3 items-center mt-8"
-        >
-          <p class="mt-2 text-sm text-n-slate-9">
-            {{ $t('INBOX_MGMT.FINISH.WHATSAPP_QR_INSTRUCTION') }}
-          </p>
-          <div class="rounded-lg shadow outline-1 outline-n-strong outline">
-            <img
-              :src="qrCodes.whatsapp"
-              alt="WhatsApp QR Code"
-              class="rounded-lg size-48 dark:invert"
-            />
-          </div>
-        </div>
-        <div
-          v-if="isAFacebookInbox && qrCodes.messenger"
-          class="flex flex-col gap-3 items-center mt-8"
-        >
-          <p class="mt-2 text-sm text-n-slate-9">
-            {{ $t('INBOX_MGMT.FINISH.MESSENGER_QR_INSTRUCTION') }}
-          </p>
-          <div class="rounded-lg shadow outline-1 outline-n-strong outline">
-            <img
-              :src="qrCodes.messenger"
-              alt="Messenger QR Code"
-              class="rounded-lg size-48 dark:invert"
-            />
-          </div>
-        </div>
-        <div
-          v-if="isATelegramChannel && qrCodes.telegram"
-          class="flex flex-col gap-4 items-center mt-8"
-        >
-          <p class="mt-2 text-sm text-n-slate-9">
-            {{ $t('INBOX_MGMT.FINISH.TELEGRAM_QR_INSTRUCTION') }}
-          </p>
+      </div>
 
-          <div class="rounded-lg shadow outline-1 outline-n-strong outline">
-            <img
-              :src="qrCodes.telegram"
-              alt="Telegram QR Code"
-              class="rounded-lg size-48 dark:invert"
-            />
-          </div>
-        </div>
-        <div class="flex gap-2 justify-center mt-4">
-          <router-link
-            :to="{
-              name: 'settings_inbox_show',
-              params: { inboxId: $route.params.inbox_id },
-            }"
-          >
-            <NextButton
-              outline
-              slate
-              :label="$t('INBOX_MGMT.FINISH.MORE_SETTINGS')"
-            />
-          </router-link>
-          <router-link
-            :to="{
-              name: 'inbox_dashboard',
-              params: { inboxId: $route.params.inbox_id },
-            }"
-          >
-            <NextButton
-              solid
-              teal
-              :label="$t('INBOX_MGMT.FINISH.BUTTON_TEXT')"
-            />
-          </router-link>
+      <div v-if="isALineChannel" class="w-full text-left">
+        <woot-code lang="html" :script="currentInbox.callback_webhook_url" />
+      </div>
+
+      <div v-if="isASmsInbox" class="w-full text-left">
+        <woot-code lang="html" :script="currentInbox.callback_webhook_url" />
+      </div>
+
+      <EmailInboxFinish
+        v-if="showEmailFinish"
+        :inbox="currentInbox"
+        :inbox-id="$route.params.inbox_id"
+      />
+
+      <div
+        v-if="isAWhatsAppChannel && qrCodes.whatsapp"
+        class="flex flex-col items-center gap-3"
+      >
+        <p class="text-sm text-muted-foreground">
+          {{ $t('INBOX_MGMT.FINISH.WHATSAPP_QR_INSTRUCTION') }}
+        </p>
+        <div class="rounded-lg border border-border shadow-sm">
+          <img
+            :src="qrCodes.whatsapp"
+            alt="WhatsApp QR Code"
+            class="size-48 rounded-lg dark:invert"
+          />
         </div>
       </div>
-    </EmptyState>
+
+      <div
+        v-if="isAFacebookInbox && qrCodes.messenger"
+        class="flex flex-col items-center gap-3"
+      >
+        <p class="text-sm text-muted-foreground">
+          {{ $t('INBOX_MGMT.FINISH.MESSENGER_QR_INSTRUCTION') }}
+        </p>
+        <div class="rounded-lg border border-border shadow-sm">
+          <img
+            :src="qrCodes.messenger"
+            alt="Messenger QR Code"
+            class="size-48 rounded-lg dark:invert"
+          />
+        </div>
+      </div>
+
+      <div
+        v-if="isATelegramChannel && qrCodes.telegram"
+        class="flex flex-col items-center gap-3"
+      >
+        <p class="text-sm text-muted-foreground">
+          {{ $t('INBOX_MGMT.FINISH.TELEGRAM_QR_INSTRUCTION') }}
+        </p>
+        <div class="rounded-lg border border-border shadow-sm">
+          <img
+            :src="qrCodes.telegram"
+            alt="Telegram QR Code"
+            class="size-48 rounded-lg dark:invert"
+          />
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <router-link
+          :to="{
+            name: 'settings_inbox_show',
+            params: { inboxId: $route.params.inbox_id },
+          }"
+        >
+          <RelayButton variant="outline" class="shadow-sm">
+            {{ $t('INBOX_MGMT.FINISH.MORE_SETTINGS') }}
+          </RelayButton>
+        </router-link>
+        <router-link
+          :to="{
+            name: 'inbox_dashboard',
+            params: { inboxId: $route.params.inbox_id },
+          }"
+        >
+          <RelayButton class="h-11 px-8 text-[14px] shadow-sm">
+            {{ $t('INBOX_MGMT.FINISH.BUTTON_TEXT') }}
+          </RelayButton>
+        </router-link>
+      </div>
+    </div>
   </div>
 </template>

@@ -5,13 +5,22 @@ import { useVuelidate } from '@vuelidate/core';
 import { useAlert } from 'dashboard/composables';
 import { required } from '@vuelidate/validators';
 import router from '../../../../index';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 import { isPhoneE164OrEmpty } from 'shared/helpers/Validators';
 import { parseAPIErrorResponse } from 'dashboard/store/utils/api';
+import {
+  RelayButton,
+  RelayInput,
+  RelayCheckbox,
+} from 'dashboard/components-next/relay';
+
+const INPUT_CLASS =
+  'h-10 rounded-md border-border/80 bg-background px-4 text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30';
 
 export default {
   components: {
-    NextButton,
+    RelayButton,
+    RelayInput,
+    RelayCheckbox,
   },
   props: {
     type: {
@@ -33,6 +42,7 @@ export default {
       useMessagingService: false,
       useAPIKey: false,
       phoneNumber: '',
+      inputClass: INPUT_CLASS,
     };
   },
   computed: {
@@ -117,148 +127,136 @@ export default {
 </script>
 
 <template>
-  <form class="flex flex-wrap flex-col mx-0" @submit.prevent="createChannel()">
-    <div class="flex-shrink-0 flex-grow-0">
-      <label :class="{ error: v$.channelName.$error }">
+  <form class="space-y-6" @submit.prevent="createChannel()">
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
         {{ $t('INBOX_MGMT.ADD.TWILIO.CHANNEL_NAME.LABEL') }}
-        <input
-          v-model="channelName"
-          type="text"
-          :placeholder="$t('INBOX_MGMT.ADD.TWILIO.CHANNEL_NAME.PLACEHOLDER')"
-          @blur="v$.channelName.$touch"
-        />
-        <span v-if="v$.channelName.$error" class="message">{{
-          $t('INBOX_MGMT.ADD.TWILIO.CHANNEL_NAME.ERROR')
-        }}</span>
       </label>
+      <RelayInput
+        v-model="channelName"
+        type="text"
+        :placeholder="$t('INBOX_MGMT.ADD.TWILIO.CHANNEL_NAME.PLACEHOLDER')"
+        :class-name="inputClass"
+        @blur="v$.channelName.$touch"
+      />
+      <p v-if="v$.channelName.$error" class="text-[12.5px] text-destructive">
+        {{ $t('INBOX_MGMT.ADD.TWILIO.CHANNEL_NAME.ERROR') }}
+      </p>
     </div>
 
-    <div class="flex-shrink-0 flex-grow-0">
-      <label
-        v-if="useMessagingService"
-        :class="{ error: v$.messagingServiceSID.$error }"
-      >
+    <div v-if="useMessagingService" class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
         {{ $t('INBOX_MGMT.ADD.TWILIO.MESSAGING_SERVICE_SID.LABEL') }}
-        <input
-          v-model="messagingServiceSID"
-          type="text"
-          :placeholder="
-            $t('INBOX_MGMT.ADD.TWILIO.MESSAGING_SERVICE_SID.PLACEHOLDER')
-          "
-          @blur="v$.messagingServiceSID.$touch"
-        />
-        <span v-if="v$.messagingServiceSID.$error" class="message">{{
-          $t('INBOX_MGMT.ADD.TWILIO.MESSAGING_SERVICE_SID.ERROR')
-        }}</span>
       </label>
+      <RelayInput
+        v-model="messagingServiceSID"
+        type="text"
+        :placeholder="
+          $t('INBOX_MGMT.ADD.TWILIO.MESSAGING_SERVICE_SID.PLACEHOLDER')
+        "
+        :class-name="inputClass"
+        @blur="v$.messagingServiceSID.$touch"
+      />
+      <p
+        v-if="v$.messagingServiceSID.$error"
+        class="text-[12.5px] text-destructive"
+      >
+        {{ $t('INBOX_MGMT.ADD.TWILIO.MESSAGING_SERVICE_SID.ERROR') }}
+      </p>
     </div>
 
-    <div v-if="!useMessagingService" class="flex-shrink-0 flex-grow-0">
-      <label :class="{ error: v$.phoneNumber.$error }">
+    <div v-if="!useMessagingService" class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
         {{ $t('INBOX_MGMT.ADD.TWILIO.PHONE_NUMBER.LABEL') }}
-        <input
-          v-model="phoneNumber"
-          type="text"
-          :placeholder="$t('INBOX_MGMT.ADD.TWILIO.PHONE_NUMBER.PLACEHOLDER')"
-          @blur="v$.phoneNumber.$touch"
-        />
-        <span v-if="v$.phoneNumber.$error" class="message">{{
-          $t('INBOX_MGMT.ADD.TWILIO.PHONE_NUMBER.ERROR')
-        }}</span>
       </label>
+      <RelayInput
+        v-model="phoneNumber"
+        type="text"
+        :placeholder="$t('INBOX_MGMT.ADD.TWILIO.PHONE_NUMBER.PLACEHOLDER')"
+        :class-name="inputClass"
+        @blur="v$.phoneNumber.$touch"
+      />
+      <p v-if="v$.phoneNumber.$error" class="text-[12.5px] text-destructive">
+        {{ $t('INBOX_MGMT.ADD.TWILIO.PHONE_NUMBER.ERROR') }}
+      </p>
     </div>
 
-    <div class="max-w-[65%] w-full messagingServiceHelptext">
-      <label for="useMessagingService">
-        <input
-          id="useMessagingService"
-          v-model="useMessagingService"
-          type="checkbox"
-          class="checkbox"
-        />
+    <label class="flex items-center gap-3">
+      <RelayCheckbox v-model="useMessagingService" />
+      <span class="text-[13.5px] text-foreground">
         {{
           $t(
             'INBOX_MGMT.ADD.TWILIO.MESSAGING_SERVICE_SID.USE_MESSAGING_SERVICE'
           )
         }}
-      </label>
-    </div>
+      </span>
+    </label>
 
-    <div class="flex-shrink-0 flex-grow-0">
-      <label :class="{ error: v$.accountSID.$error }">
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
         {{ $t('INBOX_MGMT.ADD.TWILIO.ACCOUNT_SID.LABEL') }}
-        <input
-          v-model="accountSID"
-          type="text"
-          :placeholder="$t('INBOX_MGMT.ADD.TWILIO.ACCOUNT_SID.PLACEHOLDER')"
-          @blur="v$.accountSID.$touch"
-        />
-        <span v-if="v$.accountSID.$error" class="message">{{
-          $t('INBOX_MGMT.ADD.TWILIO.ACCOUNT_SID.ERROR')
-        }}</span>
       </label>
-    </div>
-    <div class="max-w-[65%] w-full messagingServiceHelptext">
-      <label for="useAPIKey">
-        <input
-          id="useAPIKey"
-          v-model="useAPIKey"
-          type="checkbox"
-          class="checkbox"
-        />
-        {{ $t('INBOX_MGMT.ADD.TWILIO.API_KEY.USE_API_KEY') }}
-      </label>
-    </div>
-    <div v-if="useAPIKey" class="flex-shrink-0 flex-grow-0">
-      <label :class="{ error: v$.apiKeySID.$error }">
-        {{ $t('INBOX_MGMT.ADD.TWILIO.API_KEY.LABEL') }}
-        <input
-          v-model="apiKeySID"
-          type="text"
-          :placeholder="$t('INBOX_MGMT.ADD.TWILIO.API_KEY.PLACEHOLDER')"
-          @blur="v$.apiKeySID.$touch"
-        />
-        <span v-if="v$.apiKeySID.$error" class="message">{{
-          $t('INBOX_MGMT.ADD.TWILIO.API_KEY.ERROR')
-        }}</span>
-      </label>
-    </div>
-    <div class="flex-shrink-0 flex-grow-0">
-      <label :class="{ error: v$.authToken.$error }">
-        {{ $t(`INBOX_MGMT.ADD.TWILIO.${authTokeni18nKey}.LABEL`) }}
-        <input
-          v-model="authToken"
-          type="text"
-          :placeholder="
-            $t(`INBOX_MGMT.ADD.TWILIO.${authTokeni18nKey}.PLACEHOLDER`)
-          "
-          @blur="v$.authToken.$touch"
-        />
-        <span v-if="v$.authToken.$error" class="message">
-          {{ $t(`INBOX_MGMT.ADD.TWILIO.${authTokeni18nKey}.ERROR`) }}
-        </span>
-      </label>
+      <RelayInput
+        v-model="accountSID"
+        type="text"
+        :placeholder="$t('INBOX_MGMT.ADD.TWILIO.ACCOUNT_SID.PLACEHOLDER')"
+        :class-name="inputClass"
+        @blur="v$.accountSID.$touch"
+      />
+      <p v-if="v$.accountSID.$error" class="text-[12.5px] text-destructive">
+        {{ $t('INBOX_MGMT.ADD.TWILIO.ACCOUNT_SID.ERROR') }}
+      </p>
     </div>
 
-    <div class="w-full mt-4">
-      <NextButton
-        :is-loading="uiFlags.isCreating"
-        type="submit"
-        solid
-        blue
-        :label="$t('INBOX_MGMT.ADD.TWILIO.SUBMIT_BUTTON')"
+    <label class="flex items-center gap-3">
+      <RelayCheckbox v-model="useAPIKey" />
+      <span class="text-[13.5px] text-foreground">
+        {{ $t('INBOX_MGMT.ADD.TWILIO.API_KEY.USE_API_KEY') }}
+      </span>
+    </label>
+
+    <div v-if="useAPIKey" class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
+        {{ $t('INBOX_MGMT.ADD.TWILIO.API_KEY.LABEL') }}
+      </label>
+      <RelayInput
+        v-model="apiKeySID"
+        type="text"
+        :placeholder="$t('INBOX_MGMT.ADD.TWILIO.API_KEY.PLACEHOLDER')"
+        :class-name="inputClass"
+        @blur="v$.apiKeySID.$touch"
       />
+      <p v-if="v$.apiKeySID.$error" class="text-[12.5px] text-destructive">
+        {{ $t('INBOX_MGMT.ADD.TWILIO.API_KEY.ERROR') }}
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
+        {{ $t(`INBOX_MGMT.ADD.TWILIO.${authTokeni18nKey}.LABEL`) }}
+      </label>
+      <RelayInput
+        v-model="authToken"
+        type="text"
+        :placeholder="
+          $t(`INBOX_MGMT.ADD.TWILIO.${authTokeni18nKey}.PLACEHOLDER`)
+        "
+        :class-name="inputClass"
+        @blur="v$.authToken.$touch"
+      />
+      <p v-if="v$.authToken.$error" class="text-[12.5px] text-destructive">
+        {{ $t(`INBOX_MGMT.ADD.TWILIO.${authTokeni18nKey}.ERROR`) }}
+      </p>
+    </div>
+
+    <div class="pt-4">
+      <RelayButton
+        type="submit"
+        class="shadow-sm"
+        :disabled="uiFlags.isCreating"
+      >
+        {{ $t('INBOX_MGMT.ADD.TWILIO.SUBMIT_BUTTON') }}
+      </RelayButton>
     </div>
   </form>
 </template>
-
-<style lang="scss" scoped>
-.messagingServiceHelptext {
-  margin-top: -10px;
-  margin-bottom: 15px;
-
-  .checkbox {
-    margin: 0px 4px;
-  }
-}
-</style>

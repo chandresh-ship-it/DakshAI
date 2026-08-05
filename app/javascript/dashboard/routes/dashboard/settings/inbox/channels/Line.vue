@@ -5,12 +5,16 @@ import { useAlert } from 'dashboard/composables';
 import { required } from '@vuelidate/validators';
 import router from '../../../../index';
 import PageHeader from '../../SettingsSubPageHeader.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
+
+const INPUT_CLASS =
+  'h-10 rounded-md border-border/80 bg-background px-4 text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30';
 
 export default {
   components: {
     PageHeader,
-    NextButton,
+    RelayButton,
+    RelayInput,
   },
   setup() {
     return { v$: useVuelidate() };
@@ -21,6 +25,7 @@ export default {
       lineChannelId: '',
       lineChannelSecret: '',
       lineChannelToken: '',
+      inputClass: INPUT_CLASS,
     };
   },
   computed: {
@@ -71,82 +76,83 @@ export default {
 </script>
 
 <template>
-  <div class="h-full w-full p-6 col-span-6">
+  <div class="w-full max-w-2xl">
     <PageHeader
       :header-title="$t('INBOX_MGMT.ADD.LINE_CHANNEL.TITLE')"
       :header-content="$t('INBOX_MGMT.ADD.LINE_CHANNEL.DESC')"
     />
-    <form
-      class="flex flex-wrap flex-col mx-0"
-      @submit.prevent="createChannel()"
-    >
-      <div class="flex-shrink-0 flex-grow-0">
-        <label :class="{ error: v$.channelName.$error }">
+    <form class="space-y-6" @submit.prevent="createChannel()">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
           {{ $t('INBOX_MGMT.ADD.LINE_CHANNEL.CHANNEL_NAME.LABEL') }}
-          <input
-            v-model="channelName"
-            type="text"
-            :placeholder="
-              $t('INBOX_MGMT.ADD.LINE_CHANNEL.CHANNEL_NAME.PLACEHOLDER')
-            "
-            @blur="v$.channelName.$touch"
-          />
-          <span v-if="v$.channelName.$error" class="message">{{
-            $t('INBOX_MGMT.ADD.LINE_CHANNEL.CHANNEL_NAME.ERROR')
-          }}</span>
         </label>
-      </div>
-
-      <div class="flex-shrink-0 flex-grow-0">
-        <label :class="{ error: v$.lineChannelId.$error }">
-          {{ $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_ID.LABEL') }}
-          <input
-            v-model="lineChannelId"
-            type="text"
-            :placeholder="
-              $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_ID.PLACEHOLDER')
-            "
-            @blur="v$.lineChannelId.$touch"
-          />
-        </label>
-      </div>
-
-      <div class="flex-shrink-0 flex-grow-0">
-        <label :class="{ error: v$.lineChannelSecret.$error }">
-          {{ $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_SECRET.LABEL') }}
-          <input
-            v-model="lineChannelSecret"
-            type="text"
-            :placeholder="
-              $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_SECRET.PLACEHOLDER')
-            "
-            @blur="v$.lineChannelSecret.$touch"
-          />
-        </label>
-      </div>
-
-      <div class="flex-shrink-0 flex-grow-0">
-        <label :class="{ error: v$.lineChannelToken.$error }">
-          {{ $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_TOKEN.LABEL') }}
-          <input
-            v-model="lineChannelToken"
-            type="text"
-            :placeholder="
-              $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_TOKEN.PLACEHOLDER')
-            "
-            @blur="v$.lineChannelToken.$touch"
-          />
-        </label>
-      </div>
-
-      <div class="w-full mt-4">
-        <NextButton
-          :is-loading="uiFlags.isCreating"
-          type="submit"
-          solid
-          blue
-          :label="$t('INBOX_MGMT.ADD.LINE_CHANNEL.SUBMIT_BUTTON')"
+        <RelayInput
+          v-model="channelName"
+          type="text"
+          :placeholder="
+            $t('INBOX_MGMT.ADD.LINE_CHANNEL.CHANNEL_NAME.PLACEHOLDER')
+          "
+          :class-name="inputClass"
+          @blur="v$.channelName.$touch"
         />
+        <p v-if="v$.channelName.$error" class="text-[12.5px] text-destructive">
+          {{ $t('INBOX_MGMT.ADD.LINE_CHANNEL.CHANNEL_NAME.ERROR') }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_ID.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="lineChannelId"
+          type="text"
+          :placeholder="
+            $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_ID.PLACEHOLDER')
+          "
+          :class-name="inputClass"
+          @blur="v$.lineChannelId.$touch"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_SECRET.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="lineChannelSecret"
+          type="text"
+          :placeholder="
+            $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_SECRET.PLACEHOLDER')
+          "
+          :class-name="inputClass"
+          @blur="v$.lineChannelSecret.$touch"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_TOKEN.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="lineChannelToken"
+          type="text"
+          :placeholder="
+            $t('INBOX_MGMT.ADD.LINE_CHANNEL.LINE_CHANNEL_TOKEN.PLACEHOLDER')
+          "
+          :class-name="inputClass"
+          @blur="v$.lineChannelToken.$touch"
+        />
+      </div>
+
+      <div class="pt-4">
+        <RelayButton
+          type="submit"
+          class="shadow-sm"
+          :disabled="uiFlags.isCreating"
+        >
+          {{ $t('INBOX_MGMT.ADD.LINE_CHANNEL.SUBMIT_BUTTON') }}
+        </RelayButton>
       </div>
     </form>
   </div>

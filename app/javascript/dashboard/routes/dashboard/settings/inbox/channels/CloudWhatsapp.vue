@@ -5,12 +5,15 @@ import { useAlert } from 'dashboard/composables';
 import { required } from '@vuelidate/validators';
 import router from '../../../../index';
 import { isPhoneE164OrEmpty, isNumber } from 'shared/helpers/Validators';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 
-import NextButton from 'dashboard/components-next/button/Button.vue';
+const INPUT_CLASS =
+  'h-10 rounded-md border-border/80 bg-background px-4 text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30';
 
 export default {
   components: {
-    NextButton,
+    RelayButton,
+    RelayInput,
   },
   setup() {
     return { v$: useVuelidate() };
@@ -22,6 +25,7 @@ export default {
       apiKey: '',
       phoneNumberId: '',
       businessAccountId: '',
+      inputClass: INPUT_CLASS,
     };
   },
   computed: {
@@ -77,100 +81,100 @@ export default {
 </script>
 
 <template>
-  <form class="flex flex-wrap flex-col mx-0" @submit.prevent="createChannel()">
-    <div class="flex-shrink-0 flex-grow-0">
-      <label :class="{ error: v$.inboxName.$error }">
+  <form class="space-y-6" @submit.prevent="createChannel()">
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
         {{ $t('INBOX_MGMT.ADD.WHATSAPP.INBOX_NAME.LABEL') }}
-        <input
-          v-model="inboxName"
-          type="text"
-          :placeholder="$t('INBOX_MGMT.ADD.WHATSAPP.INBOX_NAME.PLACEHOLDER')"
-          @blur="v$.inboxName.$touch"
-        />
-        <span v-if="v$.inboxName.$error" class="message">
-          {{ $t('INBOX_MGMT.ADD.WHATSAPP.INBOX_NAME.ERROR') }}
-        </span>
       </label>
-    </div>
-
-    <div class="flex-shrink-0 flex-grow-0">
-      <label :class="{ error: v$.phoneNumber.$error }">
-        {{ $t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER.LABEL') }}
-        <input
-          v-model="phoneNumber"
-          type="text"
-          :placeholder="$t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER.PLACEHOLDER')"
-          @blur="v$.phoneNumber.$touch"
-        />
-        <span v-if="v$.phoneNumber.$error" class="message">
-          {{ $t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER.ERROR') }}
-        </span>
-      </label>
-    </div>
-
-    <div class="flex-shrink-0 flex-grow-0">
-      <label :class="{ error: v$.phoneNumberId.$error }">
-        <span>
-          {{ $t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER_ID.LABEL') }}
-        </span>
-        <input
-          v-model="phoneNumberId"
-          type="text"
-          :placeholder="
-            $t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER_ID.PLACEHOLDER')
-          "
-          @blur="v$.phoneNumberId.$touch"
-        />
-        <span v-if="v$.phoneNumberId.$error" class="message">
-          {{ $t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER_ID.ERROR') }}
-        </span>
-      </label>
-    </div>
-
-    <div class="flex-shrink-0 flex-grow-0">
-      <label :class="{ error: v$.businessAccountId.$error }">
-        <span>
-          {{ $t('INBOX_MGMT.ADD.WHATSAPP.BUSINESS_ACCOUNT_ID.LABEL') }}
-        </span>
-        <input
-          v-model="businessAccountId"
-          type="text"
-          :placeholder="
-            $t('INBOX_MGMT.ADD.WHATSAPP.BUSINESS_ACCOUNT_ID.PLACEHOLDER')
-          "
-          @blur="v$.businessAccountId.$touch"
-        />
-        <span v-if="v$.businessAccountId.$error" class="message">
-          {{ $t('INBOX_MGMT.ADD.WHATSAPP.BUSINESS_ACCOUNT_ID.ERROR') }}
-        </span>
-      </label>
-    </div>
-
-    <div class="flex-shrink-0 flex-grow-0">
-      <label :class="{ error: v$.apiKey.$error }">
-        <span>
-          {{ $t('INBOX_MGMT.ADD.WHATSAPP.API_KEY.LABEL') }}
-        </span>
-        <input
-          v-model="apiKey"
-          type="text"
-          :placeholder="$t('INBOX_MGMT.ADD.WHATSAPP.API_KEY.PLACEHOLDER')"
-          @blur="v$.apiKey.$touch"
-        />
-        <span v-if="v$.apiKey.$error" class="message">
-          {{ $t('INBOX_MGMT.ADD.WHATSAPP.API_KEY.ERROR') }}
-        </span>
-      </label>
-    </div>
-
-    <div class="w-full mt-4">
-      <NextButton
-        :is-loading="uiFlags.isCreating"
-        type="submit"
-        solid
-        blue
-        :label="$t('INBOX_MGMT.ADD.WHATSAPP.SUBMIT_BUTTON')"
+      <RelayInput
+        v-model="inboxName"
+        type="text"
+        :placeholder="$t('INBOX_MGMT.ADD.WHATSAPP.INBOX_NAME.PLACEHOLDER')"
+        :class-name="inputClass"
+        @blur="v$.inboxName.$touch"
       />
+      <p v-if="v$.inboxName.$error" class="text-[12.5px] text-destructive">
+        {{ $t('INBOX_MGMT.ADD.WHATSAPP.INBOX_NAME.ERROR') }}
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
+        {{ $t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER.LABEL') }}
+      </label>
+      <RelayInput
+        v-model="phoneNumber"
+        type="text"
+        :placeholder="$t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER.PLACEHOLDER')"
+        :class-name="inputClass"
+        @blur="v$.phoneNumber.$touch"
+      />
+      <p v-if="v$.phoneNumber.$error" class="text-[12.5px] text-destructive">
+        {{ $t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER.ERROR') }}
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
+        {{ $t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER_ID.LABEL') }}
+      </label>
+      <RelayInput
+        v-model="phoneNumberId"
+        type="text"
+        :placeholder="$t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER_ID.PLACEHOLDER')"
+        :class-name="inputClass"
+        @blur="v$.phoneNumberId.$touch"
+      />
+      <p v-if="v$.phoneNumberId.$error" class="text-[12.5px] text-destructive">
+        {{ $t('INBOX_MGMT.ADD.WHATSAPP.PHONE_NUMBER_ID.ERROR') }}
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
+        {{ $t('INBOX_MGMT.ADD.WHATSAPP.BUSINESS_ACCOUNT_ID.LABEL') }}
+      </label>
+      <RelayInput
+        v-model="businessAccountId"
+        type="text"
+        :placeholder="
+          $t('INBOX_MGMT.ADD.WHATSAPP.BUSINESS_ACCOUNT_ID.PLACEHOLDER')
+        "
+        :class-name="inputClass"
+        @blur="v$.businessAccountId.$touch"
+      />
+      <p
+        v-if="v$.businessAccountId.$error"
+        class="text-[12.5px] text-destructive"
+      >
+        {{ $t('INBOX_MGMT.ADD.WHATSAPP.BUSINESS_ACCOUNT_ID.ERROR') }}
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[13.5px] font-medium text-foreground">
+        {{ $t('INBOX_MGMT.ADD.WHATSAPP.API_KEY.LABEL') }}
+      </label>
+      <RelayInput
+        v-model="apiKey"
+        type="text"
+        :placeholder="$t('INBOX_MGMT.ADD.WHATSAPP.API_KEY.PLACEHOLDER')"
+        :class-name="inputClass"
+        @blur="v$.apiKey.$touch"
+      />
+      <p v-if="v$.apiKey.$error" class="text-[12.5px] text-destructive">
+        {{ $t('INBOX_MGMT.ADD.WHATSAPP.API_KEY.ERROR') }}
+      </p>
+    </div>
+
+    <div class="pt-4">
+      <RelayButton
+        type="submit"
+        class="shadow-sm"
+        :disabled="uiFlags.isCreating"
+      >
+        {{ $t('INBOX_MGMT.ADD.WHATSAPP.SUBMIT_BUTTON') }}
+      </RelayButton>
     </div>
   </form>
 </template>

@@ -18,11 +18,12 @@ to display a collection of resources in an HTML table.
 [1]: http://www.rubydoc.info/gems/administrate/Administrate/Page/Collection
 %>
 
-<table aria-labelledby="<%= table_title %>">
-  <thead>
-    <tr>
+<div class="rounded-md border border-border bg-card text-card-foreground shadow-sm overflow-hidden">
+  <table class="w-full text-sm text-left" aria-labelledby="<%= table_title %>">
+    <thead class="bg-muted/50 border-b border-border text-muted-foreground font-medium">
+      <tr>
       <% collection_presenter.attribute_types.each do |attr_name, attr_type| %>
-        <th class="cell-label
+        <th class="px-4 py-3 align-middle font-medium cell-label
         cell-label--<%= attr_type.html_class %>
         cell-label--<%= collection_presenter.ordered_html_class(attr_name) %>"
         scope="col"
@@ -47,21 +48,21 @@ to display a collection of resources in an HTML table.
       <% end %>
       <% [existing_action?(collection_presenter.resource_name, :edit),
           existing_action?(collection_presenter.resource_name, :destroy)].count(true).times do %>
-        <th scope="col"></th>
+        <th scope="col" class="px-4 py-3 align-middle font-medium"></th>
       <% end %>
     </tr>
   </thead>
 
   <tbody>
     <% resources.each do |resource| %>
-      <tr class="js-table-row"
+      <tr class="js-table-row border-b border-border hover:bg-muted/50 transition-colors"
           tabindex="0"
           <% if existing_action? collection_presenter.resource_name, :show %>
             <%= %(role=link data-url=#{polymorphic_path([namespace, resource])}) %>
           <% end %>
           >
         <% collection_presenter.attributes_for(resource).each do |attribute| %>
-          <td class="cell-data cell-data--<%= attribute.html_class %>">
+          <td class="px-4 py-3 align-middle cell-data cell-data--<%= attribute.html_class %>">
             <% if authorized_action? resource, :show -%>
               <a href="<%= polymorphic_path([namespace, resource]) -%>"
                  class="action-show"
@@ -73,18 +74,18 @@ to display a collection of resources in an HTML table.
         <% end %>
 
         <% if existing_action? collection_presenter.resource_name, :edit %>
-          <td><%= link_to(
+          <td class="px-4 py-3 align-middle text-right"><%= link_to(
             t("administrate.actions.edit"),
             [:edit, namespace, resource],
-            class: "action-edit",
+            class: "text-primary hover:underline",
           ) if authorized_action? resource, :edit%></td>
         <% end %>
 
         <% if existing_action? collection_presenter.resource_name, :destroy %>
-          <td><%= link_to(
+          <td class="px-4 py-3 align-middle text-right"><%= link_to(
             t("administrate.actions.destroy"),
             [namespace, resource],
-            class: "text-color-red",
+            class: "text-destructive hover:underline",
             method: :delete,
             data: { confirm: t("administrate.actions.confirm") }
           ) if authorized_action? resource, :destroy %></td>
@@ -92,4 +93,5 @@ to display a collection of resources in an HTML table.
       </tr>
     <% end %>
   </tbody>
-</table>
+  </table>
+</div>

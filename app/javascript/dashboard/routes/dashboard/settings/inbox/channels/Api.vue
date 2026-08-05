@@ -5,7 +5,10 @@ import { useAlert } from 'dashboard/composables';
 import { required } from '@vuelidate/validators';
 import router from '../../../../index';
 import PageHeader from '../../SettingsSubPageHeader.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
+
+const INPUT_CLASS =
+  'h-10 rounded-md border-border/80 bg-background px-4 text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30';
 
 const shouldBeWebhookUrl = (value = '') =>
   value ? value.startsWith('http') : true;
@@ -13,7 +16,8 @@ const shouldBeWebhookUrl = (value = '') =>
 export default {
   components: {
     PageHeader,
-    NextButton,
+    RelayButton,
+    RelayInput,
   },
   setup() {
     return { v$: useVuelidate() };
@@ -22,6 +26,7 @@ export default {
     return {
       channelName: '',
       webhookUrl: '',
+      inputClass: INPUT_CLASS,
     };
   },
   computed: {
@@ -68,57 +73,56 @@ export default {
 </script>
 
 <template>
-  <div class="h-full w-full p-6 col-span-6">
+  <div class="w-full max-w-2xl">
     <PageHeader
       :header-title="$t('INBOX_MGMT.ADD.API_CHANNEL.TITLE')"
       :header-content="$t('INBOX_MGMT.ADD.API_CHANNEL.DESC')"
     />
-    <form
-      class="flex flex-wrap flex-col mx-0"
-      @submit.prevent="createChannel()"
-    >
-      <div class="flex-shrink-0 flex-grow-0">
-        <label :class="{ error: v$.channelName.$error }">
+    <form class="space-y-6" @submit.prevent="createChannel()">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
           {{ $t('INBOX_MGMT.ADD.API_CHANNEL.CHANNEL_NAME.LABEL') }}
-          <input
-            v-model="channelName"
-            type="text"
-            :placeholder="
-              $t('INBOX_MGMT.ADD.API_CHANNEL.CHANNEL_NAME.PLACEHOLDER')
-            "
-            @blur="v$.channelName.$touch"
-          />
-          <span v-if="v$.channelName.$error" class="message">{{
-            $t('INBOX_MGMT.ADD.API_CHANNEL.CHANNEL_NAME.ERROR')
-          }}</span>
         </label>
+        <RelayInput
+          v-model="channelName"
+          type="text"
+          :placeholder="
+            $t('INBOX_MGMT.ADD.API_CHANNEL.CHANNEL_NAME.PLACEHOLDER')
+          "
+          :class-name="inputClass"
+          @blur="v$.channelName.$touch"
+        />
+        <p v-if="v$.channelName.$error" class="text-[12.5px] text-destructive">
+          {{ $t('INBOX_MGMT.ADD.API_CHANNEL.CHANNEL_NAME.ERROR') }}
+        </p>
       </div>
 
-      <div class="flex-shrink-0 flex-grow-0">
-        <label :class="{ error: v$.webhookUrl.$error }">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
           {{ $t('INBOX_MGMT.ADD.API_CHANNEL.WEBHOOK_URL.LABEL') }}
-          <input
-            v-model="webhookUrl"
-            type="text"
-            :placeholder="
-              $t('INBOX_MGMT.ADD.API_CHANNEL.WEBHOOK_URL.PLACEHOLDER')
-            "
-            @blur="v$.webhookUrl.$touch"
-          />
         </label>
-        <p class="help-text">
+        <RelayInput
+          v-model="webhookUrl"
+          type="text"
+          :placeholder="
+            $t('INBOX_MGMT.ADD.API_CHANNEL.WEBHOOK_URL.PLACEHOLDER')
+          "
+          :class-name="inputClass"
+          @blur="v$.webhookUrl.$touch"
+        />
+        <p class="text-[12.5px] text-muted-foreground">
           {{ $t('INBOX_MGMT.ADD.API_CHANNEL.WEBHOOK_URL.SUBTITLE') }}
         </p>
       </div>
 
-      <div class="w-full mt-4">
-        <NextButton
-          :is-loading="uiFlags.isCreating"
+      <div class="pt-4">
+        <RelayButton
           type="submit"
-          solid
-          blue
-          :label="$t('INBOX_MGMT.ADD.API_CHANNEL.SUBMIT_BUTTON')"
-        />
+          class="shadow-sm"
+          :disabled="uiFlags.isCreating"
+        >
+          {{ $t('INBOX_MGMT.ADD.API_CHANNEL.SUBMIT_BUTTON') }}
+        </RelayButton>
       </div>
     </form>
   </div>

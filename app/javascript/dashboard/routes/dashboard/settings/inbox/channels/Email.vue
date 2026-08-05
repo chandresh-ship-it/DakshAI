@@ -56,13 +56,12 @@ function onClick(emailProvider) {
 </script>
 
 <template>
-  <div v-if="!provider" class="h-full w-full p-6 col-span-6">
+  <div v-if="!provider" class="w-full max-w-3xl">
     <PageHeader
-      class="max-w-4xl"
       :header-title="$t('INBOX_MGMT.ADD.EMAIL_PROVIDER.TITLE')"
       :header-content="$t('INBOX_MGMT.ADD.EMAIL_PROVIDER.DESCRIPTION')"
     />
-    <div class="grid max-w-3xl grid-cols-4 gap-6 mx-0 mt-6">
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       <ChannelSelector
         v-for="emailProvider in emailProviderList"
         :key="emailProvider.key"

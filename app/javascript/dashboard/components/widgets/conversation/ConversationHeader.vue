@@ -196,7 +196,7 @@ const toggleContactSidebar = () => {
         </div>
         <div
           v-if="metaLine"
-          class="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 truncate"
+          class="flex items-center gap-2 text-[13px] text-muted-foreground mt-0.5 truncate"
         >
           {{ metaLine }}
         </div>

@@ -83,13 +83,6 @@ const STATUS_TAB_MAP = {
   'on-hold': wootConstants.STATUS_TYPE.SNOOZED,
   closed: wootConstants.STATUS_TYPE.RESOLVED,
 };
-
-const STATUS_TO_TAB = {
-  [wootConstants.STATUS_TYPE.OPEN]: 'new',
-  [wootConstants.STATUS_TYPE.PENDING]: 'in-progress',
-  [wootConstants.STATUS_TYPE.SNOOZED]: 'on-hold',
-  [wootConstants.STATUS_TYPE.RESOLVED]: 'closed',
-};
 // chatsOnView is to store the chats that are currently visible on the screen,
 // which mirrors the conversationList.
 const chatsOnView = ref([]);
@@ -277,9 +270,11 @@ const activeTeam = computed(() => {
   return {};
 });
 
-const pageTitle = computed(() => {
+const pageTitle = computed(() => t('CHAT_LIST.TAB_HEADING'));
+
+const pageSubtitle = computed(() => {
   if (hasAppliedFilters.value) {
-    return t('CHAT_LIST.TAB_HEADING');
+    return '';
   }
   if (inbox.value.name) {
     return inbox.value.name;
@@ -304,19 +299,8 @@ const pageTitle = computed(() => {
   if (hasActiveFolders.value) {
     return activeFolder.value.name;
   }
-  return t('CHAT_LIST.TAB_HEADING');
+  return t('CHAT_LIST.ALL_CONVERSATION_SUBTITLE');
 });
-
-const statusTabs = computed(() => [
-  { value: 'new', label: t('CHAT_LIST.STATUS_TABS.NEW') },
-  { value: 'in-progress', label: t('CHAT_LIST.STATUS_TABS.IN_PROGRESS') },
-  { value: 'on-hold', label: t('CHAT_LIST.STATUS_TABS.ON_HOLD') },
-  { value: 'closed', label: t('CHAT_LIST.STATUS_TABS.CLOSED') },
-]);
-
-const activeStatusTab = computed(
-  () => STATUS_TO_TAB[activeStatus.value] || 'new'
-);
 
 function filterByAssigneeTab(conversations) {
   if (activeAssigneeTab.value === wootConstants.ASSIGNEE_TYPE.ME) {
@@ -904,6 +888,7 @@ watch(conversationFilters, (newVal, oldVal) => {
     <slot />
     <ChatListHeader
       :page-title="pageTitle"
+      :page-subtitle="pageSubtitle"
       :has-applied-filters="hasAppliedFilters"
       :has-active-folders="hasActiveFolders"
       :active-assignee-tab="activeAssigneeTab"
@@ -940,21 +925,31 @@ watch(conversationFilters, (newVal, oldVal) => {
     />
 
     <div v-if="!hasAppliedFiltersOrActiveFolders" class="px-4 pt-2 shrink-0">
-      <div class="flex items-center border-b border-border/60">
+      <div
+        class="flex items-center gap-4 border-b border-border"
+        role="tablist"
+      >
         <div class="flex items-center gap-4 flex-1 min-w-0 overflow-x-auto">
           <button
-            v-for="tab in statusTabs"
-            :key="tab.value"
+            v-for="tab in assigneeTabItems"
+            :key="tab.key"
             type="button"
-            class="px-0 py-2 text-sm font-medium border-b-2 transition-colors shrink-0"
+            role="tab"
+            :aria-selected="activeAssigneeTab === tab.key"
+            class="relative -mb-px px-0 pb-2.5 text-sm font-medium transition-colors shrink-0"
             :class="
-              activeStatusTab === tab.value
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+              activeAssigneeTab === tab.key
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             "
-            @click="onStatusTabChange(tab.value)"
+            @click="updateAssigneeTab(tab.key)"
           >
-            {{ tab.label }}
+            {{ tab.name }}
+            <span
+              v-if="activeAssigneeTab === tab.key"
+              class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+              aria-hidden="true"
+            />
           </button>
         </div>
         <div class="relative shrink-0">

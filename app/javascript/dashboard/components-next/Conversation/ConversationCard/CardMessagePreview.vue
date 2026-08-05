@@ -42,7 +42,7 @@ const unreadMessagesCount = computed(() => {
 
 <template>
   <div class="flex items-end w-full gap-2 pb-1">
-    <p class="w-full mb-0 text-sm leading-7 text-n-slate-12 line-clamp-2">
+    <p class="w-full mb-0 text-sm leading-7 text-foreground line-clamp-2">
       {{ lastNonActivityMessageContent }}
     </p>
     <div class="flex items-center flex-shrink-0 gap-2 pb-2">
@@ -56,9 +56,9 @@ const unreadMessagesCount = computed(() => {
       />
       <div
         v-if="unreadMessagesCount > 0"
-        class="inline-flex items-center justify-center rounded-full size-5 bg-n-brand"
+        class="inline-flex items-center justify-center rounded-full size-5 bg-primary"
       >
-        <span class="text-xs font-semibold text-white">
+        <span class="text-xs font-semibold text-primary-foreground">
           {{ unreadMessagesCount }}
         </span>
       </div>

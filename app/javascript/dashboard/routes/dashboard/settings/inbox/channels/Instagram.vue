@@ -45,23 +45,26 @@ const requestAuthorization = async () => {
 </script>
 
 <template>
-  <div class="h-full p-6 w-full max-w-full flex-shrink-0 flex-grow-0">
-    <div class="flex flex-col items-center justify-start h-full text-center">
-      <div v-if="hasError" class="max-w-lg mx-auto text-center">
-        <h5>{{ errorStateMessage }}</h5>
+  <div class="w-full max-w-2xl">
+    <div class="flex flex-col items-center justify-start text-center">
+      <div v-if="hasError" class="mx-auto max-w-lg text-center">
+        <h5 class="text-base font-semibold text-foreground">
+          {{ errorStateMessage }}
+        </h5>
         <p
           v-if="errorStateDescription"
           v-dompurify-html="errorStateDescription"
+          class="mt-2 text-[13px] text-muted-foreground"
         />
       </div>
       <div
         v-else
-        class="flex flex-col items-center justify-center px-8 py-10 text-center rounded-2xl outline outline-1 outline-n-weak"
+        class="flex w-full flex-col items-center justify-center rounded-xl border border-border bg-card px-8 py-10 text-center shadow-sm"
       >
-        <h6 class="text-2xl font-medium">
+        <h6 class="text-lg font-semibold text-foreground">
           {{ $t('INBOX_MGMT.ADD.INSTAGRAM.CONNECT_YOUR_INSTAGRAM_PROFILE') }}
         </h6>
-        <p class="py-6 text-sm text-n-slate-11">
+        <p class="py-6 text-[13px] leading-relaxed text-muted-foreground">
           {{ $t('INBOX_MGMT.ADD.INSTAGRAM.HELP') }}
         </p>
         <Button

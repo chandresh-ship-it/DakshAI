@@ -21,7 +21,7 @@
     "CREATE_FLOW": {
       "CHANNEL": {
         "TITLE": "Choose Channel",
-        "BODY": "Choose the provider you want to integrate with newrelay."
+        "BODY": "Choose the provider you want to integrate with Newrelay."
       },
       "INBOX": {
         "TITLE": "Create Inbox",
@@ -75,6 +75,7 @@
       "TWITTER": {
         "HELP": "To add your Twitter profile as a channel, you need to authenticate your Twitter Profile by clicking on 'Sign in with Twitter' ",
         "ERROR_MESSAGE": "There was an error connecting to Twitter, please try again",
+        "SIGN_IN": "Sign in with Twitter",
         "TWEETS": {
           "ENABLE": "Create conversations from mentioned Tweets"
         }
@@ -558,9 +559,9 @@
       "ADD_AGENTS": "Adding Agents to your Inbox..."
     },
     "FINISH": {
-      "TITLE": "Your Inbox is ready!",
-      "MESSAGE": "You can now engage with your customers through your new Channel. Happy supporting",
-      "BUTTON_TEXT": "Take me there",
+      "TITLE": "You're all set!",
+      "MESSAGE": "Your new inbox has been created successfully and agents have been assigned. You can now start receiving and replying to messages.",
+      "BUTTON_TEXT": "Take me to inbox",
       "MORE_SETTINGS": "More settings",
       "WEBSITE_SUCCESS": "You have successfully finished creating a website channel. Copy the code shown below and paste it on your website. Next time a customer use the live chat, the conversation will automatically appear on your inbox.",
       "WHATSAPP_QR_INSTRUCTION": "Scan the QR code above to quickly test your WhatsApp inbox",

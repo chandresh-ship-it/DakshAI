@@ -6,6 +6,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
 
 import Breadcrumb from 'dashboard/components-next/breadcrumb/Breadcrumb.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import SettingsLayout from 'dashboard/routes/dashboard/settings/SettingsLayout.vue';
 import AssignmentPolicyForm from 'dashboard/routes/dashboard/settings/assignmentPolicy/pages/components/AgentAssignmentPolicyForm.vue';
 
@@ -106,7 +107,7 @@ const handleSubmit = async formState => {
 
     <template #body>
       <div
-        class="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+        class="mx-auto mt-2 flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
       >
         <div
           class="flex items-center justify-between border-b border-border/40 bg-background/50 p-5"
@@ -118,16 +119,24 @@ const handleSubmit = async formState => {
               )
             }}
           </h3>
+          <button
+            type="button"
+            class="text-muted-foreground transition-colors hover:text-foreground"
+            :aria-label="
+              $t('ASSIGNMENT_POLICY.AGENT_ASSIGNMENT_POLICY.FORM.CANCEL_BUTTON')
+            "
+            @click="handleCancel"
+          >
+            <Icon icon="i-lucide-x" class="size-5" />
+          </button>
         </div>
-        <div class="p-5">
-          <AssignmentPolicyForm
-            ref="formRef"
-            mode="CREATE"
-            :is-loading="uiFlags.isCreating"
-            @submit="handleSubmit"
-            @cancel="handleCancel"
-          />
-        </div>
+        <AssignmentPolicyForm
+          ref="formRef"
+          mode="CREATE"
+          :is-loading="uiFlags.isCreating"
+          @submit="handleSubmit"
+          @cancel="handleCancel"
+        />
       </div>
     </template>
   </SettingsLayout>

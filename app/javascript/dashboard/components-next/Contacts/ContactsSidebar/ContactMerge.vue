@@ -1,17 +1,15 @@
 <script setup>
-import { reactive, computed, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
-import { required } from '@vuelidate/validators';
-import { useVuelidate } from '@vuelidate/core';
 import { useRoute } from 'vue-router';
 import { useAlert, useTrack } from 'dashboard/composables';
 import ContactAPI from 'dashboard/api/contacts';
 import { debounce } from '@chatwoot/utils';
 import { CONTACTS_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
 
-import Button from 'dashboard/components-next/button/Button.vue';
-import ContactMergeForm from 'dashboard/components-next/Contacts/ContactsForm/ContactMergeForm.vue';
+import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   selectedContact: {
@@ -20,41 +18,32 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['goToContactsList', 'resetTab']);
+const emit = defineEmits(['resetTab']);
 
 const { t } = useI18n();
 const store = useStore();
 const route = useRoute();
 
-const state = reactive({
-  primaryContactId: null,
-});
+const mergeSearchQuery = ref('');
+const searchResults = ref([]);
+const selectedDuplicate = ref(null);
+const isSearching = ref(false);
+const isPreviewOpen = ref(false);
 
 const uiFlags = useMapGetter('contacts/getUIFlags');
-
-const searchResults = ref([]);
-const isSearching = ref(false);
-
-const validationRules = {
-  primaryContactId: { required },
-};
-
-const v$ = useVuelidate(validationRules, state);
-
 const isMergingContact = computed(() => uiFlags.value.isMerging);
 
-const primaryContactList = computed(
-  () =>
-    searchResults.value?.map(item => ({
-      value: item.id,
-      label: `(ID: ${item.id}) ${item.name}`,
-    })) ?? []
-);
+const canPreview = computed(() => Boolean(selectedDuplicate.value?.id));
 
 const onContactSearch = debounce(
   async query => {
+    mergeSearchQuery.value = query;
+    selectedDuplicate.value = null;
+    if (!query?.trim()) {
+      searchResults.value = [];
+      return;
+    }
     isSearching.value = true;
-    searchResults.value = [];
     try {
       const {
         data: { payload },
@@ -62,8 +51,7 @@ const onContactSearch = debounce(
       searchResults.value = payload.filter(
         contact => contact.id !== props.selectedContact.id
       );
-      isSearching.value = false;
-    } catch (error) {
+    } catch {
       useAlert(t('CONTACTS_LAYOUT.SIDEBAR.MERGE.SEARCH_ERROR_MESSAGE'));
     } finally {
       isSearching.value = false;
@@ -73,73 +61,266 @@ const onContactSearch = debounce(
   false
 );
 
-const resetState = () => {
-  if (state.primaryContactId === null) {
-    emit('resetTab');
-  }
-  state.primaryContactId = null;
+const selectDuplicate = contact => {
+  selectedDuplicate.value = contact;
+  mergeSearchQuery.value = contact.name || contact.email || '';
   searchResults.value = [];
-  isSearching.value = false;
+};
+
+const resetState = () => {
+  mergeSearchQuery.value = '';
+  searchResults.value = [];
+  selectedDuplicate.value = null;
+  isPreviewOpen.value = false;
+  emit('resetTab');
+};
+
+const openPreviewMerge = () => {
+  if (!canPreview.value) return;
+  isPreviewOpen.value = true;
 };
 
 const onMergeContacts = async () => {
-  const isFormValid = await v$.value.$validate();
-  if (!isFormValid) return;
+  if (!selectedDuplicate.value?.id) return;
 
   useTrack(CONTACTS_EVENTS.MERGED_CONTACTS);
 
   try {
+    // Current contact is primary (kept); selected duplicate is deleted.
     await store.dispatch('contacts/merge', {
-      childId: props.selectedContact.id || route.params.contactId,
-      parentId: state.primaryContactId,
+      parentId: props.selectedContact.id || route.params.contactId,
+      childId: selectedDuplicate.value.id,
     });
-    emit('goToContactsList');
     useAlert(t('CONTACTS_LAYOUT.SIDEBAR.MERGE.SUCCESS_MESSAGE'));
-    resetState();
-  } catch (error) {
+    isPreviewOpen.value = false;
+    mergeSearchQuery.value = '';
+    searchResults.value = [];
+    selectedDuplicate.value = null;
+    await store.dispatch('contacts/show', {
+      id: props.selectedContact.id || route.params.contactId,
+    });
+  } catch {
     useAlert(t('CONTACTS_LAYOUT.SIDEBAR.MERGE.ERROR_MESSAGE'));
   }
+};
+
+const initials = name => {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return (name || '?').slice(0, 2).toUpperCase();
 };
 </script>
 
 <template>
-  <div class="flex flex-col gap-8 px-6 py-6">
-    <div class="flex flex-col gap-2">
-      <h4 class="text-base text-n-slate-12">
-        {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.TITLE') }}
-      </h4>
-      <p class="text-sm text-n-slate-11">
-        {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.DESCRIPTION') }}
-      </p>
+  <div>
+    <h3 class="mb-6 text-sm font-medium text-foreground">
+      {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.TITLE_NEW') }}
+    </h3>
+
+    <div
+      class="mb-4 flex w-full flex-col rounded-xl border border-border bg-card p-5 shadow-sm"
+    >
+      <div class="mb-6 flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.SELECT_LABEL') }}
+        </label>
+        <div class="relative">
+          <span
+            class="i-lucide-search absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <RelayInput
+            :model-value="mergeSearchQuery"
+            :placeholder="t('CONTACTS_LAYOUT.SIDEBAR.MERGE.SEARCH_BY')"
+            class-name="pl-9 h-10 w-full text-[14px] shadow-sm rounded-md border-border/80 bg-background focus-visible:ring-1 focus-visible:ring-primary/30"
+            @update:model-value="onContactSearch"
+          />
+        </div>
+        <p class="mt-1 text-xs text-muted-foreground">
+          {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.SELECT_HELP_PREFIX') }}
+          <strong class="text-foreground">{{ selectedContact.name }}</strong>
+          {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.SELECT_HELP_SUFFIX') }}
+        </p>
+
+        <div
+          v-if="isSearching || searchResults.length"
+          class="mt-2 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md"
+        >
+          <p v-if="isSearching" class="px-3 py-2 text-sm text-muted-foreground">
+            {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.IS_SEARCHING') }}
+          </p>
+          <button
+            v-for="contact in searchResults"
+            :key="contact.id"
+            type="button"
+            class="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+            @click="selectDuplicate(contact)"
+          >
+            <Avatar
+              :name="contact.name || ''"
+              :src="contact.thumbnail || ''"
+              :size="28"
+              rounded-full
+            />
+            <div class="min-w-0">
+              <p class="truncate font-medium text-foreground">
+                {{ contact.name }}
+              </p>
+              <p class="truncate text-xs text-muted-foreground">
+                {{ contact.email }}
+              </p>
+            </div>
+          </button>
+          <p
+            v-if="!isSearching && searchResults.length === 0"
+            class="px-3 py-2 text-sm text-muted-foreground"
+          >
+            {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.EMPTY_STATE') }}
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="mb-6 flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-3.5"
+      >
+        <span
+          class="i-lucide-lightbulb mt-0.5 size-4 shrink-0 text-destructive"
+        />
+        <p class="text-[13px] font-medium leading-relaxed text-destructive">
+          {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.WARNING') }}
+        </p>
+      </div>
+
+      <div class="mt-auto flex items-center gap-3 self-end">
+        <RelayButton
+          variant="outline"
+          class="h-9 px-4 text-sm font-medium"
+          @click="resetState"
+        >
+          {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.BUTTONS.CANCEL') }}
+        </RelayButton>
+        <RelayButton
+          class="h-9 px-4 text-sm font-medium"
+          :disabled="!canPreview"
+          @click="openPreviewMerge"
+        >
+          {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.BUTTONS.PREVIEW') }}
+        </RelayButton>
+      </div>
     </div>
-    <ContactMergeForm
-      v-model:primary-contact-id="state.primaryContactId"
-      :selected-contact="selectedContact"
-      :primary-contact-list="primaryContactList"
-      :is-searching="isSearching"
-      :has-error="!!v$.primaryContactId.$error"
-      :error-message="
-        v$.primaryContactId.$error
-          ? t('CONTACTS_LAYOUT.SIDEBAR.MERGE.PRIMARY_REQUIRED_ERROR')
-          : ''
-      "
-      @search="onContactSearch"
-    />
-    <div class="flex items-center justify-between gap-3">
-      <Button
-        variant="faded"
-        color="slate"
-        :label="t('CONTACTS_LAYOUT.SIDEBAR.MERGE.BUTTONS.CANCEL')"
-        class="w-full bg-n-alpha-2 text-n-blue-11 hover:bg-n-alpha-3"
-        @click="resetState"
-      />
-      <Button
-        :label="t('CONTACTS_LAYOUT.SIDEBAR.MERGE.BUTTONS.CONFIRM')"
-        class="w-full"
-        :is-loading="isMergingContact"
-        :disabled="isMergingContact"
-        @click="onMergeContacts"
-      />
+
+    <!-- Preview merge modal -->
+    <div
+      v-if="isPreviewOpen"
+      class="fixed inset-0 z-[60] flex items-center justify-center bg-n-alpha-black2 p-4 backdrop-blur-[4px]"
+      @click.self="isPreviewOpen = false"
+    >
+      <div
+        class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+      >
+        <div class="shrink-0 border-b border-border/40 p-6">
+          <h2 class="text-lg font-semibold tracking-tight text-foreground">
+            {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.PREVIEW_TITLE') }}
+          </h2>
+          <p class="mt-1 text-sm text-muted-foreground">
+            {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.PREVIEW_SUBTITLE') }}
+          </p>
+        </div>
+
+        <div
+          class="grid grid-cols-1 gap-6 overflow-y-auto bg-muted/10 p-6 sm:grid-cols-2"
+        >
+          <div
+            class="relative flex flex-col gap-4 overflow-hidden rounded-lg border border-border bg-card p-4"
+          >
+            <div
+              class="absolute right-0 top-0 rounded-bl-lg bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground"
+            >
+              {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.PRIMARY_BADGE') }}
+            </div>
+            <div class="flex items-center gap-3 border-b border-border/40 pb-3">
+              <div
+                class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-medium text-primary"
+              >
+                {{ initials(selectedContact.name) }}
+              </div>
+              <div class="min-w-0">
+                <h4 class="truncate text-sm font-medium text-foreground">
+                  {{ selectedContact.name }}
+                </h4>
+                <p class="truncate text-xs text-muted-foreground">
+                  {{ selectedContact.email }}
+                </p>
+              </div>
+            </div>
+            <div class="flex flex-col gap-3">
+              <div>
+                <span
+                  class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+                >
+                  {{ t('CONTACTS_LAYOUT.DETAIL.ABOUT.PHONE') }}
+                </span>
+                <p class="truncate text-sm text-foreground">
+                  {{ selectedContact.phoneNumber || '—' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="relative flex flex-col gap-4 overflow-hidden rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+          >
+            <div
+              class="absolute right-0 top-0 rounded-bl-lg bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground"
+            >
+              {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.DELETED_BADGE') }}
+            </div>
+            <div
+              class="flex items-center gap-3 border-b border-destructive/10 pb-3"
+            >
+              <div
+                class="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 font-medium text-destructive"
+              >
+                {{ initials(selectedDuplicate?.name) }}
+              </div>
+              <div class="min-w-0">
+                <h4 class="truncate text-sm font-medium text-foreground">
+                  {{ selectedDuplicate?.name }}
+                </h4>
+                <p class="truncate text-xs text-muted-foreground">
+                  {{ selectedDuplicate?.email }}
+                </p>
+              </div>
+            </div>
+            <div class="flex flex-col gap-3">
+              <div>
+                <span
+                  class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+                >
+                  {{ t('CONTACTS_LAYOUT.DETAIL.ABOUT.PHONE') }}
+                </span>
+                <p
+                  class="truncate text-sm text-foreground line-through opacity-60"
+                >
+                  {{ selectedDuplicate?.phoneNumber || '—' }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="flex shrink-0 items-center justify-end gap-3 border-t border-border bg-card px-6 py-4"
+        >
+          <RelayButton variant="outline" @click="isPreviewOpen = false">
+            {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.BUTTONS.CANCEL') }}
+          </RelayButton>
+          <RelayButton :disabled="isMergingContact" @click="onMergeContacts">
+            {{ t('CONTACTS_LAYOUT.SIDEBAR.MERGE.BUTTONS.CONFIRM_MERGE') }}
+          </RelayButton>
+        </div>
+      </div>
     </div>
   </div>
 </template>

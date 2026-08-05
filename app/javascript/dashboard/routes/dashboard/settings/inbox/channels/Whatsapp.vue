@@ -70,18 +70,18 @@ const handleManualLinkClick = () => {
 </script>
 
 <template>
-  <div class="overflow-auto col-span-6 p-6 w-full h-full">
+  <div class="w-full max-w-3xl">
     <div v-if="showProviderSelection">
-      <div class="mb-10 text-left">
-        <h1 class="mb-2 text-lg font-medium text-n-slate-12">
+      <div class="mb-8 border-b border-border/40 pb-4 text-left">
+        <h3 class="mb-1 text-lg font-semibold text-foreground">
           {{ $t('INBOX_MGMT.ADD.WHATSAPP.SELECT_PROVIDER.TITLE') }}
-        </h1>
-        <p class="text-sm leading-relaxed text-n-slate-11">
+        </h3>
+        <p class="text-[13px] leading-relaxed text-muted-foreground">
           {{ $t('INBOX_MGMT.ADD.WHATSAPP.SELECT_PROVIDER.DESCRIPTION') }}
         </p>
       </div>
 
-      <div class="flex gap-6 justify-start">
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <ChannelSelector
           v-for="provider in availableProviders"
           :key="provider.key"
@@ -93,8 +93,8 @@ const handleManualLinkClick = () => {
       </div>
     </div>
 
-    <div v-else-if="showConfiguration">
-      <div class="px-6 py-5 rounded-2xl border border-n-weak">
+    <div v-else-if="showConfiguration" class="max-w-2xl">
+      <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
         <!-- Show embedded signup if app ID is configured -->
         <div
           v-if="
@@ -104,16 +104,16 @@ const handleManualLinkClick = () => {
           <WhatsappEmbeddedSignup />
 
           <!-- Manual setup fallback option -->
-          <div class="pt-6 mt-6 border-t border-n-weak">
+          <div class="mt-6 border-t border-border pt-6">
             <I18nT
               keypath="INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.MANUAL_FALLBACK"
               tag="p"
-              class="text-sm text-n-slate-11"
+              class="text-[13px] text-muted-foreground"
             >
               <template #link>
                 <a
                   href="#"
-                  class="underline text-n-brand"
+                  class="font-medium text-primary underline hover:no-underline"
                   @click.prevent="handleManualLinkClick"
                 >
                   {{

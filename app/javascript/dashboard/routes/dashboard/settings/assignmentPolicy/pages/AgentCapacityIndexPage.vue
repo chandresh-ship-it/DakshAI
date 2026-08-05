@@ -6,7 +6,6 @@ import { useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
 
 import ConfirmDeletePolicyDialog from './components/ConfirmDeletePolicyDialog.vue';
-import AgentCapacityPolicyForm from './components/AgentCapacityPolicyForm.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { RelayButton } from 'dashboard/components-next/relay';
 
@@ -18,28 +17,12 @@ const agentCapacityPolicies = useMapGetter(
   'agentCapacityPolicies/getAgentCapacityPolicies'
 );
 const uiFlags = useMapGetter('agentCapacityPolicies/getUIFlags');
-const labelsList = useMapGetter('labels/getLabels');
 const confirmDeletePolicyDialogRef = ref(null);
-const showCreateModal = ref(false);
-const formRef = ref(null);
 
 const policies = computed(() => agentCapacityPolicies.value || []);
 
-const allLabels = computed(() =>
-  labelsList.value?.map(({ title, color, id }) => ({
-    id,
-    name: title,
-    color,
-  }))
-);
-
 const onClickCreatePolicy = () => {
-  showCreateModal.value = true;
-};
-
-const hideCreateModal = () => {
-  showCreateModal.value = false;
-  formRef.value?.resetForm();
+  router.push({ name: 'agent_capacity_policy_create' });
 };
 
 const onClickEditPolicy = id => {
@@ -63,27 +46,6 @@ const handleDeletePolicy = async policyId => {
   } catch (error) {
     useAlert(
       t('ASSIGNMENT_POLICY.AGENT_CAPACITY_POLICY.DELETE_POLICY.ERROR_MESSAGE')
-    );
-  }
-};
-
-const handleCreate = async formState => {
-  try {
-    const policy = await store.dispatch(
-      'agentCapacityPolicies/create',
-      formState
-    );
-    useAlert(
-      t('ASSIGNMENT_POLICY.AGENT_CAPACITY_POLICY.CREATE.API.SUCCESS_MESSAGE')
-    );
-    hideCreateModal();
-    router.push({
-      name: 'agent_capacity_policy_edit',
-      params: { id: policy.id },
-    });
-  } catch (error) {
-    useAlert(
-      t('ASSIGNMENT_POLICY.AGENT_CAPACITY_POLICY.CREATE.API.ERROR_MESSAGE')
     );
   }
 };
@@ -220,29 +182,5 @@ onMounted(() => {
       ref="confirmDeletePolicyDialogRef"
       @delete="handleDeletePolicy"
     />
-
-    <woot-modal
-      v-model:show="showCreateModal"
-      size="medium"
-      :on-close="hideCreateModal"
-    >
-      <div class="flex flex-col overflow-auto p-1">
-        <div class="relative mb-6">
-          <h3 class="text-base font-medium text-foreground">
-            {{
-              $t('ASSIGNMENT_POLICY.AGENT_CAPACITY_POLICY.CREATE.HEADER.TITLE')
-            }}
-          </h3>
-        </div>
-        <AgentCapacityPolicyForm
-          ref="formRef"
-          mode="CREATE"
-          :is-loading="uiFlags.isCreating"
-          :label-list="allLabels"
-          @submit="handleCreate"
-          @cancel="hideCreateModal"
-        />
-      </div>
-    </woot-modal>
   </div>
 </template>

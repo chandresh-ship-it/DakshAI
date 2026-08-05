@@ -4,7 +4,7 @@ import { ref, computed } from 'vue';
 import microsoftClient from 'dashboard/api/channel/microsoftClient';
 import googleClient from 'dashboard/api/channel/googleClient';
 import SettingsSubPageHeader from '../../../SettingsSubPageHeader.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 import { useAlert } from 'dashboard/composables';
 
@@ -60,19 +60,19 @@ async function requestAuthorization() {
 </script>
 
 <template>
-  <div class="h-full w-full p-6 col-span-6">
+  <div class="w-full max-w-2xl">
     <SettingsSubPageHeader
       :header-title="title"
       :header-content="description"
     />
-    <form class="mt-6" @submit.prevent="requestAuthorization">
-      <NextButton
-        :is-loading="isRequestingAuthorization"
+    <form @submit.prevent="requestAuthorization">
+      <RelayButton
         type="submit"
-        solid
-        blue
-        :label="submitButtonText"
-      />
+        class="shadow-sm"
+        :disabled="isRequestingAuthorization"
+      >
+        {{ submitButtonText }}
+      </RelayButton>
     </form>
   </div>
 </template>

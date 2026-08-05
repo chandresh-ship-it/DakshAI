@@ -8,9 +8,9 @@ import { useEventListener } from '@vueuse/core';
 import { ALLOWED_FILE_TYPES } from 'shared/constants/messages';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import FileUpload from 'vue-upload-component';
-import Button from 'dashboard/components-next/button/Button.vue';
 import WhatsAppOptions from './WhatsAppOptions.vue';
 import ContentTemplateSelector from './ContentTemplateSelector.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   attachedFiles: { type: Array, default: () => [] },
@@ -29,6 +29,7 @@ const props = defineProps({
   messageSignature: { type: String, default: '' },
   inboxId: { type: Number, default: null },
   voiceEnabled: { type: Boolean, default: false },
+  showFormatting: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -37,6 +38,8 @@ const emit = defineEmits([
   'sendWhatsappMessage',
   'sendTwilioMessage',
   'insertEmoji',
+  'insertLink',
+  'toggleFormatting',
   'addSignature',
   'removeSignature',
   'attachFile',
@@ -51,7 +54,9 @@ const generateUid = () => {
 };
 
 const uploadAttachment = ref(null);
+const imageUpload = ref(null);
 const isEmojiPickerOpen = ref(false);
+const isSendMenuOpen = ref(false);
 
 const EmojiInput = defineAsyncComponent(
   () => import('shared/components/emoji/EmojiInput.vue')
@@ -116,6 +121,7 @@ watch(
 
 const onClickInsertEmoji = emoji => {
   emit('insertEmoji', emoji);
+  isEmojiPickerOpen.value = false;
 };
 
 const { onFileUpload } = useFileUpload({
@@ -134,13 +140,6 @@ const { onFileUpload } = useFileUpload({
       emit('attachFile', [...props.attachedFiles, newFile]);
     };
   },
-});
-
-const sendButtonLabel = computed(() => {
-  const keyCode = isEditorHotKeyEnabled('cmd_enter') ? '⌘ + ↵' : '↵';
-  return t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.SEND', {
-    keyCode,
-  });
 });
 
 const keyboardEvents = {
@@ -190,9 +189,9 @@ useEventListener(document, 'paste', onPaste);
 
 <template>
   <div
-    class="flex items-center justify-between w-full h-[3.25rem] gap-2 px-4 py-3"
+    class="flex w-full items-center justify-between gap-2 border-t border-border bg-background p-3"
   >
-    <div class="flex gap-2 items-center">
+    <div class="flex min-w-0 items-center gap-3 sm:gap-4">
       <WhatsAppOptions
         v-if="isWhatsappInbox"
         :inbox-id="inboxId"
@@ -203,96 +202,174 @@ useEventListener(document, 'paste', onPaste);
         :inbox-id="inboxId"
         @send-message="emit('sendTwilioMessage', $event)"
       />
+
       <div
-        v-if="shouldShowEmojiButton"
-        v-on-click-outside="() => (isEmojiPickerOpen = false)"
-        class="relative"
+        v-if="isRegularMessageMode"
+        v-on-click-outside="() => (isSendMenuOpen = false)"
+        class="relative flex shrink-0 items-center overflow-hidden rounded-full bg-primary shadow-sm"
       >
-        <Button
-          icon="i-lucide-smile-plus"
-          color="slate"
-          size="sm"
-          class="!w-10"
-          @click="isEmojiPickerOpen = !isEmojiPickerOpen"
-        />
-        <EmojiInput
-          v-if="isEmojiPickerOpen"
-          class="!top-auto !bottom-full mb-1.5 ltr:left-0 rtl:right-0"
-          :on-click="onClickInsertEmoji"
-        />
+        <button
+          type="button"
+          class="h-8 px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          :disabled="isLoading || disableSendButton"
+          @click="emit('sendMessage')"
+        >
+          {{ t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.SEND') }}
+        </button>
+        <button
+          type="button"
+          class="flex h-8 w-6 items-center justify-center border-l border-primary-foreground/20 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          :disabled="isLoading || disableSendButton"
+          :title="
+            t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.SEND_OPTIONS')
+          "
+          @click="isSendMenuOpen = !isSendMenuOpen"
+        >
+          <span class="i-lucide-chevron-down size-3.5" />
+        </button>
+        <div
+          v-if="isSendMenuOpen"
+          class="absolute bottom-full left-0 z-50 mb-2 min-w-[10rem] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+        >
+          <button
+            type="button"
+            class="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+            @click="
+              () => {
+                isSendMenuOpen = false;
+                emit('sendMessage');
+              }
+            "
+          >
+            {{ t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.SEND_NOW') }}
+          </button>
+        </div>
       </div>
-      <FileUpload
-        v-if="isEmailOrWebWidgetInbox"
-        ref="uploadAttachment"
-        input-id="composeNewConversationAttachment"
-        :size="4096 * 4096"
-        :accept="ALLOWED_FILE_TYPES"
-        multiple
-        :drop-directory="false"
-        :data="{
-          direct_upload_url: '/rails/active_storage/direct_uploads',
-          direct_upload: true,
-        }"
-        class="p-px"
-        @input-file="onFileUpload"
+
+      <div
+        v-if="isRegularMessageMode"
+        class="flex items-center gap-0.5 sm:gap-1"
       >
-        <Button
-          icon="i-lucide-plus"
-          color="slate"
-          size="sm"
-          class="!w-10 relative"
-        />
-      </FileUpload>
-      <Button
-        v-if="shouldShowSignatureButton"
-        icon="i-lucide-signature"
-        color="slate"
-        size="sm"
-        class="!w-10"
-        @click="toggleMessageSignature"
-      />
+        <RelayButton
+          variant="ghost"
+          size="icon"
+          class="size-8"
+          :class="
+            showFormatting
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          "
+          :title="t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.FORMATTING')"
+          @click="emit('toggleFormatting')"
+        >
+          <!-- eslint-disable-next-line vue/no-bare-strings-in-template, @intlify/vue-i18n/no-raw-text -->
+          <span class="text-sm font-bold">A</span>
+        </RelayButton>
+
+        <FileUpload
+          v-if="isEmailOrWebWidgetInbox"
+          ref="uploadAttachment"
+          input-id="composeNewConversationAttachment"
+          :size="4096 * 4096"
+          :accept="ALLOWED_FILE_TYPES"
+          multiple
+          :drop-directory="false"
+          :data="{
+            direct_upload_url: '/rails/active_storage/direct_uploads',
+            direct_upload: true,
+          }"
+          class="inline-flex"
+          @input-file="onFileUpload"
+        >
+          <RelayButton
+            variant="ghost"
+            size="icon"
+            class="size-8 text-muted-foreground hover:text-foreground"
+            :title="t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.ATTACH')"
+            as="span"
+          >
+            <span class="i-lucide-paperclip size-4" />
+          </RelayButton>
+        </FileUpload>
+
+        <RelayButton
+          variant="ghost"
+          size="icon"
+          class="hidden size-8 text-muted-foreground hover:text-foreground sm:inline-flex"
+          :title="t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.LINK')"
+          @click="emit('insertLink')"
+        >
+          <span class="i-lucide-link-2 size-4" />
+        </RelayButton>
+
+        <div
+          v-if="shouldShowEmojiButton"
+          v-on-click-outside="() => (isEmojiPickerOpen = false)"
+          class="relative hidden sm:block"
+        >
+          <RelayButton
+            variant="ghost"
+            size="icon"
+            class="size-8 text-muted-foreground hover:text-foreground"
+            :title="t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.EMOJI')"
+            @click="isEmojiPickerOpen = !isEmojiPickerOpen"
+          >
+            <span class="i-lucide-smile size-4" />
+          </RelayButton>
+          <EmojiInput
+            v-if="isEmojiPickerOpen"
+            class="!top-auto !bottom-full mb-1.5 ltr:left-0 rtl:right-0"
+            :on-click="onClickInsertEmoji"
+          />
+        </div>
+
+        <FileUpload
+          v-if="isEmailOrWebWidgetInbox"
+          ref="imageUpload"
+          input-id="composeNewConversationImage"
+          :size="4096 * 4096"
+          accept="image/*"
+          multiple
+          :drop-directory="false"
+          :data="{
+            direct_upload_url: '/rails/active_storage/direct_uploads',
+            direct_upload: true,
+          }"
+          class="hidden sm:inline-flex"
+          @input-file="onFileUpload"
+        >
+          <RelayButton
+            variant="ghost"
+            size="icon"
+            class="size-8 text-muted-foreground hover:text-foreground"
+            :title="t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.IMAGE')"
+            as="span"
+          >
+            <span class="i-lucide-image size-4" />
+          </RelayButton>
+        </FileUpload>
+
+        <RelayButton
+          v-if="shouldShowSignatureButton"
+          variant="ghost"
+          size="icon"
+          class="size-8 text-muted-foreground hover:text-foreground"
+          :title="t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.SIGNATURE')"
+          @click="toggleMessageSignature"
+        >
+          <span class="i-lucide-signature size-4" />
+        </RelayButton>
+      </div>
     </div>
 
-    <div class="flex gap-2 items-center">
-      <Button
-        :label="t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.DISCARD')"
-        variant="faded"
-        color="slate"
-        size="sm"
-        class="!text-xs font-medium"
-        @click="emit('discard')"
-      />
-      <Button
-        v-if="isRegularMessageMode"
-        :label="sendButtonLabel"
-        size="sm"
-        class="!text-xs font-medium"
-        :disabled="isLoading || disableSendButton"
-        :is-loading="isLoading"
-        @click="emit('sendMessage')"
-      />
-    </div>
+    <RelayButton
+      variant="ghost"
+      size="icon"
+      class="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+      :title="t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.DISCARD')"
+      @click="emit('discard')"
+    >
+      <span class="i-lucide-trash-2 size-4" />
+    </RelayButton>
   </div>
 </template>
-
-<style scoped lang="scss">
-.emoji-dialog::before {
-  @apply hidden;
-}
-
-// The <label> tag inside the file-upload component overlaps the button due to its position.
-// This causes the button's hover state to not work, as it's positioned below the label (z-index).
-// Increasing the button's z-index would break the file upload functionality.
-// This style ensures the label remains clickable while preserving the button's hover effect.
-:deep() {
-  .file-uploads.file-uploads-html5 {
-    label {
-      @apply hover:cursor-pointer;
-    }
-
-    &:hover button {
-      @apply dark:bg-n-solid-2 bg-n-alpha-2;
-    }
-  }
-}
-</style>

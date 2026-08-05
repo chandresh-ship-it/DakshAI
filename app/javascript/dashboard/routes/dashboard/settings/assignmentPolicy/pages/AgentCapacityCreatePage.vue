@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
 
 import Breadcrumb from 'dashboard/components-next/breadcrumb/Breadcrumb.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import SettingsLayout from 'dashboard/routes/dashboard/settings/SettingsLayout.vue';
 import AgentCapacityPolicyForm from 'dashboard/routes/dashboard/settings/assignmentPolicy/pages/components/AgentCapacityPolicyForm.vue';
 
@@ -71,7 +72,7 @@ const handleSubmit = async formState => {
 </script>
 
 <template>
-  <SettingsLayout class="w-full max-w-2xl ltr:mr-auto rtl:ml-auto">
+  <SettingsLayout class="w-full max-w-3xl ltr:mr-auto rtl:ml-auto">
     <template #header>
       <div class="mb-4 flex min-h-10 w-full items-center justify-between gap-2">
         <Breadcrumb :items="breadcrumbItems" @click="handleBreadcrumbClick" />
@@ -80,7 +81,7 @@ const handleSubmit = async formState => {
 
     <template #body>
       <div
-        class="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+        class="mx-auto mt-2 flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
       >
         <div
           class="flex items-center justify-between border-b border-border/40 bg-background/50 p-5"
@@ -90,17 +91,25 @@ const handleSubmit = async formState => {
               $t('ASSIGNMENT_POLICY.AGENT_CAPACITY_POLICY.CREATE.HEADER.TITLE')
             }}
           </h3>
+          <button
+            type="button"
+            class="text-muted-foreground transition-colors hover:text-foreground"
+            :aria-label="
+              $t('ASSIGNMENT_POLICY.AGENT_CAPACITY_POLICY.FORM.CANCEL_BUTTON')
+            "
+            @click="handleCancel"
+          >
+            <Icon icon="i-lucide-x" class="size-5" />
+          </button>
         </div>
-        <div class="p-5">
-          <AgentCapacityPolicyForm
-            ref="formRef"
-            mode="CREATE"
-            :is-loading="uiFlags.isCreating"
-            :label-list="allLabels"
-            @submit="handleSubmit"
-            @cancel="handleCancel"
-          />
-        </div>
+        <AgentCapacityPolicyForm
+          ref="formRef"
+          mode="CREATE"
+          :is-loading="uiFlags.isCreating"
+          :label-list="allLabels"
+          @submit="handleSubmit"
+          @cancel="handleCancel"
+        />
       </div>
     </template>
   </SettingsLayout>

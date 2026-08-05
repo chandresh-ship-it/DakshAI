@@ -3,6 +3,7 @@ import { computed, h, watch, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from 'next/button/Button.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
 import FilterSelect from './inputs/FilterSelect.vue';
 import MultiSelect from './inputs/MultiSelect.vue';
 import SingleSelect from './inputs/SingleSelect.vue';
@@ -11,9 +12,10 @@ import { useSnakeCase } from 'dashboard/composables/useTransformKeys';
 import { validateSingleFilter } from 'dashboard/helper/validations.js';
 
 // filterTypes: import('vue').ComputedRef<FilterType[]>
-const { filterTypes } = defineProps({
+const { filterTypes, stacked } = defineProps({
   showQueryOperator: { type: Boolean, default: false },
   filterTypes: { type: Array, required: true },
+  stacked: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['remove']);
@@ -64,6 +66,17 @@ const getOperator = (filter, selectedOperator) => {
 const currentOperator = computed(() =>
   getOperator(currentFilter.value, filterOperator.value)
 );
+
+const stackedOperatorLabel = computed(() => {
+  const label = currentOperator.value?.label;
+  if (!label) return '';
+  const symbolByOp = {
+    equal_to: '=',
+    not_equal_to: '≠',
+  };
+  const symbol = symbolByOp[filterOperator.value];
+  return symbol ? `${symbol} ${label}` : label;
+});
 
 const getInputType = (operator, filter) =>
   operator.inputOverride ?? filter.inputType;
@@ -146,8 +159,125 @@ defineExpose({ validate, resetValidation });
 </script>
 
 <template>
-  <li class="list-none">
+  <component :is="stacked ? 'div' : 'li'" :class="{ 'list-none': !stacked }">
+    <!-- Stacked drawer layout (NewRelay / contacts filter drawer) -->
     <div
+      v-if="stacked"
+      class="flex flex-col gap-3"
+      :class="{ 'animate-wiggle': showErrors && validationError }"
+    >
+      <div
+        v-if="showQueryOperator"
+        class="absolute -top-2.5 left-4 z-10 bg-card px-2"
+      >
+        <FilterSelect
+          v-model="queryOperator"
+          hide-icon
+          :options="queryOperatorOptions"
+        >
+          <template #trigger="{ toggle }">
+            <button
+              type="button"
+              class="text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+              @click="toggle"
+            >
+              {{
+                queryOperator === 'or'
+                  ? t('FILTER.QUERY_DROPDOWN_LABELS.OR')
+                  : t('FILTER.QUERY_DROPDOWN_LABELS.AND')
+              }}
+            </button>
+          </template>
+        </FilterSelect>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="min-w-0 flex-1">
+          <FilterSelect
+            v-model="attributeKey"
+            :options="filterTypes"
+            @update:model-value="resetModelOnAttributeKeyChange"
+          >
+            <template #trigger="{ toggle }">
+              <RelayButton
+                variant="outline"
+                class="h-9 w-full justify-between border-border/80 bg-background px-3 text-sm font-medium shadow-sm hover:border-border/80 hover:bg-muted/50"
+                @click="toggle"
+              >
+                <span class="truncate">{{ currentFilter?.label }}</span>
+                <span
+                  class="i-lucide-chevron-down size-4 shrink-0 opacity-50"
+                />
+              </RelayButton>
+            </template>
+          </FilterSelect>
+        </div>
+        <RelayButton
+          variant="ghost"
+          size="icon"
+          class="size-9 shrink-0 rounded-md border border-border/50 bg-background text-muted-foreground hover:border-border/50 hover:text-destructive"
+          @click.stop="emit('remove')"
+        >
+          <span class="i-lucide-trash-2 size-4" />
+        </RelayButton>
+      </div>
+      <FilterSelect
+        v-model="filterOperator"
+        :options="currentFilter?.filterOperators"
+      >
+        <template #trigger="{ toggle }">
+          <RelayButton
+            variant="outline"
+            class="h-9 w-full justify-between border-border/80 bg-background px-3 text-sm font-medium text-primary shadow-sm hover:border-border/80 hover:bg-muted/50 hover:text-primary"
+            @click="toggle"
+          >
+            <span class="truncate">{{ stackedOperatorLabel }}</span>
+            <span class="i-lucide-chevron-down size-4 shrink-0 opacity-50" />
+          </RelayButton>
+        </template>
+      </FilterSelect>
+      <template v-if="currentOperator?.hasInput">
+        <MultiSelect
+          v-if="inputType === 'multiSelect'"
+          v-model="values"
+          :options="currentFilter.options"
+          dropdown-max-height="max-h-72"
+        />
+        <SingleSelect
+          v-else-if="inputType === 'searchSelect'"
+          v-model="values"
+          :options="currentFilter.options"
+          dropdown-max-height="max-h-64"
+        />
+        <SingleSelect
+          v-else-if="inputType === 'booleanSelect'"
+          v-model="values"
+          disable-search
+          :options="booleanOptions"
+        />
+        <div v-else class="flex w-full flex-col">
+          <RelayInput
+            v-model="values"
+            :type="inputFieldType"
+            :placeholder="t('FILTER.INPUT_PLACEHOLDER')"
+            :class-name="
+              showErrors && validationError
+                ? 'border-destructive/60 focus-visible:ring-destructive/20'
+                : 'border-border/80'
+            "
+          />
+        </div>
+      </template>
+      <span
+        v-if="showErrors && validationError"
+        class="text-[11.5px] font-medium text-destructive"
+      >
+        {{ t(`FILTER.ERRORS.${validationError}`) }}
+      </span>
+    </div>
+
+    <!-- Default horizontal row layout -->
+    <div
+      v-else
       class="flex items-center gap-2 rounded-md"
       :class="{
         'animate-wiggle': showErrors && validationError,
@@ -208,8 +338,11 @@ defineExpose({ validate, resetValidation });
         @click.stop="emit('remove')"
       />
     </div>
-    <span v-if="showErrors && validationError" class="text-sm text-n-ruby-11">
+    <span
+      v-if="!stacked && showErrors && validationError"
+      class="text-sm text-n-ruby-11"
+    >
       {{ t(`FILTER.ERRORS.${validationError}`) }}
     </span>
-  </li>
+  </component>
 </template>

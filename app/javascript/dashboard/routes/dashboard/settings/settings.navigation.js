@@ -100,6 +100,11 @@ export const SETTINGS_NAV_SECTIONS = [
         labelKey: 'SIDEBAR.LABELS',
         routeName: 'labels_list',
       },
+      {
+        key: 'notifications',
+        labelKey: 'SIDEBAR.NOTIFICATIONS',
+        routeName: 'settings_notifications_index',
+      },
     ],
   },
   {

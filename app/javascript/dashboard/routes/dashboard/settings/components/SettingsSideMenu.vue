@@ -126,7 +126,7 @@ const toggleSection = key => {
             class="relative flex items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors"
             :class="
               item.active
-                ? 'bg-sidebar-accent text-foreground'
+                ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
             "
           >

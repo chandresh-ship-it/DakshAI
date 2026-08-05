@@ -5,6 +5,7 @@ import { useMapGetter } from 'dashboard/composables/store';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 
 import ContactCustomAttributeItem from 'dashboard/components-next/Contacts/ContactsSidebar/ContactCustomAttributeItem.vue';
+import { RelayInput } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   selectedContact: {
@@ -14,7 +15,6 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
-
 const { uiSettings } = useUISettings();
 
 const searchQuery = ref('');
@@ -56,18 +56,12 @@ const sortAttributesOrder = computed(
 );
 
 const sortByUISettings = attributes => {
-  // Get saved order from UI settings
-  // Same as conversation panel contact attribute order
   const order = sortAttributesOrder.value;
-
-  // If no order defined, return original array
   if (!order?.length) return attributes;
 
   const orderMap = new Map(order.map((key, index) => [key, index]));
 
-  // Sort attributes based on their position in saved order
   return [...attributes].sort((a, b) => {
-    // Get positions, use Infinity if not found in order (pushes to end)
     const aPos = orderMap.get(a.attributeKey) ?? Infinity;
     const bPos = orderMap.get(b.attributeKey) ?? Infinity;
     return aPos - bPos;
@@ -105,10 +99,31 @@ const filteredUnusedAttributes = computed(() => {
 const unusedAttributesCount = computed(() => unusedAttributes.value?.length);
 const hasNoUnusedAttributes = computed(() => unusedAttributesCount.value === 0);
 const hasNoUsedAttributes = computed(() => usedAttributes.value.length === 0);
+
+const showEmptyPlaceholder = computed(
+  () => !hasContactAttributes.value || hasNoUsedAttributes.value
+);
 </script>
 
 <template>
-  <div v-if="hasContactAttributes" class="flex flex-col gap-6 px-6 py-6">
+  <div
+    v-if="showEmptyPlaceholder && hasNoUnusedAttributes"
+    class="mx-auto flex h-full max-w-sm flex-col items-center justify-center py-16 text-center opacity-60"
+  >
+    <div
+      class="mb-4 flex size-12 items-center justify-center rounded-full bg-muted"
+    >
+      <span class="i-lucide-user size-6 text-muted-foreground" />
+    </div>
+    <h3 class="mb-1 text-sm font-medium text-foreground">
+      {{ t('CONTACTS_LAYOUT.SIDEBAR.TABS.ATTRIBUTES') }}
+    </h3>
+    <p class="text-xs text-muted-foreground">
+      {{ t('CONTACTS_LAYOUT.SIDEBAR.ATTRIBUTES.EMPTY_PLACEHOLDER') }}
+    </p>
+  </div>
+
+  <div v-else-if="hasContactAttributes" class="flex flex-col gap-6">
     <div v-if="!hasNoUsedAttributes" class="flex flex-col gap-2">
       <ContactCustomAttributeItem
         v-for="attribute in usedAttributes"
@@ -118,31 +133,33 @@ const hasNoUsedAttributes = computed(() => usedAttributes.value.length === 0);
       />
     </div>
     <div v-if="!hasNoUnusedAttributes" class="flex items-center gap-3">
-      <div class="flex-1 h-[1px] bg-n-slate-5" />
-      <span class="text-sm font-medium text-n-slate-10">{{
+      <div class="h-px flex-1 bg-border" />
+      <span class="text-sm font-medium text-muted-foreground">{{
         t('CONTACTS_LAYOUT.SIDEBAR.ATTRIBUTES.UNUSED_ATTRIBUTES', {
           count: unusedAttributesCount,
         })
       }}</span>
-      <div class="flex-1 h-[1px] bg-n-slate-5" />
+      <div class="h-px flex-1 bg-border" />
     </div>
     <div class="flex flex-col gap-3">
       <div v-if="!hasNoUnusedAttributes" class="relative">
-        <span class="absolute i-lucide-search size-3.5 top-2 left-3" />
-        <input
+        <span
+          class="i-lucide-search absolute left-3 top-2.5 size-3.5 text-muted-foreground"
+        />
+        <RelayInput
           v-model="searchQuery"
           type="search"
           :placeholder="
             t('CONTACTS_LAYOUT.SIDEBAR.ATTRIBUTES.SEARCH_PLACEHOLDER')
           "
-          class="w-full h-8 py-2 pl-10 pr-2 text-sm reset-base outline-none border-none rounded-lg bg-n-alpha-black2 dark:bg-n-solid-1 text-n-slate-12"
+          class-name="h-8 w-full py-2 pl-10 pr-2 text-sm rounded-lg border-border/80 bg-muted/40"
         />
       </div>
       <div
         v-if="filteredUnusedAttributes.length === 0 && !hasNoUnusedAttributes"
-        class="flex items-center justify-start h-11"
+        class="flex h-11 items-center justify-start"
       >
-        <p class="text-sm text-n-slate-11">
+        <p class="text-sm text-muted-foreground">
           {{ t('CONTACTS_LAYOUT.SIDEBAR.ATTRIBUTES.NO_ATTRIBUTES') }}
         </p>
       </div>
@@ -155,7 +172,21 @@ const hasNoUsedAttributes = computed(() => usedAttributes.value.length === 0);
       </div>
     </div>
   </div>
-  <p v-else class="px-6 py-10 text-sm leading-6 text-center text-n-slate-11">
-    {{ t('CONTACTS_LAYOUT.SIDEBAR.ATTRIBUTES.EMPTY_STATE') }}
-  </p>
+
+  <div
+    v-else
+    class="mx-auto flex h-full max-w-sm flex-col items-center justify-center py-16 text-center opacity-60"
+  >
+    <div
+      class="mb-4 flex size-12 items-center justify-center rounded-full bg-muted"
+    >
+      <span class="i-lucide-user size-6 text-muted-foreground" />
+    </div>
+    <h3 class="mb-1 text-sm font-medium text-foreground">
+      {{ t('CONTACTS_LAYOUT.SIDEBAR.TABS.ATTRIBUTES') }}
+    </h3>
+    <p class="text-xs text-muted-foreground">
+      {{ t('CONTACTS_LAYOUT.SIDEBAR.ATTRIBUTES.EMPTY_PLACEHOLDER') }}
+    </p>
+  </div>
 </template>

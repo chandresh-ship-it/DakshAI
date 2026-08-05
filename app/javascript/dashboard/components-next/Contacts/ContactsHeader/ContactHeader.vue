@@ -56,31 +56,29 @@ const emit = defineEmits([
       <div class="flex flex-shrink-0 items-center gap-2 sm:gap-3">
         <slot name="columns" />
 
-        <div v-if="!isLabelView && !isActiveView" class="relative">
-          <RelayButton
-            id="toggleContactsFilterButton"
-            variant="outline"
-            class="h-10 gap-2 rounded-lg px-3 text-sm font-medium shadow-sm"
-            @click="emit('filter')"
-          >
-            <span
-              :class="
-                isSegmentsView ? 'i-lucide-pen-line' : 'i-lucide-list-filter'
-              "
-              class="size-4"
-            />
-            {{
-              isSegmentsView
-                ? $t('CONTACTS_LAYOUT.FILTER.EDIT_SEGMENT')
-                : $t('CONTACTS_LAYOUT.HEADER.FILTERS_BUTTON')
-            }}
-            <span
-              v-if="hasActiveFilters && !isSegmentsView"
-              class="size-1.5 rounded-full bg-primary"
-            />
-          </RelayButton>
-          <slot name="filter" />
-        </div>
+        <RelayButton
+          v-if="!isLabelView && !isActiveView"
+          id="toggleContactsFilterButton"
+          variant="outline"
+          class="h-10 gap-2 rounded-lg px-3 text-sm font-medium shadow-sm"
+          @click="emit('filter')"
+        >
+          <span
+            :class="
+              isSegmentsView ? 'i-lucide-pen-line' : 'i-lucide-list-filter'
+            "
+            class="size-4"
+          />
+          {{
+            isSegmentsView
+              ? $t('CONTACTS_LAYOUT.FILTER.EDIT_SEGMENT')
+              : $t('CONTACTS_LAYOUT.HEADER.FILTERS_BUTTON')
+          }}
+          <span
+            v-if="hasActiveFilters && !isSegmentsView"
+            class="size-1.5 rounded-full bg-primary"
+          />
+        </RelayButton>
 
         <RelayButton
           v-if="

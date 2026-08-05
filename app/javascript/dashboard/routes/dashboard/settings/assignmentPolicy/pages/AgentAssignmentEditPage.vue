@@ -11,6 +11,7 @@ import {
 } from 'dashboard/routes/dashboard/settings/assignmentPolicy/constants';
 
 import Breadcrumb from 'dashboard/components-next/breadcrumb/Breadcrumb.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import SettingsLayout from 'dashboard/routes/dashboard/settings/SettingsLayout.vue';
 import AssignmentPolicyForm from 'dashboard/routes/dashboard/settings/assignmentPolicy/pages/components/AgentAssignmentPolicyForm.vue';
 import ConfirmInboxDialog from 'dashboard/routes/dashboard/settings/assignmentPolicy/pages/components/ConfirmInboxDialog.vue';
@@ -274,7 +275,7 @@ watch(routeId, fetchPolicyData, { immediate: true });
 
     <template #body>
       <div
-        class="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+        class="mx-auto mt-2 flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
       >
         <div
           class="flex items-center justify-between border-b border-border/40 bg-background/50 p-5"
@@ -282,24 +283,30 @@ watch(routeId, fetchPolicyData, { immediate: true });
           <h3 class="text-[16px] font-semibold text-foreground">
             {{ $t(`${BASE_KEY}.EDIT.HEADER.TITLE`) }}
           </h3>
+          <button
+            type="button"
+            class="text-muted-foreground transition-colors hover:text-foreground"
+            :aria-label="$t(`${BASE_KEY}.FORM.CANCEL_BUTTON`)"
+            @click="handleCancel"
+          >
+            <Icon icon="i-lucide-x" class="size-5" />
+          </button>
         </div>
-        <div class="p-5">
-          <AssignmentPolicyForm
-            :key="routeId"
-            mode="EDIT"
-            :initial-data="formData"
-            :policy-inboxes="policyInboxes"
-            :inbox-list="inboxList"
-            show-inbox-section
-            :is-loading="uiFlags.isUpdating"
-            :is-inbox-loading="inboxUiFlags.isFetching"
-            @submit="handleSubmit"
-            @cancel="handleCancel"
-            @add-inbox="handleAddInbox"
-            @delete-inbox="handleDeleteInbox"
-            @navigate-to-inbox="handleNavigateToInbox"
-          />
-        </div>
+        <AssignmentPolicyForm
+          :key="routeId"
+          mode="EDIT"
+          :initial-data="formData"
+          :policy-inboxes="policyInboxes"
+          :inbox-list="inboxList"
+          show-inbox-section
+          :is-loading="uiFlags.isUpdating"
+          :is-inbox-loading="inboxUiFlags.isFetching"
+          @submit="handleSubmit"
+          @cancel="handleCancel"
+          @add-inbox="handleAddInbox"
+          @delete-inbox="handleDeleteInbox"
+          @navigate-to-inbox="handleNavigateToInbox"
+        />
       </div>
     </template>
 

@@ -8,6 +8,7 @@ import camelcaseKeys from 'camelcase-keys';
 import { getInboxIconByType } from 'dashboard/helper/inbox';
 
 import Breadcrumb from 'dashboard/components-next/breadcrumb/Breadcrumb.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import SettingsLayout from 'dashboard/routes/dashboard/settings/SettingsLayout.vue';
 import AgentCapacityPolicyForm from 'dashboard/routes/dashboard/settings/assignmentPolicy/pages/components/AgentCapacityPolicyForm.vue';
 
@@ -190,17 +191,17 @@ onMounted(() => store.dispatch('agents/get'));
 <template>
   <SettingsLayout
     :is-loading="uiFlags.isFetchingItem"
-    class="w-full max-w-2xl ltr:mr-auto rtl:ml-auto"
+    class="w-full max-w-3xl ltr:mr-auto rtl:ml-auto"
   >
     <template #header>
-      <div class="flex items-center gap-2 w-full justify-between mb-4 min-h-10">
+      <div class="mb-4 flex min-h-10 w-full items-center justify-between gap-2">
         <Breadcrumb :items="breadcrumbItems" @click="handleBreadcrumbClick" />
       </div>
     </template>
 
     <template #body>
       <div
-        class="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+        class="mx-auto mt-2 flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
       >
         <div
           class="flex items-center justify-between border-b border-border/40 bg-background/50 p-5"
@@ -208,30 +209,36 @@ onMounted(() => store.dispatch('agents/get'));
           <h3 class="text-[16px] font-semibold text-foreground">
             {{ $t(`${BASE_KEY}.EDIT.HEADER.TITLE`) }}
           </h3>
+          <button
+            type="button"
+            class="text-muted-foreground transition-colors hover:text-foreground"
+            :aria-label="$t(`${BASE_KEY}.FORM.CANCEL_BUTTON`)"
+            @click="handleCancel"
+          >
+            <Icon icon="i-lucide-x" class="size-5" />
+          </button>
         </div>
-        <div class="p-5">
-          <AgentCapacityPolicyForm
-            :key="routeId"
-            mode="EDIT"
-            :initial-data="formData"
-            :policy-users="policyUsers"
-            :agent-list="allAgents"
-            :label-list="allLabels"
-            :inbox-list="allInboxes"
-            show-user-section
-            show-inbox-limit-section
-            :is-loading="uiFlags.isUpdating"
-            :is-users-loading="usersUiFlags.isFetching"
-            :is-inboxes-loading="inboxesUiFlags.isFetching"
-            @submit="handleSubmit"
-            @cancel="handleCancel"
-            @add-user="handleAddUser"
-            @delete-user="handleDeleteUser"
-            @add-inbox-limit="handleAddInboxLimit"
-            @update-inbox-limit="handleLimitChange"
-            @delete-inbox-limit="handleDeleteInboxLimit"
-          />
-        </div>
+        <AgentCapacityPolicyForm
+          :key="routeId"
+          mode="EDIT"
+          :initial-data="formData"
+          :policy-users="policyUsers"
+          :agent-list="allAgents"
+          :label-list="allLabels"
+          :inbox-list="allInboxes"
+          show-user-section
+          show-inbox-limit-section
+          :is-loading="uiFlags.isUpdating"
+          :is-users-loading="usersUiFlags.isFetching"
+          :is-inboxes-loading="inboxesUiFlags.isFetching"
+          @submit="handleSubmit"
+          @cancel="handleCancel"
+          @add-user="handleAddUser"
+          @delete-user="handleDeleteUser"
+          @add-inbox-limit="handleAddInboxLimit"
+          @update-inbox-limit="handleLimitChange"
+          @delete-inbox-limit="handleDeleteInboxLimit"
+        />
       </div>
     </template>
   </SettingsLayout>

@@ -2,17 +2,21 @@
 import { mapGetters } from 'vuex';
 import { useAlert } from 'dashboard/composables';
 import router from '../../../../index';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 import PageHeader from '../../SettingsSubPageHeader.vue';
 import GreetingsEditor from 'shared/components/GreetingsEditor.vue';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
+
+const INPUT_CLASS =
+  'h-10 rounded-md border-border/80 bg-background px-4 text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30';
 
 export default {
   components: {
     PageHeader,
     GreetingsEditor,
-    NextButton,
     Editor,
+    RelayButton,
+    RelayInput,
   },
   data() {
     return {
@@ -23,6 +27,7 @@ export default {
       channelWelcomeTagline: '',
       greetingEnabled: false,
       greetingMessage: '',
+      inputClass: INPUT_CLASS,
     };
   },
   computed: {
@@ -37,6 +42,9 @@ export default {
       )
         return true;
       return false;
+    },
+    canSubmit() {
+      return Boolean(this.channelWebsiteUrl?.trim() && this.inboxName?.trim());
     },
   },
   methods: {
@@ -76,7 +84,7 @@ export default {
 </script>
 
 <template>
-  <div class="h-full w-full p-6 col-span-6">
+  <div class="w-full max-w-2xl">
     <PageHeader
       :header-title="$t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.TITLE')"
       :header-content="$t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.DESC')"
@@ -87,53 +95,67 @@ export default {
     />
     <form
       v-if="!uiFlags.isCreating"
-      class="flex flex-wrap flex-col mx-0"
+      class="space-y-6"
       @submit.prevent="createChannel"
     >
-      <div class="w-full">
-        <label>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
           {{ $t('INBOX_MGMT.ADD.WEBSITE_NAME.LABEL') }}
-          <input
-            v-model="inboxName"
-            type="text"
-            :placeholder="$t('INBOX_MGMT.ADD.WEBSITE_NAME.PLACEHOLDER')"
-          />
         </label>
+        <RelayInput
+          v-model="inboxName"
+          type="text"
+          :placeholder="$t('INBOX_MGMT.ADD.WEBSITE_NAME.PLACEHOLDER')"
+          :class-name="inputClass"
+        />
       </div>
-      <div class="w-full">
-        <label>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
           {{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.LABEL') }}
-          <input
-            v-model="channelWebsiteUrl"
-            type="text"
-            :placeholder="
-              $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.PLACEHOLDER')
-            "
-          />
         </label>
+        <RelayInput
+          v-model="channelWebsiteUrl"
+          type="text"
+          :placeholder="
+            $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.PLACEHOLDER')
+          "
+          :class-name="inputClass"
+        />
       </div>
 
-      <div class="w-full">
-        <label>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
           {{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.WIDGET_COLOR.LABEL') }}
-          <woot-color-picker v-model="channelWidgetColor" />
         </label>
+        <div class="flex items-center gap-3">
+          <input
+            v-model="channelWidgetColor"
+            type="color"
+            class="size-10 cursor-pointer rounded-md border border-border bg-background p-1"
+          />
+          <span class="font-mono text-[13px] text-muted-foreground">
+            {{ channelWidgetColor }}
+          </span>
+        </div>
       </div>
 
-      <div class="w-full">
-        <label>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
           {{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TITLE.LABEL') }}
-          <input
-            v-model="channelWelcomeTitle"
-            type="text"
-            :placeholder="
-              $t(
-                'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TITLE.PLACEHOLDER'
-              )
-            "
-          />
         </label>
+        <RelayInput
+          v-model="channelWelcomeTitle"
+          type="text"
+          :placeholder="
+            $t(
+              'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TITLE.PLACEHOLDER'
+            )
+          "
+          :class-name="inputClass"
+        />
       </div>
+
       <Editor
         v-model="channelWelcomeTagline"
         :label="
@@ -146,12 +168,18 @@ export default {
         "
         :max-length="255"
         channel-type="Context::InboxSettings"
-        class="mb-4"
       />
 
-      <label class="w-full">
-        {{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.LABEL') }}
-        <select v-model="greetingEnabled">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{
+            $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.LABEL')
+          }}
+        </label>
+        <select
+          v-model="greetingEnabled"
+          class="h-10 w-full rounded-md border border-border/80 bg-background px-3 text-[14px] text-foreground shadow-sm outline-none focus:ring-1 focus:ring-primary/30"
+        >
           <option :value="true">
             {{
               $t(
@@ -167,14 +195,15 @@ export default {
             }}
           </option>
         </select>
-        <p class="help-text">
+        <p class="text-[12.5px] text-muted-foreground">
           {{
             $t(
               'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.HELP_TEXT'
             )
           }}
         </p>
-      </label>
+      </div>
+
       <GreetingsEditor
         v-if="greetingEnabled"
         v-model="greetingMessage"
@@ -189,17 +218,15 @@ export default {
         "
         :richtext="!textAreaChannels"
       />
-      <div class="flex flex-row justify-end w-full gap-2 px-0 py-2 mt-4">
-        <div class="w-full">
-          <NextButton
-            type="submit"
-            :is-loading="uiFlags.isCreating"
-            :disabled="!channelWebsiteUrl || !inboxName"
-            solid
-            blue
-            :label="$t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.SUBMIT_BUTTON')"
-          />
-        </div>
+
+      <div class="pt-4">
+        <RelayButton
+          type="submit"
+          class="shadow-sm"
+          :disabled="!canSubmit || uiFlags.isCreating"
+        >
+          {{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.SUBMIT_BUTTON') }}
+        </RelayButton>
       </div>
     </form>
   </div>

@@ -5,6 +5,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import { RelayCheckbox } from 'dashboard/components-next/relay';
+import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 
 const props = defineProps({
   contacts: { type: Array, required: true },
@@ -321,25 +322,37 @@ const handleColumnSort = sortKey => {
                   hide-offline-status
                   class="shadow-sm ring-1 ring-border/50"
                 />
-                <span
-                  class="truncate font-medium text-foreground hover:underline"
+                <button
+                  type="button"
+                  class="truncate text-left font-medium text-foreground hover:underline"
+                  @click.stop="onClickViewDetails(contact.id)"
                 >
                   {{
                     contact.name || t('CONTACTS_LAYOUT.CARD.UNNAMED_CONTACT')
                   }}
-                </span>
+                </button>
               </div>
             </td>
 
             <td
               v-if="visibleColumns.includes('email')"
               class="px-4 py-4 align-middle"
+              @click.stop
             >
-              <span
-                class="truncate text-sm text-foreground hover:text-primary hover:underline"
+              <ComposeConversation
+                v-if="contact.email"
+                :initial-contact="contact"
+                align="start"
               >
-                {{ contact.email || '—' }}
-              </span>
+                <template #trigger>
+                  <span
+                    class="cursor-pointer truncate text-sm text-foreground hover:text-primary hover:underline"
+                  >
+                    {{ contact.email }}
+                  </span>
+                </template>
+              </ComposeConversation>
+              <span v-else class="text-sm text-muted-foreground">—</span>
             </td>
 
             <td

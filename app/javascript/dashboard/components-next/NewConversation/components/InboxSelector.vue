@@ -50,16 +50,18 @@ const targetInboxLabel = computed(() => {
 
 <template>
   <div
-    class="flex items-center flex-1 w-full gap-3 px-4 py-3 overflow-y-visible"
+    class="flex w-full flex-1 items-center gap-3 overflow-y-visible border-b border-border/40 px-4 py-2"
   >
-    <label class="mb-0.5 text-sm font-medium text-n-slate-11 whitespace-nowrap">
+    <label
+      class="mb-0.5 whitespace-nowrap text-xs font-medium text-muted-foreground"
+    >
       {{ t('COMPOSE_NEW_CONVERSATION.FORM.INBOX_SELECTOR.LABEL') }}
     </label>
     <div
       v-if="targetInbox"
-      class="flex items-center gap-1.5 rounded-md bg-n-alpha-2 truncate ltr:pl-3 rtl:pr-3 ltr:pr-1 rtl:pl-1 h-7 min-w-0"
+      class="flex h-7 min-w-0 items-center gap-1.5 truncate rounded-md bg-muted px-3 pr-1"
     >
-      <span class="text-sm truncate text-n-slate-12">
+      <span class="truncate text-sm text-foreground">
         {{ targetInboxLabel }}
       </span>
       <Button
@@ -74,7 +76,7 @@ const targetInboxLabel = computed(() => {
     <div
       v-else
       v-on-click-outside="() => emit('toggleDropdown', false)"
-      class="relative flex items-center h-7"
+      class="relative flex h-7 items-center"
     >
       <Spinner v-if="isFetchingInboxes" :size="16" />
       <Button

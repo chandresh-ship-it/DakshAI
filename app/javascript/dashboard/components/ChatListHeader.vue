@@ -11,6 +11,7 @@ import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   pageTitle: { type: String, required: true },
+  pageSubtitle: { type: String, default: '' },
   hasAppliedFilters: { type: Boolean, required: true },
   hasActiveFolders: { type: Boolean, required: true },
   activeAssigneeTab: { type: String, default: 'all' },
@@ -69,12 +70,18 @@ const applySort = value => {
   <div
     class="flex items-center justify-between p-4 border-b border-border h-14 shrink-0"
   >
-    <div class="flex items-center min-w-0 gap-2">
+    <div class="flex items-center min-w-0 gap-1.5">
       <h1
-        class="text-base font-medium truncate text-foreground"
-        :title="pageTitle"
+        class="text-base font-medium truncate text-foreground flex items-center gap-1.5 min-w-0"
+        :title="pageSubtitle ? `${pageTitle} / ${pageSubtitle}` : pageTitle"
       >
-        {{ pageTitle }}
+        <span class="truncate">{{ pageTitle }}</span>
+        <span
+          v-if="pageSubtitle"
+          class="text-[14px] font-medium text-muted-foreground truncate"
+        >
+          / {{ pageSubtitle }}
+        </span>
       </h1>
       <span
         v-if="

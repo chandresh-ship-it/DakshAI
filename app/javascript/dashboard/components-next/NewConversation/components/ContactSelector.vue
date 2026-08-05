@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { INPUT_TYPES } from 'dashboard/components-next/taginput/helper/tagInputHelper.js';
 
 import TagInput from 'dashboard/components-next/taginput/TagInput.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   contacts: {
@@ -70,15 +70,13 @@ const contactsList = computed(() => {
   }));
 });
 
-const selectedContactLabel = computed(() => {
-  const { name, email = '', phoneNumber = '' } = props.selectedContact || {};
-  if (email) {
-    return `${name} (${email})`;
-  }
-  if (phoneNumber) {
-    return `${name} (${phoneNumber})`;
-  }
-  return name || '';
+const selectedContactPill = computed(() => {
+  const {
+    email = '',
+    phoneNumber = '',
+    name = '',
+  } = props.selectedContact || {};
+  return email || phoneNumber || name || '';
 });
 
 const errorClass = computed(() => {
@@ -97,41 +95,33 @@ const handleInput = value => {
 </script>
 
 <template>
-  <div class="relative flex-1 px-4 py-3 overflow-y-visible">
-    <div class="flex items-baseline w-full gap-3 min-h-7">
-      <label class="text-sm font-medium text-n-slate-11 whitespace-nowrap">
-        {{ t(`${i18nPrefix}.LABEL`) }}
-      </label>
-
+  <div class="relative min-w-0 flex-1 overflow-y-visible">
+    <div class="flex min-h-8 w-full items-center gap-2">
       <div
         v-if="isCreatingContact"
-        class="flex items-center gap-1.5 rounded-md bg-n-alpha-2 px-3 min-h-7 min-w-0"
+        class="flex min-h-7 min-w-0 items-center gap-1.5 rounded-md bg-muted px-3"
       >
-        <span class="text-sm truncate text-n-slate-12">
+        <span class="truncate text-sm text-foreground">
           {{ t(`${i18nPrefix}.CONTACT_CREATING`) }}
         </span>
       </div>
       <div
         v-else-if="selectedContact"
-        class="flex items-center gap-1.5 rounded-md bg-n-alpha-2 min-h-7 min-w-0"
-        :class="!contactId ? 'ltr:pl-3 rtl:pr-3 ltr:pr-1 rtl:pl-1' : 'px-3'"
+        class="flex min-h-7 min-w-0 items-center gap-1.5 rounded-md bg-muted px-3"
+        :class="!contactId ? 'pr-1' : ''"
       >
-        <span class="text-sm truncate text-n-slate-12">
-          {{
-            isCreatingContact
-              ? t(`${i18nPrefix}.CONTACT_CREATING`)
-              : selectedContactLabel
-          }}
+        <span class="truncate text-sm text-foreground">
+          {{ selectedContactPill }}
         </span>
-        <Button
+        <RelayButton
           v-if="!contactId"
           variant="ghost"
-          icon="i-lucide-x"
-          color="slate"
-          :disabled="contactId"
-          size="xs"
+          size="icon"
+          class="size-6 shrink-0 text-muted-foreground hover:text-foreground"
           @click="emit('clearSelectedContact')"
-        />
+        >
+          <span class="i-lucide-x size-3.5" />
+        </RelayButton>
       </div>
       <TagInput
         v-else
@@ -143,7 +133,7 @@ const handleInput = value => {
         :disabled="contactableInboxesList?.length > 0 && showInboxesDropdown"
         allow-create
         :type="inputType"
-        class="flex-1 min-h-7"
+        class="min-h-7 flex-1"
         :class="errorClass"
         focus-on-mount
         @input="handleInput"

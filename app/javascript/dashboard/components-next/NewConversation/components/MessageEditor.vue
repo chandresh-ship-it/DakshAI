@@ -12,6 +12,7 @@ const props = defineProps({
   channelType: { type: String, default: '' },
   medium: { type: String, default: '' },
   copilot: { type: Object, default: null },
+  showFormatting: { type: Boolean, default: false },
 });
 
 const editorKey = computed(() => `editor-${props.channelType}-${props.medium}`);
@@ -33,7 +34,23 @@ const executeCopilotAction = (action, data) => {
 </script>
 
 <template>
-  <div class="flex-1 h-full px-4 py-4">
+  <div class="relative flex min-h-[250px] flex-1 flex-col px-4 py-4">
+    <div
+      v-if="showFormatting && !isCopilotActive"
+      class="mb-2 flex items-center gap-0.5 border-b border-border/40 pb-2"
+    >
+      <!-- eslint-disable vue/no-bare-strings-in-template, @intlify/vue-i18n/no-raw-text -->
+      <span
+        class="flex size-7 items-center justify-center rounded text-sm font-bold text-muted-foreground"
+        >B</span>
+      <span
+        class="flex size-7 items-center justify-center rounded text-sm font-medium italic text-muted-foreground"
+        >I</span>
+      <span
+        class="flex size-7 items-center justify-center rounded text-sm font-medium underline text-muted-foreground"
+        >U</span>
+      <!-- eslint-enable vue/no-bare-strings-in-template, @intlify/vue-i18n/no-raw-text -->
+    </div>
     <Transition
       mode="out-in"
       enter-active-class="transition-all duration-300 ease-out"
@@ -45,7 +62,7 @@ const executeCopilotAction = (action, data) => {
     >
       <div
         :key="copilot ? copilot.editorTransitionKey.value : 'rich'"
-        class="h-full"
+        class="h-full min-h-[200px]"
       >
         <CopilotEditorSection
           v-if="isCopilotActive"
@@ -66,7 +83,7 @@ const executeCopilotAction = (action, data) => {
           :placeholder="
             t('COMPOSE_NEW_CONVERSATION.FORM.MESSAGE_EDITOR.PLACEHOLDER')
           "
-          class="[&>div]:!border-transparent [&>div]:px-0 [&>div]:py-0 [&>div]:!bg-transparent h-full [&_.ProseMirror-woot-style]:!max-h-[12.5rem] [&_.ProseMirror-woot-style]:!min-h-[12rem] [&_.ProseMirror-menubar]:!pt-0 [&_.mention--box]:-top-[7.5rem] [&_.mention--box]:bottom-[unset]"
+          class="h-full [&>div]:!border-transparent [&>div]:!bg-transparent [&>div]:px-0 [&>div]:py-0 [&_.ProseMirror-menubar]:!pt-0 [&_.ProseMirror-woot-style]:!min-h-[12rem] [&_.ProseMirror-woot-style]:!max-h-[18rem] [&_.mention--box]:-top-[7.5rem] [&_.mention--box]:bottom-[unset]"
           :class="
             hasErrors
               ? '[&_.empty-node]:before:!text-n-ruby-9 [&_.empty-node]:dark:before:!text-n-ruby-9'

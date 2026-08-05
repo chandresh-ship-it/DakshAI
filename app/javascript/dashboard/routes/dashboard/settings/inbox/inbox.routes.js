@@ -11,11 +11,22 @@ import ChannelList from './ChannelList.vue';
 import AddAgents from './AddAgents.vue';
 import FinishSetup from './FinishSetup.vue';
 
+const CREATE_FLOW_ROUTES = [
+  'settings_inbox_new',
+  'settings_inbox_finish',
+  'settings_inboxes_page_channel',
+  'settings_inboxes_add_agents',
+];
+
 export default {
   routes: [
     {
       path: frontendURL('accounts/:accountId/settings/inboxes'),
       component: SettingsWrapper,
+      props: route => ({
+        fullWidth: CREATE_FLOW_ROUTES.includes(route.name),
+        keepAlive: !CREATE_FLOW_ROUTES.includes(route.name),
+      }),
       children: [
         {
           path: '',
@@ -32,27 +43,6 @@ export default {
             permissions: ['administrator'],
           },
         },
-      ],
-    },
-    {
-      path: frontendURL('accounts/:accountId/settings/inboxes'),
-      component: SettingsContent,
-      props: route => {
-        const isCreateFlow = [
-          'settings_inbox_new',
-          'settings_inbox_finish',
-          'settings_inboxes_page_channel',
-          'settings_inboxes_add_agents',
-        ].includes(route.name);
-        const fullWidth = route.name === 'settings_inbox_show' || isCreateFlow;
-        return {
-          headerTitle: isCreateFlow ? '' : 'INBOX_MGMT.HEADER',
-          icon: isCreateFlow ? '' : 'mail-inbox-all',
-          showBackButton: route.name === 'settings_inbox_show',
-          fullWidth,
-        };
-      },
-      children: [
         {
           path: 'new',
           component: InboxChannel,
@@ -98,6 +88,17 @@ export default {
             },
           ],
         },
+      ],
+    },
+    {
+      path: frontendURL('accounts/:accountId/settings/inboxes'),
+      component: SettingsContent,
+      props: () => ({
+        headerTitle: 'INBOX_MGMT.HEADER',
+        icon: 'mail-inbox-all',
+        showBackButton: true,
+      }),
+      children: [
         {
           path: ':inboxId/:tab?',
           name: 'settings_inbox_show',

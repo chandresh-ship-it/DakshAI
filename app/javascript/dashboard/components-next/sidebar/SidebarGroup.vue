@@ -7,6 +7,7 @@ import Icon from 'next/icon/Icon.vue';
 import SidebarGroupHeader from './SidebarGroupHeader.vue';
 import SidebarGroupLeaf from './SidebarGroupLeaf.vue';
 import SidebarSubGroup from './SidebarSubGroup.vue';
+import SidebarCollapsibleSubItem from './SidebarCollapsibleSubItem.vue';
 import SidebarGroupEmptyLeaf from './SidebarGroupEmptyLeaf.vue';
 import SidebarCollapsedPopover from './SidebarCollapsedPopover.vue';
 
@@ -20,6 +21,18 @@ const props = defineProps({
   getterKeys: { type: Object, default: () => ({}) },
   click: { type: Function, default: null },
 });
+
+const flattenNavLeaves = items =>
+  (items || []).flatMap(child =>
+    child.children?.length ? flattenNavLeaves(child.children) : [child]
+  );
+
+const childHasAccessibleRoute = (child, allowed) => {
+  if (child.children?.length) {
+    return child.children.some(sub => childHasAccessibleRoute(sub, allowed));
+  }
+  return Boolean(child.to && allowed(child.to));
+};
 
 const {
   expandedItem,
@@ -41,9 +54,7 @@ const {
   cancelClose,
 } = usePopoverState();
 
-const navigableChildren = computed(() => {
-  return props.children?.flatMap(child => child.children || child) || [];
-});
+const navigableChildren = computed(() => flattenNavLeaves(props.children));
 
 const route = useRoute();
 const router = useRouter();
@@ -103,16 +114,18 @@ const handleWindowBlur = () => {
 
 const accessibleItems = computed(() => {
   if (!hasChildren.value) return [];
-  return props.children.filter(child => {
-    // If a item has no link, it means it's just a subgroup header
-    // So we don't need to check for permissions here, because there's nothing to
-    // access here anyway
-    return child.to && isAllowed(child.to);
-  });
+  return props.children.filter(child =>
+    childHasAccessibleRoute(child, isAllowed)
+  );
 });
 
 const hasAccessibleChildren = computed(() => {
   return accessibleItems.value.length > 0;
+});
+
+// First navigable leaf under the group (for collapsed-icon click)
+const firstNavigableLeaf = computed(() => {
+  return navigableChildren.value.find(child => child.to && isAllowed(child.to));
 });
 
 // Route names for the live location (leaf + parents). Portal/Captain links use
@@ -199,9 +212,8 @@ const hasActiveChild = computed(() => {
 const shouldHighlight = computed(() => isActive.value || hasActiveChild.value);
 
 const handleCollapsedClick = () => {
-  if (hasChildren.value && hasAccessibleChildren.value) {
-    const firstItem = accessibleItems.value[0];
-    router.push(firstItem.to);
+  if (hasChildren.value && firstNavigableLeaf.value?.to) {
+    router.push(firstNavigableLeaf.value.to);
   }
 };
 
@@ -319,8 +331,16 @@ watch(
             class="mx-3.5 flex min-w-0 list-none flex-col gap-1 border-l border-sidebar-border py-0.5 ltr:translate-x-px ltr:pl-5 ltr:pr-2 rtl:-translate-x-px rtl:pr-5 rtl:pl-2"
           >
             <template v-for="child in children" :key="child.name">
+              <SidebarCollapsibleSubItem
+                v-if="child.collapsible && child.children"
+                :label="child.label"
+                :children="child.children"
+                :active-child="activeChild"
+                :is-parent-expanded="isExpanded"
+                :default-open="child.defaultOpen !== false"
+              />
               <SidebarSubGroup
-                v-if="child.children"
+                v-else-if="child.children"
                 :label="child.label"
                 :icon="child.icon"
                 :children="child.children"

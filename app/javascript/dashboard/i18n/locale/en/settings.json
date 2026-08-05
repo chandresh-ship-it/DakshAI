@@ -1,4 +1,8 @@
 {
+  "NOTIFICATION_SETTINGS": {
+    "TITLE": "Notifications",
+    "DESCRIPTION": "Configure how and when you receive notifications."
+  },
   "PROFILE_SETTINGS": {
     "LINK": "Profile Settings",
     "TITLE": "Profile Settings",
@@ -316,6 +320,7 @@
     "KNOWLEDGE_BASE": "Knowledge Base",
     "CONVERSATIONS": "Conversations",
     "INBOX": "Inbox",
+    "ALL_CONVERSATION": "All conversation",
     "ALL_CONVERSATIONS": "All Conversations",
     "REPUTATION_OVERVIEW": "Overview",
     "REPUTATION_REVIEWS": "Reviews",
@@ -970,7 +975,7 @@
           "INACTIVE": "Policy is inactive"
         },
         "ASSIGNMENT_ORDER": {
-          "LABEL": "Assignment Method",
+          "LABEL": "Assignment order",
           "ROUND_ROBIN": {
             "LABEL": "Round Robin",
             "DESCRIPTION": "Evenly distribute conversations."
@@ -983,7 +988,7 @@
           }
         },
         "ASSIGNMENT_PRIORITY": {
-          "LABEL": "Prioritization",
+          "LABEL": "Prioritization priority",
           "EARLIEST_CREATED": {
             "LABEL": "Earliest Created",
             "DESCRIPTION": "Oldest tickets assigned first."
@@ -1111,14 +1116,14 @@
         },
         "CANCEL_BUTTON": "Cancel",
         "INBOX_CAPACITY_LIMIT": {
-          "LABEL": "Inbox capacity limits",
+          "LABEL": "Excluded Inboxes",
           "ADD_BUTTON": "Add inbox",
           "FIELD": {
-            "SELECT_INBOX": "Select inbox",
+            "SELECT_INBOX": "Search inboxes...",
             "MAX_CONVERSATIONS": "Max conversations",
             "SET_LIMIT": "Set limit"
           },
-          "EMPTY_STATE": "No inbox limit set"
+          "EMPTY_STATE": "No inboxes found"
         },
         "EXCLUSION_RULES": {
           "LABEL": "Exclusion rules",
@@ -1137,14 +1142,14 @@
           }
         },
         "USERS": {
-          "LABEL": "Assigned agents",
+          "LABEL": "Assigned Agents",
           "DESCRIPTION": "Add agents for which this policy will be applicable.",
-          "ADD_BUTTON": "Add agent",
+          "ADD_BUTTON": "Assign agent",
           "DROPDOWN": {
-            "SEARCH_PLACEHOLDER": "Search and select agents to add",
+            "SEARCH_PLACEHOLDER": "Search agents...",
             "ADD_BUTTON": "Add"
           },
-          "EMPTY_STATE": "No agents added",
+          "EMPTY_STATE": "No agents found",
           "API": {
             "SUCCESS_MESSAGE": "Agent successfully added to policy",
             "ERROR_MESSAGE": "Failed to add agent to policy"

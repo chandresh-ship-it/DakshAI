@@ -50,7 +50,7 @@ const goBack = () => {
 
 <template>
   <div
-    class="mx-auto mb-8 flex h-[calc(100vh-6rem)] w-full max-w-7xl flex-col overflow-hidden rounded-xl border border-border/80 bg-background shadow-xs"
+    class="flex h-[calc(100vh-8rem)] w-full flex-col overflow-hidden rounded-xl border border-border/80 bg-background shadow-xs lg:h-[calc(100vh-6rem)]"
   >
     <div
       class="flex shrink-0 items-center gap-3 border-b border-border/40 bg-card px-6 py-4"
@@ -86,19 +86,13 @@ const goBack = () => {
           class="relative z-10 flex flex-1 flex-col items-center gap-3"
         >
           <div
-            class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border bg-background text-[13px] font-medium transition-colors duration-200"
+            class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border text-[13px] font-medium transition-colors duration-200"
             :class="[
-              index < activeIndex
+              index <= activeIndex
                 ? 'border-primary bg-primary text-primary-foreground'
-                : index === activeIndex
-                  ? 'border-primary text-primary'
-                  : 'border-border/80 text-muted-foreground',
+                : 'border-border/80 bg-background text-muted-foreground',
             ]"
           >
-            <div
-              v-if="index === activeIndex"
-              class="absolute inset-0 rounded-full bg-primary/10"
-            />
             <Icon
               v-if="index < activeIndex"
               icon="i-lucide-check"
@@ -121,7 +115,10 @@ const goBack = () => {
               {{ step.title }}
             </h4>
             <p
-              class="mx-auto mt-1.5 hidden max-w-[150px] text-[13px] leading-relaxed text-muted-foreground sm:block"
+              class="mx-auto mt-1.5 hidden max-w-[150px] text-[13px] leading-relaxed sm:block"
+              :class="
+                index === activeIndex ? 'text-primary' : 'text-muted-foreground'
+              "
             >
               {{ step.body }}
             </p>

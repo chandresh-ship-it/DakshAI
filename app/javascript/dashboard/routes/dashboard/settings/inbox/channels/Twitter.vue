@@ -1,11 +1,11 @@
 <script>
 import { useAlert } from 'dashboard/composables';
 import twitterClient from '../../../../../api/channel/twitterClient';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 export default {
   components: {
-    NextButton,
+    RelayButton,
   },
   data() {
     return { isRequestingAuthorization: false };
@@ -30,29 +30,20 @@ export default {
 </script>
 
 <template>
-  <div class="h-full w-full p-6 col-span-6">
-    <div class="login-init h-full text-center">
-      <form @submit.prevent="requestAuthorization">
-        <NextButton
-          type="submit"
-          icon="i-ri-twitter-x-fill"
-          label="Sign in with Twitter"
-          :is-loading="isRequestingAuthorization"
-        />
-      </form>
-      <p>{{ $t('INBOX_MGMT.ADD.TWITTER.HELP') }}</p>
-    </div>
+  <div
+    class="flex w-full max-w-2xl flex-col items-center justify-center py-16 text-center"
+  >
+    <form @submit.prevent="requestAuthorization">
+      <RelayButton
+        type="submit"
+        class="shadow-sm"
+        :disabled="isRequestingAuthorization"
+      >
+        {{ $t('INBOX_MGMT.ADD.TWITTER.SIGN_IN') }}
+      </RelayButton>
+    </form>
+    <p class="mt-6 max-w-md text-[13px] leading-relaxed text-muted-foreground">
+      {{ $t('INBOX_MGMT.ADD.TWITTER.HELP') }}
+    </p>
   </div>
 </template>
-
-<style scoped lang="scss">
-.login-init {
-  @apply pt-[30%] text-center;
-  p {
-    @apply p-6;
-  }
-  > a > img {
-    @apply w-60;
-  }
-}
-</style>

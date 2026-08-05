@@ -173,48 +173,70 @@ export default {
 <template>
   <div
     class="flex items-center justify-between h-10 px-4 border-b border-border gap-4"
+    role="tablist"
   >
     <div class="flex items-center gap-6 h-full">
       <button
         type="button"
-        class="h-full px-0 text-sm font-semibold border-b-2 transition-colors"
+        role="tab"
+        :aria-selected="isReplyActive"
+        class="relative h-full px-0 text-sm font-semibold transition-colors"
         :class="
           isReplyActive
-            ? 'border-primary text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground'
+            ? 'text-foreground'
+            : 'text-muted-foreground hover:text-foreground'
         "
         :disabled="disabled || isReplyRestricted"
         @click="handleReplyClick"
       >
         {{ $t('CONVERSATION.REPLYBOX.REPLY') }}
+        <span
+          v-if="isReplyActive"
+          class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+          aria-hidden="true"
+        />
       </button>
       <button
         type="button"
-        class="h-full px-0 text-sm font-semibold border-b-2 transition-colors"
+        role="tab"
+        :aria-selected="isNoteActive"
+        class="relative h-full px-0 text-sm font-semibold transition-colors"
         :class="
           isNoteActive
-            ? 'border-primary text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground'
+            ? 'text-foreground'
+            : 'text-muted-foreground hover:text-foreground'
         "
         :disabled="disabled"
         @click="handleNoteClick"
       >
         {{ $t('CONVERSATION.REPLYBOX.PRIVATE_NOTE') }}
+        <span
+          v-if="isNoteActive"
+          class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+          aria-hidden="true"
+        />
       </button>
       <button
         v-if="captainTasksEnabled"
         type="button"
-        class="h-full px-0 text-sm font-semibold border-b-2 transition-colors inline-flex items-center gap-1.5"
+        role="tab"
+        :aria-selected="isAiActive"
+        class="relative h-full px-0 text-sm font-semibold transition-colors inline-flex items-center gap-1.5"
         :class="
           isAiActive
-            ? 'border-primary text-primary'
-            : 'border-transparent text-muted-foreground hover:text-foreground'
+            ? 'text-primary'
+            : 'text-muted-foreground hover:text-foreground'
         "
         :disabled="disabled || isEditorDisabled"
         @click="handleAiReplyClick"
       >
         <span class="i-lucide-wand-sparkles size-4" />
         {{ $t('CONVERSATION.REPLYBOX.AI_REPLY') }}
+        <span
+          v-if="isAiActive"
+          class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+          aria-hidden="true"
+        />
       </button>
     </div>
     <div class="flex items-center gap-2">

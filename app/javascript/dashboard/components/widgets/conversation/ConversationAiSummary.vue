@@ -110,81 +110,87 @@ watch(
 </script>
 
 <template>
-  <div class="p-6 border-b border-border">
+  <div class="px-4 pt-1 pb-2">
     <div
-      class="bg-primary/[0.02] dark:bg-primary/5 border border-primary/10 rounded-2xl p-5 flex flex-col shadow-xs"
+      class="bg-card border border-border/60 rounded-xl p-4 shadow-sm flex flex-col gap-4"
     >
-      <div class="flex flex-col gap-1 mb-4">
-        <h3 class="font-semibold text-foreground flex items-center gap-2">
-          <span class="i-lucide-bot size-5 text-primary shrink-0" />
+      <div class="flex flex-col gap-1">
+        <h3
+          class="font-medium text-foreground text-[14px] flex items-center gap-2"
+        >
+          <span class="i-lucide-sparkles size-4 text-primary shrink-0" />
           <span>{{ t('CONVERSATION.AI_SUMMARY.TITLE') }}</span>
         </h3>
-        <span class="text-[11px] font-medium text-muted-foreground">
+        <span class="text-[11px] text-muted-foreground">
           {{ lastUpdatedLabel }}
         </span>
       </div>
 
-      <ul v-if="summaryBullets.length" class="flex flex-col gap-2 mb-6 ml-0.5">
+      <ul v-if="summaryBullets.length" class="flex flex-col gap-2.5">
         <li
           v-for="(item, index) in summaryBullets"
           :key="`${index}-${item}`"
-          class="flex items-start gap-2.5 text-[13px] text-foreground/80 leading-tight"
+          class="flex items-start gap-3 text-[13px] text-foreground/80 leading-snug"
         >
-          <span class="size-1 rounded-full bg-foreground/50 mt-1.5 shrink-0" />
+          <span
+            class="size-1.5 rounded-full bg-foreground/30 mt-1.5 shrink-0"
+          />
           <span>{{ item }}</span>
         </li>
       </ul>
-      <p v-else class="text-[13px] text-muted-foreground mb-6">
+      <p v-else class="text-[13px] text-muted-foreground">
         {{ t('CONVERSATION.AI_SUMMARY.EMPTY') }}
       </p>
 
-      <p v-if="errorMessage" class="text-[12px] text-destructive mb-3">
+      <p v-if="errorMessage" class="text-[12px] text-destructive">
         {{ errorMessage }}
       </p>
 
       <div
-        class="bg-background border border-primary/10 rounded-xl p-3.5 mb-5 flex items-center justify-between"
+        class="flex flex-col gap-1.5 border border-primary/20 bg-primary/5 rounded-xl overflow-hidden p-0.5"
       >
-        <div class="flex flex-col gap-1.5 min-w-0">
-          <div class="flex items-center gap-2">
-            <div class="bg-primary/10 p-1 rounded-md text-primary">
-              <span class="i-lucide-lightbulb size-4" />
-            </div>
-            <span class="text-xs font-bold text-primary tracking-wide">
+        <div
+          class="flex items-center gap-3 p-2.5 cursor-pointer hover:bg-primary/5 transition-colors rounded-lg"
+        >
+          <div
+            class="size-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0"
+          >
+            <span class="i-lucide-lightbulb size-4 text-primary" />
+          </div>
+          <div class="flex flex-col flex-1 min-w-0">
+            <span class="text-[13px] font-medium text-primary">
               {{ t('CONVERSATION.AI_SUMMARY.NEXT_BEST_ACTION') }}
             </span>
+            <span class="text-[13px] text-foreground truncate mt-0.5">
+              {{ nextBestAction }}
+            </span>
           </div>
-          <span
-            class="text-[13px] text-foreground/90 font-medium ml-7 truncate"
-          >
-            {{ nextBestAction }}
-          </span>
+          <span class="i-lucide-chevron-right size-4 text-muted-foreground" />
         </div>
-        <span
-          class="i-lucide-chevron-right size-4 text-muted-foreground shrink-0"
-        />
-      </div>
 
-      <RelayButton
-        variant="outline"
-        class="w-full gap-2 text-primary font-semibold border-primary/20 hover:bg-primary/5 hover:text-primary bg-background"
-        :disabled="!captainTasksEnabled || isGenerating"
-        @click="generateSummary"
-      >
-        <span
-          class="size-3.5"
-          :class="
-            isGenerating
-              ? 'i-lucide-loader-2 animate-spin'
-              : 'i-lucide-refresh-cw'
-          "
-        />
-        {{
-          isGenerating
-            ? t('CONVERSATION.AI_SUMMARY.GENERATING')
-            : t('CONVERSATION.AI_SUMMARY.GENERATE')
-        }}
-      </RelayButton>
+        <div class="px-2 pb-2">
+          <RelayButton
+            variant="outline"
+            class="w-full gap-2 text-[13px] font-medium text-primary border-primary/20 hover:bg-primary/5 hover:text-primary bg-background"
+            :disabled="!captainTasksEnabled || isGenerating"
+            @click="generateSummary"
+          >
+            <span
+              class="size-3.5"
+              :class="
+                isGenerating
+                  ? 'i-lucide-loader-2 animate-spin'
+                  : 'i-lucide-refresh-cw'
+              "
+            />
+            {{
+              isGenerating
+                ? t('CONVERSATION.AI_SUMMARY.GENERATING')
+                : t('CONVERSATION.AI_SUMMARY.GENERATE')
+            }}
+          </RelayButton>
+        </div>
+      </div>
     </div>
   </div>
 </template>

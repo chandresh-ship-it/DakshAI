@@ -67,7 +67,7 @@ defineExpose({ conversationListRef });
       ref="virtualListRef"
       v-slot="{ item }"
       :data="conversationList"
-      class="px-0 py-1"
+      class="py-2"
     >
       <ConversationItem
         :source="item"
@@ -96,7 +96,7 @@ defineExpose({ conversationListRef });
       <div class="pb-4 flex justify-center">
         <button
           type="button"
-          class="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline transition-colors"
+          class="text-[13px] font-medium text-muted-foreground hover:text-foreground hover:underline transition-colors"
           @click="loadMoreConversations"
         >
           {{ $t('CHAT_LIST.LOAD_MORE_CONVERSATIONS') }}

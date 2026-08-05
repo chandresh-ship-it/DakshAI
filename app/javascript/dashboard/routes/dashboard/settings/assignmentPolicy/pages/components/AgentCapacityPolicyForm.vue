@@ -1,10 +1,11 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import DataTable from 'dashboard/components-next/AssignmentPolicy/components/DataTable.vue';
-import AddDataDropdown from 'dashboard/components-next/AssignmentPolicy/components/AddDataDropdown.vue';
+import { vOnClickOutside } from '@vueuse/components';
 import ExclusionRules from 'dashboard/components-next/AssignmentPolicy/components/ExclusionRules.vue';
 import InboxCapacityLimits from 'dashboard/components-next/AssignmentPolicy/components/InboxCapacityLimits.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import Avatar from 'next/avatar/Avatar.vue';
 import {
   RelayButton,
   RelayInput,
@@ -93,12 +94,24 @@ const state = reactive({
 });
 
 const nameTouched = ref(false);
+const showAgentDropdown = ref(false);
+const agentSearch = ref('');
 
 const isNameValid = computed(() => state.name.trim().length > 0);
 
 const buttonLabel = computed(() =>
   t(`${BASE_KEY}.${props.mode.toUpperCase()}.${props.mode}_BUTTON`)
 );
+
+const filteredAgents = computed(() => {
+  const query = agentSearch.value.trim().toLowerCase();
+  if (!query) return props.agentList;
+  return props.agentList.filter(
+    agent =>
+      agent.name?.toLowerCase().includes(query) ||
+      agent.email?.toLowerCase().includes(query)
+  );
+});
 
 const handleDeleteInboxLimit = id => {
   emit('deleteInboxLimit', id);
@@ -110,6 +123,16 @@ const handleAddInboxLimit = limit => {
 
 const handleLimitChange = limit => {
   emit('updateInboxLimit', limit);
+};
+
+const handleAddAgent = agent => {
+  emit('addUser', agent);
+  showAgentDropdown.value = false;
+  agentSearch.value = '';
+};
+
+const closeAgentDropdown = () => {
+  showAgentDropdown.value = false;
 };
 
 const resetForm = () => {
@@ -146,7 +169,7 @@ defineExpose({
 
 <template>
   <form class="flex w-full flex-col" @submit.prevent="handleSubmit">
-    <div class="space-y-6">
+    <div class="flex-1 space-y-6 overflow-y-auto p-5">
       <div class="flex flex-col gap-1.5">
         <RelayLabel
           html-for="capacity-policy-name"
@@ -193,32 +216,7 @@ defineExpose({
         "
         :tags-list="labelList"
       />
-    </div>
 
-    <div
-      class="mt-8 flex items-center justify-end gap-3 border-t border-border/40 pt-5"
-    >
-      <RelayButton
-        type="button"
-        variant="ghost"
-        class="h-10 rounded-md border border-border/40 px-5 text-[14px] font-semibold text-muted-foreground hover:border-transparent hover:bg-muted"
-        @click="emit('cancel')"
-      >
-        {{ t(`${BASE_KEY}.FORM.CANCEL_BUTTON`) }}
-      </RelayButton>
-      <RelayButton
-        type="submit"
-        class="h-10 rounded-md px-6 text-[14px] font-semibold shadow-sm"
-        :disabled="!isNameValid || isLoading"
-      >
-        {{ buttonLabel }}
-      </RelayButton>
-    </div>
-
-    <div
-      v-if="showInboxLimitSection || showUserSection"
-      class="mt-6 flex flex-col gap-4 border-t border-border/40 pt-4"
-    >
       <InboxCapacityLimits
         v-if="showInboxLimitSection"
         v-model:inbox-capacity-limits="state.inboxCapacityLimits"
@@ -228,32 +226,119 @@ defineExpose({
         @add="handleAddInboxLimit"
         @update="handleLimitChange"
       />
-      <div v-if="showUserSection" class="flex flex-col gap-4 py-4">
-        <div class="flex w-full items-end justify-between gap-4">
-          <div class="flex flex-col items-start gap-1 py-1">
-            <label class="py-1 text-sm font-medium text-foreground">
-              {{ t(`${BASE_KEY}.FORM.USERS.LABEL`) }}
-            </label>
-            <p class="mb-0 text-sm text-muted-foreground">
-              {{ t(`${BASE_KEY}.FORM.USERS.DESCRIPTION`) }}
-            </p>
-          </div>
-          <AddDataDropdown
-            :label="t(`${BASE_KEY}.FORM.USERS.ADD_BUTTON`)"
-            :search-placeholder="
-              t(`${BASE_KEY}.FORM.USERS.DROPDOWN.SEARCH_PLACEHOLDER`)
-            "
-            :items="agentList"
-            @add="$emit('addUser', $event)"
-          />
+
+      <div
+        v-if="showUserSection"
+        class="space-y-2 border-t border-border/40 pt-2"
+      >
+        <label class="block text-[13.5px] font-medium text-foreground">
+          {{ t(`${BASE_KEY}.FORM.USERS.LABEL`) }}
+        </label>
+
+        <div
+          v-if="isUsersLoading"
+          class="py-3 text-[13px] text-muted-foreground"
+        >
+          {{ t(`${BASE_KEY}.INDEX.LOADING`) }}
         </div>
-        <DataTable
-          :items="policyUsers"
-          :is-fetching="isUsersLoading"
-          :empty-state-message="t(`${BASE_KEY}.FORM.USERS.EMPTY_STATE`)"
-          @delete="$emit('deleteUser', $event)"
-        />
+
+        <div v-else-if="policyUsers.length" class="mb-2 flex flex-wrap gap-2">
+          <span
+            v-for="agent in policyUsers"
+            :key="agent.id"
+            class="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-accent py-1 pl-1 pr-2.5 text-[12px] font-medium text-foreground"
+          >
+            <Avatar
+              :title="agent.name"
+              :src="agent.avatarUrl"
+              :name="agent.name"
+              :size="20"
+              rounded-full
+            />
+            {{ agent.name }}
+            <button
+              type="button"
+              class="ml-1 text-muted-foreground hover:text-destructive"
+              @click="emit('deleteUser', agent.id)"
+            >
+              <Icon icon="i-lucide-x" class="size-3.5" />
+            </button>
+          </span>
+        </div>
+
+        <div v-on-click-outside="closeAgentDropdown" class="relative">
+          <RelayButton
+            type="button"
+            variant="outline"
+            class="h-9 w-full justify-start border-border/80 bg-background text-[13px] font-medium text-muted-foreground shadow-sm hover:bg-muted/50"
+            @click="showAgentDropdown = !showAgentDropdown"
+          >
+            <Icon icon="i-lucide-plus" class="size-3.5" />
+            {{ t(`${BASE_KEY}.FORM.USERS.ADD_BUTTON`) }}
+          </RelayButton>
+          <div
+            v-if="showAgentDropdown"
+            class="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-md border border-border/60 bg-card shadow-lg"
+          >
+            <div class="relative border-b border-border/40 p-2">
+              <Icon
+                icon="i-lucide-search"
+                class="absolute left-4 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                v-model="agentSearch"
+                type="text"
+                class="w-full rounded-md bg-muted/50 py-1.5 pl-8 pr-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
+                :placeholder="
+                  t(`${BASE_KEY}.FORM.USERS.DROPDOWN.SEARCH_PLACEHOLDER`)
+                "
+              />
+            </div>
+            <ul class="max-h-40 overflow-y-auto p-1">
+              <li
+                v-for="agent in filteredAgents"
+                :key="agent.id"
+                class="flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2 text-[13px] text-foreground hover:bg-accent"
+                @click="handleAddAgent(agent)"
+              >
+                <Avatar
+                  :title="agent.name"
+                  :src="agent.avatarUrl"
+                  :name="agent.name"
+                  :size="24"
+                  rounded-full
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate font-medium">{{ agent.name }}</p>
+                  <p
+                    v-if="agent.email"
+                    class="truncate text-[11px] text-muted-foreground"
+                  >
+                    {{ agent.email }}
+                  </p>
+                </div>
+              </li>
+              <li
+                v-if="!filteredAgents.length"
+                class="px-3 py-2 text-[13px] text-muted-foreground"
+              >
+                {{ t(`${BASE_KEY}.FORM.USERS.EMPTY_STATE`) }}
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <div
+      class="flex justify-end gap-3 border-t border-border/40 bg-background/50 p-5"
+    >
+      <RelayButton type="button" variant="outline" @click="emit('cancel')">
+        {{ t(`${BASE_KEY}.FORM.CANCEL_BUTTON`) }}
+      </RelayButton>
+      <RelayButton type="submit" :disabled="!isNameValid || isLoading">
+        {{ buttonLabel }}
+      </RelayButton>
     </div>
   </form>
 </template>

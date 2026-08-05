@@ -1,15 +1,15 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import TagInput from 'dashboard/components-next/taginput/TagInput.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
-import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue';
 
 const props = defineProps({
   contacts: { type: Array, required: true },
   showCcEmailsDropdown: { type: Boolean, required: false },
   showBccEmailsDropdown: { type: Boolean, required: false },
+  showCcInput: { type: Boolean, default: false },
+  showBccInput: { type: Boolean, default: false },
   isLoading: { type: Boolean, default: false },
   hasErrors: { type: Boolean, default: false },
 });
@@ -22,12 +22,6 @@ const emit = defineEmits([
 
 const i18nPrefix = `COMPOSE_NEW_CONVERSATION.FORM.EMAIL_OPTIONS`;
 
-const showBccInput = ref(false);
-
-const toggleBccInput = () => {
-  showBccInput.value = !showBccInput.value;
-};
-
 const subject = defineModel('subject', { type: String, default: '' });
 const ccEmails = defineModel('ccEmails', { type: String, default: '' });
 const bccEmails = defineModel('bccEmails', { type: String, default: '' });
@@ -36,11 +30,21 @@ const { t } = useI18n();
 
 // Convert string to array for TagInput
 const ccEmailsArray = computed(() =>
-  props.ccEmails ? props.ccEmails.split(',').map(email => email.trim()) : []
+  ccEmails.value
+    ? ccEmails.value
+        .split(',')
+        .map(email => email.trim())
+        .filter(Boolean)
+    : []
 );
 
 const bccEmailsArray = computed(() =>
-  props.bccEmails ? props.bccEmails.split(',').map(email => email.trim()) : []
+  bccEmails.value
+    ? bccEmails.value
+        .split(',')
+        .map(email => email.trim())
+        .filter(Boolean)
+    : []
 );
 
 const contactEmailsList = computed(() => {
@@ -65,61 +69,42 @@ const handleBccUpdate = value => {
   bccEmails.value = value.join(',');
 };
 
-const inputClass = computed(() => {
-  return props.hasErrors
-    ? 'placeholder:!text-n-ruby-9 dark:placeholder:!text-n-ruby-9'
-    : '';
+const subjectClass = computed(() => {
+  return [
+    'h-8 w-full border-none bg-transparent px-0 text-sm font-medium text-foreground shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-0',
+    props.hasErrors ? 'placeholder:!text-n-ruby-9' : '',
+  ];
 });
 </script>
 
 <template>
-  <div class="flex flex-col divide-y divide-n-strong">
-    <div class="flex items-baseline flex-1 w-full h-8 gap-3 px-4 py-3">
-      <InlineInput
-        v-model="subject"
-        :placeholder="t(`${i18nPrefix}.SUBJECT_PLACEHOLDER`)"
-        :label="t(`${i18nPrefix}.SUBJECT_LABEL`)"
-        focus-on-mount
-        :custom-input-class="inputClass"
-      />
-    </div>
-    <div class="flex items-baseline flex-1 w-full gap-3 px-4 py-3 min-h-8">
-      <label
-        class="mb-0.5 text-sm font-medium whitespace-nowrap text-n-slate-11"
-      >
+  <div class="flex flex-col">
+    <div
+      v-if="showCcInput"
+      class="flex min-h-8 items-center gap-3 border-b border-border/40 px-4 py-2"
+    >
+      <label class="shrink-0 text-xs font-medium text-muted-foreground">
         {{ t(`${i18nPrefix}.CC_LABEL`) }}
       </label>
-      <div class="flex items-center w-full gap-3 min-h-7">
-        <TagInput
-          :model-value="ccEmailsArray"
-          :placeholder="t(`${i18nPrefix}.CC_PLACEHOLDER`)"
-          :menu-items="contactEmailsList"
-          :show-dropdown="showCcEmailsDropdown"
-          :is-loading="isLoading"
-          type="email"
-          allow-create
-          class="flex-1 min-h-7"
-          @input="emit('searchCcEmails', $event)"
-          @on-click-outside="emit('updateDropdown', 'cc', false)"
-          @update:model-value="handleCcUpdate"
-        />
-        <Button
-          :label="t(`${i18nPrefix}.BCC_BUTTON`)"
-          variant="ghost"
-          size="sm"
-          color="slate"
-          class="flex-shrink-0"
-          @click="toggleBccInput"
-        />
-      </div>
+      <TagInput
+        :model-value="ccEmailsArray"
+        :placeholder="t(`${i18nPrefix}.CC_PLACEHOLDER`)"
+        :menu-items="contactEmailsList"
+        :show-dropdown="showCcEmailsDropdown"
+        :is-loading="isLoading"
+        type="email"
+        allow-create
+        class="min-h-7 flex-1"
+        @input="emit('searchCcEmails', $event)"
+        @on-click-outside="emit('updateDropdown', 'cc', false)"
+        @update:model-value="handleCcUpdate"
+      />
     </div>
     <div
       v-if="showBccInput"
-      class="flex items-baseline flex-1 w-full gap-3 px-4 py-3 min-h-8"
+      class="flex min-h-8 items-center gap-3 border-b border-border/40 px-4 py-2"
     >
-      <label
-        class="mb-0.5 text-sm font-medium whitespace-nowrap text-n-slate-11"
-      >
+      <label class="shrink-0 text-xs font-medium text-muted-foreground">
         {{ t(`${i18nPrefix}.BCC_LABEL`) }}
       </label>
       <TagInput
@@ -130,11 +115,19 @@ const inputClass = computed(() => {
         :is-loading="isLoading"
         type="email"
         allow-create
-        class="flex-1 min-h-7"
+        class="min-h-7 flex-1"
         focus-on-mount
         @input="emit('searchBccEmails', $event)"
         @on-click-outside="emit('updateDropdown', 'bcc', false)"
         @update:model-value="handleBccUpdate"
+      />
+    </div>
+    <div class="flex items-center border-b border-border/40 px-4 py-2">
+      <input
+        v-model="subject"
+        type="text"
+        :placeholder="t(`${i18nPrefix}.SUBJECT_PLACEHOLDER`)"
+        :class="subjectClass"
       />
     </div>
   </div>

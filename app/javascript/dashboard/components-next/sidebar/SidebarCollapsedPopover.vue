@@ -25,6 +25,13 @@ const topPosition = ref(0);
 const isRTL = useMapGetter('accounts/isRTL');
 const skipTransition = ref(true);
 
+const childHasAccessibleRoute = child => {
+  if (child.children?.length) {
+    return child.children.some(childHasAccessibleRoute);
+  }
+  return Boolean(child.to && isAllowed(child.to));
+};
+
 const toggleSubGroup = name => {
   expandedSubGroup.value = expandedSubGroup.value === name ? null : name;
 };
@@ -37,7 +44,7 @@ const navigateAndClose = to => {
 const isActive = child => props.activeChild?.name === child.name;
 
 const getAccessibleSubChildren = children =>
-  children.filter(c => isAllowed(c.to));
+  (children || []).filter(childHasAccessibleRoute);
 
 const renderIcon = icon => ({
   component: typeof icon === 'object' ? icon : Icon,
@@ -57,26 +64,34 @@ const transition = computed(() =>
       }
 );
 
-const accessibleChildren = computed(() => {
-  return props.children.filter(child => {
-    if (child.children) {
-      return child.children.some(subChild => isAllowed(subChild.to));
-    }
-    return child.to && isAllowed(child.to);
-  });
-});
+const accessibleChildren = computed(() =>
+  props.children.filter(childHasAccessibleRoute)
+);
+
+const findParentOfActive = (items, activeName) => {
+  const list = items || [];
+  const direct = list.find(child =>
+    child.children?.some(sub => sub.name === activeName)
+  );
+  if (direct) return direct.name;
+
+  return list.reduce((found, child) => {
+    if (found || !child.children?.length) return found;
+    return findParentOfActive(child.children, activeName);
+  }, null);
+};
 
 onMounted(async () => {
   await nextTick();
 
-  // Auto-expand subgroup if active child is inside it
+  // Auto-expand subgroup if active child is inside it (supports nested Conversations)
   if (props.activeChild) {
-    const parentGroup = props.children.find(child =>
-      child.children?.some(subChild => subChild.name === props.activeChild.name)
+    const parentName = findParentOfActive(
+      props.children,
+      props.activeChild.name
     );
-    if (parentGroup) {
-      expandedSubGroup.value = parentGroup.name;
-      // Wait for the subgroup expansion to render before measuring height
+    if (parentName) {
+      expandedSubGroup.value = parentName;
       await nextTick();
     }
   }
@@ -87,7 +102,6 @@ onMounted(async () => {
   const popoverHeight = popoverRef.value?.offsetHeight || 300;
   const { top: triggerTop } = props.triggerRect;
 
-  // Adjust position if popover would overflow viewport
   topPosition.value =
     triggerTop + popoverHeight > viewportHeight - 20
       ? Math.max(20, viewportHeight - popoverHeight - 20)
@@ -121,64 +135,173 @@ onMounted(async () => {
           class="m-0 max-h-[400px] list-none overflow-y-auto p-0 no-scrollbar"
         >
           <template v-for="child in accessibleChildren" :key="child.name">
-            <!-- SubGroup with children -->
+            <!-- SubGroup / collapsible with children -->
             <li v-if="child.children" class="py-0.5">
-              <button
-                class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
-                @click="toggleSubGroup(child.name)"
-              >
-                <Icon
-                  v-if="child.icon"
-                  :icon="child.icon"
-                  class="mr-2 size-4 flex-shrink-0 text-muted-foreground"
-                />
-                <span class="flex-1 truncate">{{ child.label }}</span>
-                <span
-                  class="size-3 transition-transform i-lucide-chevron-down"
-                  :class="{
-                    'rotate-180': expandedSubGroup === child.name,
-                  }"
-                />
-              </button>
-              <Transition v-bind="transition">
-                <ul
-                  v-if="expandedSubGroup === child.name"
-                  class="mt-1 m-0 list-none overflow-hidden p-0 ltr:pl-3 rtl:pr-3"
+              <template v-if="child.collapsible">
+                <!-- NewRelay: Conversations as section label + nested links -->
+                <div
+                  class="px-2 pt-2 pb-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
                 >
-                  <li
-                    v-for="subChild in getAccessibleSubChildren(child.children)"
-                    :key="subChild.name"
-                    class="py-0.5"
+                  {{ child.label }}
+                </div>
+                <ul class="m-0 list-none p-0">
+                  <template
+                    v-for="sub in getAccessibleSubChildren(child.children)"
+                    :key="sub.name"
                   >
-                    <button
-                      class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
-                      :class="{
-                        'bg-sidebar-accent font-medium text-sidebar-primary':
-                          isActive(subChild),
-                      }"
-                      @click="navigateAndClose(subChild.to)"
-                    >
-                      <component
-                        :is="renderIcon(subChild.icon).component"
-                        v-if="subChild.icon"
-                        v-bind="renderIcon(subChild.icon).props"
-                        class="mr-2 size-4 flex-shrink-0"
-                        :class="
-                          isActive(subChild)
-                            ? 'text-sidebar-primary'
-                            : 'text-muted-foreground'
-                        "
-                      />
-                      <span class="flex-1 truncate">{{ subChild.label }}</span>
-                      <SidebarUnreadBadge :count="subChild.badgeCount" />
-                    </button>
-                  </li>
+                    <li v-if="sub.children" class="py-0.5">
+                      <button
+                        type="button"
+                        class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
+                        @click="toggleSubGroup(sub.name)"
+                      >
+                        <Icon
+                          v-if="sub.icon"
+                          :icon="sub.icon"
+                          class="mr-2 size-4 flex-shrink-0 text-muted-foreground"
+                        />
+                        <span class="flex-1 truncate">{{ sub.label }}</span>
+                        <span
+                          class="size-3 transition-transform i-lucide-chevron-down"
+                          :class="{
+                            'rotate-180': expandedSubGroup === sub.name,
+                          }"
+                        />
+                      </button>
+                      <Transition v-bind="transition">
+                        <ul
+                          v-if="expandedSubGroup === sub.name"
+                          class="mt-1 m-0 list-none overflow-hidden p-0 ltr:pl-3 rtl:pr-3"
+                        >
+                          <li
+                            v-for="leaf in getAccessibleSubChildren(
+                              sub.children
+                            )"
+                            :key="leaf.name"
+                            class="py-0.5"
+                          >
+                            <button
+                              type="button"
+                              class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
+                              :class="{
+                                'bg-sidebar-accent font-medium text-sidebar-primary':
+                                  isActive(leaf),
+                              }"
+                              @click="navigateAndClose(leaf.to)"
+                            >
+                              <component
+                                :is="renderIcon(leaf.icon).component"
+                                v-if="leaf.icon"
+                                v-bind="renderIcon(leaf.icon).props"
+                                class="mr-2 size-4 flex-shrink-0"
+                                :class="
+                                  isActive(leaf)
+                                    ? 'text-sidebar-primary'
+                                    : 'text-muted-foreground'
+                                "
+                              />
+                              <span class="flex-1 truncate">{{
+                                leaf.label
+                              }}</span>
+                              <SidebarUnreadBadge :count="leaf.badgeCount" />
+                            </button>
+                          </li>
+                        </ul>
+                      </Transition>
+                    </li>
+                    <li v-else class="py-0.5">
+                      <button
+                        type="button"
+                        class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
+                        :class="{
+                          'bg-sidebar-accent font-medium text-sidebar-primary':
+                            isActive(sub),
+                        }"
+                        @click="navigateAndClose(sub.to)"
+                      >
+                        <component
+                          :is="renderIcon(sub.icon).component"
+                          v-if="sub.icon"
+                          v-bind="renderIcon(sub.icon).props"
+                          class="mr-2 size-4 flex-shrink-0"
+                          :class="
+                            isActive(sub)
+                              ? 'text-sidebar-primary'
+                              : 'text-muted-foreground'
+                          "
+                        />
+                        <span class="flex-1 truncate">{{ sub.label }}</span>
+                        <SidebarUnreadBadge :count="sub.badgeCount" />
+                      </button>
+                    </li>
+                  </template>
                 </ul>
-              </Transition>
+              </template>
+              <template v-else>
+                <button
+                  type="button"
+                  class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
+                  @click="toggleSubGroup(child.name)"
+                >
+                  <Icon
+                    v-if="child.icon"
+                    :icon="child.icon"
+                    class="mr-2 size-4 flex-shrink-0 text-muted-foreground"
+                  />
+                  <span class="flex-1 truncate">{{ child.label }}</span>
+                  <span
+                    class="size-3 transition-transform i-lucide-chevron-down"
+                    :class="{
+                      'rotate-180': expandedSubGroup === child.name,
+                    }"
+                  />
+                </button>
+                <Transition v-bind="transition">
+                  <ul
+                    v-if="expandedSubGroup === child.name"
+                    class="mt-1 m-0 list-none overflow-hidden p-0 ltr:pl-3 rtl:pr-3"
+                  >
+                    <li
+                      v-for="subChild in getAccessibleSubChildren(
+                        child.children
+                      )"
+                      :key="subChild.name"
+                      class="py-0.5"
+                    >
+                      <button
+                        type="button"
+                        class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
+                        :class="{
+                          'bg-sidebar-accent font-medium text-sidebar-primary':
+                            isActive(subChild),
+                        }"
+                        @click="navigateAndClose(subChild.to)"
+                      >
+                        <component
+                          :is="renderIcon(subChild.icon).component"
+                          v-if="subChild.icon"
+                          v-bind="renderIcon(subChild.icon).props"
+                          class="mr-2 size-4 flex-shrink-0"
+                          :class="
+                            isActive(subChild)
+                              ? 'text-sidebar-primary'
+                              : 'text-muted-foreground'
+                          "
+                        />
+                        <span class="flex-1 truncate">{{
+                          subChild.label
+                        }}</span>
+                        <SidebarUnreadBadge :count="subChild.badgeCount" />
+                      </button>
+                    </li>
+                  </ul>
+                </Transition>
+              </template>
             </li>
             <!-- Direct child item -->
             <li v-else class="py-0.5">
               <button
+                type="button"
                 class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground rtl:text-right"
                 :class="{
                   'bg-sidebar-accent font-medium text-sidebar-primary':

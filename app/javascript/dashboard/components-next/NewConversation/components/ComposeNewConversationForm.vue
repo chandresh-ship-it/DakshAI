@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required, requiredIf } from '@vuelidate/validators';
+import { useI18n } from 'vue-i18n';
 import { INBOX_TYPES, isVoiceCallEnabled } from 'dashboard/helper/inbox';
 import {
   appendSignature,
@@ -26,6 +27,7 @@ import ActionButtons from './ActionButtons.vue';
 import InboxEmptyState from './InboxEmptyState.vue';
 import AttachmentPreviews from './AttachmentPreviews.vue';
 import CopilotReplyBottomPanel from 'dashboard/components/widgets/WootWriter/CopilotReplyBottomPanel.vue';
+import { RelayInput } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   contacts: { type: Array, default: () => [] },
@@ -55,6 +57,7 @@ const emit = defineEmits([
 ]);
 
 const DEFAULT_FORMATTING = 'Context::Default';
+const { t } = useI18n();
 
 const copilot = useCopilotReply();
 
@@ -62,6 +65,10 @@ const showContactsDropdown = ref(false);
 const showInboxesDropdown = ref(false);
 const showCcEmailsDropdown = ref(false);
 const showBccEmailsDropdown = ref(false);
+const showCcInput = ref(false);
+const showBccInput = ref(false);
+const showFormatting = ref(false);
+const aiPrompt = ref('');
 
 const isCreating = computed(() => props.contactConversationsUiFlags.isCreating);
 
@@ -257,6 +264,10 @@ const onClickInsertEmoji = emoji => {
   state.message += emoji;
 };
 
+const insertLink = () => {
+  state.message = `${state.message || ''}${state.message ? '\n' : ''}[Link Text](https://example.com)`;
+};
+
 const handleAddSignature = signature => {
   state.message = appendSignature(
     state.message,
@@ -286,6 +297,10 @@ const clearForm = () => {
     bccEmails: '',
     attachedFiles: [],
   });
+  aiPrompt.value = '';
+  showCcInput.value = false;
+  showBccInput.value = false;
+  showFormatting.value = false;
   v$.value.$reset();
 };
 
@@ -349,6 +364,15 @@ const onSubmitCopilotReply = () => {
   state.message = acceptedMessage;
 };
 
+const submitAiPrompt = () => {
+  const prompt = aiPrompt.value.trim();
+  if (!prompt) return;
+  // Compose has no conversation context; apply prompt as drafting guidance in the body.
+  const prefix = state.message?.trim() ? `${state.message.trim()}\n\n` : '';
+  state.message = `${prefix}${prompt}`;
+  aiPrompt.value = '';
+};
+
 useKeyboardEvents({
   '$mod+Enter': {
     action: () => {
@@ -362,28 +386,51 @@ useKeyboardEvents({
 </script>
 
 <template>
-  <div
-    class="w-full md:w-[42rem] divide-y divide-n-strong overflow-visible transition-all duration-300 ease-in-out top-full flex flex-col bg-n-alpha-3 border border-n-strong shadow-sm backdrop-blur-[100px] rounded-xl min-w-0 max-h-[calc(100vh-8rem)]"
-  >
-    <div class="flex-1 overflow-y-auto divide-y divide-n-strong">
-      <ContactSelector
-        :contacts="contacts"
-        :selected-contact="selectedContact"
-        :show-contacts-dropdown="showContactsDropdown"
-        :is-loading="isLoading"
-        :is-creating-contact="isCreatingContact"
-        :contact-id="contactId"
-        :contactable-inboxes-list="contactableInboxesList"
-        :show-inboxes-dropdown="showInboxesDropdown"
-        :has-errors="validationStates.isContactInvalid"
-        @search-contacts="handleContactSearch"
-        @set-selected-contact="setSelectedContact"
-        @clear-selected-contact="clearSelectedContact"
-        @update-dropdown="handleDropdownUpdate"
-      />
+  <div class="flex min-h-0 flex-1 flex-col bg-background">
+    <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div
+        class="flex items-center justify-between gap-2 border-b border-border/40 px-4 py-2"
+      >
+        <ContactSelector
+          class="min-w-0 flex-1"
+          :contacts="contacts"
+          :selected-contact="selectedContact"
+          :show-contacts-dropdown="showContactsDropdown"
+          :is-loading="isLoading"
+          :is-creating-contact="isCreatingContact"
+          :contact-id="contactId"
+          :contactable-inboxes-list="contactableInboxesList"
+          :show-inboxes-dropdown="showInboxesDropdown"
+          :has-errors="validationStates.isContactInvalid"
+          @search-contacts="handleContactSearch"
+          @set-selected-contact="setSelectedContact"
+          @clear-selected-contact="clearSelectedContact"
+          @update-dropdown="handleDropdownUpdate"
+        />
+        <div
+          v-if="inboxTypes.isEmail || !targetInbox"
+          class="flex shrink-0 items-center gap-2"
+        >
+          <button
+            type="button"
+            class="text-xs font-medium text-muted-foreground hover:text-foreground"
+            @click="showCcInput = !showCcInput"
+          >
+            {{ t('COMPOSE_NEW_CONVERSATION.FORM.EMAIL_OPTIONS.CC_BUTTON') }}
+          </button>
+          <button
+            type="button"
+            class="text-xs font-medium text-muted-foreground hover:text-foreground"
+            @click="showBccInput = !showBccInput"
+          >
+            {{ t('COMPOSE_NEW_CONVERSATION.FORM.EMAIL_OPTIONS.BCC_BUTTON') }}
+          </button>
+        </div>
+      </div>
+
       <InboxEmptyState v-if="showNoInboxAlert" />
       <InboxSelector
-        v-else
+        v-else-if="!targetInbox || contactableInboxesList.length > 1"
         :target-inbox="targetInbox"
         :selected-contact="selectedContact"
         :show-inboxes-dropdown="showInboxesDropdown"
@@ -396,11 +443,13 @@ useKeyboardEvents({
       />
 
       <EmailOptions
-        v-if="inboxTypes.isEmail"
+        v-if="inboxTypes.isEmail || (!targetInbox && !inboxTypes.isWhatsapp)"
         v-model:cc-emails="state.ccEmails"
         v-model:bcc-emails="state.bccEmails"
         v-model:subject="state.subject"
         :contacts="contacts"
+        :show-cc-input="showCcInput && inboxTypes.isEmail"
+        :show-bcc-input="showBccInput && inboxTypes.isEmail"
         :show-cc-emails-dropdown="showCcEmailsDropdown"
         :show-bcc-emails-dropdown="showBccEmailsDropdown"
         :is-loading="isLoading"
@@ -419,6 +468,7 @@ useKeyboardEvents({
         :channel-type="inboxChannelType"
         :medium="targetInbox?.medium || ''"
         :copilot="copilot"
+        :show-formatting="showFormatting"
       />
 
       <AttachmentPreviews
@@ -426,6 +476,20 @@ useKeyboardEvents({
         :attachments="state.attachedFiles"
         @update:attachments="state.attachedFiles = $event"
       />
+
+      <div v-if="shouldShowMessageEditor && !isCopilotActive" class="px-4 pb-3">
+        <div
+          class="flex items-center gap-2 rounded-full border border-border/50 bg-muted/40 px-4 py-1.5"
+        >
+          <span class="i-lucide-wand-sparkles size-4 shrink-0 text-primary" />
+          <RelayInput
+            v-model="aiPrompt"
+            :placeholder="t('COMPOSE_NEW_CONVERSATION.FORM.AI_BAR.PLACEHOLDER')"
+            class-name="h-7 flex-1 border-none bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+            @keydown.enter.prevent="submitAiPrompt"
+          />
+        </div>
+      </div>
     </div>
 
     <CopilotReplyBottomPanel
@@ -452,7 +516,10 @@ useKeyboardEvents({
       :has-no-inbox="showNoInboxAlert"
       :is-dropdown-active="isAnyDropdownActive"
       :message-signature="messageSignature"
+      :show-formatting="showFormatting"
       @insert-emoji="onClickInsertEmoji"
+      @insert-link="insertLink"
+      @toggle-formatting="showFormatting = !showFormatting"
       @add-signature="handleAddSignature"
       @remove-signature="handleRemoveSignature"
       @attach-file="handleAttachFile"

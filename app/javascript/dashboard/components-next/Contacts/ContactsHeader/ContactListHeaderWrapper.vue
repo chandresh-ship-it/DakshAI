@@ -227,23 +227,18 @@ defineExpose({
     <template #columns>
       <slot name="columns" />
     </template>
-    <template #filter>
-      <div
-        class="absolute mt-1 ltr:-right-52 rtl:-left-52 sm:ltr:right-0 sm:rtl:left-0 top-full z-50"
-      >
-        <ContactsFilter
-          v-if="showFiltersModal"
-          v-model="appliedFilter"
-          :segment-name="activeSegmentName"
-          :is-segment-view="hasActiveSegments"
-          @apply-filter="onApplyFilter"
-          @update-segment="onUpdateSegment"
-          @close="closeAdvanceFiltersModal"
-          @clear-filters="clearFilters"
-        />
-      </div>
-    </template>
   </ContactsHeader>
+
+  <ContactsFilter
+    v-if="showFiltersModal"
+    v-model="appliedFilter"
+    :segment-name="activeSegmentName"
+    :is-segment-view="hasActiveSegments"
+    @apply-filter="onApplyFilter"
+    @update-segment="onUpdateSegment"
+    @close="closeAdvanceFiltersModal"
+    @clear-filters="clearFilters"
+  />
 
   <ContactExportDialog ref="contactExportDialogRef" @export="onExport" />
   <CreateSegmentDialog ref="createSegmentDialogRef" @create="onCreateSegment" />

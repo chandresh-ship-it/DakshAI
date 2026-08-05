@@ -9,8 +9,10 @@ import { isPhoneE164 } from 'shared/helpers/Validators';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 
 import PageHeader from '../../SettingsSubPageHeader.vue';
-import Input from 'dashboard/components-next/input/Input.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
+
+const INPUT_CLASS =
+  'h-10 rounded-md border-border/80 bg-background px-4 text-[14px] shadow-sm focus-visible:ring-1 focus-visible:ring-primary/30';
 
 const { t } = useI18n();
 const store = useStore();
@@ -93,72 +95,107 @@ async function createChannel() {
 </script>
 
 <template>
-  <div class="overflow-auto col-span-6 p-6 w-full h-full">
+  <div class="w-full max-w-2xl">
     <PageHeader
       :header-title="t('INBOX_MGMT.ADD.VOICE.TITLE')"
       :header-content="t('INBOX_MGMT.ADD.VOICE.DESC')"
     />
 
-    <form
-      class="flex flex-col gap-4 flex-wrap mx-0"
-      @submit.prevent="createChannel"
-    >
-      <Input
-        v-model="state.phoneNumber"
-        :label="t('INBOX_MGMT.ADD.VOICE.PHONE_NUMBER.LABEL')"
-        :placeholder="t('INBOX_MGMT.ADD.VOICE.PHONE_NUMBER.PLACEHOLDER')"
-        :message="formErrors.phoneNumber"
-        :message-type="formErrors.phoneNumber ? 'error' : 'info'"
-        @blur="v$.phoneNumber?.$touch"
-      />
-
-      <Input
-        v-model="state.accountSid"
-        :label="t('INBOX_MGMT.ADD.VOICE.TWILIO.ACCOUNT_SID.LABEL')"
-        :placeholder="t('INBOX_MGMT.ADD.VOICE.TWILIO.ACCOUNT_SID.PLACEHOLDER')"
-        :message="formErrors.accountSid"
-        :message-type="formErrors.accountSid ? 'error' : 'info'"
-        @blur="v$.accountSid?.$touch"
-      />
-
-      <Input
-        v-model="state.authToken"
-        type="password"
-        :label="t('INBOX_MGMT.ADD.VOICE.TWILIO.AUTH_TOKEN.LABEL')"
-        :placeholder="t('INBOX_MGMT.ADD.VOICE.TWILIO.AUTH_TOKEN.PLACEHOLDER')"
-        :message="formErrors.authToken"
-        :message-type="formErrors.authToken ? 'error' : 'info'"
-        @blur="v$.authToken?.$touch"
-      />
-
-      <Input
-        v-model="state.apiKeySid"
-        :label="t('INBOX_MGMT.ADD.VOICE.TWILIO.API_KEY_SID.LABEL')"
-        :placeholder="t('INBOX_MGMT.ADD.VOICE.TWILIO.API_KEY_SID.PLACEHOLDER')"
-        :message="formErrors.apiKeySid"
-        :message-type="formErrors.apiKeySid ? 'error' : 'info'"
-        @blur="v$.apiKeySid?.$touch"
-      />
-
-      <Input
-        v-model="state.apiKeySecret"
-        type="password"
-        :label="t('INBOX_MGMT.ADD.VOICE.TWILIO.API_KEY_SECRET.LABEL')"
-        :placeholder="
-          t('INBOX_MGMT.ADD.VOICE.TWILIO.API_KEY_SECRET.PLACEHOLDER')
-        "
-        :message="formErrors.apiKeySecret"
-        :message-type="formErrors.apiKeySecret ? 'error' : 'info'"
-        @blur="v$.apiKeySecret?.$touch"
-      />
-
-      <div>
-        <NextButton
-          :is-loading="uiFlags.isCreating"
-          :disabled="isSubmitDisabled"
-          :label="t('INBOX_MGMT.ADD.VOICE.SUBMIT_BUTTON')"
-          type="submit"
+    <form class="space-y-6" @submit.prevent="createChannel">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('INBOX_MGMT.ADD.VOICE.PHONE_NUMBER.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="state.phoneNumber"
+          :placeholder="t('INBOX_MGMT.ADD.VOICE.PHONE_NUMBER.PLACEHOLDER')"
+          :class-name="INPUT_CLASS"
+          @blur="v$.phoneNumber?.$touch"
         />
+        <p v-if="formErrors.phoneNumber" class="text-[12.5px] text-destructive">
+          {{ formErrors.phoneNumber }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('INBOX_MGMT.ADD.VOICE.TWILIO.ACCOUNT_SID.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="state.accountSid"
+          :placeholder="
+            t('INBOX_MGMT.ADD.VOICE.TWILIO.ACCOUNT_SID.PLACEHOLDER')
+          "
+          :class-name="INPUT_CLASS"
+          @blur="v$.accountSid?.$touch"
+        />
+        <p v-if="formErrors.accountSid" class="text-[12.5px] text-destructive">
+          {{ formErrors.accountSid }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('INBOX_MGMT.ADD.VOICE.TWILIO.AUTH_TOKEN.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="state.authToken"
+          type="password"
+          :placeholder="t('INBOX_MGMT.ADD.VOICE.TWILIO.AUTH_TOKEN.PLACEHOLDER')"
+          :class-name="INPUT_CLASS"
+          @blur="v$.authToken?.$touch"
+        />
+        <p v-if="formErrors.authToken" class="text-[12.5px] text-destructive">
+          {{ formErrors.authToken }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('INBOX_MGMT.ADD.VOICE.TWILIO.API_KEY_SID.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="state.apiKeySid"
+          :placeholder="
+            t('INBOX_MGMT.ADD.VOICE.TWILIO.API_KEY_SID.PLACEHOLDER')
+          "
+          :class-name="INPUT_CLASS"
+          @blur="v$.apiKeySid?.$touch"
+        />
+        <p v-if="formErrors.apiKeySid" class="text-[12.5px] text-destructive">
+          {{ formErrors.apiKeySid }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[13.5px] font-medium text-foreground">
+          {{ t('INBOX_MGMT.ADD.VOICE.TWILIO.API_KEY_SECRET.LABEL') }}
+        </label>
+        <RelayInput
+          v-model="state.apiKeySecret"
+          type="password"
+          :placeholder="
+            t('INBOX_MGMT.ADD.VOICE.TWILIO.API_KEY_SECRET.PLACEHOLDER')
+          "
+          :class-name="INPUT_CLASS"
+          @blur="v$.apiKeySecret?.$touch"
+        />
+        <p
+          v-if="formErrors.apiKeySecret"
+          class="text-[12.5px] text-destructive"
+        >
+          {{ formErrors.apiKeySecret }}
+        </p>
+      </div>
+
+      <div class="pt-4">
+        <RelayButton
+          type="submit"
+          class="shadow-sm"
+          :disabled="isSubmitDisabled || uiFlags.isCreating"
+        >
+          {{ t('INBOX_MGMT.ADD.VOICE.SUBMIT_BUTTON') }}
+        </RelayButton>
       </div>
     </form>
   </div>
