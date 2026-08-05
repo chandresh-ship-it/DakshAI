@@ -9,6 +9,7 @@ const props = defineProps({
   inboxItem: { type: Object, default: () => ({}) },
   isActive: { type: Boolean, default: false },
   isStarred: { type: Boolean, default: false },
+  isSelected: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -19,6 +20,7 @@ const emit = defineEmits([
   'markNotificationAsUnRead',
   'deleteNotification',
   'toggleStar',
+  'toggleSelect',
 ]);
 
 const { t } = useI18n();
@@ -127,17 +129,33 @@ onBeforeMount(contextMenuActions.close);
     role="button"
     class="flex items-center gap-4 px-5 py-3 text-left transition-colors w-full group border-b border-border/60 hover:shadow-sm cursor-pointer"
     :class="[
-      isActive
-        ? 'bg-primary/5 hover:bg-primary/5'
-        : isUnread
-          ? 'bg-background hover:bg-muted/20'
-          : 'bg-muted/10 hover:bg-muted/30',
+      isSelected
+        ? 'bg-primary/10 hover:bg-primary/15'
+        : isActive
+          ? 'bg-primary/5 hover:bg-primary/5'
+          : isUnread
+            ? 'bg-background hover:bg-muted/20'
+            : 'bg-muted/10 hover:bg-muted/30',
     ]"
     @contextmenu="contextMenuActions.open($event)"
     @click="emit('click')"
   >
-    <!-- Star + Avatar -->
+    <!-- Select + Star + Avatar -->
     <div class="flex items-center gap-3 shrink-0">
+      <button
+        type="button"
+        class="size-[18px] rounded-full border flex items-center justify-center transition-colors shrink-0"
+        :class="
+          isSelected
+            ? 'bg-primary border-primary text-primary-foreground opacity-100'
+            : 'border-input opacity-0 group-hover:opacity-100 bg-background hover:border-primary/50'
+        "
+        :aria-label="t('INBOX.LIST.SELECT_CONVERSATION')"
+        :aria-pressed="isSelected"
+        @click.stop="emit('toggleSelect', inboxItem)"
+      >
+        <span v-if="isSelected" class="i-lucide-check size-3" />
+      </button>
       <button
         type="button"
         class="size-4 flex items-center justify-center"

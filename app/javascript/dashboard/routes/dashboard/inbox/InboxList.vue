@@ -22,7 +22,7 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
-const { uiSettings } = useUISettings();
+const { uiSettings, updateUISettings } = useUISettings();
 
 const notificationList = ref(null);
 const page = ref(1);
@@ -34,7 +34,13 @@ const activeView = ref('all');
 const activeStatusTab = ref('new');
 const showListFilterMenu = ref(false);
 const showTabMoreMenu = ref(false);
-const starredIds = ref(new Set());
+const selectedIds = ref(new Set());
+
+// Starred notification ids are persisted in UI settings so favourites survive
+// reloads and stay in sync across the agent's sessions.
+const starredIds = computed(
+  () => new Set(uiSettings.value?.starred_notification_ids || [])
+);
 
 const STATUS_TAB_MAP = {
   new: 'open',
@@ -98,7 +104,9 @@ const viewCounts = computed(() => {
         n.notificationType === 'conversation_assignment' ||
         n.primaryActor?.meta?.assignee?.id === currentUserId
     ).length,
-    starred: starredIds.value.size,
+    // Counted from the loaded list rather than the saved id set, so the badge
+    // always matches what the Starred view actually renders.
+    starred: items.filter(n => starredIds.value.has(n.id)).length,
     snoozed: items.filter(
       n => n.snoozedUntil || n.primaryActor?.status === 'snoozed'
     ).length,
@@ -135,8 +143,15 @@ const filteredNotifications = computed(() => {
     items = items.filter(n => n.primaryActor?.inboxId === inboxId);
   }
 
+  // Starred is an explicit user-curated view: showing it through the status
+  // tabs would hide favourites whose conversation sits in another status.
   const statusKey = STATUS_TAB_MAP[activeStatusTab.value];
-  if (statusKey && view !== 'snoozed' && view !== 'archived') {
+  if (
+    statusKey &&
+    view !== 'snoozed' &&
+    view !== 'archived' &&
+    view !== 'starred'
+  ) {
     items = items.filter(n => {
       const conversationStatus = n.primaryActor?.status;
       if (!conversationStatus) return activeStatusTab.value === 'new';
@@ -172,7 +187,67 @@ const toggleStar = notificationItem => {
   const next = new Set(starredIds.value);
   if (next.has(notificationItem.id)) next.delete(notificationItem.id);
   else next.add(notificationItem.id);
-  starredIds.value = next;
+  updateUISettings({ starred_notification_ids: [...next] });
+};
+
+const toggleSelect = notificationItem => {
+  const next = new Set(selectedIds.value);
+  if (next.has(notificationItem.id)) next.delete(notificationItem.id);
+  else next.add(notificationItem.id);
+  selectedIds.value = next;
+};
+
+const selectedCount = computed(() => selectedIds.value.size);
+
+const allSelected = computed(
+  () =>
+    filteredNotifications.value.length > 0 &&
+    selectedCount.value === filteredNotifications.value.length
+);
+
+const toggleSelectAll = () => {
+  selectedIds.value = allSelected.value
+    ? new Set()
+    : new Set(filteredNotifications.value.map(item => item.id));
+};
+
+const selectedNotifications = () =>
+  filteredNotifications.value.filter(item => selectedIds.value.has(item.id));
+
+// The store derives the next unread count from the value handed to it, so these
+// run sequentially and re-read `meta` each pass; dispatching in parallel would
+// make every call start from the same stale count.
+const markSelectedAsRead = async () => {
+  const items = selectedNotifications().filter(item => !item.readAt);
+  // eslint-disable-next-line no-restricted-syntax
+  for (const { id, primaryActorId, primaryActorType } of items) {
+    // eslint-disable-next-line no-await-in-loop
+    await store.dispatch('notifications/read', {
+      id,
+      primaryActorId,
+      primaryActorType,
+      unreadCount: meta.value.unreadCount,
+    });
+  }
+  selectedIds.value = new Set();
+  store.dispatch('notifications/unReadCount');
+  useAlert(t('INBOX.ALERTS.MARK_AS_READ'));
+};
+
+const deleteSelected = async () => {
+  const items = selectedNotifications();
+  // eslint-disable-next-line no-restricted-syntax
+  for (const notification of items) {
+    // eslint-disable-next-line no-await-in-loop
+    await store.dispatch('notifications/delete', {
+      notification,
+      count: meta.value.count,
+      unreadCount: meta.value.unreadCount,
+    });
+  }
+  selectedIds.value = new Set();
+  store.dispatch('notifications/unReadCount');
+  useAlert(t('INBOX.ALERTS.DELETE'));
 };
 
 const fetchNotifications = () => {
@@ -238,7 +313,7 @@ const deleteNotification = async notificationItem => {
   try {
     await store.dispatch('notifications/delete', {
       notification: notificationItem,
-      unread_count: meta.value.unreadCount,
+      unreadCount: meta.value.unreadCount,
       count: meta.value.count,
     });
     useAlert(t('INBOX.ALERTS.DELETE'));
@@ -378,82 +453,115 @@ onMounted(() => {
         class="flex-1 flex flex-col bg-card overflow-hidden"
       >
         <div
-          class="flex items-center justify-between p-4 border-b border-border h-14 shrink-0"
+          class="flex items-center justify-between px-4 border-b border-border h-14 shrink-0"
         >
-          <h1 class="text-base font-medium text-foreground">
-            {{ t('INBOX.LIST.CONVERSATIONS') }}
-          </h1>
-          <div class="relative">
-            <RelayButton
-              variant="outline"
-              size="icon"
-              class="h-8 w-8 shrink-0"
-              :aria-label="t('INBOX.LIST.FILTER_TOOLTIP')"
-              @click="showListFilterMenu = !showListFilterMenu"
+          <div
+            class="flex items-center justify-start gap-6 h-14 flex-1 min-w-0 overflow-hidden"
+            role="tablist"
+          >
+            <button
+              v-for="tab in statusTabs"
+              :key="tab.value"
+              type="button"
+              role="tab"
+              :aria-selected="activeStatusTab === tab.value"
+              class="h-14 px-0 text-sm font-medium border-b-2 transition-colors shrink-0"
+              :class="
+                activeStatusTab === tab.value
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              "
+              @click="activeStatusTab = tab.value"
             >
-              <span class="i-lucide-list-filter size-4" />
-            </RelayButton>
-            <div
-              v-if="showListFilterMenu"
-              v-on-clickaway="() => (showListFilterMenu = false)"
-              class="absolute right-0 mt-1.5 z-50 w-48 rounded-md border border-border bg-popover p-1 shadow-md"
-            >
-              <button
-                type="button"
-                class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
-                @click="applyListFilter('assigned')"
-              >
-                <span class="i-lucide-user size-4 text-muted-foreground" />
-                {{ t('INBOX.FILTER_MENU.ASSIGNED_TO_ME') }}
-              </button>
-              <button
-                type="button"
-                class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
-                @click="applyListFilter('oldest')"
-              >
-                <span class="i-lucide-clock size-4 text-muted-foreground" />
-                {{ t('INBOX.FILTER_MENU.OLDEST_FIRST') }}
-              </button>
-              <div class="my-1 h-px bg-border" />
-              <button
-                type="button"
-                class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
-                @click="applyListFilter('archived')"
-              >
-                <span class="i-lucide-archive size-4 text-muted-foreground" />
-                {{ t('INBOX.FILTER_MENU.ARCHIVED') }}
-              </button>
-              <button
-                type="button"
-                class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
-                @click="applyListFilter('snoozed')"
-              >
-                <span
-                  class="i-lucide-alarm-clock size-4 text-muted-foreground"
-                />
-                {{ t('INBOX.FILTER_MENU.SNOOZED') }}
-              </button>
-            </div>
+              {{ tab.label }}
+            </button>
           </div>
-        </div>
 
-        <div class="px-4 pt-2 shrink-0">
-          <div class="flex items-center border-b border-border/60">
-            <div class="flex items-center gap-4 flex-1 min-w-0 overflow-x-auto">
-              <button
-                v-for="tab in statusTabs"
-                :key="tab.value"
-                type="button"
-                class="px-0 py-2 text-sm font-medium border-b-2 transition-colors shrink-0"
-                :class="
-                  activeStatusTab === tab.value
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                "
-                @click="activeStatusTab = tab.value"
+          <div class="flex items-center gap-1 pl-4 shrink-0">
+            <RelayButton
+              v-if="filteredNotifications.length"
+              variant="ghost"
+              size="sm"
+              class="h-8 text-xs text-muted-foreground hover:text-foreground"
+              @click="toggleSelectAll"
+            >
+              {{
+                allSelected
+                  ? t('INBOX.LIST.DESELECT_ALL')
+                  : t('INBOX.LIST.SELECT_ALL')
+              }}
+            </RelayButton>
+            <template v-if="selectedCount > 0">
+              <RelayButton
+                variant="ghost"
+                size="sm"
+                class="h-8 text-xs text-muted-foreground hover:text-foreground"
+                @click="markSelectedAsRead"
               >
-                {{ tab.label }}
-              </button>
+                <span class="i-lucide-check-check size-3.5 mr-1" />
+                {{ t('INBOX.LIST.MARK_READ') }}
+              </RelayButton>
+              <RelayButton
+                variant="ghost"
+                size="sm"
+                class="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                @click="deleteSelected"
+              >
+                <span class="i-lucide-trash-2 size-3.5 mr-1" />
+                {{ t('INBOX.LIST.DELETE') }}
+              </RelayButton>
+            </template>
+            <div class="relative">
+              <RelayButton
+                variant="outline"
+                size="icon"
+                class="h-8 w-8 shrink-0"
+                :aria-label="t('INBOX.LIST.FILTER_TOOLTIP')"
+                @click="showListFilterMenu = !showListFilterMenu"
+              >
+                <span class="i-lucide-list-filter size-4" />
+              </RelayButton>
+              <div
+                v-if="showListFilterMenu"
+                v-on-clickaway="() => (showListFilterMenu = false)"
+                class="absolute right-0 mt-1.5 z-50 w-48 rounded-md border border-border bg-popover p-1 shadow-md"
+              >
+                <button
+                  type="button"
+                  class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
+                  @click="applyListFilter('assigned')"
+                >
+                  <span class="i-lucide-user size-4 text-muted-foreground" />
+                  {{ t('INBOX.FILTER_MENU.ASSIGNED_TO_ME') }}
+                </button>
+                <button
+                  type="button"
+                  class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
+                  @click="applyListFilter('oldest')"
+                >
+                  <span class="i-lucide-clock size-4 text-muted-foreground" />
+                  {{ t('INBOX.FILTER_MENU.OLDEST_FIRST') }}
+                </button>
+                <div class="my-1 h-px bg-border" />
+                <button
+                  type="button"
+                  class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
+                  @click="applyListFilter('archived')"
+                >
+                  <span class="i-lucide-archive size-4 text-muted-foreground" />
+                  {{ t('INBOX.FILTER_MENU.ARCHIVED') }}
+                </button>
+                <button
+                  type="button"
+                  class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
+                  @click="applyListFilter('snoozed')"
+                >
+                  <span
+                    class="i-lucide-alarm-clock size-4 text-muted-foreground"
+                  />
+                  {{ t('INBOX.FILTER_MENU.SNOOZED') }}
+                </button>
+              </div>
             </div>
             <div class="relative shrink-0">
               <RelayButton
@@ -523,6 +631,7 @@ onMounted(() => {
               currentConversationId === notificationItem.primaryActor?.id
             "
             :is-starred="isStarred(notificationItem.id)"
+            :is-selected="selectedIds.has(notificationItem.id)"
             class="inbox-card"
             :class="{
               active:
@@ -532,6 +641,7 @@ onMounted(() => {
             @mark-notification-as-un-read="markNotificationAsUnRead"
             @delete-notification="deleteNotification"
             @toggle-star="toggleStar"
+            @toggle-select="toggleSelect"
             @context-menu-open="isInboxContextMenuOpen = true"
             @context-menu-close="isInboxContextMenuOpen = false"
             @click="openConversation(notificationItem)"

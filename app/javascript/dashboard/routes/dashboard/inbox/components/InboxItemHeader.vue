@@ -88,7 +88,7 @@ export default {
       this.$store
         .dispatch('notifications/delete', {
           notification: this.activeNotification,
-          unread_count: this.meta.unreadCount,
+          unreadCount: this.meta.unreadCount,
           count: this.meta.count,
         })
         .then(() => {

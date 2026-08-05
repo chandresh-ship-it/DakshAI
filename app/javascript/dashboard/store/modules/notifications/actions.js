@@ -93,7 +93,13 @@ export const actions = {
     try {
       await NotificationsAPI.delete(notification.id);
       commit(types.SET_NOTIFICATIONS_UNREAD_COUNT, unreadCount - 1);
-      commit(types.DELETE_NOTIFICATION, { notification, count, unreadCount });
+      // The mutation reads `unread_count` (it also receives raw websocket
+      // payloads via actionCable), so translate on the way in.
+      commit(types.DELETE_NOTIFICATION, {
+        notification,
+        count,
+        unread_count: unreadCount,
+      });
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isDeleting: false });
     } catch (error) {
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isDeleting: false });

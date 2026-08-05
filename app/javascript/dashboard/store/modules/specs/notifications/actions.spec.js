@@ -156,7 +156,7 @@ describe('#actions', () => {
         [types.SET_NOTIFICATIONS_UNREAD_COUNT, 0],
         [
           types.DELETE_NOTIFICATION,
-          { notification: { id: 1 }, count: 2, unreadCount: 1 },
+          { notification: { id: 1 }, count: 2, unread_count: 1 },
         ],
         [types.SET_NOTIFICATIONS_UI_FLAG, { isDeleting: false }],
       ]);

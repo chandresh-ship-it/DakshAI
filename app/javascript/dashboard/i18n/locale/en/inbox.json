@@ -14,7 +14,12 @@
       "CONVERSATIONS": "Conversations",
       "LOAD_MORE": "Load more conversations",
       "FILTER_TOOLTIP": "Filter conversations",
-      "MORE_OPTIONS": "More options"
+      "MORE_OPTIONS": "More options",
+      "SELECT_ALL": "Select All",
+      "DESELECT_ALL": "Deselect All",
+      "SELECT_CONVERSATION": "Select conversation",
+      "MARK_READ": "Mark as Read",
+      "DELETE": "Delete"
     },
     "VIEWS": {
       "TITLE": "Views",
