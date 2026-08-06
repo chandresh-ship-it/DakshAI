@@ -66,7 +66,7 @@ const defaulSpanRender = cellProps =>
   h(
     'span',
     {
-      class: cellProps.getValue() ? '' : 'text-n-slate-12',
+      class: cellProps.getValue() ? '' : 'text-foreground font-medium text-[14px]',
     },
     cellProps.getValue()
   );
@@ -221,9 +221,9 @@ defineExpose({ downloadReports });
     >
       <div
         v-if="isLoading"
-        class="absolute inset-0 flex justify-center pt-[12.5rem] bg-n-solid-1/70 rounded-xl pointer-events-none"
+        class="absolute inset-0 flex justify-center pt-[12.5rem] bg-background/80 backdrop-blur-sm rounded-xl pointer-events-none"
       >
-        <Spinner :size="32" class="text-n-brand" />
+        <Spinner :size="32" class="text-primary" />
       </div>
     </Transition>
   </div>

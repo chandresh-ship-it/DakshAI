@@ -20,7 +20,7 @@ const isTabActive = tab =>
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-full overflow-hidden bg-n-surface-1">
+  <div class="flex flex-col h-full w-full overflow-hidden bg-background">
     <div class="px-8 pt-6 shrink-0">
       <h1 class="text-xl font-semibold tracking-tight text-foreground mb-1">
         {{ $t('REPORT.REPORTS_TITLE') }}
