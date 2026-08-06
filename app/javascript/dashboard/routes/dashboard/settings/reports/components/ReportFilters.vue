@@ -319,14 +319,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col w-full gap-3 lg:flex-row">
+  <div class="flex items-center justify-between border-b border-border pb-4 pt-2">
+    <div class="flex items-center gap-4">
     <WootDatePicker
       v-model:date-range="customDateRange"
       v-model:range-type="selectedDateRange"
       @date-range-changed="onDateRangeChange"
     />
+    </div>
 
-    <div class="flex gap-2 items-center w-full">
+    <div class="flex gap-4 items-center">
       <ActiveFilterChip
         v-if="showEntityFilter"
         :id="appliedFilters[getFilterKey()]"
@@ -377,6 +379,7 @@ onMounted(() => {
           />
         </span>
       </div>
+      <slot />
     </div>
   </div>
 </template>

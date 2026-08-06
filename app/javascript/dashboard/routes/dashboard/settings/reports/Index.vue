@@ -6,7 +6,6 @@ import { GROUP_BY_FILTER } from './constants';
 import { REPORTS_EVENTS } from '../../../../helper/AnalyticsHelper/events';
 import { generateFileName } from 'dashboard/helper/downloadHelper';
 import ReportContainer from './ReportContainer.vue';
-import ReportHeader from './components/ReportHeader.vue';
 
 const REPORTS_KEYS = {
   CONVERSATIONS: 'conversations_count',
@@ -21,7 +20,6 @@ const REPORTS_KEYS = {
 export default {
   name: 'ConversationReports',
   components: {
-    ReportHeader,
     ReportFilters,
     ReportContainer,
     V4Button,
@@ -107,20 +105,19 @@ export default {
 </script>
 
 <template>
-  <ReportHeader :header-title="$t('REPORT.HEADER')">
-    <V4Button
-      :label="$t('REPORT.DOWNLOAD_CONVERSATION_REPORTS')"
-      icon="i-ph-download-simple"
-      size="sm"
-      @click="downloadConversationReports"
-    />
-  </ReportHeader>
-  <div class="flex flex-col">
+  <div class="flex flex-col w-full">
     <ReportFilters
       :show-entity-filter="false"
       show-group-by
       @filter-change="onFilterChange"
-    />
+    >
+      <V4Button
+        :label="$t('REPORT.DOWNLOAD_CONVERSATION_REPORTS')"
+        icon="i-ph-download-simple"
+        size="sm"
+        @click="downloadConversationReports"
+      />
+    </ReportFilters>
     <ReportContainer :group-by="groupBy" />
   </div>
 </template>

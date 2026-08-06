@@ -5,11 +5,10 @@ import { GROUP_BY_FILTER, METRIC_CHART } from './constants';
 import fromUnixTime from 'date-fns/fromUnixTime';
 import format from 'date-fns/format';
 import { formatTime } from '@chatwoot/utils';
-import ChartStats from './components/ChartElements/ChartStats.vue';
-import BarChart from 'shared/components/charts/BarChart.vue';
+import MetricCard from './components/ChartElements/MetricCard.vue';
 
 export default {
-  components: { ChartStats, BarChart },
+  components: { MetricCard },
   props: {
     groupBy: {
       type: Object,
@@ -144,36 +143,15 @@ export default {
 </script>
 
 <template>
-  <div
-    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 px-6 py-5 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2 mt-4"
-  >
-    <div
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-6 pb-8">
+    <MetricCard
       v-for="metric in metrics"
       :key="metric.KEY"
-      class="p-4 mb-3 rounded-md"
-    >
-      <ChartStats
-        :metric="metric"
-        :account-summary-key="accountSummaryKey"
-        :summary-fetching-key="summaryFetchingKey"
-      />
-      <div class="mt-4 h-72">
-        <woot-loading-state
-          v-if="accountReport.isFetching[metric.KEY]"
-          class="text-xs"
-          :message="$t('REPORT.LOADING_CHART')"
-        />
-        <div v-else class="flex items-center justify-center h-72">
-          <BarChart
-            v-if="accountReport.data[metric.KEY].length"
-            :collection="getCollection(metric)"
-            :chart-options="getChartOptions(metric)"
-          />
-          <span v-else class="text-sm text-n-slate-10">
-            {{ $t('REPORT.NO_ENOUGH_DATA') }}
-          </span>
-        </div>
-      </div>
-    </div>
+      :metric="metric"
+      :account-summary-key="accountSummaryKey"
+      :summary-fetching-key="summaryFetchingKey"
+      :chart-data="accountReport.data[metric.KEY] || []"
+      :group-by="groupBy"
+    />
   </div>
 </template>
