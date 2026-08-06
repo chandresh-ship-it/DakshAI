@@ -7,19 +7,7 @@ import format from 'date-fns/format';
 import { formatTime } from '@chatwoot/utils';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
-// Lucide Icons
-import {
-  MessageCircle,
-  Download,
-  Send,
-  Clock,
-  Timer,
-  CheckCircle2,
-  Hourglass,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-} from 'lucide-vue-next';
+
 
 const props = defineProps({
   metric: {
@@ -49,18 +37,18 @@ const { calculateTrend, displayMetric, isAverageMetricType, fetchingStatus } =
 
 // Map metric keys to appropriate Lucide icons
 const iconMap = {
-  conversations_count: MessageCircle,
-  incoming_messages_count: Download,
-  outgoing_messages_count: Send,
-  avg_first_response_time: Clock,
-  avg_resolution_time: Timer,
-  resolutions_count: CheckCircle2,
-  reply_time: Clock,
-  customer_waiting_time: Hourglass,
+  conversations_count: 'i-lucide-message-circle',
+  incoming_messages_count: 'i-lucide-download',
+  outgoing_messages_count: 'i-lucide-send',
+  avg_first_response_time: 'i-lucide-clock',
+  avg_resolution_time: 'i-lucide-timer',
+  resolutions_count: 'i-lucide-circle-check',
+  reply_time: 'i-lucide-clock',
+  customer_waiting_time: 'i-lucide-hourglass',
 };
 
 const metricIcon = computed(() => {
-  return iconMap[props.metric.KEY] || MessageCircle;
+  return iconMap[props.metric.KEY] || 'i-lucide-message-circle';
 });
 
 // Format Trend Data
@@ -165,7 +153,7 @@ const xAxisLabels = computed(() => {
       <div
         class="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0"
       >
-        <component :is="metricIcon" class="size-5" />
+        <span :class="[metricIcon, 'size-5']" />
       </div>
       <div class="flex flex-col">
         <h3 class="text-[14px] font-medium text-muted-foreground">
@@ -196,9 +184,9 @@ const xAxisLabels = computed(() => {
             class="flex items-center gap-1 text-[14px] font-medium pb-1"
             :class="trendData.good ? 'text-emerald-600' : 'text-destructive'"
           >
-            <TrendingUp v-if="trendData.up === true" class="size-3.5" />
-            <TrendingDown v-else-if="trendData.up === false" class="size-3.5" />
-            <Minus v-else class="size-3.5" />
+            <span v-if="trendData.up === true" class="i-lucide-trending-up size-3.5" />
+            <span v-else-if="trendData.up === false" class="i-lucide-trending-down size-3.5" />
+            <span v-else class="i-lucide-minus size-3.5" />
             {{ trendData.value }}
           </div>
         </div>
