@@ -1468,15 +1468,6 @@ export default {
 
 .reply-box {
   @apply relative mb-4 mx-4 border border-border rounded-xl bg-background overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary;
-
-  &.is-private {
-    background-color: rgba(245, 158, 11, 0.05);
-  }
-
-  &.is-private:focus-within {
-    border-color: rgba(245, 158, 11, 0.5);
-    --tw-ring-color: rgba(245, 158, 11, 0.5);
-  }
 }
 
 .reply-box :deep(.ProseMirror-menubar-wrapper) {
