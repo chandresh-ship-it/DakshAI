@@ -234,6 +234,7 @@ export default {
         :class="
           isAiActive
             ? 'text-primary'
+            : 'text-muted-foreground hover:text-foreground'
         "
         :disabled="disabled || isEditorDisabled || isReplyRestricted"
         @click="handleAiReplyClick"
