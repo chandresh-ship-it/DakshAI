@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useStore } from 'vuex';
+import { useI18n } from 'vue-i18n';
+import { useMapGetter } from 'dashboard/composables/store';
 import Avatar from 'next/avatar/Avatar.vue';
 import { useInbox } from 'dashboard/composables/useInbox';
 import { useUISettings } from 'dashboard/composables/useUISettings';
@@ -17,6 +19,8 @@ const props = defineProps({
 const store = useStore();
 const { isAWebWidgetInbox } = useInbox();
 const { uiSettings, updateUISettings } = useUISettings();
+const { t } = useI18n();
+const accountLabels = useMapGetter('labels/getLabels');
 
 const toggleSidebar = () => {
   updateUISettings({
@@ -52,6 +56,73 @@ const subject = computed(() => {
   const attrs = props.chat.additional_attributes || {};
   return attrs.mailSubject || `Conversation #${props.chat.id}`;
 });
+
+const unreadCount = computed(() => props.chat.unread_count);
+const hasUnread = computed(() => unreadCount.value > 0);
+
+const primaryLabel = computed(() => {
+  const titles = props.chat.labels || [];
+  if (!titles.length) return null;
+  return (
+    accountLabels.value.find(label => label.title === titles[0]) || {
+      title: titles[0],
+      color: null,
+    }
+  );
+});
+
+const statusBadge = computed(() => {
+  if (primaryLabel.value) {
+    return { text: primaryLabel.value.title, variant: 'label' };
+  }
+  const status = props.chat.status;
+  if (status === 'pending') {
+    return {
+      text: t('CHAT_LIST.STATUS_TABS.IN_PROGRESS'),
+      variant: 'secondary',
+    };
+  }
+  if (status === 'snoozed') {
+    return { text: t('CHAT_LIST.STATUS_TABS.ON_HOLD'), variant: 'warning' };
+  }
+  if (props.chat.priority === 'urgent' || props.chat.priority === 'high') {
+    return {
+      text: t(
+        `CONVERSATION.PRIORITY.OPTIONS.${props.chat.priority.toUpperCase()}`
+      ),
+      variant: 'default',
+    };
+  }
+  return null;
+});
+
+const badgeClass = computed(() => {
+  const variant = statusBadge.value?.variant;
+  if (variant === 'default') {
+    return 'bg-primary text-primary-foreground border-transparent';
+  }
+  if (variant === 'secondary') {
+    return 'bg-primary/10 text-primary border-primary/20';
+  }
+  if (variant === 'warning') {
+    return 'bg-background text-foreground border-border';
+  }
+  return 'bg-primary text-primary-foreground border-transparent';
+});
+
+const statusDotClass = computed(() => {
+  const priority = props.chat.priority;
+  if (priority === 'urgent') return 'bg-destructive';
+  if (priority === 'high') return 'bg-primary';
+  if (priority === 'medium') return 'bg-amber-500';
+  if (priority === 'low') return 'bg-emerald-500';
+  if (hasUnread.value) return 'bg-primary';
+  return 'bg-muted-foreground/30';
+});
+
+const statusTextColorClass = computed(() => {
+  return statusDotClass.value.replace('bg-', 'text-').split('/')[0];
+});
 </script>
 
 <template>
@@ -76,14 +147,17 @@ const subject = computed(() => {
             {{ currentContact.name }}
           </span>
           <span
-            class="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0"
+            v-if="statusBadge"
+            class="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 border"
+            :class="badgeClass"
           >
-            High Lead
+            {{ statusBadge.text }}
           </span>
           <span
-            class="text-[11px] font-medium text-emerald-600 flex items-center gap-1 shrink-0"
+            class="text-[11px] font-medium flex items-center gap-1 shrink-0"
+            :class="statusTextColorClass"
           >
-            <span class="size-1.5 rounded-full bg-emerald-500"></span> {{ chat.id }}
+            <span class="size-1.5 rounded-full" :class="statusDotClass"></span> {{ chat.id }}
           </span>
         </div>
         <div
