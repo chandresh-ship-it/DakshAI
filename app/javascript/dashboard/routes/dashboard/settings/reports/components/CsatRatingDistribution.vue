@@ -28,11 +28,22 @@ const sortedRatings = computed(() =>
   [...CSAT_RATINGS].sort((a, b) => b.value - a.value)
 );
 
+// Circle + dot colors per rating, ordered best → worst (matches sortedRatings)
+const ratingStyles = [
+  { circle: 'bg-primary/10', dot: 'bg-primary' },
+  { circle: 'bg-success/15', dot: 'bg-success' },
+  { circle: 'bg-warning/15', dot: 'bg-warning' },
+  { circle: 'bg-priority-2/15', dot: 'bg-priority-2' },
+  { circle: 'bg-destructive/10', dot: 'bg-destructive' },
+];
+
 const formatPercent = value => (value ? `${value}%` : '0%');
 
 const getRatingLabel = value => {
   const rating = CSAT_RATINGS.find(r => r.value === value);
-  return rating ? t(rating.translationKey) : '';
+  // Translation strings are prefixed with the emoji (e.g. "😍 Excellent");
+  // strip leading non-letters since the emoji is shown in its own circle.
+  return rating ? t(rating.translationKey).replace(/^[^\p{L}]+/u, '').trim() : '';
 };
 
 const getRatingCount = value => {
@@ -42,28 +53,28 @@ const getRatingCount = value => {
 
 <template>
   <div
-    class="shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2 px-6 py-5"
+    class="rounded-xl border border-border bg-card shadow-sm p-6 flex flex-col gap-6"
   >
-    <span class="text-sm font-medium text-n-slate-11">
+    <div
+      class="flex items-center gap-1.5 text-[14px] font-medium text-foreground"
+    >
       {{ $t('CSAT_REPORTS.METRIC.RATING_DISTRIBUTION') }}
-    </span>
+      <span class="i-lucide-info size-3.5 text-muted-foreground opacity-60" />
+    </div>
 
-    <div v-if="isLoading" class="mt-4">
-      <div class="h-6 w-full rounded-full bg-n-slate-3 animate-pulse" />
-      <div class="flex gap-6 mt-4">
+    <div v-if="isLoading">
+      <div class="h-3 w-full rounded-full bg-muted animate-pulse" />
+      <div class="flex gap-6 mt-6">
         <div
           v-for="n in 5"
           :key="n"
-          class="h-4 w-20 rounded bg-n-slate-3 animate-pulse"
+          class="flex-1 h-16 rounded-lg bg-muted animate-pulse"
         />
       </div>
     </div>
 
-    <div v-else class="mt-4">
-      <div
-        v-if="totalResponseCount"
-        class="flex h-6 w-full rounded-full overflow-hidden bg-n-alpha-2"
-      >
+    <template v-else>
+      <div class="h-3 w-full bg-muted/40 rounded-full overflow-hidden flex">
         <div
           v-for="rating in sortedRatings"
           :key="rating.value"
@@ -71,31 +82,46 @@ const getRatingCount = value => {
             `${getRatingLabel(rating.value)}: ${formatPercent(ratingPercentage[rating.value])} (${getRatingCount(rating.value)})`
           "
           :style="{
-            width: `${ratingPercentage[rating.value]}%`,
+            width: `${ratingPercentage[rating.value] || 0}%`,
             backgroundColor: rating.color,
           }"
-          class="h-full transition-all duration-300 first:rounded-s-full last:rounded-e-full cursor-default"
+          class="h-full transition-all duration-300"
         />
       </div>
-      <div v-else class="h-6 w-full rounded-full bg-n-alpha-2" />
 
-      <div class="flex flex-wrap gap-x-6 gap-y-2 mt-4">
+      <div class="flex flex-col sm:flex-row items-stretch w-full">
         <div
-          v-for="rating in sortedRatings"
+          v-for="(rating, index) in sortedRatings"
           :key="rating.value"
-          class="flex items-center gap-2"
+          class="flex-1 flex items-center gap-4 justify-center py-3 sm:py-0 border-b sm:border-b-0 sm:border-r border-border/50 last:border-none"
         >
-          <span class="text-sm text-n-slate-11">
-            {{ getRatingLabel(rating.value) }}
-          </span>
-          <span class="text-sm font-medium text-n-slate-12">
-            {{ formatPercent(ratingPercentage[rating.value]) }}
-          </span>
-          <span class="text-xs text-n-slate-10">
-            ({{ getRatingCount(rating.value) }})
-          </span>
+          <div class="flex flex-col items-center gap-2 shrink-0">
+            <div
+              class="size-10 rounded-full flex items-center justify-center text-[20px]"
+              :class="ratingStyles[index].circle"
+            >
+              {{ rating.emoji }}
+            </div>
+            <div
+              class="size-1.5 rounded-full"
+              :class="ratingStyles[index].dot"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-[14px] text-muted-foreground font-medium">
+              {{ getRatingLabel(rating.value) }}
+            </span>
+            <span
+              class="text-[18px] font-semibold leading-none text-foreground"
+            >
+              {{ formatPercent(ratingPercentage[rating.value]) }}
+            </span>
+            <span class="text-[13px] text-muted-foreground/60">
+              ({{ getRatingCount(rating.value) }})
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>

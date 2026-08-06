@@ -25,30 +25,33 @@ const formatPercent = value => (value ? `${value}%` : '0%');
 <template>
   <div class="flex flex-col gap-4">
     <div
-      class="flex sm:flex-row flex-col w-full gap-4 sm:gap-14 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2 px-6 py-5"
+      class="flex sm:flex-row flex-col items-stretch sm:items-center w-full gap-6 rounded-xl border border-border bg-card shadow-sm p-6"
     >
       <CsatMetricCard
         :label="$t('CSAT_REPORTS.METRIC.TOTAL_RESPONSES.LABEL')"
         :tooltip="$t('CSAT_REPORTS.METRIC.TOTAL_RESPONSES.TOOLTIP')"
         :value="responseCount"
+        icon="i-lucide-message-square"
         :is-loading="isLoading"
       />
 
-      <div class="w-full sm:w-px bg-n-strong" />
+      <div class="w-full h-px sm:w-px sm:h-16 bg-border/60 shrink-0" />
 
       <CsatMetricCard
         :label="$t('CSAT_REPORTS.METRIC.SATISFACTION_SCORE.LABEL')"
         :tooltip="$t('CSAT_REPORTS.METRIC.SATISFACTION_SCORE.TOOLTIP')"
         :value="formatPercent(satisfactionScore)"
+        icon="i-lucide-smile"
         :is-loading="isLoading"
       />
 
-      <div class="w-full sm:w-px bg-n-strong" />
+      <div class="w-full h-px sm:w-px sm:h-16 bg-border/60 shrink-0" />
 
       <CsatMetricCard
         :label="$t('CSAT_REPORTS.METRIC.RESPONSE_RATE.LABEL')"
         :tooltip="$t('CSAT_REPORTS.METRIC.RESPONSE_RATE.TOOLTIP')"
         :value="formatPercent(responseRate)"
+        icon="i-lucide-percent"
         :is-loading="isLoading"
       />
     </div>

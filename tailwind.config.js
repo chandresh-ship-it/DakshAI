@@ -291,6 +291,12 @@ const tailwindConfig = {
       },
       success: 'var(--success)',
       warning: 'var(--warning)',
+      priority: {
+        1: 'var(--priority-1)',
+        2: 'var(--priority-2)',
+        3: 'var(--priority-3)',
+        4: 'var(--priority-4)',
+      },
     },
 
     keyframes: {

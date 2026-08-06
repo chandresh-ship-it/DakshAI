@@ -12,6 +12,10 @@ defineProps({
     type: [String, Number],
     required: true,
   },
+  icon: {
+    type: String,
+    default: 'i-lucide-message-square',
+  },
   isLoading: {
     type: Boolean,
     default: false,
@@ -20,22 +24,36 @@ defineProps({
 </script>
 
 <template>
-  <div class="flex flex-col gap-2 items-start justify-center min-w-[10rem]">
-    <span
-      class="inline-flex items-center gap-1 text-sm font-medium text-n-slate-11"
-    >
-      {{ label }}
-      <span
-        v-tooltip.right="tooltip"
-        class="i-lucide-info flex flex-shrink-0 text-n-slate-10 size-3.5"
-      />
-    </span>
+  <div class="flex-1 flex items-start gap-4">
     <div
-      v-if="isLoading"
-      class="w-16 h-8 rounded-md bg-n-slate-3 animate-pulse"
-    />
-    <span v-else class="text-2xl font-medium text-n-slate-12">
-      {{ value }}
-    </span>
+      class="size-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0"
+    >
+      <span :class="icon" class="size-5 text-primary" />
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <div
+        class="text-[14px] text-muted-foreground font-medium flex items-center gap-1.5"
+      >
+        {{ label }}
+        <span
+          v-tooltip.right="tooltip"
+          class="i-lucide-info size-3.5 opacity-60"
+        />
+      </div>
+      <div
+        v-if="isLoading"
+        class="w-16 h-8 rounded-md bg-muted animate-pulse mt-1"
+      />
+      <template v-else>
+        <div
+          class="text-[28px] font-semibold tracking-tight leading-none mt-1 text-foreground"
+        >
+          {{ value }}
+        </div>
+        <div class="text-[12px] text-muted-foreground">
+          {{ $t('CSAT_REPORTS.METRIC.VS_PREVIOUS') }}
+        </div>
+      </template>
+    </div>
   </div>
 </template>

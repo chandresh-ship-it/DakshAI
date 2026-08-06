@@ -484,7 +484,8 @@
         "LABEL": "Response rate",
         "TOOLTIP": "Total number of responses / Total number of CSAT survey messages sent * 100"
       },
-      "RATING_DISTRIBUTION": "Rating distribution"
+      "RATING_DISTRIBUTION": "Rating distribution",
+      "VS_PREVIOUS": "— vs previous 7 days"
     },
     "REVIEW_NOTES": {
       "TITLE": "Review notes",

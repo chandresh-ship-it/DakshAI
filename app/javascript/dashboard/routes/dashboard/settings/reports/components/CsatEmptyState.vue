@@ -10,22 +10,34 @@ defineProps({
   },
   icon: {
     type: String,
-    default: 'i-lucide-message-square-off',
+    default: 'i-lucide-file-text',
   },
 });
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
-    <div
-      class="size-16 rounded-full bg-n-alpha-2 flex items-center justify-center mb-4"
-    >
-      <i :class="icon" class="size-8 text-n-slate-10" />
+  <div
+    class="flex flex-col items-center justify-center min-h-[350px] p-6 text-center"
+  >
+    <div class="relative mb-6">
+      <div
+        class="size-20 rounded-full bg-primary/10 flex items-center justify-center"
+      >
+        <i :class="icon" class="size-9 text-primary/50" />
+      </div>
+      <div
+        class="absolute -bottom-1 -right-1 size-7 rounded-full bg-primary border-[3px] border-card flex items-center justify-center"
+      >
+        <i class="i-lucide-x size-3 text-white" />
+      </div>
     </div>
-    <h3 class="text-base font-medium text-n-slate-12 mb-1">
+    <h3 class="text-[16px] font-semibold text-foreground tracking-tight">
       {{ title }}
     </h3>
-    <p v-if="description" class="text-sm text-n-slate-10 max-w-sm">
+    <p
+      v-if="description"
+      class="text-[14px] text-muted-foreground mt-2 max-w-[400px]"
+    >
       {{ description }}
     </p>
   </div>
