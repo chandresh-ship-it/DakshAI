@@ -312,7 +312,7 @@ export default {
         @input-file="onFileUpload"
       >
         <NextButton
-          v-if="showAttachButton"
+          v-if="!isEditorDisabled"
           v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_ATTACH_ICON')"
           icon="i-ph-paperclip"
           slate
@@ -321,7 +321,7 @@ export default {
         />
       </FileUpload>
       <NextButton
-        v-if="showAudioRecorderButton"
+        v-if="!isEditorDisabled"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"
         :icon="!isRecordingAudio ? 'i-ph-microphone' : 'i-ph-microphone-slash'"
         slate
@@ -339,7 +339,7 @@ export default {
         @click="toggleAudioRecorderPlayPause"
       />
       <NextButton
-        v-if="showMessageSignatureButton"
+        v-if="!isEditorDisabled"
         v-tooltip.top-end="signatureToggleTooltip"
         icon="i-ph-signature"
         slate
@@ -376,11 +376,7 @@ export default {
         @click="$emit('selectContentTemplate')"
       />
       <VideoCallButton
-        v-if="
-          (isAWebWidgetInbox || isAPIInbox) &&
-          !isOnPrivateNote &&
-          !isEditorDisabled
-        "
+        v-if="!isEditorDisabled"
         :conversation-id="conversationId"
       />
       <transition name="modal-fade">
@@ -395,7 +391,7 @@ export default {
         </div>
       </transition>
       <NextButton
-        v-if="enableInsertArticleInReply"
+        v-if="!isEditorDisabled"
         v-tooltip.top-end="$t('HELP_CENTER.ARTICLE_SEARCH.OPEN_ARTICLE_SEARCH')"
         icon="i-ph-article-ny-times"
         slate
@@ -404,7 +400,7 @@ export default {
         @click="toggleInsertArticle"
       />
       <NextButton
-        v-if="captainTasksEnabled"
+        v-if="!isEditorDisabled"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.AI_REPLY')"
         icon="i-lucide-wand-sparkles"
         slate
