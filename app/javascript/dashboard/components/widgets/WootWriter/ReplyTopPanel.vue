@@ -177,7 +177,7 @@ export default {
 
 <template>
   <div
-    class="flex items-center justify-between h-10 px-4 border-b border-border gap-4 bg-background"
+    class="flex items-center justify-between h-10 px-4 gap-4 bg-transparent"
     role="tablist"
   >
     <div class="flex items-center gap-6 h-full">
@@ -185,7 +185,7 @@ export default {
         type="button"
         role="tab"
         :aria-selected="isReplyActive"
-        class="relative h-full px-0 text-sm font-semibold transition-colors"
+        class="relative h-full px-4 text-sm font-semibold transition-colors"
         :class="
           isReplyActive
             ? 'text-foreground'
@@ -201,7 +201,7 @@ export default {
         }}
         <span
           v-if="isReplyActive"
-          class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+          class="absolute inset-x-0 bottom-0 h-0.5 bg-foreground"
           aria-hidden="true"
         />
       </button>
@@ -209,10 +209,10 @@ export default {
         type="button"
         role="tab"
         :aria-selected="isNoteActive"
-        class="relative h-full px-0 text-sm font-semibold transition-colors"
+        class="relative h-full px-4 text-sm font-semibold transition-colors"
         :class="
           isNoteActive
-            ? 'text-amber-500'
+            ? 'text-amber-500 bg-amber-500/10'
             : 'text-muted-foreground hover:text-foreground'
         "
         :disabled="disabled"
@@ -230,7 +230,7 @@ export default {
         type="button"
         role="tab"
         :aria-selected="isAiActive"
-        class="relative h-full px-0 text-sm font-semibold transition-colors inline-flex items-center gap-1.5"
+        class="relative h-full px-4 text-sm font-semibold transition-colors inline-flex items-center gap-1.5"
         :class="
           isAiActive
             ? 'text-primary'

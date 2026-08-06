@@ -1484,7 +1484,7 @@ export default {
 }
 
 .reply-box :deep(.ProseMirror-menubar) {
-  @apply border-b border-border px-4 py-2 bg-background mb-0 !important;
+  @apply px-4 py-2 bg-transparent mb-0 !important;
   left: 0 !important;
   right: 0 !important;
   width: 100%;
