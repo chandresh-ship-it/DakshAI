@@ -197,8 +197,9 @@ watch(
       sm
       slate
       faded
+      icon="i-lucide-calendar"
       :label="selectedLabel"
-      class="rounded-md group-hover:bg-n-alpha-2"
+      class="rounded-md"
       @click="toggleDropdown()"
     />
     <DropdownMenu

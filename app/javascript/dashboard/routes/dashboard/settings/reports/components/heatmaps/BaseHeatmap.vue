@@ -70,30 +70,31 @@ function getDayOfTheWeek(date) {
   return DAYS_OF_WEEK[dayIndex];
 }
 
+const EMPTY_CELL_CLASS = 'bg-muted/50 dark:bg-muted/30';
+
 const COLOR_SCHEMES = {
   blue: [
-    'bg-n-blue-3 border border-n-blue-4/30',
-    'bg-n-blue-5 border border-n-blue-6/30',
-    'bg-n-blue-7 border border-n-blue-8/30',
-    'bg-n-blue-8 border border-n-blue-9/30',
-    'bg-n-blue-10 border border-n-blue-8/30',
-    'bg-n-blue-11 border border-n-blue-10/30',
+    'bg-primary/20',
+    'bg-primary/35',
+    'bg-primary/50',
+    'bg-primary/65',
+    'bg-primary/80',
+    'bg-primary',
   ],
   green: [
-    'bg-n-teal-3 border border-n-teal-4/30',
-    'bg-n-teal-5 border border-n-teal-6/30',
-    'bg-n-teal-7 border border-n-teal-8/30',
-    'bg-n-teal-8 border border-n-teal-9/30',
-    'bg-n-teal-10 border border-n-teal-8/30',
-    'bg-n-teal-11 border border-n-teal-10/30',
+    'bg-emerald-500/20',
+    'bg-emerald-500/35',
+    'bg-emerald-500/50',
+    'bg-emerald-500/65',
+    'bg-emerald-500/80',
+    'bg-emerald-500',
   ],
 };
 
 // Memoized function to calculate CSS class for heatmap cell intensity levels
 const getHeatmapLevelClass = useMemoize(
   (value, quantileRangeArray, colorScheme) => {
-    if (!value)
-      return 'border border-n-container bg-n-slate-2 dark:bg-n-slate-1/30';
+    if (!value) return EMPTY_CELL_CLASS;
     let level = [...quantileRangeArray, Infinity].findIndex(
       range => value <= range && value > 0
     );
@@ -101,12 +102,14 @@ const getHeatmapLevelClass = useMemoize(
     if (level > 6) level = 5;
 
     if (level === 0) {
-      return 'border border-n-container bg-n-slate-2 dark:bg-n-slate-1/30';
+      return EMPTY_CELL_CLASS;
     }
 
     return COLOR_SCHEMES[colorScheme][level - 1];
   }
 );
+
+const legendScheme = computed(() => COLOR_SCHEMES[props.colorScheme]);
 
 function getHeatmapClass(value) {
   return getHeatmapLevelClass(value, quantileRange.value, props.colorScheme);
@@ -161,10 +164,10 @@ const tooltip = useHeatmapTooltip();
           v-for="row in dataRows"
           :key="row.dateKey"
           v-memo="[row.dateKey]"
-          class="h-8 min-w-[70px] text-n-slate-12 text-[10px] font-semibold flex flex-col items-end justify-center"
+          class="h-8 min-w-[70px] text-foreground text-[10px] font-semibold flex flex-col items-end justify-center"
         >
           {{ getDayOfTheWeek(new Date(row.dateKey)) }}
-          <time class="font-normal text-n-slate-11">
+          <time class="font-normal text-muted-foreground">
             {{ formatDate(row.dateKey) }}
           </time>
         </div>
@@ -183,7 +186,7 @@ const tooltip = useHeatmapTooltip();
           <div
             v-for="data in row.data"
             :key="data.timestamp"
-            class="h-8 rounded-sm cursor-pointer"
+            class="h-8 rounded-[8px] cursor-pointer transition-colors duration-200"
             :class="getHeatmapClass(data.value)"
             @mouseenter="tooltip.show($event, data.value)"
             @mouseleave="tooltip.hide"
@@ -203,6 +206,36 @@ const tooltip = useHeatmapTooltip();
         </div>
       </div>
     </template>
+
+    <div class="col-span-2 flex items-center justify-end gap-4 mt-2">
+      <div class="flex items-center gap-1.5">
+        <span
+          class="size-3 rounded-[4px]"
+          :class="legendScheme[0]"
+        />
+        <span class="text-[11px] text-muted-foreground">
+          {{ $t('OVERVIEW_REPORTS.HEATMAP_LEGEND.LOW') }}
+        </span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span
+          class="size-3 rounded-[4px]"
+          :class="legendScheme[2]"
+        />
+        <span class="text-[11px] text-muted-foreground">
+          {{ $t('OVERVIEW_REPORTS.HEATMAP_LEGEND.MEDIUM') }}
+        </span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span
+          class="size-3 rounded-[4px]"
+          :class="legendScheme[5]"
+        />
+        <span class="text-[11px] text-muted-foreground">
+          {{ $t('OVERVIEW_REPORTS.HEATMAP_LEGEND.HIGH') }}
+        </span>
+      </div>
+    </div>
 
     <HeatmapTooltip
       :visible="tooltip.visible.value"

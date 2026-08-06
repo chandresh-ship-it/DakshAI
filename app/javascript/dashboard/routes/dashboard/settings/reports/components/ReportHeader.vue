@@ -24,15 +24,13 @@ defineProps({
     </div>
     <div class="flex justify-between w-full gap-5">
       <div class="flex flex-col gap-2">
-        <div class="flex flex-col gap-3 items-start">
-          <span
-            class="text-heading-1 text-n-slate-12 min-h-10 flex items-center"
-          >
+        <div class="flex flex-col gap-2 items-start">
+          <h2 class="text-xl font-medium text-foreground tracking-tight">
             {{ headerTitle }}
-          </span>
+          </h2>
           <p
             v-if="headerDescription"
-            class="text-n-slate-11 mb-0 line-clamp-5 sm:line-clamp-none text-body-main"
+            class="text-[13.5px] text-muted-foreground max-w-[800px] leading-relaxed mb-0"
           >
             {{ headerDescription }}
           </p>
