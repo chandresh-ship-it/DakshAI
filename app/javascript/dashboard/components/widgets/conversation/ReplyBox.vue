@@ -1263,6 +1263,7 @@ export default {
       @set-reply-mode="setReplyMode"
       @toggle-editor-size="toggleEditorSize"
       @toggle-copilot="copilot.toggleEditor"
+      @reset-copilot="copilot.reset"
       @execute-copilot-action="executeCopilotAction"
     />
     <ArticleSearchPopover

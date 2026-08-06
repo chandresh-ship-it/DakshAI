@@ -69,6 +69,7 @@ export default {
     'toggleEditorSize',
     'executeCopilotAction',
     'toggleCopilot',
+    'resetCopilot',
   ],
   setup(props, { emit }) {
     const setReplyMode = mode => {
@@ -77,13 +78,13 @@ export default {
     const handleReplyClick = () => {
       if (props.isReplyRestricted) return;
       if (props.isCopilotActive) {
-        emit('toggleCopilot');
+        emit('resetCopilot');
       }
       setReplyMode(REPLY_EDITOR_MODES.REPLY);
     };
     const handleNoteClick = () => {
       if (props.isCopilotActive) {
-        emit('toggleCopilot');
+        emit('resetCopilot');
       }
       setReplyMode(REPLY_EDITOR_MODES.NOTE);
     };

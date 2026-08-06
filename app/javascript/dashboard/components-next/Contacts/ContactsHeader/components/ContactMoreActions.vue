@@ -16,6 +16,14 @@ const contactMenuItems = computed(() => [
     ? [
         {
           label: t(
+            'CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.IMPORT_CONTACT'
+          ),
+          action: 'import',
+          value: 'import',
+          icon: 'i-lucide-download',
+        },
+        {
+          label: t(
             'CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.EXPORT_CONTACT'
           ),
           action: 'export',

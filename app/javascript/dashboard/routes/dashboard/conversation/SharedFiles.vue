@@ -187,12 +187,15 @@ const displayTime = attachment => {
     <div v-if="!attachmentsLoaded" class="flex justify-center p-3">
       <Spinner class="size-5" />
     </div>
-    <p
+    <div
       v-else-if="!mediaAttachments.length && !fileAttachments.length"
-      class="p-3 text-sm text-center text-n-slate-11"
+      class="flex flex-col items-center justify-center px-6 py-8 gap-3"
     >
-      {{ t('CONVERSATION_SIDEBAR.SHARED_FILES.EMPTY') }}
-    </p>
+      <span class="i-lucide-paperclip size-8 text-muted-foreground/50" />
+      <p class="text-[13.5px] text-center text-muted-foreground">
+        {{ t('CONVERSATION_SIDEBAR.SHARED_FILES.EMPTY', 'No attachments yet') }}
+      </p>
+    </div>
 
     <section v-if="mediaAttachments.length" class="flex flex-col gap-2.5">
       <header class="flex items-center justify-between px-0.5">

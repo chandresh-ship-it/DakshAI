@@ -292,27 +292,27 @@ onMounted(() => {
           </div>
           <div v-else-if="element.name === 'contact_notes'">
             <AccordionItem
-              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_NOTES')"
+              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_NOTES', 'Notes & Attachments')"
               :is-open="isContactSidebarItemOpen('is_contact_notes_open')"
               compact
               @toggle="
                 value => toggleSidebarUIState('is_contact_notes_open', value)
               "
             >
-              <ContactNotes :contact-id="contactId" />
+              <div class="flex flex-col gap-6 pt-2 pb-4">
+                <div class="flex flex-col gap-2">
+                  <h4 class="text-sm font-semibold text-foreground px-6">{{ $t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_NOTES', 'Contact Notes') }}</h4>
+                  <ContactNotes :contact-id="contactId" />
+                </div>
+                <div class="flex flex-col gap-2">
+                  <h4 class="text-sm font-semibold text-foreground px-6">{{ $t('CONVERSATION_SIDEBAR.ACCORDION.SHARED_FILES', 'Attachments') }}</h4>
+                  <SharedFiles />
+                </div>
+              </div>
             </AccordionItem>
           </div>
-          <div v-else-if="element.name === 'shared_files'">
-            <AccordionItem
-              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.SHARED_FILES')"
-              :is-open="isContactSidebarItemOpen('is_shared_files_open')"
-              compact
-              @toggle="
-                value => toggleSidebarUIState('is_shared_files_open', value)
-              "
-            >
-              <SharedFiles />
-            </AccordionItem>
+          <div v-else-if="element.name === 'shared_files'" class="hidden">
+            <!-- Hidden as it is now combined with contact_notes -->
           </div>
         </template>
       </Draggable>

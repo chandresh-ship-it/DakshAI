@@ -174,46 +174,55 @@ export default {
 </script>
 
 <template>
-  <div class="relative items-center w-full p-6 border-b border-border">
+  <div class="relative items-center w-full p-6 border-b border-border bg-background">
+    <!-- Header -->
     <div class="flex w-full justify-between items-center mb-6">
-      <h3 class="font-semibold text-foreground">
+      <h3 class="text-xl font-bold text-foreground tracking-tight">
         {{ $t('CONVERSATION.SIDEBAR.OVERVIEW') }}
       </h3>
       <a
         :href="contactProfileLink"
         target="_blank"
         rel="noopener nofollow noreferrer"
-        class="text-xs text-primary font-medium hover:underline"
+        class="text-[13.5px] text-primary font-medium hover:underline"
       >
         {{ $t('CONVERSATION.SIDEBAR.VIEW_FULL_PROFILE') }}
       </a>
     </div>
 
-    <div class="flex flex-col gap-6 w-full">
-      <div class="flex items-center gap-3 w-full">
-        <Avatar
-          v-if="showAvatar"
-          :src="contact.thumbnail"
-          :name="contact.name"
-          :status="contact.availability_status"
-          :size="48"
-          hide-offline-status
-          rounded-full
-        />
-        <div class="flex flex-col min-w-0">
+    <!-- Details Grid -->
+    <div class="flex items-start gap-6 w-full">
+      <!-- Left: Avatar & Name -->
+      <div class="flex flex-col items-center shrink-0 w-24">
+        <div class="relative">
+          <Avatar
+            v-if="showAvatar"
+            :src="contact.thumbnail"
+            :name="contact.name"
+            :size="64"
+            hide-offline-status
+            rounded-full
+          />
+          <!-- Online status dot overlay -->
+          <div
+            v-if="contact.availability_status === 'online'"
+            class="absolute bottom-0 right-0 size-4 bg-green-500 border-2 border-background rounded-full"
+          />
+        </div>
+        <div class="mt-3 w-full text-center">
           <InlineInput
             v-if="isEditingName"
             ref="nameInput"
             v-model="editName"
-            custom-input-class="!text-base !font-semibold"
-            class="!w-fit"
+            custom-input-class="!text-sm !font-semibold"
+            class="!w-fit mx-auto"
             @enter-press="saveNameEdit"
             @escape-press="cancelNameEdit"
             @blur="saveNameEdit"
           />
           <h2
             v-else-if="showAvatar"
-            class="group/name text-base font-semibold text-foreground truncate cursor-pointer"
+            class="group/name text-[15px] font-bold text-foreground truncate cursor-pointer hover:text-primary transition-colors leading-tight"
             :title="$t('CONTACT_PANEL.CLICK_TO_EDIT')"
             @click="startEditingName"
           >
@@ -222,49 +231,34 @@ export default {
         </div>
       </div>
 
-      <div class="flex flex-col gap-3 w-full">
-        <h4
-          class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-        >
-          {{ $t('CONTACT_PANEL.CONTACT_TITLE') }}
-        </h4>
-
-        <div v-if="contact.email" class="flex flex-col gap-1 w-full">
-          <span class="text-xs text-muted-foreground">{{
-            $t('CONTACT_PANEL.EMAIL_ADDRESS')
-          }}</span>
-          <span class="text-sm text-foreground truncate">{{
-            contact.email
-          }}</span>
+      <!-- Right: Contact Metadata -->
+      <div class="flex flex-col gap-3 min-w-0 pt-1">
+        <div v-if="contact.email" class="flex items-center gap-3 w-full text-muted-foreground">
+          <span class="i-lucide-mail size-[18px] shrink-0 opacity-80" />
+          <span class="text-[13.5px] font-medium truncate">{{ contact.email }}</span>
         </div>
 
-        <div v-if="contact.phone_number" class="flex flex-col gap-1 w-full">
-          <span class="text-xs text-muted-foreground">{{
-            $t('CONTACT_PANEL.PHONE_NUMBER')
-          }}</span>
-          <span class="text-sm text-foreground truncate">{{
-            contact.phone_number
-          }}</span>
+        <div v-if="contact.phone_number" class="flex items-center gap-3 w-full text-muted-foreground">
+          <span class="i-lucide-phone size-[18px] shrink-0 opacity-80" />
+          <span class="text-[13.5px] font-medium truncate">{{ contact.phone_number }}</span>
         </div>
 
-        <div
-          v-if="location || additionalAttributes.location"
-          class="flex flex-col gap-1 w-full"
-        >
-          <span class="text-xs text-muted-foreground">{{
-            $t('CONTACT_PANEL.LOCATION')
-          }}</span>
+        <div v-if="location || additionalAttributes.location" class="flex items-center gap-3 w-full text-muted-foreground">
+          <span class="i-lucide-map-pin size-[18px] shrink-0 opacity-80" />
           <span
-            class="text-sm text-foreground truncate"
+            class="text-[13.5px] font-medium truncate"
             v-html="location || additionalAttributes.location"
           />
         </div>
 
-        <SocialIcons v-if="socialProfiles" :social-profiles="socialProfiles" />
+        <div v-if="socialProfiles" class="mt-1">
+          <SocialIcons :social-profiles="socialProfiles" />
+        </div>
       </div>
     </div>
 
-    <div class="flex items-center w-full mt-4 gap-2">
+    <!-- Actions (hidden in screenshot, kept for functionality) -->
+    <div class="flex flex-wrap items-center gap-2 mt-6">
       <ComposeConversation :contact-id="String(contact.id)">
         <template #trigger>
           <NextButton
@@ -324,6 +318,7 @@ export default {
         </template>
       </ContactDeleteModal>
     </div>
+
     <EditContact
       :show="showEditModal"
       :contact="contact"

@@ -157,7 +157,7 @@ onBeforeMount(contextMenuActions.close);
     <div class="flex items-center gap-3 shrink-0">
       <button
         type="button"
-        class="size-[18px] rounded-full border flex items-center justify-center transition-colors shrink-0"
+        class="size-[18px] p-0 rounded-full border flex items-center justify-center transition-colors shrink-0"
         :class="
           isSelected
             ? 'bg-primary border-primary text-primary-foreground opacity-100'
@@ -171,17 +171,17 @@ onBeforeMount(contextMenuActions.close);
       </button>
       <button
         type="button"
-        class="size-4 flex items-center justify-center"
+        class=" flex items-center justify-center"
         :aria-label="t('INBOX.VIEWS.STARRED')"
         @click.stop="emit('toggleStar', inboxItem)"
       >
         <span
-          class="size-4 hover:text-amber-400 cursor-pointer"
-          :class="
-            isStarred
-              ? 'i-ri-star-fill text-amber-400 opacity-100'
-              : 'i-lucide-star text-muted-foreground opacity-30 group-hover:opacity-100 transition-opacity'
-          "
+          v-if="isStarred"
+          class="size-4 cursor-pointer i-ri-star-fill text-[#b6872d] opacity-100"
+        />
+        <span
+          v-else
+          class="size-4 cursor-pointer i-lucide-star text-muted-foreground opacity-30 group-hover:opacity-100 transition-opacity hover:text-[#b6872d]"
         />
       </button>
       <div class="relative shrink-0 ml-1">

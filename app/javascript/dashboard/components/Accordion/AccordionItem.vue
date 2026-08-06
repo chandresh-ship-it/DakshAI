@@ -32,29 +32,28 @@ const onToggle = () => {
 </script>
 
 <template>
-  <div class="text-sm border rounded-lg border-border bg-card">
+  <div class="text-sm bg-transparent">
     <button
-      class="flex items-center select-none w-full m-0 cursor-grab justify-between py-2 px-4 drag-handle"
+      class="flex items-center select-none w-full m-0 cursor-grab justify-between py-4 px-6 drag-handle hover:opacity-80 transition-opacity"
       @click.stop="onToggle"
     >
-      <div class="flex justify-between">
-        <EmojiOrIcon class="inline-block w-5" :icon="icon" :emoji="emoji" />
-        <h5 class="text-foreground text-sm mb-0 py-0 pr-2 pl-0 font-medium">
+      <div class="flex items-center gap-2">
+        <EmojiOrIcon v-if="icon || emoji" class="inline-block w-5" :icon="icon" :emoji="emoji" />
+        <h5 class="text-foreground text-[15px] font-semibold mb-0 py-0 pr-2 pl-0">
           {{ title }}
         </h5>
       </div>
-      <div class="flex flex-row items-center">
+      <div class="flex flex-row items-center gap-2">
         <slot name="button" />
         <span
-          class="size-4 text-muted-foreground transition-transform duration-200 i-lucide-chevron-down"
-          :class="{ 'rotate-180': isOpen }"
+          class="size-[18px] text-primary transition-transform duration-200"
+          :class="isOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
         />
       </div>
     </button>
     <div
       v-if="isOpen"
-      class="border-t border-border"
-      :class="compact ? 'p-0' : 'px-2 py-4'"
+      :class="compact ? 'p-0 px-6 pb-6' : 'px-6 pb-6'"
     >
       <slot />
     </div>

@@ -37,8 +37,7 @@ const showCopilotLauncher = computed(() => {
   );
   return (
     isCaptainEnabled &&
-    !uiSettings.value.is_copilot_panel_open &&
-    !isConversationRoute.value
+    !uiSettings.value.is_copilot_panel_open
   );
 });
 const toggleSidebar = () => {
@@ -52,19 +51,14 @@ const toggleSidebar = () => {
 <template>
   <div
     v-if="showCopilotLauncher"
-    class="fixed bottom-4 ltr:right-4 rtl:left-4 z-50"
+    class="fixed bottom-6 ltr:right-6 rtl:left-6 z-[9999]"
   >
-    <ButtonGroup
-      class="rounded-full bg-n-alpha-2 backdrop-blur-lg p-1 shadow hover:shadow-md"
+    <button
+      class="flex items-center justify-center size-14 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+      @click="toggleSidebar"
     >
-      <Button
-        icon="i-woot-captain"
-        no-animation
-        class="!rounded-full !bg-n-solid-3 dark:!bg-n-alpha-2 !text-n-slate-12 text-xl transition-all duration-200 ease-out hover:brightness-110"
-        lg
-        @click="toggleSidebar"
-      />
-    </ButtonGroup>
+      <span class="i-woot-captain size-6" />
+    </button>
   </div>
   <template v-else />
 </template>
