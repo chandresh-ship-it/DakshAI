@@ -293,7 +293,7 @@ export default {
         slate
         faded
         sm
-        @click="toggleEmojiPicker"
+        @click.stop.prevent="toggleEmojiPicker"
       />
       <FileUpload
         v-if="showAttachButton"
