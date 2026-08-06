@@ -3,7 +3,11 @@ import { mapGetters } from 'vuex';
 import { useAlert, useTrack } from 'dashboard/composables';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { getUnixTime } from 'date-fns';
-import { CMD_SNOOZE_NOTIFICATION, CMD_REOPEN_CONVERSATION, CMD_RESOLVE_CONVERSATION } from 'dashboard/helper/commandbar/events';
+import {
+  CMD_SNOOZE_NOTIFICATION,
+  CMD_REOPEN_CONVERSATION,
+  CMD_RESOLVE_CONVERSATION,
+} from 'dashboard/helper/commandbar/events';
 import wootConstants from 'dashboard/constants/globals';
 import { findSnoozeTime } from 'dashboard/helper/snoozeHelpers';
 import { INBOX_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
@@ -56,9 +60,12 @@ export default {
       if (!currentChat) return items;
 
       const isOpen = currentChat.status === wootConstants.STATUS_TYPE.OPEN;
-      const isResolved = currentChat.status === wootConstants.STATUS_TYPE.RESOLVED;
-      const isPending = currentChat.status === wootConstants.STATUS_TYPE.PENDING;
-      const isSnoozed = currentChat.status === wootConstants.STATUS_TYPE.SNOOZED;
+      const isResolved =
+        currentChat.status === wootConstants.STATUS_TYPE.RESOLVED;
+      const isPending =
+        currentChat.status === wootConstants.STATUS_TYPE.PENDING;
+      const isSnoozed =
+        currentChat.status === wootConstants.STATUS_TYPE.SNOOZED;
 
       if (isOpen || isPending || isSnoozed) {
         items.push({
@@ -72,7 +79,9 @@ export default {
       if (isResolved || isPending || isSnoozed) {
         items.push({
           icon: 'i-lucide-rotate-ccw',
-          label: isResolved ? this.$t('CONVERSATION.HEADER.REOPEN_ACTION') : this.$t('CONVERSATION.HEADER.OPEN_ACTION'),
+          label: isResolved
+            ? this.$t('CONVERSATION.HEADER.REOPEN_ACTION')
+            : this.$t('CONVERSATION.HEADER.OPEN_ACTION'),
           action: 'open',
           value: 'open',
         });
@@ -188,12 +197,14 @@ export default {
       } else if (action === 'open') {
         emitter.emit(CMD_REOPEN_CONVERSATION);
       } else if (action === 'pending') {
-        this.$store.dispatch('toggleStatus', {
-          conversationId: currentChatId,
-          status: wootConstants.STATUS_TYPE.PENDING,
-        }).then(() => {
-          useAlert(this.$t('CONVERSATION.CHANGE_STATUS'));
-        });
+        this.$store
+          .dispatch('toggleStatus', {
+            conversationId: currentChatId,
+            status: wootConstants.STATUS_TYPE.PENDING,
+          })
+          .then(() => {
+            useAlert(this.$t('CONVERSATION.CHANGE_STATUS'));
+          });
       }
     },
   },

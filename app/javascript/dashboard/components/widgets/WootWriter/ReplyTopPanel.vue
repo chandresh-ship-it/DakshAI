@@ -222,8 +222,6 @@ export default {
         >
           {{ $t('CONVERSATION.REPLYBOX.PRIVATE_NOTE') }}
         </button>
-
-
       </div>
 
       <div class="flex items-center gap-2">
@@ -233,7 +231,7 @@ export default {
           </span>
         </div>
         <div v-if="captainTasksEnabled" class="relative">
-          <div ref="copilotToggleRef" class="inline-flex"></div>
+          <div ref="copilotToggleRef" class="inline-flex" />
           <CopilotMenuBar
             v-if="showCopilotMenu"
             v-on-click-outside="[
@@ -248,9 +246,9 @@ export default {
           />
         </div>
         <button
-          @click="$emit('toggleEditorSize')"
           class="size-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
           title="Toggle editor size"
+          @click="$emit('toggleEditorSize')"
         >
           <span class="i-lucide-maximize-2 size-4" />
         </button>

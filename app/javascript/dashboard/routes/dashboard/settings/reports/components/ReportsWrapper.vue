@@ -4,12 +4,36 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 
 const tabs = [
-  { labelKey: 'SIDEBAR.REPORTS_OVERVIEW', routeName: 'account_overview_reports', activeOn: [] },
-  { labelKey: 'SIDEBAR.REPORTS_CONVERSATION', routeName: 'conversation_reports', activeOn: [] },
-  { labelKey: 'SIDEBAR.REPORTS_AGENT', routeName: 'agent_reports_index', activeOn: ['agent_reports_show'] },
-  { labelKey: 'SIDEBAR.REPORTS_LABEL', routeName: 'label_reports_index', activeOn: ['label_reports_show'] },
-  { labelKey: 'SIDEBAR.REPORTS_INBOX', routeName: 'inbox_reports_index', activeOn: ['inbox_reports_show'] },
-  { labelKey: 'SIDEBAR.REPORTS_TEAM', routeName: 'team_reports_index', activeOn: ['team_reports_show'] },
+  {
+    labelKey: 'SIDEBAR.REPORTS_OVERVIEW',
+    routeName: 'account_overview_reports',
+    activeOn: [],
+  },
+  {
+    labelKey: 'SIDEBAR.REPORTS_CONVERSATION',
+    routeName: 'conversation_reports',
+    activeOn: [],
+  },
+  {
+    labelKey: 'SIDEBAR.REPORTS_AGENT',
+    routeName: 'agent_reports_index',
+    activeOn: ['agent_reports_show'],
+  },
+  {
+    labelKey: 'SIDEBAR.REPORTS_LABEL',
+    routeName: 'label_reports_index',
+    activeOn: ['label_reports_show'],
+  },
+  {
+    labelKey: 'SIDEBAR.REPORTS_INBOX',
+    routeName: 'inbox_reports_index',
+    activeOn: ['inbox_reports_show'],
+  },
+  {
+    labelKey: 'SIDEBAR.REPORTS_TEAM',
+    routeName: 'team_reports_index',
+    activeOn: ['team_reports_show'],
+  },
   { labelKey: 'SIDEBAR.CSAT', routeName: 'csat_reports', activeOn: [] },
   { labelKey: 'SIDEBAR.REPORTS_SLA', routeName: 'sla_reports', activeOn: [] },
   { labelKey: 'SIDEBAR.REPORTS_BOT', routeName: 'bot_reports', activeOn: [] },

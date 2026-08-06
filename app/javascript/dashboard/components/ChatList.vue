@@ -948,14 +948,23 @@ watch(conversationFilters, (newVal, oldVal) => {
       </div>
     </div>
 
-    <div v-if="!hasAppliedFiltersOrActiveFolders" class="p-4 pt-2 shrink-0 border-b border-border/50">
-      <RelayTabs :model-value="activeAssigneeTab" class="w-full" @update:model-value="updateAssigneeTab">
+    <div
+      v-if="!hasAppliedFiltersOrActiveFolders"
+      class="p-4 pt-2 shrink-0 border-b border-border/50"
+    >
+      <RelayTabs
+        :model-value="activeAssigneeTab"
+        class="w-full"
+        @update:model-value="updateAssigneeTab"
+      >
         <div class="flex items-center">
-          <RelayTabsList class="h-9 p-0 bg-transparent gap-4 overflow-hidden flex-1 justify-start">
-            <RelayTabsTrigger 
-              v-for="tab in assigneeTabItems" 
-              :key="tab.key" 
-              :value="tab.key" 
+          <RelayTabsList
+            class="h-9 p-0 bg-transparent gap-4 overflow-hidden flex-1 justify-start"
+          >
+            <RelayTabsTrigger
+              v-for="tab in assigneeTabItems"
+              :key="tab.key"
+              :value="tab.key"
               class="px-0 py-2 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none data-[state=active]:bg-transparent"
             >
               {{ tab.name }}

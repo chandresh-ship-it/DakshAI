@@ -163,7 +163,7 @@ export default {
 
     const { captainTasksEnabled } = useCaptain();
 
-    const handleEmojiPickerClick = (e) => {
+    const handleEmojiPickerClick = e => {
       if (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -344,8 +344,8 @@ export default {
           direct_upload_url: '/rails/active_storage/direct_uploads',
           direct_upload: true,
         }"
-        @input-file="onFileUpload"
         class="inline-flex"
+        @input-file="onFileUpload"
       >
         <NextButton
           v-if="!isEditorDisabled"

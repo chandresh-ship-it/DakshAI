@@ -171,7 +171,7 @@ onBeforeMount(contextMenuActions.close);
       </button>
       <button
         type="button"
-        class=" flex items-center justify-center"
+        class="flex items-center justify-center"
         :aria-label="t('INBOX.VIEWS.STARRED')"
         @click.stop="emit('toggleStar', inboxItem)"
       >

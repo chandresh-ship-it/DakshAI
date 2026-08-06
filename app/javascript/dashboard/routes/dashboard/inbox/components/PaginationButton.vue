@@ -41,7 +41,9 @@ export default {
 
 <template>
   <div class="flex gap-2.5 items-center">
-    <div class="flex items-center gap-1 whitespace-nowrap text-xs text-muted-foreground font-medium">
+    <div
+      class="flex items-center gap-1 whitespace-nowrap text-xs text-muted-foreground font-medium"
+    >
       <span class="tabular-nums text-foreground">
         {{ totalLength <= 1 ? '1' : currentIndex }}
       </span>

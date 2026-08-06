@@ -130,10 +130,18 @@ watch(
         @delete="onDelete"
       />
     </div>
-    <div v-else class="flex flex-col items-center justify-center px-6 py-8 gap-3">
+    <div
+      v-else
+      class="flex flex-col items-center justify-center px-6 py-8 gap-3"
+    >
       <span class="i-lucide-file-text size-8 text-muted-foreground/50" />
       <p class="text-[13.5px] text-center text-muted-foreground">
-        {{ t('CONTACTS_LAYOUT.SIDEBAR.NOTES.CONVERSATION_EMPTY_STATE', 'No notes yet') }}
+        {{
+          t(
+            'CONTACTS_LAYOUT.SIDEBAR.NOTES.CONVERSATION_EMPTY_STATE',
+            'No notes yet'
+          )
+        }}
       </p>
     </div>
 

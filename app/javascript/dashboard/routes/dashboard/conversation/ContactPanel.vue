@@ -292,7 +292,12 @@ onMounted(() => {
           </div>
           <div v-else-if="element.name === 'contact_notes'">
             <AccordionItem
-              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_NOTES', 'Notes & Attachments')"
+              :title="
+                $t(
+                  'CONVERSATION_SIDEBAR.ACCORDION.CONTACT_NOTES',
+                  'Notes & Attachments'
+                )
+              "
               :is-open="isContactSidebarItemOpen('is_contact_notes_open')"
               compact
               @toggle="
@@ -301,11 +306,25 @@ onMounted(() => {
             >
               <div class="flex flex-col gap-6 pt-2 pb-4">
                 <div class="flex flex-col gap-2">
-                  <h4 class="text-sm font-semibold text-foreground px-6">{{ $t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_NOTES', 'Contact Notes') }}</h4>
+                  <h4 class="text-sm font-semibold text-foreground px-6">
+                    {{
+                      $t(
+                        'CONVERSATION_SIDEBAR.ACCORDION.CONTACT_NOTES',
+                        'Contact Notes'
+                      )
+                    }}
+                  </h4>
                   <ContactNotes :contact-id="contactId" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <h4 class="text-sm font-semibold text-foreground px-6">{{ $t('CONVERSATION_SIDEBAR.ACCORDION.SHARED_FILES', 'Attachments') }}</h4>
+                  <h4 class="text-sm font-semibold text-foreground px-6">
+                    {{
+                      $t(
+                        'CONVERSATION_SIDEBAR.ACCORDION.SHARED_FILES',
+                        'Attachments'
+                      )
+                    }}
+                  </h4>
                   <SharedFiles />
                 </div>
               </div>

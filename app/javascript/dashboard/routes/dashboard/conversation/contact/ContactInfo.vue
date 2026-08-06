@@ -174,7 +174,7 @@ export default {
 </script>
 
 <template>
-  <div class="relative items-center w-full p-6 border-b border-border bg-background">
+  <div class="relative items-center w-full p-6 border-b border-border">
     <!-- Header -->
     <div class="flex w-full justify-between items-center mb-6">
       <h3 class="text-xl font-bold text-foreground tracking-tight">
@@ -233,17 +233,30 @@ export default {
 
       <!-- Right: Contact Metadata -->
       <div class="flex flex-col gap-3 min-w-0 pt-1">
-        <div v-if="contact.email" class="flex items-center gap-3 w-full text-muted-foreground">
+        <div
+          v-if="contact.email"
+          class="flex items-center gap-3 w-full text-muted-foreground"
+        >
           <span class="i-lucide-mail size-[18px] shrink-0 opacity-80" />
-          <span class="text-[13.5px] font-medium truncate">{{ contact.email }}</span>
+          <span class="text-[13.5px] font-medium truncate">{{
+            contact.email
+          }}</span>
         </div>
 
-        <div v-if="contact.phone_number" class="flex items-center gap-3 w-full text-muted-foreground">
+        <div
+          v-if="contact.phone_number"
+          class="flex items-center gap-3 w-full text-muted-foreground"
+        >
           <span class="i-lucide-phone size-[18px] shrink-0 opacity-80" />
-          <span class="text-[13.5px] font-medium truncate">{{ contact.phone_number }}</span>
+          <span class="text-[13.5px] font-medium truncate">{{
+            contact.phone_number
+          }}</span>
         </div>
 
-        <div v-if="location || additionalAttributes.location" class="flex items-center gap-3 w-full text-muted-foreground">
+        <div
+          v-if="location || additionalAttributes.location"
+          class="flex items-center gap-3 w-full text-muted-foreground"
+        >
           <span class="i-lucide-map-pin size-[18px] shrink-0 opacity-80" />
           <span
             class="text-[13.5px] font-medium truncate"

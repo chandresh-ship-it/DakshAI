@@ -7,8 +7,6 @@ import format from 'date-fns/format';
 import { formatTime } from '@chatwoot/utils';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
-
-
 const props = defineProps({
   metric: {
     type: Object,
@@ -153,7 +151,7 @@ const xAxisLabels = computed(() => {
       <div
         class="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0"
       >
-        <span :class="[metricIcon, 'size-5']" />
+        <span class="size-5" :class="[metricIcon]" />
       </div>
       <div class="flex flex-col">
         <h3 class="text-[14px] font-medium text-muted-foreground">
@@ -184,8 +182,14 @@ const xAxisLabels = computed(() => {
             class="flex items-center gap-1 text-[14px] font-medium pb-1"
             :class="trendData.good ? 'text-emerald-600' : 'text-destructive'"
           >
-            <span v-if="trendData.up === true" class="i-lucide-trending-up size-3.5" />
-            <span v-else-if="trendData.up === false" class="i-lucide-trending-down size-3.5" />
+            <span
+              v-if="trendData.up === true"
+              class="i-lucide-trending-up size-3.5"
+            />
+            <span
+              v-else-if="trendData.up === false"
+              class="i-lucide-trending-down size-3.5"
+            />
             <span v-else class="i-lucide-minus size-3.5" />
             {{ trendData.value }}
           </div>
@@ -232,14 +236,18 @@ const xAxisLabels = computed(() => {
           }}</span>
           <div class="flex items-center gap-1.5 mt-0.5">
             <div class="size-2 bg-primary rounded-sm" />
-            <span class="text-[11px] leading-none text-white/90">{{ metric.NAME }}: {{ item.displayValue }}</span>
+            <span class="text-[11px] leading-none text-white/90"
+              >{{ metric.NAME }}: {{ item.displayValue }}</span
+            >
           </div>
           <div
             v-if="item.count > 0 && isAverageMetricType(metric.KEY)"
             class="flex items-center gap-1.5 mt-0.5"
           >
             <div class="size-2 bg-white/20 rounded-sm" />
-            <span class="text-[11px] leading-none text-white/70">{{ $t('REPORT.CONVERSATION_COUNT') }}: {{ item.count }}</span>
+            <span class="text-[11px] leading-none text-white/70"
+              >{{ $t('REPORT.CONVERSATION_COUNT') }}: {{ item.count }}</span
+            >
           </div>
           <!-- Tooltip Arrow -->
           <div

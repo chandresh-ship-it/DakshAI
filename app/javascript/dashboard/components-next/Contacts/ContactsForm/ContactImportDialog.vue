@@ -56,7 +56,9 @@ defineExpose({ dialogRef });
   <Dialog
     ref="dialogRef"
     :title="t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.TITLE')"
-    :confirm-button-label="t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.IMPORT')"
+    :confirm-button-label="
+      t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.IMPORT')
+    "
     :is-loading="isImportingContact"
     :disable-confirm-button="isImportingContact || !hasSelectedFile"
     @confirm="uploadFile"
@@ -71,15 +73,20 @@ defineExpose({ dialogRef });
       class="mt-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card p-10 transition-colors hover:bg-muted/50 cursor-pointer"
       @click="handleFileClick"
       @dragover.prevent
-      @drop.prevent="e => {
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-          hasSelectedFile = e.dataTransfer.files[0];
-          selectedFileName = processFileName(hasSelectedFile.name);
-          if (fileInput) fileInput.value = null;
+      @drop.prevent="
+        e => {
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            hasSelectedFile = e.dataTransfer.files[0];
+            selectedFileName = processFileName(hasSelectedFile.name);
+            if (fileInput) fileInput.value = null;
+          }
         }
-      }"
+      "
     >
-      <div v-if="!hasSelectedFile" class="flex flex-col items-center gap-3 text-center">
+      <div
+        v-if="!hasSelectedFile"
+        class="flex flex-col items-center gap-3 text-center"
+      >
         <div class="rounded-full bg-muted/50 p-3">
           <span class="i-lucide-upload size-6 text-foreground" />
         </div>
@@ -87,9 +94,7 @@ defineExpose({ dialogRef });
           <p class="text-sm font-medium text-foreground">
             Click to upload or drag and drop
           </p>
-          <p class="text-xs text-muted-foreground">
-            CSV up to 10MB
-          </p>
+          <p class="text-xs text-muted-foreground">CSV up to 10MB</p>
         </div>
       </div>
 
@@ -99,7 +104,9 @@ defineExpose({ dialogRef });
             <span class="i-lucide-file-spreadsheet size-5 text-primary" />
           </div>
           <div class="flex flex-col text-start">
-            <span class="text-sm font-medium text-foreground">{{ selectedFileName }}</span>
+            <span class="text-sm font-medium text-foreground">{{
+              selectedFileName
+            }}</span>
             <span class="text-xs text-muted-foreground">Ready to upload</span>
           </div>
         </div>

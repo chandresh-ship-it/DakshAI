@@ -38,8 +38,15 @@ const onToggle = () => {
       @click.stop="onToggle"
     >
       <div class="flex items-center gap-2">
-        <EmojiOrIcon v-if="icon || emoji" class="inline-block w-5" :icon="icon" :emoji="emoji" />
-        <h5 class="text-foreground text-[15px] font-semibold mb-0 py-0 pr-2 pl-0">
+        <EmojiOrIcon
+          v-if="icon || emoji"
+          class="inline-block w-5"
+          :icon="icon"
+          :emoji="emoji"
+        />
+        <h5
+          class="text-foreground text-[15px] font-semibold mb-0 py-0 pr-2 pl-0"
+        >
           {{ title }}
         </h5>
       </div>
@@ -51,10 +58,7 @@ const onToggle = () => {
         />
       </div>
     </button>
-    <div
-      v-if="isOpen"
-      :class="compact ? 'p-0 px-6 pb-6' : 'px-6 pb-6'"
-    >
+    <div v-if="isOpen" :class="compact ? 'p-0 px-6 pb-6' : 'px-6 pb-6'">
       <slot />
     </div>
   </div>

@@ -23,21 +23,57 @@ const teamMenuList = computed(() => [
 ]);
 
 const conversationCards = computed(() => [
-  { key: 'open', icon: 'i-lucide-message-circle', label: t(`${accounti18nKey}.OPEN`), value: accountConversationMetric.value.open ?? 0 },
-  { key: 'unattended', icon: 'i-lucide-circle-alert', label: t(`${accounti18nKey}.UNATTENDED`), value: accountConversationMetric.value.unattended ?? 0 },
-  { key: 'unassigned', icon: 'i-lucide-user-x', label: t(`${accounti18nKey}.UNASSIGNED`), value: accountConversationMetric.value.unassigned ?? 0 },
-  { key: 'pending', icon: 'i-lucide-hourglass', label: t(`${accounti18nKey}.PENDING`), value: accountConversationMetric.value.pending ?? 0 },
+  {
+    key: 'open',
+    icon: 'i-lucide-message-circle',
+    label: t(`${accounti18nKey}.OPEN`),
+    value: accountConversationMetric.value.open ?? 0,
+  },
+  {
+    key: 'unattended',
+    icon: 'i-lucide-circle-alert',
+    label: t(`${accounti18nKey}.UNATTENDED`),
+    value: accountConversationMetric.value.unattended ?? 0,
+  },
+  {
+    key: 'unassigned',
+    icon: 'i-lucide-user-x',
+    label: t(`${accounti18nKey}.UNASSIGNED`),
+    value: accountConversationMetric.value.unassigned ?? 0,
+  },
+  {
+    key: 'pending',
+    icon: 'i-lucide-hourglass',
+    label: t(`${accounti18nKey}.PENDING`),
+    value: accountConversationMetric.value.pending ?? 0,
+  },
 ]);
 
 const agentStatusRows = computed(() => [
-  { key: 'online', dotClass: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]', label: t('OVERVIEW_REPORTS.AGENT_STATUS.ONLINE'), value: agentStatus.value.online ?? 0 },
-  { key: 'busy', dotClass: 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]', label: t('OVERVIEW_REPORTS.AGENT_STATUS.BUSY'), value: agentStatus.value.busy ?? 0 },
-  { key: 'offline', dotClass: 'bg-slate-400', label: t('OVERVIEW_REPORTS.AGENT_STATUS.OFFLINE'), value: agentStatus.value.offline ?? 0 },
+  {
+    key: 'online',
+    dotClass: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]',
+    label: t('OVERVIEW_REPORTS.AGENT_STATUS.ONLINE'),
+    value: agentStatus.value.online ?? 0,
+  },
+  {
+    key: 'busy',
+    dotClass: 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]',
+    label: t('OVERVIEW_REPORTS.AGENT_STATUS.BUSY'),
+    value: agentStatus.value.busy ?? 0,
+  },
+  {
+    key: 'offline',
+    dotClass: 'bg-slate-400',
+    label: t('OVERVIEW_REPORTS.AGENT_STATUS.OFFLINE'),
+    value: agentStatus.value.offline ?? 0,
+  },
 ]);
 
 const selectedTeam = ref(null);
 const selectedTeamLabel = computed(
-  () => teamMenuList.value.find(item => item.value === selectedTeam.value)?.label
+  () =>
+    teamMenuList.value.find(item => item.value === selectedTeam.value)?.label
 );
 
 const fetchData = () => {
@@ -165,13 +201,17 @@ onMounted(() => {
         >
           <div class="flex items-center gap-3">
             <span :class="row.dotClass" class="size-2 rounded-full shrink-0" />
-            <span class="text-[14px] font-medium text-foreground">{{ row.label }}</span>
+            <span class="text-[14px] font-medium text-foreground">{{
+              row.label
+            }}</span>
           </div>
           <div class="flex items-center gap-4">
             <span class="text-[12px] font-medium text-muted-foreground">
               {{ $t('REPORT.DATA_PENDING') }}
             </span>
-            <span class="text-[14px] font-medium text-foreground w-6 text-right">
+            <span
+              class="text-[14px] font-medium text-foreground w-6 text-right"
+            >
               {{ row.value }}
             </span>
           </div>

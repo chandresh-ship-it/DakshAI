@@ -27,7 +27,6 @@ const emit = defineEmits([
 
 <template>
   <div class="flex flex-col gap-0 border-b border-border/40 bg-background">
-
     <!-- Two-section layout for search views (main contacts, label views) -->
     <template v-if="showSearch">
       <!-- Top: Title + subtitle + action buttons -->
@@ -42,7 +41,12 @@ const emit = defineEmits([
         </div>
         <div class="flex shrink-0 items-center gap-2">
           <RelayButton
-            v-if="hasActiveFilters && !isSegmentsView && !isLabelView && !isActiveView"
+            v-if="
+              hasActiveFilters &&
+              !isSegmentsView &&
+              !isLabelView &&
+              !isActiveView
+            "
             variant="outline"
             size="icon"
             class="size-10 rounded-lg shadow-sm"
@@ -67,7 +71,9 @@ const emit = defineEmits([
             @click="emit('add')"
           >
             <span class="i-lucide-plus size-4" />
-            {{ $t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.ADD_CONTACT') }}
+            {{
+              $t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.ADD_CONTACT')
+            }}
           </RelayButton>
 
           <ContactMoreActions
@@ -79,7 +85,9 @@ const emit = defineEmits([
       </div>
 
       <!-- Bottom: Search + Columns + Filters toolbar -->
-      <div class="flex items-center justify-between gap-3 border-t border-border/30 px-6 py-3">
+      <div
+        class="flex items-center justify-between gap-3 border-t border-border/30 px-6 py-3"
+      >
         <div class="relative w-full max-w-sm">
           <span
             class="i-lucide-search pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -103,7 +111,10 @@ const emit = defineEmits([
           >
             <span class="i-lucide-list-filter size-4" />
             {{ $t('CONTACTS_LAYOUT.HEADER.FILTERS_BUTTON') }}
-            <span v-if="hasActiveFilters" class="size-1.5 rounded-full bg-primary" />
+            <span
+              v-if="hasActiveFilters"
+              class="size-1.5 rounded-full bg-primary"
+            />
           </RelayButton>
         </div>
       </div>
@@ -124,7 +135,9 @@ const emit = defineEmits([
             @click="emit('filter')"
           >
             <span
-              :class="isSegmentsView ? 'i-lucide-pen-line' : 'i-lucide-list-filter'"
+              :class="
+                isSegmentsView ? 'i-lucide-pen-line' : 'i-lucide-list-filter'
+              "
               class="size-4"
             />
             {{

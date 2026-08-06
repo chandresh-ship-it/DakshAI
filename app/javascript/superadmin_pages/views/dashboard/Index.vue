@@ -27,12 +27,15 @@ const prepareData = sourceData => {
         label: 'Conversations',
         data,
         borderColor: 'rgba(91, 91, 214, 1)',
-        backgroundColor: (ctx) => {
+        backgroundColor: ctx => {
           const chart = ctx.chart;
           const { chartArea } = chart;
           if (!chartArea) return 'rgba(91, 91, 214, 0.15)';
           const gradient = chart.ctx.createLinearGradient(
-            0, chartArea.top, 0, chartArea.bottom
+            0,
+            chartArea.top,
+            0,
+            chartArea.bottom
           );
           gradient.addColorStop(0, 'rgba(91, 91, 214, 0.25)');
           gradient.addColorStop(1, 'rgba(91, 91, 214, 0)');
@@ -84,14 +87,22 @@ const stats = [
   { label: 'Accounts', value: accountsCount, icon: 'i-lucide-building' },
   { label: 'Users', value: usersCount, icon: 'i-lucide-users' },
   { label: 'Inboxes', value: inboxesCount, icon: 'i-lucide-inbox' },
-  { label: 'Conversations', value: conversationsCount, icon: 'i-lucide-message-square' },
+  {
+    label: 'Conversations',
+    value: conversationsCount,
+    icon: 'i-lucide-message-square',
+  },
 ];
 </script>
 
 <template>
   <div class="space-y-6">
-    <header class="flex items-center justify-between pb-4 border-b border-border/40">
-      <h1 class="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+    <header
+      class="flex items-center justify-between pb-4 border-b border-border/40"
+    >
+      <h1 class="text-2xl font-semibold tracking-tight text-foreground">
+        Dashboard
+      </h1>
     </header>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -101,47 +112,83 @@ const stats = [
         class="rounded-xl border border-border bg-card p-5 shadow-xs"
       >
         <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-medium text-muted-foreground">{{ stat.label }}</span>
-          <span :class="[stat.icon, 'size-4 text-muted-foreground']" aria-hidden="true" />
+          <span class="text-sm font-medium text-muted-foreground">{{
+            stat.label
+          }}</span>
+          <span
+            class="size-4 text-muted-foreground"
+            :class="[stat.icon]"
+            aria-hidden="true"
+          />
         </div>
-        <div class="text-3xl font-bold text-foreground tabular-nums">{{ stat.value }}</div>
+        <div class="text-3xl font-bold text-foreground tabular-nums">
+          {{ stat.value }}
+        </div>
       </div>
     </div>
 
-    <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
-      <div class="px-6 pt-5 pb-4 border-b border-border/40 flex items-start justify-between gap-6 flex-wrap">
+    <div
+      class="rounded-xl border border-border bg-card shadow-xs overflow-hidden"
+    >
+      <div
+        class="px-6 pt-5 pb-4 border-b border-border/40 flex items-start justify-between gap-6 flex-wrap"
+      >
         <div>
-          <h2 class="text-base font-semibold text-foreground">Conversation Activity</h2>
-          <p class="text-sm text-muted-foreground mt-0.5">Volume of conversations over time</p>
+          <h2 class="text-base font-semibold text-foreground">
+            Conversation Activity
+          </h2>
+          <p class="text-sm text-muted-foreground mt-0.5">
+            Volume of conversations over time
+          </p>
         </div>
 
         <div class="flex items-center divide-x divide-border/60">
           <div class="pr-5 text-right">
-            <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total</div>
+            <div
+              class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+            >
+              Total
+            </div>
             <div class="text-xl font-bold text-foreground tabular-nums mt-0.5">
               {{ totalConversations.toLocaleString() }}
             </div>
           </div>
           <div class="px-5 text-right">
-            <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Peak</div>
+            <div
+              class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+            >
+              Peak
+            </div>
             <div class="text-xl font-bold text-foreground tabular-nums mt-0.5">
               {{ peakConversations.toLocaleString() }}
             </div>
           </div>
           <div class="pl-5 text-right">
-            <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Avg / period</div>
+            <div
+              class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+            >
+              Avg / period
+            </div>
             <div class="text-xl font-bold text-foreground tabular-nums mt-0.5">
               {{ avgConversations.toLocaleString() }}
             </div>
           </div>
           <div v-if="trendPercent !== null" class="pl-5 text-right">
-            <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Trend</div>
+            <div
+              class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+            >
+              Trend
+            </div>
             <div
               class="inline-flex items-center gap-1 text-base font-bold tabular-nums mt-0.5"
               :class="trendPercent >= 0 ? 'text-success' : 'text-destructive'"
             >
               <span
-                :class="trendPercent >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'"
+                :class="
+                  trendPercent >= 0
+                    ? 'i-lucide-trending-up'
+                    : 'i-lucide-trending-down'
+                "
                 class="size-4 shrink-0"
                 aria-hidden="true"
               />
@@ -152,7 +199,11 @@ const stats = [
       </div>
 
       <!-- eslint-disable-next-line vue/no-static-inline-styles -->
-      <LineChart class="px-4 pt-4 pb-2 w-full" :collection="chartData" style="max-height: 360px" />
+      <LineChart
+        class="px-4 pt-4 pb-2 w-full"
+        :collection="chartData"
+        style="max-height: 360px"
+      />
     </div>
   </div>
 </template>

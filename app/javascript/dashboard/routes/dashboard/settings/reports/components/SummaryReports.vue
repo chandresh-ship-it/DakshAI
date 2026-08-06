@@ -66,7 +66,9 @@ const defaulSpanRender = cellProps =>
   h(
     'span',
     {
-      class: cellProps.getValue() ? '' : 'text-foreground font-medium text-[14px]',
+      class: cellProps.getValue()
+        ? ''
+        : 'text-foreground font-medium text-[14px]',
     },
     cellProps.getValue()
   );

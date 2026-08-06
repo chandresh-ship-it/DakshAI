@@ -72,7 +72,10 @@ const defaultChartOptions = {
   },
 };
 
-const options = computed(() => ({ ...defaultChartOptions, ...props.chartOptions }));
+const options = computed(() => ({
+  ...defaultChartOptions,
+  ...props.chartOptions,
+}));
 </script>
 
 <template>

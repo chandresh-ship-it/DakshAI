@@ -35,10 +35,7 @@ const showCopilotLauncher = computed(() => {
     currentAccountId.value,
     FEATURE_FLAGS.CAPTAIN
   );
-  return (
-    isCaptainEnabled &&
-    !uiSettings.value.is_copilot_panel_open
-  );
+  return isCaptainEnabled && !uiSettings.value.is_copilot_panel_open;
 });
 const toggleSidebar = () => {
   updateUISettings({

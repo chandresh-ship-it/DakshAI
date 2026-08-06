@@ -130,12 +130,19 @@ watch(
       <!-- Bullets / Content -->
       <div v-if="summaryBullets.length" class="pl-4">
         <ul class="list-disc text-[13.5px] text-muted-foreground space-y-2">
-          <li v-for="(bullet, index) in summaryBullets" :key="index" class="pl-1">
+          <li
+            v-for="(bullet, index) in summaryBullets"
+            :key="index"
+            class="pl-1"
+          >
             <span class="text-foreground/90">{{ bullet }}</span>
           </li>
         </ul>
       </div>
-      <div v-else-if="summaryText" class="text-[13.5px] text-foreground/90 leading-relaxed">
+      <div
+        v-else-if="summaryText"
+        class="text-[13.5px] text-foreground/90 leading-relaxed"
+      >
         {{ summaryText }}
       </div>
       <p v-else class="text-[13px] text-muted-foreground">
@@ -152,18 +159,26 @@ watch(
         class="flex flex-col gap-3 mt-1 bg-black/20 dark:bg-black/40 border border-border/20 rounded-xl p-4"
       >
         <div class="flex items-center gap-2.5">
-          <div class="flex items-center justify-center size-6 rounded-full bg-primary/15 text-primary">
+          <div
+            class="flex items-center justify-center size-6 rounded-full bg-primary/15 text-primary"
+          >
             <span class="i-lucide-lightbulb size-3.5" />
           </div>
-          <span class="text-[13px] font-semibold text-primary uppercase tracking-wide">
+          <span
+            class="text-[13px] font-semibold text-primary uppercase tracking-wide"
+          >
             {{ t('CONVERSATION.AI_SUMMARY.ACTIONS.TITLE', 'Next Best Action') }}
           </span>
         </div>
-        <div class="flex items-center justify-between gap-4 cursor-pointer hover:opacity-80 transition-opacity">
+        <div
+          class="flex items-center justify-between gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <span class="text-sm font-medium text-foreground">
             {{ nextBestAction }}
           </span>
-          <span class="i-lucide-chevron-right size-4 text-muted-foreground shrink-0" />
+          <span
+            class="i-lucide-chevron-right size-4 text-muted-foreground shrink-0"
+          />
         </div>
       </div>
 

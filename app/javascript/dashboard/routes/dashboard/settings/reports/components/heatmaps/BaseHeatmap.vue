@@ -209,28 +209,19 @@ const tooltip = useHeatmapTooltip();
 
     <div class="col-span-2 flex items-center justify-end gap-4 mt-2">
       <div class="flex items-center gap-1.5">
-        <span
-          class="size-3 rounded-[4px]"
-          :class="legendScheme[0]"
-        />
+        <span class="size-3 rounded-[4px]" :class="legendScheme[0]" />
         <span class="text-[11px] text-muted-foreground">
           {{ $t('OVERVIEW_REPORTS.HEATMAP_LEGEND.LOW') }}
         </span>
       </div>
       <div class="flex items-center gap-1.5">
-        <span
-          class="size-3 rounded-[4px]"
-          :class="legendScheme[2]"
-        />
+        <span class="size-3 rounded-[4px]" :class="legendScheme[2]" />
         <span class="text-[11px] text-muted-foreground">
           {{ $t('OVERVIEW_REPORTS.HEATMAP_LEGEND.MEDIUM') }}
         </span>
       </div>
       <div class="flex items-center gap-1.5">
-        <span
-          class="size-3 rounded-[4px]"
-          :class="legendScheme[5]"
-        />
+        <span class="size-3 rounded-[4px]" :class="legendScheme[5]" />
         <span class="text-[11px] text-muted-foreground">
           {{ $t('OVERVIEW_REPORTS.HEATMAP_LEGEND.HIGH') }}
         </span>

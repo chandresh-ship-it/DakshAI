@@ -16,24 +16,24 @@ const isRTL = useMapGetter('accounts/isRTL');
 <template>
   <BaseCell>
     <div
-      class="items-center flex text-left"
+      class="flex items-center gap-3 text-left"
       :class="{ 'flex-row-reverse': isRTL }"
     >
       <Avatar
         :src="row.original.thumbnail"
         :name="row.original.agent"
         :status="row.original.status"
-        :size="32"
+        :size="40"
         hide-offline-status
         rounded-full
       />
-      <div class="items-start flex flex-col min-w-0 my-0 mx-2">
+      <div class="flex flex-col min-w-0">
         <h6
-          class="overflow-hidden text-[13px] font-medium m-0 leading-[1.2] text-foreground whitespace-nowrap text-ellipsis"
+          class="overflow-hidden text-[14px] font-medium m-0 leading-[1.3] text-foreground whitespace-nowrap text-ellipsis"
         >
           {{ row.original.agent }}
         </h6>
-        <span class="text-[12px] text-muted-foreground">
+        <span class="text-[14px] text-muted-foreground">
           {{ row.original.email }}
         </span>
       </div>
