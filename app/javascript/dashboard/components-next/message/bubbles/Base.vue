@@ -9,7 +9,7 @@ import { useI18n } from 'vue-i18n';
 
 import MessageFormatter from 'shared/helpers/MessageFormatter.js';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
-import { MESSAGE_VARIANTS } from '../constants';
+import { MESSAGE_VARIANTS, ORIENTATION } from '../constants';
 
 const props = defineProps({
   hideMeta: { type: Boolean, default: false },
@@ -18,24 +18,24 @@ const props = defineProps({
 defineOptions({ inheritAttrs: false });
 
 const attrs = useAttrs();
-const { variant, inReplyTo, shouldGroupWithNext } = useMessageContext();
+const { variant, inReplyTo, shouldGroupWithNext, orientation } = useMessageContext();
 const { t } = useI18n();
 
 // Colored fill lives ONLY on the inner surface (never the meta wrapper).
 // Agent/bot/template text: solid primary + white. Media/email override via attrs.
 const varaintBaseMap = {
   [MESSAGE_VARIANTS.AGENT]:
-    'bg-transparent text-foreground border-transparent w-full',
+    'bg-primary text-primary-foreground shadow-xs border-transparent w-full',
   [MESSAGE_VARIANTS.PRIVATE]:
     'bg-amber-500/10 text-foreground border-transparent w-full',
   [MESSAGE_VARIANTS.USER]:
-    'bg-transparent text-foreground border-transparent w-full',
+    'bg-card border border-border shadow-xs text-foreground w-full',
   [MESSAGE_VARIANTS.ACTIVITY]:
     'bg-muted/50 text-muted-foreground text-sm w-full',
   [MESSAGE_VARIANTS.BOT]:
-    'bg-transparent text-foreground border-transparent w-full',
+    'bg-primary text-primary-foreground shadow-xs border-transparent w-full',
   [MESSAGE_VARIANTS.TEMPLATE]:
-    'bg-transparent text-foreground border-transparent w-full',
+    'bg-card border border-border shadow-xs text-foreground w-full',
   [MESSAGE_VARIANTS.ERROR]: 'bg-destructive/10 text-destructive w-full',
   [MESSAGE_VARIANTS.EMAIL]: 'w-full',
   [MESSAGE_VARIANTS.UNSUPPORTED]:
@@ -55,6 +55,13 @@ const messageClass = computed(() => {
 
   if (variant.value === MESSAGE_VARIANTS.ACTIVITY) {
     classToApply.push('rounded-lg px-4 py-2 my-2');
+  } else if (variant.value !== MESSAGE_VARIANTS.EMAIL) {
+    classToApply.push('rounded-2xl');
+    if (orientation.value === ORIENTATION.RIGHT) {
+      classToApply.push('ltr:rounded-br-sm rtl:rounded-bl-sm right-bubble');
+    } else if (orientation.value === ORIENTATION.LEFT) {
+      classToApply.push('ltr:rounded-bl-sm rtl:rounded-br-sm left-bubble');
+    }
   }
 
   classToApply.push('w-full');
