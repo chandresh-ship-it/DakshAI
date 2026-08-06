@@ -55,7 +55,9 @@ const subject = computed(() => {
 </script>
 
 <template>
-  <div class="h-16 px-6 border-b border-border bg-card flex items-center justify-between shrink-0">
+  <div
+    class="h-16 px-6 border-b border-border bg-card flex items-center justify-between shrink-0"
+  >
     <div class="flex items-center gap-3 min-w-0">
       <Avatar
         :name="currentContact.name"
@@ -68,32 +70,30 @@ const subject = computed(() => {
       />
       <div class="flex flex-col min-w-0">
         <div class="flex items-center gap-2">
-          <span class="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer text-base truncate">
+          <span
+            class="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer text-base truncate"
+          >
             {{ currentContact.name }}
           </span>
           <span
-            v-if="isHMACVerified"
-            class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0"
+            class="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0"
           >
-            <span class="i-lucide-check-circle size-3" />
-            {{ $t('VERIFIED') }}
+            High Lead
           </span>
-          <fluent-icon
-            v-else
-            v-tooltip="$t('CONVERSATION.UNVERIFIED_SESSION')"
-            size="14"
-            class="text-amber-500 shrink-0"
-            icon="warning"
-          />
+          <span
+            class="text-[11px] font-medium text-emerald-600 flex items-center gap-1 shrink-0"
+          >
+            <span class="size-1.5 rounded-full bg-emerald-500"></span> {{ chat.id }}
+          </span>
         </div>
-        <div class="flex items-center gap-2 text-[13px] text-muted-foreground mt-0.5">
-          <span class="truncate">{{ subject }}</span>
-          <span v-if="subject" class="text-muted-foreground">&bull;</span>
+        <div
+          class="flex items-center gap-2 text-[13px] text-muted-foreground mt-0.5"
+        >
           <span class="truncate">Customer Since {{ customerSince }}</span>
         </div>
       </div>
     </div>
-    
+
     <div class="flex items-center gap-1 shrink-0">
       <MoreActions />
       <RelayButton

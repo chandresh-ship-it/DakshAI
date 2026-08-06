@@ -1,101 +1,98 @@
 <script setup>
-import { computed, onUnmounted } from 'vue';
+import { computed } from 'vue';
 import { useToggle } from '@vueuse/core';
 import { useStore } from 'vuex';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
-import { emitter } from 'shared/helpers/mitt';
-import EmailTranscriptModal from './EmailTranscriptModal.vue';
-import ResolveAction from '../../buttons/ResolveAction.vue';
 import ButtonV4 from 'dashboard/components-next/button/Button.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
+import wootConstants from 'dashboard/constants/globals';
 
-import {
-  CMD_MUTE_CONVERSATION,
-  CMD_SEND_TRANSCRIPT,
-  CMD_UNMUTE_CONVERSATION,
-} from 'dashboard/helper/commandbar/events';
-
-// No props needed as we're getting currentChat from the store directly
 const store = useStore();
 const { t } = useI18n();
 
-const [showEmailActionsModal, toggleEmailModal] = useToggle(false);
 const [showActionsDropdown, toggleDropdown] = useToggle(false);
 
 const currentChat = computed(() => store.getters.getSelectedChat);
+const isResolved = computed(() => currentChat.value.status === wootConstants.STATUS_TYPE.RESOLVED);
+const isPending = computed(() => currentChat.value.status === wootConstants.STATUS_TYPE.PENDING);
+const isSnoozed = computed(() => currentChat.value.status === wootConstants.STATUS_TYPE.SNOOZED);
 
-const actionMenuItems = computed(() => {
-  const items = [];
+const actionMenuSections = computed(() => {
+  const primaryItems = [];
 
-  if (!currentChat.value.muted) {
-    items.push({
-      icon: 'i-lucide-volume-off',
-      label: t('CONTACT_PANEL.MUTE_CONTACT'),
-      action: 'mute',
-      value: 'mute',
+  primaryItems.push({
+    icon: 'i-lucide-check',
+    label: isResolved.value ? t('CONVERSATION.HEADER.REOPEN_ACTION') : t('CONVERSATION.HEADER.RESOLVE_ACTION'),
+    action: isResolved.value ? 'reopen' : 'resolve',
+    value: isResolved.value ? 'reopen' : 'resolve',
+  });
+
+  if (!isPending.value) {
+    primaryItems.push({
+      icon: 'i-lucide-clock',
+      label: t('CONVERSATION.RESOLVE_DROPDOWN.SNOOZE_UNTIL'),
+      action: 'snooze',
+      value: 'snooze',
     });
-  } else {
-    items.push({
-      icon: 'i-lucide-volume-1',
-      label: t('CONTACT_PANEL.UNMUTE_CONTACT'),
-      action: 'unmute',
-      value: 'unmute',
+    primaryItems.push({
+      icon: 'i-lucide-hourglass',
+      label: t('CONVERSATION.RESOLVE_DROPDOWN.MARK_PENDING'),
+      action: 'pending',
+      value: 'pending',
     });
   }
 
-  items.push({
-    icon: 'i-lucide-share',
-    label: t('CONTACT_PANEL.SEND_TRANSCRIPT'),
-    action: 'send_transcript',
-    value: 'send_transcript',
-  });
+  const destructiveItems = [
+    {
+      icon: 'i-lucide-ban',
+      label: 'Block Contact',
+      action: 'block',
+      value: 'block',
+    },
+    {
+      icon: 'i-lucide-trash-2',
+      label: t('CONVERSATION.CARD_CONTEXT_MENU.DELETE', 'Delete Thread'),
+      action: 'delete',
+      value: 'delete',
+    }
+  ];
 
-  return items;
+  return [
+    { items: primaryItems },
+    { items: destructiveItems }
+  ];
 });
+
+const openSnoozeModal = () => {
+  const ninja = document.querySelector('ninja-keys');
+  if (ninja) ninja.open({ parent: 'snooze_conversation' });
+};
 
 const handleActionClick = ({ action }) => {
   toggleDropdown(false);
 
-  if (action === 'mute') {
-    store.dispatch('muteConversation', currentChat.value.id);
-    useAlert(t('CONTACT_PANEL.MUTED_SUCCESS'));
-  } else if (action === 'unmute') {
-    store.dispatch('unmuteConversation', currentChat.value.id);
-    useAlert(t('CONTACT_PANEL.UNMUTED_SUCCESS'));
-  } else if (action === 'send_transcript') {
-    toggleEmailModal();
+  if (action === 'resolve') {
+    store.dispatch('toggleStatus', { conversationId: currentChat.value.id, status: wootConstants.STATUS_TYPE.RESOLVED });
+    useAlert(t('CONVERSATION.CHANGE_STATUS'));
+  } else if (action === 'reopen') {
+    store.dispatch('toggleStatus', { conversationId: currentChat.value.id, status: wootConstants.STATUS_TYPE.OPEN });
+    useAlert(t('CONVERSATION.CHANGE_STATUS'));
+  } else if (action === 'snooze') {
+    openSnoozeModal();
+  } else if (action === 'pending') {
+    store.dispatch('toggleStatus', { conversationId: currentChat.value.id, status: wootConstants.STATUS_TYPE.PENDING });
+    useAlert(t('CONVERSATION.CHANGE_STATUS'));
+  } else if (action === 'delete') {
+    store.dispatch('deleteConversation', currentChat.value.id);
+  } else if (action === 'block') {
+    useAlert('Block contact is not fully implemented yet.');
   }
 };
-
-// These functions are needed for the event listeners
-const mute = () => {
-  store.dispatch('muteConversation', currentChat.value.id);
-  useAlert(t('CONTACT_PANEL.MUTED_SUCCESS'));
-};
-
-const unmute = () => {
-  store.dispatch('unmuteConversation', currentChat.value.id);
-  useAlert(t('CONTACT_PANEL.UNMUTED_SUCCESS'));
-};
-
-emitter.on(CMD_MUTE_CONVERSATION, mute);
-emitter.on(CMD_UNMUTE_CONVERSATION, unmute);
-emitter.on(CMD_SEND_TRANSCRIPT, toggleEmailModal);
-
-onUnmounted(() => {
-  emitter.off(CMD_MUTE_CONVERSATION, mute);
-  emitter.off(CMD_UNMUTE_CONVERSATION, unmute);
-  emitter.off(CMD_SEND_TRANSCRIPT, toggleEmailModal);
-});
 </script>
 
 <template>
   <div class="relative flex items-center gap-2 actions--container">
-    <ResolveAction
-      :conversation-id="currentChat.id"
-      :status="currentChat.status"
-    />
     <div
       v-on-clickaway="() => toggleDropdown(false)"
       class="relative flex items-center group"
@@ -105,22 +102,16 @@ onUnmounted(() => {
         size="sm"
         variant="ghost"
         color="slate"
-        icon="i-lucide-more-vertical"
+        icon="i-lucide-more-horizontal"
         class="rounded-md group-hover:bg-n-alpha-2"
         @click="toggleDropdown()"
       />
       <DropdownMenu
         v-if="showActionsDropdown"
-        :menu-items="actionMenuItems"
+        :menu-sections="actionMenuSections"
         class="mt-1 ltr:right-0 rtl:left-0 top-full"
         @action="handleActionClick"
       />
     </div>
-    <EmailTranscriptModal
-      v-if="showEmailActionsModal"
-      :show="showEmailActionsModal"
-      :current-chat="currentChat"
-      @cancel="toggleEmailModal"
-    />
   </div>
 </template>
