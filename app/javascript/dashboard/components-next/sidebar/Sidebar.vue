@@ -252,34 +252,6 @@ const closeMobileSidebar = () => {
   emit('closeMobileSidebar');
 };
 
-const newReportRoutes = () => [
-  {
-    name: 'Reports Agent',
-    label: t('SIDEBAR.REPORTS_AGENT'),
-    to: accountScopedRoute('agent_reports_index'),
-    activeOn: ['agent_reports_show'],
-  },
-  {
-    name: 'Reports Label',
-    label: t('SIDEBAR.REPORTS_LABEL'),
-    to: accountScopedRoute('label_reports_index'),
-  },
-  {
-    name: 'Reports Inbox',
-    label: t('SIDEBAR.REPORTS_INBOX'),
-    to: accountScopedRoute('inbox_reports_index'),
-    activeOn: ['inbox_reports_show'],
-  },
-  {
-    name: 'Reports Team',
-    label: t('SIDEBAR.REPORTS_TEAM'),
-    to: accountScopedRoute('team_reports_index'),
-    activeOn: ['team_reports_show'],
-  },
-];
-
-const reportRoutes = computed(() => newReportRoutes());
-
 const primaryMenuItems = computed(() => {
   return [
     {
@@ -569,30 +541,41 @@ const primaryMenuItems = computed(() => {
       icon: 'i-lucide-chart-bar',
       children: [
         {
-          name: 'Report Overview',
-          label: t('SIDEBAR.REPORTS_OVERVIEW'),
+          name: 'Reports',
+          label: t('SIDEBAR.REPORTS'),
           to: accountScopedRoute('account_overview_reports'),
+          activeOn: [
+            'conversation_reports',
+            'agent_reports_index',
+            'agent_reports_show',
+            'label_reports_index',
+            'label_reports_show',
+            'inbox_reports_index',
+            'inbox_reports_show',
+            'team_reports_index',
+            'team_reports_show',
+            'csat_reports',
+            'sla_reports',
+            'bot_reports',
+          ],
         },
         {
-          name: 'Report Conversation',
-          label: t('SIDEBAR.REPORTS_CONVERSATION'),
-          to: accountScopedRoute('conversation_reports'),
-        },
-        ...reportRoutes.value,
-        {
-          name: 'Reports CSAT',
-          label: t('SIDEBAR.CSAT'),
-          to: accountScopedRoute('csat_reports'),
+          name: 'Dashboards',
+          label: t('SIDEBAR.DASHBOARDS'),
+          disabled: true,
+          comingSoon: true,
         },
         {
-          name: 'Reports SLA',
-          label: t('SIDEBAR.REPORTS_SLA'),
-          to: accountScopedRoute('sla_reports'),
+          name: 'Revenue Analytics',
+          label: t('SIDEBAR.REVENUE_ANALYTICS'),
+          disabled: true,
+          comingSoon: true,
         },
         {
-          name: 'Reports Bot',
-          label: t('SIDEBAR.REPORTS_BOT'),
-          to: accountScopedRoute('bot_reports'),
+          name: 'Campaign Analytics',
+          label: t('SIDEBAR.CAMPAIGN_ANALYTICS'),
+          disabled: true,
+          comingSoon: true,
         },
       ],
     },

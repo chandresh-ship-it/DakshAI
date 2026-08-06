@@ -1,5 +1,9 @@
 {
   "REPORT": {
+    "REPORTS_TITLE": "Reports",
+    "REPORTS_SUBTITLE": "Track performance and analyze key metrics across your workspace.",
+    "DATA_PENDING": "NiN",
+    "VS_LAST_PERIOD": "vs last 7 days",
     "HEADER": "Conversations",
     "LOADING_CHART": "Loading chart data...",
     "NO_ENOUGH_DATA": "We've not received enough data points to generate report, Please try again later.",
@@ -525,6 +529,11 @@
   "OVERVIEW_REPORTS": {
     "HEADER": "Overview",
     "LIVE": "Live",
+    "HEATMAP_LEGEND": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High"
+    },
     "ACCOUNT_CONVERSATIONS": {
       "HEADER": "Open Conversations",
       "LOADING_MESSAGE": "Loading conversation metrics...",

@@ -401,6 +401,10 @@
     "CUSTOM_ROLES": "Custom Roles",
     "BETA": "Beta",
     "REPORTS_OVERVIEW": "Overview",
+    "DASHBOARDS": "Dashboards",
+    "REVENUE_ANALYTICS": "Revenue Analytics",
+    "CAMPAIGN_ANALYTICS": "Campaign Analytics",
+    "COMING_SOON": "Coming soon",
     "REAUTHORIZE": "Your inbox connection has expired, please reconnect\n to continue receiving and sending messages",
     "HELP_CENTER": {
       "TITLE": "Help Center",
