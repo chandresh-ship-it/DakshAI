@@ -133,7 +133,7 @@ const selectedModel = computed({
     @contextmenu="$emit('contextmenu', $event)"
   >
     <button
-      v-if="!hideThumbnail"
+      v-if="false && !hideThumbnail"
       type="button"
       class="size-[18px] rounded-full border flex items-center justify-center transition-colors shrink-0 mt-1.5"
       :class="

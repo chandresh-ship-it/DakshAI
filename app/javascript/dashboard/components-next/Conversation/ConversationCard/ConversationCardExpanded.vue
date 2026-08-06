@@ -84,6 +84,7 @@ const selectedModel = computed({
     <!-- LEFT SECTION -->
     <div class="flex items-center gap-2 min-w-0 flex-1">
       <button
+        v-if="false"
         type="button"
         class="size-[18px] rounded-full border flex items-center justify-center transition-colors shrink-0"
         :class="

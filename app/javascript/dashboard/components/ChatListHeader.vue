@@ -114,6 +114,7 @@ const applySort = value => {
     </template>
     <div v-else class="relative">
       <RelayButton
+        v-if="false"
         id="toggleConversationFilterButton"
         variant="outline"
         size="icon"
