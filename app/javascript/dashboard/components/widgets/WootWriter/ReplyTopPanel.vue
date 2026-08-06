@@ -88,6 +88,15 @@ export default {
       }
       setReplyMode(REPLY_EDITOR_MODES.NOTE);
     };
+    const handleAiReplyClick = () => {
+      if (props.disabled || props.isEditorDisabled) return;
+      if (!props.isCopilotActive) {
+        if (props.mode !== REPLY_EDITOR_MODES.REPLY) {
+          setReplyMode(REPLY_EDITOR_MODES.REPLY);
+        }
+        emit('toggleCopilot');
+      }
+    };
 
     const { captainTasksEnabled } = useCaptain();
     const showCopilotMenu = ref(false);
@@ -128,6 +137,7 @@ export default {
     return {
       handleReplyClick,
       handleNoteClick,
+      handleAiReplyClick,
       REPLY_EDITOR_MODES,
       captainTasksEnabled,
       handleCopilotAction,
@@ -212,6 +222,28 @@ export default {
         <span
           v-if="isNoteActive"
           class="absolute inset-x-0 bottom-0 h-0.5 bg-amber-500"
+          aria-hidden="true"
+        />
+      </button>
+      <button
+        v-if="captainTasksEnabled"
+        type="button"
+        role="tab"
+        :aria-selected="isAiActive"
+        class="relative h-full px-0 text-sm font-semibold transition-colors inline-flex items-center gap-1.5"
+        :class="
+          isAiActive
+            ? 'text-primary'
+            : 'text-muted-foreground hover:text-foreground'
+        "
+        :disabled="disabled || isEditorDisabled"
+        @click="handleAiReplyClick"
+      >
+        <span class="i-lucide-wand-sparkles size-4" />
+        {{ $t('CONVERSATION.REPLYBOX.AI_REPLY') }}
+        <span
+          v-if="isAiActive"
+          class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
           aria-hidden="true"
         />
       </button>
