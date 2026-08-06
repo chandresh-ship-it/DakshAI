@@ -11,7 +11,8 @@ import { RelayButton } from 'dashboard/components-next/relay';
 defineProps({
   hasAppliedFilters: { type: Boolean, required: true },
   hasActiveFolders: { type: Boolean, required: true },
-  activeAssigneeTab: { type: String, default: 'all' },
+  activeStatusTab: { type: String, default: 'new' },
+  statusTabItems: { type: Array, default: () => [] },
   isOnExpandedLayout: { type: Boolean, required: true },
 });
 
@@ -21,7 +22,7 @@ const emit = defineEmits([
   'resetFilters',
   'basicFilterChange',
   'filtersModal',
-  'assigneeChange',
+  'statusChange',
 ]);
 
 const { t } = useI18n();
@@ -43,9 +44,9 @@ const toggleConversationLayout = () => {
   });
 };
 
-const applyAssignee = key => {
+const applyStatus = key => {
   showFilterMenu.value = false;
-  emit('assigneeChange', key);
+  emit('statusChange', key);
 };
 
 const applySort = value => {
@@ -128,37 +129,17 @@ const applySort = value => {
         class="absolute right-0 mt-1.5 z-50 w-48 rounded-md border border-border bg-popover p-1 shadow-md"
       >
         <button
+          v-for="tab in statusTabItems"
+          :key="tab.key"
           type="button"
           class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
           :class="{
-            'bg-primary/5 text-primary': activeAssigneeTab === 'me',
+            'bg-primary/5 text-primary': activeStatusTab === tab.key,
           }"
-          @click="applyAssignee('me')"
+          @click="applyStatus(tab.key)"
         >
-          <span class="i-lucide-user size-4 text-muted-foreground" />
-          {{ t('CHAT_LIST.FILTER_MENU.ASSIGNED_TO_ME') }}
-        </button>
-        <button
-          type="button"
-          class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
-          :class="{
-            'bg-primary/5 text-primary': activeAssigneeTab === 'unassigned',
-          }"
-          @click="applyAssignee('unassigned')"
-        >
-          <span class="i-lucide-users size-4 text-muted-foreground" />
-          {{ t('CHAT_LIST.FILTER_MENU.UNASSIGNED') }}
-        </button>
-        <button
-          type="button"
-          class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted text-foreground"
-          :class="{
-            'bg-primary/5 text-primary': activeAssigneeTab === 'all',
-          }"
-          @click="applyAssignee('all')"
-        >
-          <span class="i-lucide-messages-square size-4 text-muted-foreground" />
-          {{ t('CHAT_LIST.ASSIGNEE_TYPE_TABS.all') }}
+          <span class="i-lucide-circle size-4 text-muted-foreground" />
+          {{ tab.name }}
         </button>
         <div class="my-1 h-px bg-border" />
         <button

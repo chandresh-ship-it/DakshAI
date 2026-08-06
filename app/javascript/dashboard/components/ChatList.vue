@@ -9,7 +9,12 @@ import {
 
 import ChatListHeader from './ChatListHeader.vue';
 import ConversationList from './ConversationList.vue';
-import { RelayButton } from 'dashboard/components-next/relay';
+import {
+  RelayButton,
+  RelayTabs,
+  RelayTabsList,
+  RelayTabsTrigger,
+} from 'dashboard/components-next/relay';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import ConversationFilter from 'next/filter/ConversationFilter.vue';
 import SaveCustomView from 'next/filter/SaveCustomView.vue';
@@ -903,39 +908,13 @@ watch(conversationFilters, (newVal, oldVal) => {
     <div
       class="flex items-center justify-between px-4 border-b border-border h-14 shrink-0"
     >
-      <div
-        v-if="!hasAppliedFiltersOrActiveFolders"
-        class="flex items-center gap-6 h-full flex-1 min-w-0 overflow-x-auto"
-        role="tablist"
-      >
-        <button
-          v-for="tab in statusTabItems"
-          :key="tab.key"
-          type="button"
-          role="tab"
-          :aria-selected="activeStatusTab === tab.key"
-          class="h-full px-0 border-b-2 border-transparent text-sm font-medium transition-colors shrink-0"
-          :class="
-            activeStatusTab === tab.key
-              ? 'border-primary text-foreground'
-              : 'text-muted-foreground hover:text-foreground'
-          "
-          @click="onStatusTabChange(tab.key)"
-        >
-          {{ tab.name }}
-        </button>
-      </div>
       <h1
-        v-else
         class="text-base font-medium truncate text-foreground flex items-center gap-1.5 min-w-0"
         :title="pageSubtitle ? `${pageTitle} / ${pageSubtitle}` : pageTitle"
       >
         <span class="truncate">{{ pageTitle }}</span>
-        <span
-          v-if="pageSubtitle"
-          class="text-[14px] font-medium text-muted-foreground truncate"
-        >
-          / {{ pageSubtitle }}
+        <span class="text-[14px] font-medium text-muted-foreground truncate">
+          / {{ pageSubtitle || t('CHAT_LIST.ALL_CONVERSATION_SUBTITLE') }}
         </span>
       </h1>
 
@@ -956,16 +935,34 @@ watch(conversationFilters, (newVal, oldVal) => {
         <ChatListHeader
           :has-applied-filters="hasAppliedFilters"
           :has-active-folders="hasActiveFolders"
-          :active-assignee-tab="activeAssigneeTab"
+          :active-status-tab="activeStatusTab"
+          :status-tab-items="statusTabItems"
           :is-on-expanded-layout="isOnExpandedLayout"
           @add-folders="onClickOpenAddFoldersModal"
           @delete-folders="onClickOpenDeleteFoldersModal"
           @filters-modal="onToggleAdvanceFiltersModal"
           @reset-filters="resetAndFetchData"
           @basic-filter-change="onBasicFilterChange"
-          @assignee-change="updateAssigneeTab"
+          @status-change="onStatusTabChange"
         />
       </div>
+    </div>
+
+    <div v-if="!hasAppliedFiltersOrActiveFolders" class="p-4 pt-2 shrink-0 border-b border-border/50">
+      <RelayTabs :model-value="activeAssigneeTab" class="w-full" @update:model-value="updateAssigneeTab">
+        <div class="flex items-center">
+          <RelayTabsList class="h-9 p-0 bg-transparent gap-4 overflow-hidden flex-1 justify-start">
+            <RelayTabsTrigger 
+              v-for="tab in assigneeTabItems" 
+              :key="tab.key" 
+              :value="tab.key" 
+              class="px-0 py-2 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none data-[state=active]:bg-transparent"
+            >
+              {{ tab.name }}
+            </RelayTabsTrigger>
+          </RelayTabsList>
+        </div>
+      </RelayTabs>
     </div>
 
     <TeleportWithDirection
