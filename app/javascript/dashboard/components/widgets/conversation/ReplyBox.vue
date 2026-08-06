@@ -1251,7 +1251,7 @@ export default {
       :conversation-id="conversationId"
       :is-reply-restricted="isReplyRestricted"
       :disabled="
-        (copilot.isActive.value && copilot.isButtonDisabled.value) ||
+        (copilot.isActive.value && copilot.isGenerating.value) ||
         showAudioRecorderEditor
       "
       :is-editor-disabled="isEditorDisabled"
