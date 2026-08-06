@@ -5,7 +5,6 @@ import { getLastMessage } from 'dashboard/helper/conversationHelper';
 import { dynamicTime, shortTimestamp } from 'shared/helpers/timeHelper';
 import Avatar from 'next/avatar/Avatar.vue';
 import MessagePreview from './MessagePreview.vue';
-import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import { useMapGetter } from 'dashboard/composables/store';
 
 const props = defineProps({
@@ -19,6 +18,7 @@ const props = defineProps({
   showInboxName: { type: Boolean, default: false },
   hideThumbnail: { type: Boolean, default: false },
   compact: { type: Boolean, default: false },
+  isStarred: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -26,6 +26,7 @@ const emit = defineEmits([
   'contextmenu',
   'selectConversation',
   'deSelectConversation',
+  'toggleStar',
 ]);
 
 const { t } = useI18n();
@@ -131,14 +132,34 @@ const selectedModel = computed({
     @click="$emit('click', $event)"
     @contextmenu="$emit('contextmenu', $event)"
   >
-    <div
+    <button
       v-if="!hideThumbnail"
-      class="flex items-center justify-center shrink-0 size-4 mt-1.5"
-      :class="selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
-      @click.stop
+      type="button"
+      class="size-[18px] rounded-full border flex items-center justify-center transition-colors shrink-0 mt-1.5"
+      :class="
+        selectedModel
+          ? 'bg-primary border-primary text-primary-foreground opacity-100'
+          : 'border-input opacity-0 group-hover:opacity-100 bg-background hover:border-primary/50'
+      "
+      @click.stop="selectedModel = !selectedModel"
     >
-      <Checkbox v-model="selectedModel" />
-    </div>
+      <span v-if="selectedModel" class="i-lucide-check size-3" />
+    </button>
+
+    <button
+      type="button"
+      class="size-4 flex items-center justify-center shrink-0 mt-1.5"
+      @click.stop="emit('toggleStar', chat)"
+    >
+      <span
+        v-if="isStarred"
+        class="size-4 hover:text-amber-400 cursor-pointer i-ri-star-fill text-amber-400 opacity-100"
+      />
+      <span
+        v-else
+        class="size-4 hover:text-amber-400 cursor-pointer i-lucide-star text-muted-foreground opacity-30 group-hover:opacity-100 transition-opacity"
+      />
+    </button>
 
     <div class="relative shrink-0 mt-0.5">
       <Avatar

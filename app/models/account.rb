@@ -259,11 +259,12 @@ class Account < ApplicationRecord
   def effective_brand_colors
     return {} unless white_labeling_enabled?
 
-    custom_attributes.fetch('brand_colors', {}).merge(
+    # brand_colors is the source of truth; the columns only fill gaps for API-only writes
+    {
       'brand_name' => brand_name.presence,
       'primary' => brand_primary_color.presence,
       'background' => brand_secondary_color.presence
-    ).compact
+    }.merge(custom_attributes.fetch('brand_colors', {})).compact
   end
 
   def connected_account_ready_for_marketplace?
@@ -386,9 +387,9 @@ class Account < ApplicationRecord
     brand_colors = custom_attributes['brand_colors']
     return unless brand_colors.is_a?(Hash)
 
-    self.brand_name = brand_colors['brand_name'] if brand_name.blank? && brand_colors['brand_name'].present?
-    self.brand_primary_color = brand_colors['primary'] if brand_primary_color.blank? && brand_colors['primary'].present?
-    self.brand_secondary_color = brand_colors['background'] if brand_secondary_color.blank? && brand_colors['background'].present?
+    self.brand_name = brand_colors['brand_name'] if brand_colors['brand_name'].present?
+    self.brand_primary_color = brand_colors['primary'] if brand_colors['primary'].present?
+    self.brand_secondary_color = brand_colors['background'] if brand_colors['background'].present?
   end
 
   def remove_account_sequences

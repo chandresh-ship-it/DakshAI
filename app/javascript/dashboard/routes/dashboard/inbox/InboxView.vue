@@ -211,8 +211,7 @@ onMounted(async () => {
             is-inbox-view
             :inbox-id="inboxId"
             :is-on-expanded-layout="false"
-          >
-          </ConversationBox>
+          />
         </div>
       </div>
       <ConversationSidebar

@@ -3,14 +3,11 @@ import { onMounted, computed, ref, toRefs } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
 import { provideMessageContext } from './provider.js';
 import { useTrack } from 'dashboard/composables';
-import { useMapGetter } from 'dashboard/composables/store';
 import { emitter } from 'shared/helpers/mitt';
-import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { ACCOUNT_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
-import { getInboxIconByType } from 'dashboard/helper/inbox';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import {
   MESSAGE_TYPES,
@@ -21,8 +18,6 @@ import {
   MESSAGE_STATUS,
   CONTENT_TYPES,
 } from './constants';
-
-import Avatar from 'next/avatar/Avatar.vue';
 
 import TextBubble from './bubbles/Text/Index.vue';
 import ActivityBubble from './bubbles/Activity.vue';
@@ -44,7 +39,6 @@ import VoiceCallBubble from './bubbles/VoiceCall.vue';
 
 import MessageError from './MessageError.vue';
 import ContextMenu from 'dashboard/modules/conversations/components/MessageContextMenu.vue';
-import { useBranding } from 'shared/composables/useBranding';
 
 /**
  * @typedef {Object} Attachment
@@ -143,11 +137,7 @@ const emit = defineEmits(['retry']);
 const contextMenuPosition = ref({});
 const showBackgroundHighlight = ref(false);
 const showContextMenu = ref(false);
-const { t } = useI18n();
 const route = useRoute();
-const inboxGetter = useMapGetter('inboxes/getInbox');
-const inbox = computed(() => inboxGetter.value(props.inboxId) || {});
-const { replaceInstallationName } = useBranding();
 
 /**
  * Computes the message variant based on props
@@ -247,22 +237,10 @@ const flexOrientationClass = computed(() => {
   return map[orientation.value];
 });
 
-const gridClass = computed(() => {
-  return 'flex flex-col w-full';
-});
-
-const gridTemplate = computed(() => {
-  return '';
-});
-
 const shouldGroupWithNext = computed(() => {
   if (props.status === MESSAGE_STATUS.FAILED) return false;
 
   return props.groupWithNext;
-});
-
-const shouldShowAvatar = computed(() => {
-  return false; // Removed avatar from individual messages, it's now in the ConversationHeader
 });
 
 const componentToRender = computed(() => {
@@ -425,54 +403,6 @@ function handleReplyTo() {
   LocalStorage.updateJsonStore(replyStorageKey, conversationId, replyTo);
   emitter.emit(BUS_EVENTS.TOGGLE_REPLY_TO_MESSAGE, props);
 }
-
-const avatarInfo = computed(() => {
-  if (props.contentAttributes?.externalEcho) {
-    const { name, avatar_url, channel_type, medium } = inbox.value;
-    const iconName = avatar_url
-      ? null
-      : getInboxIconByType(channel_type, medium);
-    return {
-      name: iconName ? '' : name || t('CONVERSATION.NATIVE_APP'),
-      src: avatar_url || '',
-      iconName,
-    };
-  }
-
-  // If no sender, check for Slack (or other integration) sender info
-  if (!props.sender) {
-    const { senderName, senderAvatarUrl } = props.additionalAttributes || {};
-    if (senderName) {
-      return { name: senderName, src: senderAvatarUrl ?? '' };
-    }
-    return { name: t('CONVERSATION.BOT'), src: '' };
-  }
-
-  const { sender } = props;
-  const { name, type, avatarUrl, thumbnail } = sender || {};
-
-  // If sender type is agent bot, use avatarUrl
-  if ([SENDER_TYPES.AGENT_BOT, SENDER_TYPES.CAPTAIN_ASSISTANT].includes(type)) {
-    return {
-      name: name ?? '',
-      src: avatarUrl ?? '',
-    };
-  }
-
-  // For all other senders, use thumbnail
-  return {
-    name: name ?? '',
-    src: thumbnail ?? '',
-  };
-});
-
-const avatarTooltip = computed(() => {
-  if (props.contentAttributes?.externalEcho) {
-    return replaceInstallationName(t('CONVERSATION.NATIVE_APP_ADVISORY'));
-  }
-  if (avatarInfo.value.name === '') return '';
-  return `${t('CONVERSATION.SENT_BY')} ${avatarInfo.value.name}`;
-});
 
 const setupHighlightTimer = () => {
   if (Number(route.query.messageId) !== Number(props.id)) {

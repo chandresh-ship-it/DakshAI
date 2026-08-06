@@ -11,6 +11,7 @@ import VideoCallButton from '../VideoCallButton.vue';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { mapGetters } from 'vuex';
 import NextButton from 'dashboard/components-next/button/Button.vue';
+import { useCaptain } from 'dashboard/composables/useCaptain';
 
 export default {
   name: 'ReplyBottomPanel',
@@ -131,6 +132,7 @@ export default {
     'selectWhatsappTemplate',
     'selectContentTemplate',
     'toggleQuotedReply',
+    'toggleCopilot',
   ],
   setup(props) {
     const { setSignatureFlagForInbox, fetchSignatureFlagFromUISettings } =
@@ -159,10 +161,13 @@ export default {
 
     useKeyboardEvents(keyboardEvents);
 
+    const { captainTasksEnabled } = useCaptain();
+
     return {
       setSignatureFlagForInbox,
       fetchSignatureFlagFromUISettings,
       uploadRef,
+      captainTasksEnabled,
     };
   },
   computed: {
@@ -397,6 +402,15 @@ export default {
         faded
         sm
         @click="toggleInsertArticle"
+      />
+      <NextButton
+        v-if="captainTasksEnabled"
+        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.AI_REPLY')"
+        icon="i-lucide-wand-sparkles"
+        slate
+        faded
+        sm
+        @click="$emit('toggleCopilot')"
       />
     </div>
     <div class="right-wrap">

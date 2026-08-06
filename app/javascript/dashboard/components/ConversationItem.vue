@@ -2,6 +2,7 @@
 import { computed, ref, watch, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
+import { useUISettings } from 'dashboard/composables/useUISettings';
 import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
 import ConversationCard from './widgets/conversation/ConversationCard.vue';
 import ConversationCardExpanded from 'dashboard/components-next/Conversation/ConversationCard/ConversationCardExpanded.vue';
@@ -34,6 +35,25 @@ const markAsRead = inject('markAsRead');
 const assignPriority = inject('assignPriority');
 const isConversationSelected = inject('isConversationSelected');
 const deleteConversation = inject('deleteConversation');
+
+const { uiSettings, updateUISettings } = useUISettings();
+
+const isStarred = computed(() => {
+  const ids = uiSettings.value?.starred_conversation_ids || [];
+  return ids.some(id => Number(id) === Number(props.source.id));
+});
+
+const onToggleStar = () => {
+  const ids = (uiSettings.value?.starred_conversation_ids || []).map(Number);
+  const numId = Number(props.source.id);
+  const next = new Set(ids);
+  if (next.has(numId)) {
+    next.delete(numId);
+  } else {
+    next.add(numId);
+  }
+  updateUISettings({ starred_conversation_ids: [...next] });
+};
 
 // --- Context menu state (shared by both layouts) ---
 const showContextMenu = ref(false);
@@ -191,10 +211,12 @@ const onDeleteConversation = () => {
     :show-assignee="showAssigneeForExpandedCard"
     :show-inbox-name="showInboxName"
     :is-inbox-view="isInboxView"
+    :is-starred="isStarred"
     @select-conversation="onExpandedSelect"
     @de-select-conversation="onExpandedSelect"
     @click="onCardClick"
     @contextmenu="openContextMenu"
+    @toggle-star="onToggleStar"
   />
 
   <!-- Default (condensed) layout -->
@@ -208,10 +230,12 @@ const onDeleteConversation = () => {
     :is-active-chat="isActiveChat"
     :show-assignee="showAssignee"
     :show-inbox-name="showInboxName"
+    :is-starred="isStarred"
     @click="onCardClick"
     @contextmenu="openContextMenu"
     @select-conversation="selectConversation"
     @de-select-conversation="deSelectConversation"
+    @toggle-star="onToggleStar"
   />
 
   <!-- Shared context menu for both layouts -->

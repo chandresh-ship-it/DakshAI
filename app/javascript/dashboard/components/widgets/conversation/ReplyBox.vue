@@ -1432,6 +1432,7 @@ export default {
         @select-content-template="openContentTemplateModal"
         @toggle-insert-article="toggleInsertArticle"
         @toggle-quoted-reply="toggleQuotedReply"
+        @toggle-copilot="copilot.toggleEditor"
       />
     </Transition>
 

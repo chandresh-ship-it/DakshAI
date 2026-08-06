@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { useStore } from 'vuex';
 import Avatar from 'next/avatar/Avatar.vue';
 import { useInbox } from 'dashboard/composables/useInbox';
@@ -45,10 +45,7 @@ const subject = computed(() => {
 </script>
 
 <template>
-  <div
-    ref="conversationHeader"
-    class="px-6 py-6 bg-transparent flex flex-col shrink-0 w-full min-w-0"
-  >
+  <div class="px-6 py-6 bg-transparent flex flex-col shrink-0 w-full min-w-0">
     <!-- Title Row -->
     <div class="flex items-center gap-3 mb-4 min-w-0">
       <h1 class="text-xl font-bold text-foreground truncate">
@@ -85,7 +82,9 @@ const subject = computed(() => {
           {{ currentContact.name }}
         </span>
         <span class="text-muted-foreground">&bull;</span>
-        <span class="text-muted-foreground truncate">{{ $t('CONVERSATION.HEADER.CONTACT') }}</span>
+        <span class="text-muted-foreground truncate">{{
+          $t('CONVERSATION.HEADER.CONTACT')
+        }}</span>
         <span class="text-muted-foreground">&bull;</span>
         <span class="text-muted-foreground flex items-center gap-1">
           <span class="i-lucide-clock size-3" />

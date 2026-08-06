@@ -186,8 +186,7 @@ watch(
       :inbox-id="inboxId"
       :is-on-expanded-layout="isOnExpandedLayout"
       class="flex-1 bg-background border-0"
-    >
-    </ConversationBox>
+    />
     <ConversationSidebar
       v-if="shouldShowSidebar"
       :current-chat="currentChat"

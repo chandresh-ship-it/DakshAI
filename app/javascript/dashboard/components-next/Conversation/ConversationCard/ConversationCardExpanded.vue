@@ -10,7 +10,6 @@ import Avatar from 'next/avatar/Avatar.vue';
 import TimeAgo from 'dashboard/components/ui/TimeAgo.vue';
 import SLACardLabel from 'dashboard/components-next/Conversation/Sla/SLACardLabel.vue';
 import CardStatusIcon from './CardStatusIcon.vue';
-import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const props = defineProps({
@@ -23,6 +22,7 @@ const props = defineProps({
   showAssignee: { type: Boolean, default: false },
   showInboxName: { type: Boolean, default: false },
   isInboxView: { type: Boolean, default: false },
+  isStarred: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -30,6 +30,7 @@ const emit = defineEmits([
   'deSelectConversation',
   'click',
   'contextmenu',
+  'toggleStar',
 ]);
 
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
@@ -82,9 +83,33 @@ const selectedModel = computed({
   >
     <!-- LEFT SECTION -->
     <div class="flex items-center gap-2 min-w-0 flex-1">
-      <div class="flex items-center justify-center flex-shrink-0" @click.stop>
-        <Checkbox v-model="selectedModel" />
-      </div>
+      <button
+        type="button"
+        class="size-[18px] rounded-full border flex items-center justify-center transition-colors shrink-0"
+        :class="
+          selectedModel
+            ? 'bg-primary border-primary text-primary-foreground opacity-100'
+            : 'border-input opacity-0 group-hover:opacity-100 bg-background hover:border-primary/50'
+        "
+        @click.stop="selectedModel = !selectedModel"
+      >
+        <span v-if="selectedModel" class="i-lucide-check size-3" />
+      </button>
+
+      <button
+        type="button"
+        class="size-4 flex items-center justify-center flex-shrink-0"
+        @click.stop="emit('toggleStar', chat)"
+      >
+        <span
+          v-if="isStarred"
+          class="size-4 hover:text-amber-400 cursor-pointer i-ri-star-fill text-amber-400 opacity-100"
+        />
+        <span
+          v-else
+          class="size-4 hover:text-amber-400 cursor-pointer i-lucide-star text-muted-foreground opacity-30 group-hover:opacity-100 transition-opacity"
+        />
+      </button>
 
       <div class="w-px h-3 bg-n-slate-6 flex-shrink-0" />
 

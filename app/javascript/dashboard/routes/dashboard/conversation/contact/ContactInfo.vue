@@ -226,18 +226,22 @@ export default {
         <h4
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
         >
-          Contact Details
+          {{ $t('CONTACT_PANEL.CONTACT_TITLE') }}
         </h4>
 
         <div v-if="contact.email" class="flex flex-col gap-1 w-full">
-          <span class="text-xs text-muted-foreground">Email</span>
+          <span class="text-xs text-muted-foreground">{{
+            $t('CONTACT_PANEL.EMAIL_ADDRESS')
+          }}</span>
           <span class="text-sm text-foreground truncate">{{
             contact.email
           }}</span>
         </div>
 
         <div v-if="contact.phone_number" class="flex flex-col gap-1 w-full">
-          <span class="text-xs text-muted-foreground">Phone Number</span>
+          <span class="text-xs text-muted-foreground">{{
+            $t('CONTACT_PANEL.PHONE_NUMBER')
+          }}</span>
           <span class="text-sm text-foreground truncate">{{
             contact.phone_number
           }}</span>
@@ -247,7 +251,9 @@ export default {
           v-if="location || additionalAttributes.location"
           class="flex flex-col gap-1 w-full"
         >
-          <span class="text-xs text-muted-foreground">Location</span>
+          <span class="text-xs text-muted-foreground">{{
+            $t('CONTACT_PANEL.LOCATION')
+          }}</span>
           <span
             class="text-sm text-foreground truncate"
             v-html="location || additionalAttributes.location"
