@@ -173,6 +173,7 @@ const applySort = value => {
       />
     </div>
     <SwitchLayout
+      v-if="false"
       :is-on-expanded-layout="isOnExpandedLayout"
       @toggle="toggleConversationLayout"
     />
