@@ -38,7 +38,7 @@ const varaintBaseMap = {
   [MESSAGE_VARIANTS.TEMPLATE]:
     'bg-card border border-border shadow-xs text-foreground w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.ERROR]: 'bg-destructive/10 text-destructive w-fit max-w-[85%]',
-  [MESSAGE_VARIANTS.EMAIL]: 'w-full',
+  [MESSAGE_VARIANTS.EMAIL]: 'w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.UNSUPPORTED]:
     'bg-amber-500/10 border border-dashed border-amber-500/50 text-amber-500 w-fit max-w-[85%]',
 };
@@ -60,7 +60,7 @@ const messageClass = computed(() => {
 
   if (variant.value === MESSAGE_VARIANTS.ACTIVITY) {
     classToApply.push('rounded-lg px-4 py-2 my-2');
-  } else if (variant.value !== MESSAGE_VARIANTS.EMAIL) {
+  } else {
     classToApply.push('rounded-2xl');
     if (orientation.value === ORIENTATION.RIGHT) {
       classToApply.push('ltr:rounded-br-sm rtl:rounded-bl-sm right-bubble');

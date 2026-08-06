@@ -103,7 +103,7 @@ const handleSeeOriginal = () => {
 
 <template>
   <BaseBubble
-    class="w-full !bg-card !text-card-foreground border border-border shadow-xs"
+    class="!bg-card !text-card-foreground border border-border shadow-xs"
     data-bubble-name="email"
   >
     <EmailMeta class="p-3 border-b border-border" />
