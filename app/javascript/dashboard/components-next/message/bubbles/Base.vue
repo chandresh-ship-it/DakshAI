@@ -18,36 +18,41 @@ const props = defineProps({
 defineOptions({ inheritAttrs: false });
 
 const attrs = useAttrs();
-const { variant, inReplyTo, shouldGroupWithNext, orientation } = useMessageContext();
+const { variant, inReplyTo, shouldGroupWithNext, orientation } =
+  useMessageContext();
 const { t } = useI18n();
 
 // Colored fill lives ONLY on the inner surface (never the meta wrapper).
 // Agent/bot/template text: solid primary + white. Media/email override via attrs.
 const varaintBaseMap = {
   [MESSAGE_VARIANTS.AGENT]:
-    'bg-primary text-primary-foreground shadow-xs border-transparent w-full',
+    'bg-primary text-primary-foreground shadow-xs border-transparent w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.PRIVATE]:
-    'bg-amber-500/10 text-foreground border-transparent w-full',
+    'bg-amber-500/10 text-foreground border-transparent w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.USER]:
-    'bg-card border border-border shadow-xs text-foreground w-full',
+    'bg-card border border-border shadow-xs text-foreground w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.ACTIVITY]:
     'bg-muted/50 text-muted-foreground text-sm w-full',
   [MESSAGE_VARIANTS.BOT]:
-    'bg-primary text-primary-foreground shadow-xs border-transparent w-full',
+    'bg-primary text-primary-foreground shadow-xs border-transparent w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.TEMPLATE]:
-    'bg-card border border-border shadow-xs text-foreground w-full',
-  [MESSAGE_VARIANTS.ERROR]: 'bg-destructive/10 text-destructive w-full',
+    'bg-card border border-border shadow-xs text-foreground w-fit max-w-[85%]',
+  [MESSAGE_VARIANTS.ERROR]: 'bg-destructive/10 text-destructive w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.EMAIL]: 'w-full',
   [MESSAGE_VARIANTS.UNSUPPORTED]:
-    'bg-amber-500/10 border border-dashed border-amber-500/50 text-amber-500 w-full',
+    'bg-amber-500/10 border border-dashed border-amber-500/50 text-amber-500 w-fit max-w-[85%]',
 };
 
 const flexOrientationClass = computed(() => {
-  return 'justify-start w-full';
+  return orientation.value === ORIENTATION.RIGHT
+    ? 'justify-end w-full'
+    : 'justify-start w-full';
 });
 
 const wrapperAlignClass = computed(() => {
-  return 'items-start w-full';
+  return orientation.value === ORIENTATION.RIGHT
+    ? 'items-end w-full'
+    : 'items-start w-full';
 });
 
 const messageClass = computed(() => {
@@ -63,8 +68,6 @@ const messageClass = computed(() => {
       classToApply.push('ltr:rounded-bl-sm rtl:rounded-br-sm left-bubble');
     }
   }
-
-  classToApply.push('w-full');
 
   return classToApply;
 });
