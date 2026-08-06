@@ -965,7 +965,7 @@ watch(conversationFilters, (newVal, oldVal) => {
               v-for="tab in assigneeTabItems"
               :key="tab.key"
               :value="tab.key"
-              class="px-0 pb-3 pt-1 border-b-[2px] border-transparent text-[13.5px] font-medium text-muted-foreground hover:text-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none !rounded-none !bg-transparent translate-y-[1px]"
+              class="px-0 pb-3 pt-1 border-b-[2px] border-transparent text-[13.5px] font-medium text-muted-foreground hover:text-foreground aria-selected:border-foreground aria-selected:text-foreground aria-selected:shadow-none !rounded-none !bg-transparent translate-y-[1px]"
             >
               {{ tab.name }}
             </RelayTabsTrigger>
