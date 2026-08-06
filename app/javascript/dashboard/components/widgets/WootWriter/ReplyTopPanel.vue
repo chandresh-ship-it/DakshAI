@@ -223,23 +223,7 @@ export default {
           {{ $t('CONVERSATION.REPLYBOX.PRIVATE_NOTE') }}
         </button>
 
-        <!-- AI Reply -->
-        <button
-          v-if="captainTasksEnabled"
-          type="button"
-          role="tab"
-          :aria-selected="isAiActive"
-          class="rounded-none h-full border-b-2 transition-colors flex items-center gap-1.5 px-0 font-semibold text-sm"
-          :class="
-            isAiActive
-              ? 'border-primary text-primary shadow-none bg-transparent'
-              : 'border-transparent text-muted-foreground hover:text-primary shadow-none bg-transparent'
-          "
-          :disabled="disabled || isEditorDisabled || isReplyRestricted"
-          @click="handleAiReplyClick"
-        >
-          <span class="i-lucide-wand-2 size-4" /> AI Reply
-        </button>
+
       </div>
 
       <div class="flex items-center gap-2">
