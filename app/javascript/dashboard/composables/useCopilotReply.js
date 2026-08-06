@@ -96,7 +96,7 @@ export function useCopilotReply() {
 
   const isActive = computed(() => showEditor.value || isGenerating.value);
   const isButtonDisabled = computed(
-    () => isGenerating.value || !isContentReady.value
+    () => isGenerating.value || !isContentReady.value || !generatedContent.value
   );
   const editorTransitionKey = computed(() =>
     isActive.value ? 'copilot' : 'rich'

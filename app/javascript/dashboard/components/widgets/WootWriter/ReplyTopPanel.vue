@@ -89,7 +89,7 @@ export default {
       setReplyMode(REPLY_EDITOR_MODES.NOTE);
     };
     const handleAiReplyClick = () => {
-      if (props.disabled || props.isEditorDisabled) return;
+      if (props.disabled || props.isEditorDisabled || props.isReplyRestricted) return;
       if (!props.isCopilotActive) {
         if (props.mode !== REPLY_EDITOR_MODES.REPLY) {
           setReplyMode(REPLY_EDITOR_MODES.REPLY);
@@ -234,9 +234,8 @@ export default {
         :class="
           isAiActive
             ? 'text-primary'
-            : 'text-muted-foreground hover:text-foreground'
         "
-        :disabled="disabled || isEditorDisabled"
+        :disabled="disabled || isEditorDisabled || isReplyRestricted"
         @click="handleAiReplyClick"
       >
         <span class="i-lucide-wand-sparkles size-4" />
