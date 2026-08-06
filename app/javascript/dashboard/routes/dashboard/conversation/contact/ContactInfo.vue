@@ -190,32 +190,32 @@ export default {
       </a>
     </div>
 
-    <!-- Details Grid -->
-    <div class="flex items-start gap-6 w-full">
-      <!-- Left: Avatar & Name -->
-      <div class="flex flex-col items-center shrink-0 w-24">
-        <div class="relative">
+    <!-- Details -->
+    <div class="flex flex-col gap-4 w-full">
+      <!-- Avatar & Name -->
+      <div class="flex items-center gap-3">
+        <div class="relative shrink-0">
           <Avatar
             v-if="showAvatar"
             :src="contact.thumbnail"
             :name="contact.name"
-            :size="64"
+            :size="40"
             hide-offline-status
             rounded-full
           />
           <!-- Online status dot overlay -->
           <div
             v-if="contact.availability_status === 'online'"
-            class="absolute bottom-0 right-0 size-4 bg-green-500 border-2 border-background rounded-full"
+            class="absolute bottom-0 right-0 size-3 bg-green-500 border-2 border-background rounded-full"
           />
         </div>
-        <div class="mt-3 w-full text-center">
+        <div class="min-w-0 flex-1">
           <InlineInput
             v-if="isEditingName"
             ref="nameInput"
             v-model="editName"
             custom-input-class="!text-sm !font-semibold"
-            class="!w-fit mx-auto"
+            class="!w-fit"
             @enter-press="saveNameEdit"
             @escape-press="cancelNameEdit"
             @blur="saveNameEdit"
@@ -228,10 +228,13 @@ export default {
           >
             {{ contact.name }}
           </h2>
+          <p class="text-[13px] text-muted-foreground mt-0.5 truncate">
+            {{ additionalAttributes.company_plan || 'Enterprise Plan' }}
+          </p>
         </div>
       </div>
 
-      <!-- Right: Contact Metadata -->
+      <!-- Contact Metadata -->
       <div class="flex flex-col gap-3 min-w-0 pt-1">
         <div
           v-if="contact.email"

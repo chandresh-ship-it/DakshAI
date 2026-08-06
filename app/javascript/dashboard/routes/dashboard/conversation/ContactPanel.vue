@@ -138,10 +138,18 @@ onMounted(() => {
       :channel-type="channelType"
       @panel-close="closeContactPanel"
     />
-    <ConversationAiSummary
-      :conversation-id="conversationId"
-      :contact="contact"
-    />
+    <AccordionItem
+      :title="$t('CONVERSATION.AI_SUMMARY.TITLE')"
+      :is-open="isContactSidebarItemOpen('is_ai_summary_open', true)"
+      @toggle="
+        value => toggleSidebarUIState('is_ai_summary_open', value)
+      "
+    >
+      <ConversationAiSummary
+        :conversation-id="conversationId"
+        :contact="contact"
+      />
+    </AccordionItem>
     <div class="px-2 pb-8 list-group">
       <Draggable
         :list="conversationSidebarItems"

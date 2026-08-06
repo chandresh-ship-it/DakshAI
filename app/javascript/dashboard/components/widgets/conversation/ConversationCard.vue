@@ -147,6 +147,7 @@ const selectedModel = computed({
     </button>
 
     <button
+      v-if="false"
       type="button"
       class="size-4 flex items-center justify-center shrink-0 mt-1.5"
       @click.stop="emit('toggleStar', chat)"
@@ -167,7 +168,6 @@ const selectedModel = computed({
         :name="currentContact.name"
         :src="currentContact.thumbnail"
         :size="40"
-        :status="currentContact.availability_status"
         hide-offline-status
         rounded-full
       />
@@ -184,7 +184,7 @@ const selectedModel = computed({
           </span>
           <span
             v-if="statusBadge"
-            class="text-[10px] font-medium px-1.5 py-0 rounded-sm shrink-0 border"
+            class="text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 border"
             :class="badgeClass"
           >
             {{ statusBadge.text }}
