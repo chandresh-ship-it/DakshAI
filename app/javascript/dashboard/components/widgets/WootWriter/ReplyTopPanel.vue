@@ -89,7 +89,8 @@ export default {
       setReplyMode(REPLY_EDITOR_MODES.NOTE);
     };
     const handleAiReplyClick = () => {
-      if (props.disabled || props.isEditorDisabled || props.isReplyRestricted) return;
+      if (props.disabled || props.isEditorDisabled || props.isReplyRestricted)
+        return;
       if (!props.isCopilotActive) {
         if (props.mode !== REPLY_EDITOR_MODES.REPLY) {
           setReplyMode(REPLY_EDITOR_MODES.REPLY);
@@ -177,92 +178,99 @@ export default {
 
 <template>
   <div
-    class="flex items-center justify-between h-10 px-4 gap-4 bg-transparent"
-    role="tablist"
+    class="bg-card border border-border border-b-0 rounded-t-xl shadow-xs overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-shadow"
   >
-    <div class="flex items-center gap-6 h-full">
-      <button
-        type="button"
-        role="tab"
-        :aria-selected="isReplyActive"
-        class="relative h-full px-4 text-sm font-semibold transition-colors"
-        :class="
-          isReplyActive
-            ? 'text-foreground'
-            : 'text-muted-foreground hover:text-foreground'
-        "
-        :disabled="disabled || isReplyRestricted"
-        @click="handleReplyClick"
-      >
-        {{
-          contactName
-            ? `Reply to ${contactName}`
-            : $t('CONVERSATION.REPLYBOX.REPLY')
-        }}
-        <span
-          v-if="isReplyActive"
-          class="absolute inset-x-0 bottom-0 h-0.5 bg-foreground"
-          aria-hidden="true"
-        />
-      </button>
-      <button
-        type="button"
-        role="tab"
-        :aria-selected="isNoteActive"
-        class="relative h-full px-4 text-sm font-semibold transition-colors"
-        :class="
-          isNoteActive
-            ? 'text-amber-500 bg-amber-500/10'
-            : 'text-muted-foreground hover:text-foreground'
-        "
-        :disabled="disabled"
-        @click="handleNoteClick"
-      >
-        {{ $t('CONVERSATION.REPLYBOX.PRIVATE_NOTE') }}
-        <span
-          v-if="isNoteActive"
-          class="absolute inset-x-0 bottom-0 h-0.5 bg-amber-500"
-          aria-hidden="true"
-        />
-      </button>
-    </div>
-    <div class="flex items-center gap-2">
-      <div v-if="isMessageLengthReachingThreshold" class="text-xs">
-        <span :class="charLengthClass">
-          {{ characterLengthWarning }}
-        </span>
+    <div
+      class="w-full flex justify-between items-center h-10 bg-transparent rounded-none border-b border-border p-0 px-4"
+      role="tablist"
+    >
+      <div class="flex gap-8 h-full">
+        <!-- Reply -->
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="isReplyActive"
+          class="rounded-none h-full border-b-2 transition-colors flex items-center gap-1.5 px-0 font-semibold text-sm"
+          :class="
+            isReplyActive
+              ? 'border-primary text-foreground shadow-none bg-transparent'
+              : 'border-transparent text-muted-foreground hover:text-foreground shadow-none bg-transparent'
+          "
+          :disabled="disabled || isReplyRestricted"
+          @click="handleReplyClick"
+        >
+          {{
+            contactName
+              ? `Reply to ${contactName}`
+              : $t('CONVERSATION.REPLYBOX.REPLY')
+          }}
+        </button>
+
+        <!-- Private Note -->
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="isNoteActive"
+          class="rounded-none h-full border-b-2 transition-colors flex items-center gap-1.5 px-0 font-semibold text-sm"
+          :class="
+            isNoteActive
+              ? 'border-amber-500 text-amber-500 shadow-none bg-transparent'
+              : 'border-transparent text-muted-foreground hover:text-foreground shadow-none bg-transparent'
+          "
+          :disabled="disabled"
+          @click="handleNoteClick"
+        >
+          {{ $t('CONVERSATION.REPLYBOX.PRIVATE_NOTE') }}
+        </button>
+
+        <!-- AI Reply -->
+        <button
+          v-if="captainTasksEnabled"
+          type="button"
+          role="tab"
+          :aria-selected="isAiActive"
+          class="rounded-none h-full border-b-2 transition-colors flex items-center gap-1.5 px-0 font-semibold text-sm"
+          :class="
+            isAiActive
+              ? 'border-primary text-primary shadow-none bg-transparent'
+              : 'border-transparent text-muted-foreground hover:text-primary shadow-none bg-transparent'
+          "
+          :disabled="disabled || isEditorDisabled || isReplyRestricted"
+          @click="handleAiReplyClick"
+        >
+          <span class="i-lucide-wand-2 size-4" /> AI Reply
+        </button>
       </div>
-      <div v-if="captainTasksEnabled" class="relative">
-        <div ref="copilotToggleRef" class="inline-flex">
-          <NextButton
-            ghost
-            :disabled="disabled || isEditorDisabled"
-            sm
-            icon="i-ph-sparkle-fill"
-            class="text-muted-foreground"
-            @click="toggleCopilotMenu"
+
+      <div class="flex items-center gap-2">
+        <div v-if="isMessageLengthReachingThreshold" class="text-xs">
+          <span :class="charLengthClass">
+            {{ characterLengthWarning }}
+          </span>
+        </div>
+        <div v-if="captainTasksEnabled" class="relative">
+          <div ref="copilotToggleRef" class="inline-flex"></div>
+          <CopilotMenuBar
+            v-if="showCopilotMenu"
+            v-on-click-outside="[
+              handleClickOutside,
+              { ignore: [copilotToggleRef] },
+            ]"
+            :has-selection="false"
+            :has-content="hasContent"
+            :conversation-id="conversationId"
+            class="ltr:right-0 rtl:left-0 bottom-full mb-2"
+            @execute-copilot-action="handleCopilotAction"
           />
         </div>
-        <CopilotMenuBar
-          v-if="showCopilotMenu"
-          v-on-click-outside="[
-            handleClickOutside,
-            { ignore: [copilotToggleRef] },
-          ]"
-          :has-selection="false"
-          :has-content="hasContent"
-          :conversation-id="conversationId"
-          class="ltr:right-0 rtl:left-0 bottom-full mb-2"
-          @execute-copilot-action="handleCopilotAction"
-        />
+        <button
+          @click="$emit('toggleEditorSize')"
+          class="size-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          title="Toggle editor size"
+        >
+          <span class="i-lucide-maximize-2 size-4" />
+        </button>
       </div>
-      <NextButton
-        ghost
-        class="text-muted-foreground"
-        sm
-        icon="i-lucide-maximize-2"
-        @click="$emit('toggleEditorSize')"
-      />
     </div>
   </div>
 </template>

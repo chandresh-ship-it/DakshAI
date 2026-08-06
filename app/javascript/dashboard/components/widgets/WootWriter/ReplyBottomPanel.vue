@@ -282,19 +282,43 @@ export default {
 
 <template>
   <div
-    class="px-3 py-2 flex items-center justify-between bg-transparent"
-    :class="wrapClass"
+    class="px-3 py-2 flex items-center justify-between border-t border-border bg-muted/20"
   >
-    <div class="left-wrap">
+    <div class="flex items-center gap-1 flex-wrap">
+      <!-- WhatsApp Templates -->
+      <NextButton
+        v-if="enableWhatsAppTemplates"
+        v-tooltip.top-end="$t('CONVERSATION.FOOTER.WHATSAPP_TEMPLATES')"
+        icon="i-lucide-message-square"
+        variant="ghost"
+        class="text-muted-foreground hover:text-foreground h-8 w-8"
+        size="icon"
+        @click="$emit('selectWhatsappTemplate')"
+      />
+
+      <!-- Content Templates -->
+      <NextButton
+        v-if="enableContentTemplates"
+        v-tooltip.top-end="'Content Templates'"
+        icon="i-lucide-file-text"
+        variant="ghost"
+        class="text-muted-foreground hover:text-foreground h-8 w-8"
+        size="icon"
+        @click="$emit('selectContentTemplate')"
+      />
+
+      <!-- Emoji Picker -->
       <NextButton
         v-if="!isEditorDisabled"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_EMOJI_ICON')"
-        icon="i-ph-smiley-sticker"
-        slate
-        faded
-        sm
+        icon="i-lucide-smile"
+        variant="ghost"
+        class="text-muted-foreground hover:text-foreground h-8 w-8"
+        size="icon"
         @click.stop.prevent="toggleEmojiPicker"
       />
+
+      <!-- Attach File -->
       <FileUpload
         v-if="showAttachButton"
         ref="uploadRef"
@@ -310,109 +334,108 @@ export default {
           direct_upload: true,
         }"
         @input-file="onFileUpload"
+        class="inline-flex"
       >
         <NextButton
           v-if="!isEditorDisabled"
           v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_ATTACH_ICON')"
-          icon="i-ph-paperclip"
-          slate
-          faded
-          sm
+          icon="i-lucide-paperclip"
+          variant="ghost"
+          class="text-muted-foreground hover:text-foreground h-8 w-8"
+          size="icon"
         />
       </FileUpload>
+
+      <!-- Audio Recorder -->
       <NextButton
         v-if="!isEditorDisabled"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"
-        :icon="!isRecordingAudio ? 'i-ph-microphone' : 'i-ph-microphone-slash'"
-        slate
-        faded
-        sm
+        :icon="!isRecordingAudio ? 'i-lucide-mic' : 'i-lucide-mic-off'"
+        variant="ghost"
+        :class="
+          isRecordingAudio
+            ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600'
+            : 'text-muted-foreground hover:text-foreground'
+        "
+        class="h-8 w-8"
+        size="icon"
         @click="toggleAudioRecorder"
       />
+
+      <!-- Audio Play/Pause (only shown when recording) -->
       <NextButton
         v-if="showAudioPlayStopButton"
         :icon="audioRecorderPlayStopIcon"
-        slate
-        faded
-        sm
+        variant="ghost"
+        class="text-muted-foreground hover:text-foreground h-8 px-2"
         :label="recordingAudioDurationText"
         @click="toggleAudioRecorderPlayPause"
       />
+
+      <!-- Signature -->
       <NextButton
         v-if="!isEditorDisabled"
         v-tooltip.top-end="signatureToggleTooltip"
-        icon="i-ph-signature"
-        slate
-        faded
-        sm
+        icon="i-lucide-pen-line"
+        variant="ghost"
+        class="text-muted-foreground hover:text-foreground h-8 w-8"
+        size="icon"
         @click="toggleMessageSignature"
       />
+
+      <!-- Quoted Reply -->
       <NextButton
         v-if="showQuotedReplyToggle"
         v-tooltip.top-end="quotedReplyToggleTooltip"
-        icon="i-ph-quotes"
-        :variant="quotedReplyEnabled ? 'solid' : 'faded'"
-        color="slate"
-        sm
+        icon="i-lucide-quote"
+        :variant="quotedReplyEnabled ? 'solid' : 'ghost'"
+        :class="
+          quotedReplyEnabled
+            ? 'bg-muted text-foreground'
+            : 'text-muted-foreground hover:text-foreground'
+        "
+        class="h-8 w-8"
+        size="icon"
         :aria-pressed="quotedReplyEnabled"
         @click="$emit('toggleQuotedReply')"
       />
+
+      <!-- Insert Article -->
       <NextButton
-        v-if="enableWhatsAppTemplates"
-        v-tooltip.top-end="$t('CONVERSATION.FOOTER.WHATSAPP_TEMPLATES')"
-        icon="i-ph-whatsapp-logo"
-        slate
-        faded
-        sm
-        @click="$emit('selectWhatsappTemplate')"
+        v-if="!isEditorDisabled"
+        v-tooltip.top-end="$t('HELP_CENTER.ARTICLE_SEARCH.OPEN_ARTICLE_SEARCH')"
+        icon="i-lucide-file-text"
+        variant="ghost"
+        class="text-muted-foreground hover:text-foreground h-8 w-8"
+        size="icon"
+        @click="toggleInsertArticle"
       />
-      <NextButton
-        v-if="enableContentTemplates"
-        v-tooltip.top-end="'Content Templates'"
-        icon="i-ph-whatsapp-logo"
-        slate
-        faded
-        sm
-        @click="$emit('selectContentTemplate')"
-      />
+
+      <!-- Video Call -->
       <VideoCallButton
         v-if="!isEditorDisabled"
         :conversation-id="conversationId"
+        class="text-muted-foreground hover:text-foreground h-8 w-8"
       />
+
       <transition name="modal-fade">
         <div
           v-show="uploadRef && uploadRef.dropActive"
-          class="flex fixed top-0 right-0 bottom-0 left-0 z-20 flex-col gap-2 justify-center items-center w-full h-full text-n-slate-12 bg-modal-backdrop-light dark:bg-modal-backdrop-dark"
+          class="flex fixed top-0 right-0 bottom-0 left-0 z-20 flex-col gap-2 justify-center items-center w-full h-full text-foreground bg-background/80 backdrop-blur-sm"
         >
-          <fluent-icon icon="cloud-backup" size="40" />
-          <h4 class="text-2xl break-words text-n-slate-12">
+          <span class="i-lucide-cloud-upload size-10" />
+          <h4 class="text-2xl break-words font-medium">
             {{ $t('CONVERSATION.REPLYBOX.DRAG_DROP') }}
           </h4>
         </div>
       </transition>
-      <NextButton
-        v-if="!isEditorDisabled"
-        v-tooltip.top-end="$t('HELP_CENTER.ARTICLE_SEARCH.OPEN_ARTICLE_SEARCH')"
-        icon="i-ph-article-ny-times"
-        slate
-        faded
-        sm
-        @click="toggleInsertArticle"
-      />
-      <NextButton
-        v-if="!isEditorDisabled"
-        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.AI_REPLY')"
-        icon="i-lucide-wand-sparkles"
-        slate
-        faded
-        sm
-        @click="$emit('toggleCopilot')"
-      />
     </div>
-    <div class="right-wrap">
+
+    <!-- Right Side: Send Button -->
+    <div class="flex items-center">
       <button
         type="submit"
-        class="inline-flex items-center gap-2 h-8 px-4 rounded-full text-sm font-semibold shadow-xs transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        class="inline-flex items-center gap-2 h-8 px-4 rounded-md text-sm font-semibold shadow-xs transition-colors disabled:opacity-50 disabled:pointer-events-none"
         :class="
           isNote
             ? 'bg-amber-500 text-white hover:bg-amber-600'
@@ -422,27 +445,16 @@ export default {
         @click="onSend"
       >
         {{ sendButtonText }}
+        <span class="i-lucide-corner-down-left size-3.5 opacity-70" />
       </button>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.left-wrap {
-  @apply items-center flex gap-2;
-}
-
-.right-wrap {
-  @apply flex;
-}
-
 :deep(.file-uploads) {
   label {
-    @apply cursor-pointer;
-  }
-
-  &:hover button {
-    @apply enabled:bg-n-slate-9/20;
+    cursor: pointer;
   }
 }
 </style>
