@@ -906,7 +906,7 @@ watch(conversationFilters, (newVal, oldVal) => {
   >
     <slot />
     <div
-      class="flex items-center justify-between px-4 border-b border-border h-14 shrink-0"
+      class="flex items-center justify-between px-4 h-14 shrink-0"
     >
       <h1
         class="text-base font-medium truncate text-foreground flex items-center gap-1.5 min-w-0"
@@ -959,13 +959,13 @@ watch(conversationFilters, (newVal, oldVal) => {
       >
         <div class="flex items-center">
           <RelayTabsList
-            class="h-9 p-0 bg-transparent gap-4 overflow-hidden flex-1 justify-start"
+            class="h-9 p-0 bg-transparent gap-6 overflow-hidden flex-1 justify-start"
           >
             <RelayTabsTrigger
               v-for="tab in assigneeTabItems"
               :key="tab.key"
               :value="tab.key"
-              class="px-1 py-2 border-b-[2px] border-transparent text-[14px] font-medium text-muted-foreground hover:text-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none !rounded-none !bg-transparent"
+              class="px-0 py-2 border-b-[2px] border-transparent text-[14px] font-medium text-muted-foreground hover:text-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none !rounded-none !bg-transparent"
             >
               {{ tab.name }}
             </RelayTabsTrigger>
