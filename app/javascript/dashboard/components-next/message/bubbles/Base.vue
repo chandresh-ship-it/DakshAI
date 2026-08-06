@@ -28,7 +28,7 @@ const varaintBaseMap = {
   [MESSAGE_VARIANTS.AGENT]:
     'bg-primary text-primary-foreground shadow-xs border-transparent w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.PRIVATE]:
-    'bg-amber-500/10 text-foreground border-transparent w-fit max-w-[85%]',
+    'bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-transparent w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.USER]:
     'bg-card border border-border shadow-xs text-foreground w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.ACTIVITY]:
