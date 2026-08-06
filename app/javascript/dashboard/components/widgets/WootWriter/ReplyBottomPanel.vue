@@ -163,11 +163,22 @@ export default {
 
     const { captainTasksEnabled } = useCaptain();
 
+    const handleEmojiPickerClick = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (props.toggleEmojiPicker) {
+        props.toggleEmojiPicker();
+      }
+    };
+
     return {
       setSignatureFlagForInbox,
       fetchSignatureFlagFromUISettings,
       uploadRef,
       captainTasksEnabled,
+      handleEmojiPickerClick,
     };
   },
   computed: {
@@ -315,7 +326,7 @@ export default {
         variant="ghost"
         class="text-muted-foreground hover:text-foreground h-8 w-8"
         size="icon"
-        @click.stop.prevent="toggleEmojiPicker"
+        @click="handleEmojiPickerClick"
       />
 
       <!-- Attach File -->
@@ -409,6 +420,17 @@ export default {
         class="text-muted-foreground hover:text-foreground h-8 w-8"
         size="icon"
         @click="toggleInsertArticle"
+      />
+
+      <!-- AI Reply -->
+      <NextButton
+        v-if="!isEditorDisabled"
+        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.AI_REPLY')"
+        icon="i-lucide-wand-sparkles"
+        variant="ghost"
+        class="text-muted-foreground hover:text-foreground h-8 w-8"
+        size="icon"
+        @click="$emit('toggleCopilot')"
       />
 
       <!-- Video Call -->
