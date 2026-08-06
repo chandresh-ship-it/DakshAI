@@ -331,14 +331,14 @@
         "UNBLOCK_SUCCESS_MESSAGE": "This contact is unblocked successfully",
         "UNBLOCK_ERROR_MESSAGE": "Unable to unblock contact. Please try again later.",
         "IMPORT_CONTACT": {
-          "TITLE": "Import contacts",
-          "DESCRIPTION": "Import contacts through a CSV file.",
+          "TITLE": "Import Contacts",
+          "DESCRIPTION": "Only a CSV file. Upload your CSV file to import contacts into your workspace.",
           "DOWNLOAD_LABEL": "Download a sample csv.",
           "LABEL": "CSV File:",
           "CHOOSE_FILE": "Choose file",
           "CHANGE": "Change",
           "CANCEL": "Cancel",
-          "IMPORT": "Import",
+          "IMPORT": "Upload",
           "SUCCESS_MESSAGE": "You will be notified via email when the import is complete.",
           "ERROR_MESSAGE": "There was an error, please try again"
         },

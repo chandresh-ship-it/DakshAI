@@ -18,8 +18,6 @@ const fileInput = ref(null);
 const hasSelectedFile = ref(null);
 const selectedFileName = ref('');
 
-const csvUrl = '/downloads/import-contacts-sample.csv';
-
 const handleFileClick = () => fileInput.value?.click();
 
 const processFileName = fileName => {
@@ -58,71 +56,73 @@ defineExpose({ dialogRef });
   <Dialog
     ref="dialogRef"
     :title="t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.TITLE')"
-    :confirm-button-label="
-      t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.IMPORT')
-    "
+    :confirm-button-label="t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.IMPORT')"
     :is-loading="isImportingContact"
-    :disable-confirm-button="isImportingContact"
+    :disable-confirm-button="isImportingContact || !hasSelectedFile"
     @confirm="uploadFile"
   >
     <template #description>
-      <p class="mb-0 text-sm text-n-slate-11">
+      <p class="mb-0 text-sm text-muted-foreground">
         {{ t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.DESCRIPTION') }}
-        <a
-          :href="csvUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-          download="import-contacts-sample.csv"
-          class="text-n-blue-11"
-        >
-          {{
-            t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.DOWNLOAD_LABEL')
-          }}
-        </a>
       </p>
     </template>
 
-    <div class="flex flex-col gap-2">
-      <div class="flex items-center gap-2">
-        <label class="text-sm text-n-slate-12 whitespace-nowrap">
-          {{ t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.LABEL') }}
-        </label>
-        <div class="flex items-center justify-between w-full gap-2">
-          <span v-if="hasSelectedFile" class="text-sm text-n-slate-12">
-            {{ selectedFileName }}
-          </span>
+    <div
+      class="mt-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card p-10 transition-colors hover:bg-muted/50 cursor-pointer"
+      @click="handleFileClick"
+      @dragover.prevent
+      @drop.prevent="e => {
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          hasSelectedFile = e.dataTransfer.files[0];
+          selectedFileName = processFileName(hasSelectedFile.name);
+          if (fileInput) fileInput.value = null;
+        }
+      }"
+    >
+      <div v-if="!hasSelectedFile" class="flex flex-col items-center gap-3 text-center">
+        <div class="rounded-full bg-muted/50 p-3">
+          <span class="i-lucide-upload size-6 text-foreground" />
+        </div>
+        <div class="space-y-1">
+          <p class="text-sm font-medium text-foreground">
+            Click to upload or drag and drop
+          </p>
+          <p class="text-xs text-muted-foreground">
+            CSV up to 10MB
+          </p>
+        </div>
+      </div>
+
+      <div v-else class="flex w-full items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="rounded-lg border border-border bg-muted/50 p-2">
+            <span class="i-lucide-file-spreadsheet size-5 text-primary" />
+          </div>
+          <div class="flex flex-col text-start">
+            <span class="text-sm font-medium text-foreground">{{ selectedFileName }}</span>
+            <span class="text-xs text-muted-foreground">Ready to upload</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-1">
           <Button
-            v-if="!hasSelectedFile"
-            :label="
-              t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.CHOOSE_FILE')
-            "
-            icon="i-lucide-upload"
+            label="Change"
             color="slate"
             variant="ghost"
             size="sm"
-            class="!w-fit"
-            @click="handleFileClick"
+            @click.stop="handleFileClick"
           />
-          <div v-else class="flex items-center gap-1">
-            <Button
-              :label="t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.CHANGE')"
-              color="slate"
-              variant="ghost"
-              size="sm"
-              @click="handleFileClick"
-            />
-            <div class="w-px h-3 bg-n-strong" />
-            <Button
-              icon="i-lucide-trash"
-              color="slate"
-              variant="ghost"
-              size="sm"
-              @click="handleRemoveFile"
-            />
-          </div>
+          <div class="h-3 w-px bg-border mx-1" />
+          <Button
+            icon="i-lucide-trash"
+            color="slate"
+            variant="ghost"
+            size="sm"
+            @click.stop="handleRemoveFile"
+          />
         </div>
       </div>
     </div>
+
     <input
       ref="fileInput"
       type="file"
