@@ -214,7 +214,7 @@ export default {
           class="rounded-none h-full border-b-2 transition-colors flex items-center gap-1.5 px-0 font-semibold text-sm"
           :class="
             isNoteActive
-              ? 'border-amber-500 text-amber-500 shadow-none bg-transparent'
+              ? 'border-warning text-warning shadow-none bg-transparent'
               : 'border-transparent text-muted-foreground hover:text-foreground shadow-none bg-transparent'
           "
           :disabled="disabled"

@@ -298,7 +298,7 @@ const handleRemove = async event => {
 
           <p
             v-if="!isVerified && normalizedDomain && isPending"
-            class="text-sm font-semibold text-amber-500"
+            class="text-sm font-semibold text-warning"
           >
             {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PENDING') }}
           </p>

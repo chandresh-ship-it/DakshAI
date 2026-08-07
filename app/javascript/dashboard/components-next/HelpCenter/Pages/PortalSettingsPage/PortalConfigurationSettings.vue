@@ -173,7 +173,7 @@ const openDomainDialog = () => {
           </span>
           <span
             v-if="isLive || (!isOnChatwootCloud && customDomainAddress)"
-            class="i-lucide-circle-check size-4 text-emerald-500"
+            class="i-lucide-circle-check size-4 text-success"
             aria-hidden="true"
           />
           <span

@@ -282,7 +282,7 @@ onMounted(loadData);
           <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Average Rating</p>
           <div class="flex items-baseline gap-2 mt-2">
             <span class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ averageRating }}</span>
-            <span class="text-xs font-semibold text-emerald-500">★ Out of 5</span>
+            <span class="text-xs font-semibold text-success">★ Out of 5</span>
           </div>
           <!-- Simple stars row -->
           <div class="flex gap-0.5 mt-2.5 text-yellow-400">
@@ -299,7 +299,7 @@ onMounted(loadData);
             <span class="text-xs font-semibold text-slate-400">Synced reviews</span>
           </div>
           <p class="text-xs text-slate-500 mt-2.5 flex items-center gap-1">
-            <span class="size-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+            <span class="size-2 rounded-full bg-success inline-block animate-pulse"></span>
             Sync poller active
           </p>
         </div>
@@ -320,7 +320,7 @@ onMounted(loadData);
           <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Action</p>
           <div class="flex items-baseline gap-2 mt-2">
             <span class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ pendingRepliesCount }}</span>
-            <span class="text-xs font-semibold text-amber-500">Needs Reply</span>
+            <span class="text-xs font-semibold text-warning">Needs Reply</span>
           </div>
           <p class="text-xs text-slate-400 mt-2.5">
             Avg reply time: <strong class="text-slate-600 dark:text-slate-350">~15m</strong>

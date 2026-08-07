@@ -69,10 +69,10 @@ const channels = computed(() => [
     title: t('ONBOARDING.CHANNELS.WHATSAPP.TITLE'),
     description: t('ONBOARDING.CHANNELS.WHATSAPP.DESCRIPTION'),
     icon: 'i-woot-whatsapp',
-    iconWrap: 'bg-emerald-500/10',
-    iconClass: 'text-emerald-500',
+    iconWrap: 'bg-success/10',
+    iconClass: 'text-success',
     cardClass:
-      'border-2 border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-500/5 hover:border-emerald-500/40',
+      'border-2 border-success/20 bg-emerald-50/30 dark:bg-success/5 hover:border-success/40',
     buttonVariant: 'default',
     buttonClass:
       'h-8 px-4 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm',

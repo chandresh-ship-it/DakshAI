@@ -102,8 +102,8 @@ const getAvatarBg = name => {
   const colors = [
     'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     'bg-rose-500/10 text-rose-600 dark:text-rose-400',
-    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    'bg-success/10 text-emerald-600 dark:text-emerald-400',
+    'bg-warning/10 text-amber-600 dark:text-amber-400',
     'bg-sky-500/10 text-sky-600 dark:text-sky-400'
   ];
   return colors[code % colors.length];
@@ -334,7 +334,7 @@ const filteredReviews = computed(() => {
         <!-- Existing reply timeline -->
         <div v-else-if="review.reputation_review_reply" class="bg-slate-50 dark:bg-slate-850/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800/80 space-y-2">
           <div class="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold uppercase tracking-wider">
-            <svg class="size-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg class="size-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             Your response
             <span v-if="review.reputation_review_reply.published_at" class="normal-case font-normal text-slate-400">
               · published {{ new Date(review.reputation_review_reply.published_at).toLocaleDateString() }}

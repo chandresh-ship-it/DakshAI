@@ -177,11 +177,11 @@ onBeforeMount(contextMenuActions.close);
       >
         <span
           v-if="isStarred"
-          class="size-4 cursor-pointer i-ri-star-fill text-[#b6872d] opacity-100"
+          class="size-4 cursor-pointer i-ri-star-fill text-[#ffb900] opacity-100"
         />
         <span
           v-else
-          class="size-4 cursor-pointer i-lucide-star text-muted-foreground opacity-30 group-hover:opacity-100 transition-opacity hover:text-[#b6872d]"
+          class="size-4 cursor-pointer i-lucide-star text-muted-foreground opacity-30 group-hover:opacity-100 transition-opacity hover:text-[#ffb900]"
         />
       </button>
       <div class="relative shrink-0 ml-1">

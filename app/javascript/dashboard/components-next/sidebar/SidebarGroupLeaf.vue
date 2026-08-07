@@ -81,10 +81,10 @@ const isLeafActive = computed(() => {
       :title="label"
       active-class=""
       exact-active-class=""
-      class="flex h-8 min-w-0 -translate-x-px items-center gap-3 overflow-hidden rounded-md px-2 text-sm outline-none transition-colors"
+      class="relative flex h-8 min-w-0 -translate-x-px items-center gap-3 overflow-hidden rounded-md px-2 text-sm outline-none transition-colors"
       :class="
         isLeafActive
-          ? 'bg-sidebar-accent font-medium text-sidebar-primary hover:bg-sidebar-accent hover:text-sidebar-primary'
+          ? 'font-medium text-sidebar-primary before:absolute before:inset-y-1 before:left-0 before:w-[3px] before:rounded-r-md before:bg-sidebar-primary hover:text-sidebar-primary'
           : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
       "
       :aria-current="isLeafActive ? 'page' : undefined"

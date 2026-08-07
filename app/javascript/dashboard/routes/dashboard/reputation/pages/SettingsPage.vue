@@ -521,7 +521,7 @@ onMounted(async () => {
                       <h4 class="font-extrabold text-sm text-slate-850 dark:text-white">{{ platform.name }}</h4>
                       <span
                         class="text-[9px] uppercase tracking-wider font-extrabold"
-                        :class="getIntegrationForPlatform(platform.id).length > 0 ? 'text-emerald-500' : 'text-slate-400'"
+                        :class="getIntegrationForPlatform(platform.id).length > 0 ? 'text-success' : 'text-slate-400'"
                       >
                         {{ getIntegrationForPlatform(platform.id).length > 0 ? 'Connected' : 'Not connected' }}
                       </span>
@@ -567,8 +567,8 @@ onMounted(async () => {
 
                 <!-- Card Action footer -->
                 <div class="mt-4 border-t border-slate-100 dark:border-slate-850/50 pt-3">
-                  <div v-if="getIntegrationForPlatform(platform.id).length > 0" class="text-xs text-emerald-500 font-bold flex items-center gap-1">
-                    <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <div v-if="getIntegrationForPlatform(platform.id).length > 0" class="text-xs text-success font-bold flex items-center gap-1">
+                    <span class="size-1.5 rounded-full bg-success animate-pulse"></span>
                     Syncing Reviews
                   </div>
                   <button
@@ -603,7 +603,7 @@ onMounted(async () => {
                       <h4 class="font-extrabold text-sm text-slate-850 dark:text-white truncate">
                         {{ customInt.location_name.split(' - ')[0] }}
                       </h4>
-                      <span class="text-[9px] uppercase tracking-wider font-extrabold text-emerald-500">Connected</span>
+                      <span class="text-[9px] uppercase tracking-wider font-extrabold text-success">Connected</span>
                     </div>
                   </div>
                   <button 

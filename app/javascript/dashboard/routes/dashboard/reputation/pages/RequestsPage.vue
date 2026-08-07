@@ -204,12 +204,12 @@ const statusColor = s => {
         <div class="space-y-1">
           <span class="text-[10px] uppercase font-bold text-slate-400">Link Clicks</span>
           <h4 class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ stats.clicked }}</h4>
-          <p class="text-[10px] text-amber-500 font-bold">{{ conversionRates.click }}% Click Rate</p>
+          <p class="text-[10px] text-warning font-bold">{{ conversionRates.click }}% Click Rate</p>
         </div>
         <div class="space-y-1">
           <span class="text-[10px] uppercase font-bold text-slate-400">Completed Reviews</span>
           <h4 class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ stats.completed }}</h4>
-          <p class="text-[10px] text-emerald-500 font-bold">{{ conversionRates.complete }}% Conversion</p>
+          <p class="text-[10px] text-success font-bold">{{ conversionRates.complete }}% Conversion</p>
         </div>
       </div>
 

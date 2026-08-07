@@ -95,12 +95,12 @@ const statusDotClass = computed(() => {
   const priority = props.chat.priority;
   if (priority === 'urgent') return 'bg-destructive';
   if (priority === 'high') return 'bg-primary';
-  if (priority === 'medium') return 'bg-amber-500';
-  if (priority === 'low') return 'bg-emerald-500';
+  if (priority === 'medium') return 'bg-warning';
+  if (priority === 'low') return 'bg-success';
   if (hasUnread.value) return 'bg-primary';
-  if (props.chat.status === 'pending') return 'bg-amber-500';
-  if (props.chat.status === 'snoozed') return 'bg-amber-500';
-  if (props.chat.status === 'resolved') return 'bg-emerald-500';
+  if (props.chat.status === 'pending') return 'bg-warning';
+  if (props.chat.status === 'snoozed') return 'bg-warning';
+  if (props.chat.status === 'resolved') return 'bg-success';
   return 'bg-primary';
 });
 
