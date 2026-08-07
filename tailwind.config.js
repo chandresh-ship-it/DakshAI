@@ -2,6 +2,7 @@ const { slateDark } = require('@radix-ui/colors');
 import { colors } from './theme/colors';
 import { icons } from './theme/icons';
 const defaultTheme = require('tailwindcss/defaultTheme');
+const tailwindColors = require('tailwindcss/colors');
 const {
   iconsPlugin,
   getIconCollections,
@@ -49,7 +50,7 @@ const tailwindConfig = {
         xl: 'calc(var(--radius) + 4px)',
       },
       fontFamily: {
-        sans: defaultSansFonts,
+        sans: ['Geist', ...defaultSansFonts],
         inter: ['Inter', ...defaultSansFonts],
         interDisplay: ['InterDisplay', ...defaultSansFonts],
         // new-ui default `--font-sans`
@@ -237,6 +238,8 @@ const tailwindConfig = {
       'modal-backdrop-dark': 'rgba(0, 0, 0, 0.6)',
       current: 'currentColor',
       ...colors,
+      amber: tailwindColors.amber,
+      emerald: tailwindColors.emerald,
       body: slateDark.slate7,
       // new-ui / shadcn tokens (see _relay-theme.scss)
       background: 'var(--background)',

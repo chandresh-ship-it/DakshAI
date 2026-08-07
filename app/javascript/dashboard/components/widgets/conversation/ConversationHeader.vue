@@ -111,7 +111,7 @@ const badgeClass = computed(() => {
 });
 
 const statusDotClass = computed(() => {
-  const priority = props.chat.priority;
+  const priority = props.chat?.priority;
   if (priority === 'urgent') return 'bg-destructive';
   if (priority === 'high') return 'bg-primary';
   if (priority === 'medium') return 'bg-warning';
