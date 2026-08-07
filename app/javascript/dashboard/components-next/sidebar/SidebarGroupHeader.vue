@@ -37,7 +37,7 @@ const isHighlighted = computed(() => props.isActive || props.hasActiveChild);
     :title="label"
     :class="
       danger
-        ? 'text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive'
+        ? 'text-sidebar-foreground hover:bg-red-500/10 hover:text-destructive'
         : isHighlighted
           ? 'bg-sidebar-primary/10 font-medium text-sidebar-primary hover:bg-sidebar-primary/15'
           : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'

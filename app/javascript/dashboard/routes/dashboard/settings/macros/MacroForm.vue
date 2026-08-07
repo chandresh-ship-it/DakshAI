@@ -133,7 +133,7 @@ export default {
 
 <template>
   <div
-    class="flex flex-col w-full h-[calc(100vh-10rem)] lg:flex-row border border-border/60 bg-card rounded-2xl shadow-2xl overflow-hidden"
+    class="flex flex-col w-full h-full lg:flex-row border border-border/60 bg-card rounded-2xl shadow-2xl overflow-hidden"
   >
     <div
       class="flex-1 w-full h-full max-h-full ltr:pl-12 ltr:pr-6 rtl:pl-6 rtl:pr-12 py-12 overflow-y-auto lg:w-auto relative bg-[radial-gradient(#cbd5e1_1.25px,transparent_1.25px)] dark:bg-[radial-gradient(#334155_1.25px,transparent_1.25px)] [background-size:24px_24px]"

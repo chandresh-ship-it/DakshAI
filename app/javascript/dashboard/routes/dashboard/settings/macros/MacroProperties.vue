@@ -105,7 +105,7 @@ export default {
         <label class="text-[14px] font-semibold text-foreground">
           {{ $t('MACROS.EDITOR.VISIBILITY.LABEL') }}
         </label>
-        <div class="grid grid-cols-1 gap-3">
+        <div class="grid grid-cols-2 gap-3">
           <!-- Global/Public Button -->
           <button
             type="button"

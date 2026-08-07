@@ -210,7 +210,6 @@ const saveMacro = async macroData => {
 <template>
   <SettingsLayout
     :no-records-message="$t('MACROS.LIST.404')"
-    :no-records-found="!records.length"
     :is-loading="uiFlags.isFetching"
     :loading-message="$t('MACROS.LOADING')"
     feature-name="macros"
