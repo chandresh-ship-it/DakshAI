@@ -13,7 +13,7 @@ const props = defineProps({
     default: true,
   },
 });
-defineEmits(['delete']);
+defineEmits(['delete', 'edit']);
 const { t } = useI18n();
 
 const createdByName = computed(() => {
@@ -95,17 +95,16 @@ const editTooltip = computed(() =>
     <div
       class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
     >
-      <router-link :to="{ name: 'macros_edit', params: { macroId: macro.id } }">
-        <button
-          class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-          :title="editTooltip"
-        >
-          <span class="i-lucide-edit size-4 block" />
-        </button>
-      </router-link>
+      <button
+        class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer border-0 bg-transparent"
+        :title="editTooltip"
+        @click="$emit('edit', macro.id)"
+      >
+        <span class="i-lucide-edit size-4 block" />
+      </button>
       <button
         v-if="canManageMacro"
-        class="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+        class="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors cursor-pointer border-0 bg-transparent"
         :title="$t('MACROS.DELETE.TOOLTIP')"
         @click="$emit('delete')"
       >

@@ -128,6 +128,19 @@ const checkRouteAndOpenBuilder = async () => {
   }
 };
 
+const openNewMacroBuilder = () => {
+  initNewMacro();
+  isBuilderOpen.value = true;
+  router.push({ name: 'macros_new' });
+};
+
+const openEditMacroBuilder = async macroId => {
+  mode.value = 'EDIT';
+  isBuilderOpen.value = true;
+  router.push({ name: 'macros_edit', params: { macroId } });
+  await manifestMacro(macroId);
+};
+
 watch(
   () => route.name,
   () => {
@@ -214,13 +227,12 @@ const saveMacro = async macroData => {
             {{ $t('MACROS.DESCRIPTION') }}
           </p>
         </div>
-        <router-link :to="{ name: 'macros_new' }">
-          <Button
-            class="shrink-0 h-9 px-4 font-medium shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground border-0 text-[13px]"
-          >
-            {{ $t('MACROS.HEADER_BTN_TXT') }}
-          </Button>
-        </router-link>
+        <Button
+          class="shrink-0 h-9 px-4 font-medium shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground border-0 text-[13px]"
+          @click="openNewMacroBuilder"
+        >
+          {{ $t('MACROS.HEADER_BTN_TXT') }}
+        </Button>
       </div>
     </template>
     <template #body>
@@ -310,6 +322,7 @@ const saveMacro = async macroData => {
               :key="macroRecord.id"
               :macro="macroRecord"
               :can-manage-public-macros="isAdmin"
+              @edit="openEditMacroBuilder"
               @delete="openDeletePopup(macroRecord)"
             />
           </div>
