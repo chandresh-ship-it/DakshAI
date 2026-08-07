@@ -123,12 +123,12 @@ export default {
 </script>
 
 <template>
-  <li class="list-none py-2 first:pt-0 last:pb-0">
+  <div :class="isMacro ? 'w-full' : 'list-none py-2 first:pt-0 last:pb-0'">
     <div
       class="flex flex-col gap-2"
       :class="{ 'animate-wiggle': errorMessage }"
     >
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 w-full">
         <SingleSelect
           :model-value="actionNameAsSelectModel"
           :options="actionTypesAsOptions"
@@ -198,5 +198,5 @@ export default {
     <span v-if="errorMessage" class="text-sm text-n-ruby-11">
       {{ errorMessage }}
     </span>
-  </li>
+  </div>
 </template>
