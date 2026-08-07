@@ -281,7 +281,7 @@ export default {
 
 <template>
   <div
-    class="z-50 min-w-[12rem] p-1 overflow-hidden rounded-md border border-border bg-popover text-foreground shadow-md"
+    class="z-50 min-w-[12rem] p-1 rounded-md border border-border bg-popover text-foreground shadow-md"
   >
     <template v-if="isAllowed([MENU.MARK_AS_READ, MENU.MARK_AS_UNREAD])">
       <MenuItem
