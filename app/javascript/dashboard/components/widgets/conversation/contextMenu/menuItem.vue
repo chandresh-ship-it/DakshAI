@@ -15,12 +15,16 @@ defineProps({
 </script>
 
 <template>
-  <div class="menu text-n-slate-12 min-h-7 min-w-0" role="button">
+  <div 
+    class="flex items-center min-w-[12rem] min-h-8 px-2 py-1.5 rounded-sm cursor-pointer text-sm font-medium transition-colors"
+    :class="option.key === 'delete' ? 'text-destructive hover:bg-destructive/10' : 'text-foreground hover:bg-muted'"
+    role="button"
+  >
     <fluent-icon
       v-if="variant === 'icon' && option.icon"
       :icon="option.icon"
       size="14"
-      class="flex-shrink-0"
+      class="flex-shrink-0 opacity-70"
     />
     <span
       v-if="
@@ -37,7 +41,7 @@ defineProps({
       :size="20"
       class="flex-shrink-0"
     />
-    <p class="menu-label truncate min-w-0 flex-1">
+    <p class="my-0 mx-2 text-xs flex-shrink-0 min-w-0 flex-1 truncate">
       {{ option.label }}
     </p>
     <Icon
@@ -49,24 +53,11 @@ defineProps({
 </template>
 
 <style scoped lang="scss">
-.menu {
-  width: calc(6.25rem * 2);
-  @apply flex items-center flex-nowrap p-1 rounded-md overflow-hidden cursor-pointer;
-
-  .menu-label {
-    @apply my-0 mx-2 text-xs flex-shrink-0;
-  }
-
-  &:hover {
-    @apply bg-n-brand text-white;
-  }
-}
-
 .agent-thumbnail {
   margin-top: 0 !important;
 }
 
 .label-pill {
-  @apply w-4 h-4 rounded-full border border-n-strong border-solid flex-shrink-0;
+  @apply w-4 h-4 rounded-full border border-border border-solid flex-shrink-0;
 }
 </style>
