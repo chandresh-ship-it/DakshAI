@@ -25,7 +25,7 @@ export default {
       default: false,
     },
   },
-  emits: ['submit'],
+  emits: ['submit', 'close'],
   setup() {
     const v$ = useVuelidate();
     provide('v$', v$);
@@ -186,6 +186,7 @@ export default {
         @update:name="updateName"
         @update:visibility="updateVisibility"
         @submit="submit"
+        @close="$emit('close')"
       />
     </div>
   </div>

@@ -3,20 +3,41 @@ import { useAlert } from 'dashboard/composables';
 import { picoSearch } from '@scmmishra/pico-search';
 import MacrosTableRow from './MacrosTableRow.vue';
 import SettingsLayout from '../SettingsLayout.vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch, provide } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStoreGetters, useStore } from 'dashboard/composables/store';
 import Button from 'dashboard/components-next/button/Button.vue';
 import { useAdmin } from 'dashboard/composables/useAdmin';
+import { useRoute, useRouter } from 'vue-router';
+import { MACRO_ACTION_TYPES } from './constants';
+import { useMacros } from 'dashboard/composables/useMacros';
+import actionQueryGenerator from 'dashboard/helper/actionQueryGenerator.js';
+import MacroForm from './MacroForm.vue';
 
 const getters = useStoreGetters();
 const store = useStore();
 const { t } = useI18n();
 const { isAdmin } = useAdmin();
+const route = useRoute();
+const router = useRouter();
+const { getMacroDropdownValues } = useMacros();
 
 const showDeleteConfirmationPopup = ref(false);
 const selectedMacro = ref({});
 const searchQuery = ref('');
+
+const isBuilderOpen = ref(false);
+const macro = ref(null);
+const mode = ref('CREATE');
+
+const macroActionTypes = computed(() => {
+  return MACRO_ACTION_TYPES.map(type => ({
+    ...type,
+    label: t(`MACROS.ACTIONS.${type.label}`),
+  }));
+});
+
+provide('macroActionTypes', macroActionTypes);
 
 const records = computed(() => getters['macros/getMacros'].value);
 const uiFlags = computed(() => getters['macros/getUIFlags'].value);
@@ -27,7 +48,100 @@ const filteredRecords = computed(() => {
   return picoSearch(records.value, query, ['name']);
 });
 
+const isPublicMacroReadOnly = computed(
+  () => macro.value?.visibility === 'global' && !isAdmin.value
+);
+
 const deleteMessage = computed(() => ` ${selectedMacro.value.name}?`);
+
+const fetchDropdownData = () => {
+  store.dispatch('agents/get');
+  store.dispatch('teams/get');
+  store.dispatch('labels/get');
+};
+
+const formatMacro = macroData => {
+  const formattedActions = macroData.actions.map(action => {
+    let actionParams = [];
+    if (action.action_params.length) {
+      const inputType = macroActionTypes.value.find(
+        item => item.key === action.action_name
+      ).inputType;
+      if (inputType === 'multi_select' || inputType === 'search_select') {
+        actionParams = getMacroDropdownValues(action.action_name).filter(item =>
+          [...action.action_params].includes(item.id)
+        );
+      } else if (inputType === 'team_message') {
+        actionParams = {
+          team_ids: getMacroDropdownValues(action.action_name).filter(item =>
+            [...action.action_params[0].team_ids].includes(item.id)
+          ),
+          message: action.action_params[0].message,
+        };
+      } else actionParams = [...action.action_params];
+    }
+    return {
+      ...action,
+      action_params: actionParams,
+    };
+  });
+  return {
+    ...macroData,
+    actions: formattedActions,
+  };
+};
+
+const manifestMacro = async macroId => {
+  await store.dispatch('macros/getSingleMacro', macroId);
+  const singleMacro = store.getters['macros/getMacro'](macroId);
+  if (singleMacro) {
+    macro.value = formatMacro(singleMacro);
+  }
+};
+
+const initNewMacro = () => {
+  mode.value = 'CREATE';
+  macro.value = {
+    name: '',
+    actions: [
+      {
+        action_name: 'assign_team',
+        action_params: [],
+      },
+    ],
+    visibility: isAdmin.value ? 'global' : 'personal',
+  };
+};
+
+const checkRouteAndOpenBuilder = async () => {
+  fetchDropdownData();
+  if (route.name === 'macros_new') {
+    initNewMacro();
+    isBuilderOpen.value = true;
+  } else if (route.name === 'macros_edit' && route.params.macroId) {
+    mode.value = 'EDIT';
+    await manifestMacro(route.params.macroId);
+    isBuilderOpen.value = true;
+  } else {
+    isBuilderOpen.value = false;
+    macro.value = null;
+  }
+};
+
+watch(
+  () => route.name,
+  () => {
+    checkRouteAndOpenBuilder();
+  },
+  { immediate: true }
+);
+
+watch(
+  () => route.params.macroId,
+  () => {
+    checkRouteAndOpenBuilder();
+  }
+);
 
 onMounted(() => {
   store.dispatch('macros/get');
@@ -54,6 +168,29 @@ const closeDeletePopup = () => {
 const confirmDeletion = () => {
   closeDeletePopup();
   deleteMacro(selectedMacro.value.id);
+};
+
+const closeBuilder = () => {
+  router.push({ name: 'macros_wrapper' });
+};
+
+const saveMacro = async macroData => {
+  if (isPublicMacroReadOnly.value) return;
+
+  try {
+    const action = mode.value === 'EDIT' ? 'macros/update' : 'macros/create';
+    const successMessage =
+      mode.value === 'EDIT'
+        ? t('MACROS.EDIT.API.SUCCESS_MESSAGE')
+        : t('MACROS.ADD.API.SUCCESS_MESSAGE');
+    let serializedMacro = JSON.parse(JSON.stringify(macroData));
+    serializedMacro.actions = actionQueryGenerator(serializedMacro.actions);
+    await store.dispatch(action, serializedMacro);
+    useAlert(successMessage);
+    closeBuilder();
+  } catch (error) {
+    useAlert(t('MACROS.ERROR'));
+  }
 };
 </script>
 
@@ -189,6 +326,33 @@ const confirmDeletion = () => {
         :confirm-text="$t('MACROS.DELETE.CONFIRM.YES')"
         :reject-text="$t('MACROS.DELETE.CONFIRM.NO')"
       />
+
+      <!-- ==============================================
+           MODAL: BUILDER (Fullscreen Overlay)
+      =============================================== -->
+      <div
+        v-if="isBuilderOpen"
+        class="fixed inset-0 z-[101] flex items-center justify-center p-4 sm:p-6 sm:p-8 animate-in fade-in duration-200"
+      >
+        <div
+          class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+          @click="closeBuilder"
+        />
+        <div
+          class="relative w-full h-full bg-background border border-border/60 rounded-2xl shadow-2xl flex overflow-hidden animate-in zoom-in-95 duration-200"
+        >
+          <MacroForm
+            v-if="macro && !uiFlags.isFetchingItem"
+            :macro-data="macro"
+            :can-manage-public-macros="isAdmin"
+            :read-only="isPublicMacroReadOnly"
+            @update:macro-data="macro = $event"
+            @submit="saveMacro"
+            @close="closeBuilder"
+          />
+          <woot-loading-state v-else :message="t('MACROS.EDITOR.LOADING')" />
+        </div>
+      </div>
     </template>
   </SettingsLayout>
 </template>

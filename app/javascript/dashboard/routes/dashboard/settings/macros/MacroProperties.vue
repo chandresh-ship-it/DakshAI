@@ -19,7 +19,7 @@ export default {
       default: false,
     },
   },
-  emits: ['update:name', 'update:visibility', 'submit'],
+  emits: ['update:name', 'update:visibility', 'submit', 'close'],
   computed: {
     isPublicVisibilityDisabled() {
       return !this.canManagePublicMacros;
@@ -59,11 +59,20 @@ export default {
 <template>
   <div class="p-6 bg-card flex flex-col h-full justify-between select-none">
     <div class="space-y-6">
-      <h3
-        class="text-base font-medium text-foreground pb-2 border-b border-border/40"
+      <div
+        class="flex items-center justify-between pb-4 border-b border-border/40 mb-6"
       >
-        {{ $t('MACROS.ADD.FORM.NAME.LABEL') }}
-      </h3>
+        <h3 class="text-base font-medium text-foreground">
+          {{ $t('MACROS.ADD.FORM.NAME.LABEL') }}
+        </h3>
+        <button
+          type="button"
+          class="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted/50 border-0 bg-transparent cursor-pointer flex items-center"
+          @click="$emit('close')"
+        >
+          <span class="i-lucide-x size-4.5 block" />
+        </button>
+      </div>
 
       <!-- Name Field -->
       <div class="flex flex-col gap-2">
