@@ -51,7 +51,7 @@ watch(() => props.isLoading, scrollToBottom);
           />
         </div>
         <div
-          class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-success/20 text-[11px] font-bold text-emerald-600 shadow-xs dark:text-emerald-400"
+          class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-[11px] font-bold text-emerald-600 shadow-xs dark:text-emerald-400"
         >
           {{ getAvatarLabel(message.sender) }}
         </div>

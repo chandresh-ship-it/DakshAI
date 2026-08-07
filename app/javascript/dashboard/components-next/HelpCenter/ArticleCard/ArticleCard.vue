@@ -109,7 +109,7 @@ const statusBadgeClass = computed(() => {
     case 'archived':
       return 'bg-violet-500/10 text-violet-700 border border-violet-500/20';
     case 'draft':
-      return 'bg-warning/10 text-amber-600 border border-warning/20';
+      return 'bg-amber-500/10 text-amber-600 border border-amber-500/20';
     default:
       return 'bg-primary/10 text-primary border border-primary/20';
   }
@@ -152,7 +152,7 @@ const authorAvatarColor = computed(() => {
     'bg-primary/10 text-primary',
     'bg-primary/20 text-primary',
     'bg-violet-500/10 text-violet-700',
-    'bg-warning/10 text-amber-600',
+    'bg-amber-500/10 text-amber-600',
     'bg-muted text-foreground',
   ];
   return colors[code];

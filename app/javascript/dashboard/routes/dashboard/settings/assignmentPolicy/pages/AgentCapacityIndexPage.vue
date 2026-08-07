@@ -83,7 +83,7 @@ onMounted(() => {
       class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-card/30 p-16 text-center shadow-xs"
     >
       <div
-        class="mb-5 flex size-16 items-center justify-center rounded-full bg-success/10"
+        class="mb-5 flex size-16 items-center justify-center rounded-full bg-emerald-500/10"
       >
         <Icon icon="i-lucide-shield-alert" class="size-7 text-emerald-600" />
       </div>
@@ -104,9 +104,9 @@ onMounted(() => {
       <div
         v-for="policy in policies"
         :key="policy.id"
-        class="group relative overflow-hidden rounded-xl border border-border/60 bg-card p-5 shadow-xs transition-all hover:border-success/30"
+        class="group relative overflow-hidden rounded-xl border border-border/60 bg-card p-5 shadow-xs transition-all hover:border-emerald-500/30"
       >
-        <div class="absolute left-0 top-0 h-full w-1 bg-success" />
+        <div class="absolute left-0 top-0 h-full w-1 bg-emerald-500" />
         <div class="mb-4 flex items-start justify-between gap-3">
           <div class="min-w-0">
             <h4 class="text-[15px] font-semibold text-foreground">

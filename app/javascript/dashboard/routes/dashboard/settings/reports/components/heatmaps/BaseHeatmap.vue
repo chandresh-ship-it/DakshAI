@@ -82,12 +82,12 @@ const COLOR_SCHEMES = {
     'bg-primary',
   ],
   green: [
-    'bg-success/20',
-    'bg-success/35',
-    'bg-success/50',
-    'bg-success/65',
-    'bg-success/80',
-    'bg-success',
+    'bg-emerald-500/20',
+    'bg-emerald-500/35',
+    'bg-emerald-500/50',
+    'bg-emerald-500/65',
+    'bg-emerald-500/80',
+    'bg-emerald-500',
   ],
 };
 

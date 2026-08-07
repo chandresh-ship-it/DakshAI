@@ -123,7 +123,7 @@ const exploreDemo = () => {
               class="size-12 rounded-xl border border-border/60 bg-card flex items-center justify-center shadow-xs"
             >
               <span
-                class="i-lucide-message-square size-6 text-success opacity-90"
+                class="i-lucide-message-square size-6 text-emerald-500 opacity-90"
               />
             </div>
             <span class="text-xs font-normal text-muted-foreground">

@@ -153,7 +153,7 @@ const commitNameEdit = async () => {
               @keyup.enter="commitNameEdit"
             />
             <RelayBadge
-              class="h-5 border-none bg-success/15 px-2 py-0 text-[11px] font-medium text-emerald-600 shadow-none hover:bg-success/25"
+              class="h-5 border-none bg-emerald-500/15 px-2 py-0 text-[11px] font-medium text-emerald-600 shadow-none hover:bg-emerald-500/25"
             >
               {{ t('COMPANIES.DETAIL.STATUS_ACTIVE') }}
             </RelayBadge>

@@ -39,7 +39,7 @@ const metrics = [
     trendUp: true,
     icon: 'i-lucide-mail',
     color: 'text-emerald-600',
-    bg: 'bg-success/10',
+    bg: 'bg-emerald-500/10',
     sparkline: [100, 110, 105, 120, 115, 125, 128],
   },
   {
@@ -59,7 +59,7 @@ const metrics = [
     trendUp: true,
     icon: 'i-lucide-mouse-pointer-click',
     color: 'text-amber-600',
-    bg: 'bg-warning/10',
+    bg: 'bg-amber-500/10',
     sparkline: [5, 6, 7, 6, 8, 7, 8],
   },
   {
@@ -154,7 +154,7 @@ const generateSparklinePath = data => {
                 <span
                   class="flex items-center"
                   :class="
-                    metric.trendUp ? 'text-success' : 'text-destructive'
+                    metric.trendUp ? 'text-emerald-500' : 'text-destructive'
                   "
                 >
                   <span

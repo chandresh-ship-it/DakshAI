@@ -52,7 +52,7 @@ const conversationCards = computed(() => [
 const agentStatusRows = computed(() => [
   {
     key: 'online',
-    dotClass: 'bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]',
+    dotClass: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]',
     label: t('OVERVIEW_REPORTS.AGENT_STATUS.ONLINE'),
     value: agentStatus.value.online ?? 0,
   },
@@ -107,10 +107,10 @@ onMounted(() => {
             {{ $t(`${accounti18nKey}.HEADER`) }}
           </h3>
           <div
-            class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-success/10 text-emerald-600 text-[12px] font-medium border border-success/20"
+            class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 text-[12px] font-medium border border-emerald-500/20"
           >
             <span
-              class="size-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+              class="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
             />
             Live
           </div>
@@ -183,10 +183,10 @@ onMounted(() => {
           {{ $t('OVERVIEW_REPORTS.AGENT_STATUS.HEADER') }}
         </h3>
         <div
-          class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-success/10 text-emerald-600 text-[12px] font-medium border border-success/20"
+          class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 text-[12px] font-medium border border-emerald-500/20"
         >
           <span
-            class="size-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+            class="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
           />
           Live
         </div>
