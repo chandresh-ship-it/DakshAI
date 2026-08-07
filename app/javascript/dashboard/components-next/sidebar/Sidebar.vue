@@ -815,7 +815,7 @@ const logoutMenuItem = computed(() => ({
       @dblclick="onResizeHandleDoubleClick"
     >
       <div
-        class="absolute top-0 h-full w-px bg-transparent transition-colors group-hover:bg-sidebar-primary ltr:right-0 rtl:left-0"
+        class="absolute top-0 h-full w-px bg-transparent transition-colors ltr:right-0 rtl:left-0"
         :class="{ 'bg-sidebar-primary': isResizing }"
       />
     </div>
