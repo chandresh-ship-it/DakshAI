@@ -32,9 +32,11 @@ const onToggle = () => {
 </script>
 
 <template>
-  <div class="text-sm bg-transparent">
+  <div
+    class="text-sm bg-card border border-border/60 rounded-xl shadow-sm flex flex-col overflow-hidden"
+  >
     <button
-      class="flex items-center select-none w-full m-0 cursor-grab justify-between py-4 px-6 drag-handle hover:opacity-80 transition-opacity"
+      class="flex items-center select-none w-full m-0 cursor-grab justify-between py-4 px-5 drag-handle hover:opacity-80 transition-opacity"
       @click.stop="onToggle"
     >
       <div class="flex items-center gap-2">
@@ -58,7 +60,7 @@ const onToggle = () => {
         />
       </div>
     </button>
-    <div v-if="isOpen" :class="compact ? 'p-0 px-6 pb-6' : 'px-6 pb-6'">
+    <div v-if="isOpen" :class="compact ? 'p-0 px-5 pb-5' : 'px-5 pb-5'">
       <slot />
     </div>
   </div>

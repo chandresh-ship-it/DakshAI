@@ -174,47 +174,50 @@ export default {
 </script>
 
 <template>
-  <div class="relative items-center w-full p-6 border-b border-border">
+  <div
+    class="relative w-full bg-card border border-border/60 rounded-xl p-5 shadow-sm flex flex-col"
+  >
     <!-- Header -->
     <div class="flex w-full justify-between items-center mb-6">
-      <h3 class="text-xl font-bold text-foreground tracking-tight">
+      <h3 class="text-base font-medium text-foreground">
         {{ $t('CONVERSATION.SIDEBAR.OVERVIEW') }}
       </h3>
       <a
         :href="contactProfileLink"
         target="_blank"
         rel="noopener nofollow noreferrer"
-        class="text-[13.5px] text-primary font-medium hover:underline"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary text-[13px] font-medium rounded-md hover:bg-primary/20 transition-colors"
       >
         {{ $t('CONVERSATION.SIDEBAR.VIEW_FULL_PROFILE') }}
+        <span class="i-lucide-arrow-up-right size-3.5 shrink-0" />
       </a>
     </div>
 
     <!-- Details -->
-    <div class="flex flex-col gap-4 w-full">
+    <div class="flex flex-col w-full">
       <!-- Avatar & Name -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-4 mb-4">
         <div class="relative shrink-0">
           <Avatar
             v-if="showAvatar"
             :src="contact.thumbnail"
             :name="contact.name"
-            :size="40"
+            :size="64"
             hide-offline-status
             rounded-full
           />
           <!-- Online status dot overlay -->
           <div
             v-if="contact.availability_status === 'online'"
-            class="absolute bottom-0 right-0 size-3 bg-green-500 border-2 border-background rounded-full"
+            class="absolute bottom-0 right-0 size-3.5 bg-[var(--success)] border-[2.5px] border-background rounded-full"
           />
         </div>
-        <div class="min-w-0 flex-1">
+        <div class="min-w-0 flex-1 flex flex-col gap-0.5">
           <InlineInput
             v-if="isEditingName"
             ref="nameInput"
             v-model="editName"
-            custom-input-class="!text-sm !font-semibold"
+            custom-input-class="!text-[15px] !font-semibold"
             class="!w-fit"
             @enter-press="saveNameEdit"
             @escape-press="cancelNameEdit"
@@ -222,47 +225,55 @@ export default {
           />
           <h2
             v-else-if="showAvatar"
-            class="group/name text-[15px] font-bold text-foreground truncate cursor-pointer hover:text-primary transition-colors leading-tight"
+            class="group/name text-[15px] font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors leading-tight"
             :title="$t('CONTACT_PANEL.CLICK_TO_EDIT')"
             @click="startEditingName"
           >
             {{ contact.name }}
           </h2>
-          <p class="text-[13px] text-muted-foreground mt-0.5 truncate">
+          <p class="text-[13px] text-muted-foreground truncate">
             {{ additionalAttributes.company_plan || 'Enterprise Plan' }}
           </p>
         </div>
       </div>
 
+      <div class="h-px bg-border/60 w-full mb-4" />
+
       <!-- Contact Metadata -->
-      <div class="flex flex-col gap-3 min-w-0 pt-1">
-        <div
-          v-if="contact.email"
-          class="flex items-center gap-3 w-full text-muted-foreground"
-        >
-          <span class="i-lucide-mail size-[18px] shrink-0 opacity-80" />
-          <span class="text-[13.5px] font-medium truncate">{{
+      <div class="flex flex-col gap-2 min-w-0">
+        <div v-if="contact.email" class="flex items-center gap-3">
+          <div
+            class="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0"
+          >
+            <span class="i-lucide-mail size-4" />
+          </div>
+          <span class="text-[13px] text-foreground truncate">{{
             contact.email
           }}</span>
         </div>
 
-        <div
-          v-if="contact.phone_number"
-          class="flex items-center gap-3 w-full text-muted-foreground"
-        >
-          <span class="i-lucide-phone size-[18px] shrink-0 opacity-80" />
-          <span class="text-[13.5px] font-medium truncate">{{
+        <div v-if="contact.phone_number" class="flex items-center gap-3">
+          <div
+            class="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0"
+          >
+            <span class="i-lucide-phone size-4" />
+          </div>
+          <span class="text-[13px] text-foreground truncate">{{
             contact.phone_number
           }}</span>
         </div>
 
         <div
           v-if="location || additionalAttributes.location"
-          class="flex items-center gap-3 w-full text-muted-foreground"
+          class="flex items-center gap-3"
         >
-          <span class="i-lucide-map-pin size-[18px] shrink-0 opacity-80" />
+          <div
+            class="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0"
+          >
+            <span class="i-lucide-map-pin size-4" />
+          </div>
           <span
-            class="text-[13.5px] font-medium truncate"
+            class="text-[13px] text-foreground truncate"
             v-html="location || additionalAttributes.location"
           />
         </div>
