@@ -292,7 +292,7 @@ export default {
             v-tooltip.top-end="$t('CONTACT_PANEL.NEW_MESSAGE')"
             icon="i-ph-chat-circle-dots"
             slate
-            faded
+            outline
             sm
           />
         </template>
@@ -303,7 +303,7 @@ export default {
         :conversation-id="currentChat?.id"
         icon="i-lucide-phone"
         sm
-        faded
+        outline
         slate
         :tooltip-label="$t('CONTACT_PANEL.CALL')"
       />
@@ -311,7 +311,7 @@ export default {
         v-tooltip.top-end="$t('EDIT_CONTACT.BUTTON_LABEL')"
         icon="i-ph-pencil-simple"
         slate
-        faded
+        outline
         sm
         @click="toggleEditModal"
       />
@@ -321,7 +321,7 @@ export default {
             v-tooltip.top-end="$t('CONTACT_PANEL.MERGE_CONTACT')"
             icon="i-ph-arrows-merge"
             slate
-            faded
+            outline
             sm
             :disabled="uiFlags.isMerging"
           />
@@ -337,7 +337,7 @@ export default {
             v-tooltip.top-end="$t('DELETE_CONTACT.BUTTON_LABEL')"
             icon="i-ph-trash"
             slate
-            faded
+            outline
             sm
             ruby
             :disabled="uiFlags.isDeleting"

@@ -3,7 +3,6 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useCaptain } from 'dashboard/composables/useCaptain';
 import { useFunctionGetter } from 'dashboard/composables/store';
-import { RelayButton } from 'dashboard/components-next/relay';
 
 const props = defineProps({
   conversationId: {
@@ -113,20 +112,23 @@ watch(
   <div class="flex flex-col gap-4">
     <!-- Header -->
     <div class="flex flex-col gap-1 px-6">
-      <p class="text-[13px] text-muted-foreground">
+      <p class="text-[11px] text-muted-foreground">
         {{ lastUpdatedLabel }}
       </p>
     </div>
 
     <!-- Bullets / Content -->
-    <div v-if="summaryBullets.length" class="pl-10 pr-6">
-      <ul class="list-disc text-[13.5px] text-muted-foreground space-y-2">
+    <div v-if="summaryBullets.length" class="px-6">
+      <ul class="flex flex-col gap-2.5">
         <li
           v-for="(bullet, index) in summaryBullets"
           :key="index"
-          class="pl-1"
+          class="flex items-start gap-3 text-[13px] text-foreground/80 leading-snug"
         >
-          <span class="text-foreground/90">{{ bullet }}</span>
+          <span
+            class="size-1.5 rounded-full bg-foreground/30 mt-1.5 shrink-0"
+          />
+          <span>{{ bullet }}</span>
         </li>
       </ul>
     </div>
@@ -144,51 +146,50 @@ watch(
       {{ errorMessage }}
     </p>
 
-    <!-- Next Best Action Card -->
+    <!-- Next Best Action + Generate (nested) -->
     <div class="px-6">
       <div
-        v-if="summaryBullets.length || summaryText"
-        class="flex flex-col gap-3 mt-1 bg-primary/10 border border-primary/20 rounded-xl p-4"
+        class="flex flex-col gap-1.5 mt-1 border border-primary/20 bg-primary/5 rounded-xl overflow-hidden p-0.5"
       >
-        <div class="flex items-center gap-2.5">
-          <div
-            class="flex items-center justify-center size-6 rounded-full bg-primary/15 text-primary"
-          >
-            <span class="i-lucide-lightbulb size-3.5" />
-          </div>
-          <span
-            class="text-[13px] font-semibold text-primary uppercase tracking-wide"
-          >
-            {{ t('CONVERSATION.AI_SUMMARY.ACTIONS.TITLE', 'Next Best Action') }}
-          </span>
-        </div>
         <div
-          class="flex items-center justify-between gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+          v-if="summaryBullets.length || summaryText"
+          class="flex items-center gap-3 p-2.5 cursor-pointer hover:bg-primary/5 transition-colors rounded-lg"
         >
-          <span class="text-sm font-medium text-foreground">
-            {{ nextBestAction }}
-          </span>
+          <div
+            class="size-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0"
+          >
+            <span class="i-lucide-lightbulb size-4 text-primary" />
+          </div>
+          <div class="flex flex-col flex-1 min-w-0">
+            <span class="text-[13px] font-medium text-primary">
+              {{
+                t('CONVERSATION.AI_SUMMARY.ACTIONS.TITLE', 'Next Best Action')
+              }}
+            </span>
+            <span class="text-[13px] text-foreground truncate mt-0.5">
+              {{ nextBestAction }}
+            </span>
+          </div>
           <span
             class="i-lucide-chevron-right size-4 text-muted-foreground shrink-0"
           />
         </div>
-      </div>
-    </div>
 
-    <!-- Generate Button -->
-    <div class="mt-2 px-6">
-      <RelayButton
-        variant="outline"
-        class="w-full h-9 bg-background hover:bg-muted"
-        :disabled="isGenerating"
-        @click="generateSummary"
-      >
-        <span
-          class="i-lucide-refresh-cw size-4 mr-2"
-          :class="isGenerating ? 'animate-spin' : ''"
-        />
-        {{ t('CONVERSATION.AI_SUMMARY.GENERATE_BUTTON') }}
-      </RelayButton>
+        <div class="px-2 py-2">
+          <button
+            type="button"
+            class="w-full flex items-center justify-center gap-2 border border-primary/20 bg-background rounded-lg py-1.5 text-[13px] font-medium text-primary hover:bg-primary/5 transition-colors disabled:opacity-60"
+            :disabled="isGenerating"
+            @click="generateSummary"
+          >
+            <span
+              class="i-lucide-refresh-cw size-3.5"
+              :class="isGenerating ? 'animate-spin' : ''"
+            />
+            {{ t('CONVERSATION.AI_SUMMARY.GENERATE_BUTTON') }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>

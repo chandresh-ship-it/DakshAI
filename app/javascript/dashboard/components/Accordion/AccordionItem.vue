@@ -40,8 +40,13 @@ const onToggle = () => {
       @click.stop="onToggle"
     >
       <div class="flex items-center gap-2">
+        <span
+          v-if="icon && icon.startsWith('i-')"
+          class="inline-block size-4 shrink-0 text-primary"
+          :class="icon"
+        />
         <EmojiOrIcon
-          v-if="icon || emoji"
+          v-else-if="icon || emoji"
           class="inline-block w-5"
           :icon="icon"
           :emoji="emoji"
