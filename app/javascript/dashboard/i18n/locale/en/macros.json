@@ -65,6 +65,7 @@
       "LOADING": "Fetching macro",
       "ADD_BTN_TOOLTIP": "Add new action",
       "DELETE_BTN_TOOLTIP": "Delete Action",
+      "DRAG_TOOLTIP": "Drag to reorder",
       "VISIBILITY": {
         "LABEL": "Macro Visibility",
         "GLOBAL": {

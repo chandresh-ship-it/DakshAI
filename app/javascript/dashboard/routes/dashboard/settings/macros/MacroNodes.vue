@@ -1,14 +1,12 @@
 <script>
 import Draggable from 'vuedraggable';
 import MacroNode from './MacroNode.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 import { getFileName } from './macroHelper';
 
 export default {
   components: {
     Draggable,
     MacroNode,
-    NextButton,
   },
   props: {
     errors: {
@@ -44,31 +42,41 @@ export default {
 </script>
 
 <template>
-  <div class="macros__nodes">
-    <div class="macro__node">
-      <div>
-        <span
-          class="bg-n-solid-blue text-n-blue-11 py-1 px-1.5 leading-none text-sm rounded-md"
-        >
-          {{ $t('MACROS.EDITOR.START_FLOW') }}
-        </span>
+  <div
+    class="macros__nodes flex flex-col items-center w-full max-w-[600px] mx-auto relative select-none"
+  >
+    <!-- Start Flow Node -->
+    <div
+      class="flex items-center gap-3 px-6 h-[48px] bg-card border border-border/60 rounded-full shadow-sm z-10 mb-2"
+    >
+      <div
+        class="size-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground shrink-0"
+      >
+        <span class="i-lucide-play size-3.5 fill-current block" />
       </div>
+      <span class="text-[14px] font-semibold text-primary tracking-tight">
+        {{ $t('MACROS.EDITOR.START_FLOW') }}
+      </span>
     </div>
+
+    <!-- Draggable List -->
     <Draggable
       :list="actionData"
       animation="200"
       item-key="id"
       ghost-class="ghost"
       tag="div"
-      class="macros__nodes-draggable"
+      class="w-full flex flex-col items-center"
       handle=".macros__node-drag-handle"
     >
       <template #item="{ index: i }">
-        <div :key="i" class="macro__node">
+        <div :key="i" class="flex flex-col items-center w-full">
+          <!-- Vertical Line -->
+          <div class="w-px h-8 border-l border-dashed border-primary/40 z-0" />
+
           <MacroNode
             v-model="actionData[i]"
-            class="macros__node-action"
-            type="add"
+            class="macros__node-action z-10 w-full"
             :index="i"
             :error-key="errors[`action_${i}`]"
             :file-name="
@@ -85,59 +93,40 @@ export default {
         </div>
       </template>
     </Draggable>
-    <div class="macro__node">
-      <div>
-        <NextButton
-          :title="$t('MACROS.EDITOR.ADD_BTN_TOOLTIP')"
-          class="shadow-sm"
-          solid
-          teal
-          icon="i-lucide-plus-circle"
-          @click="$emit('addNewNode')"
-        >
-          {{ $t('MACROS.EDITOR.ADD_BTN_TOOLTIP') }}
-        </NextButton>
-      </div>
+
+    <!-- Line before Add Action -->
+    <div class="w-px h-8 border-l border-dashed border-primary/40 z-0" />
+
+    <!-- Add Action Node -->
+    <div class="w-full max-w-[600px] relative z-30 flex justify-center">
+      <button
+        type="button"
+        class="flex items-center justify-center gap-2 px-6 h-[48px] min-w-[140px] bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-sm transition-all group border-0 text-[14px] font-semibold cursor-pointer"
+        :title="$t('MACROS.EDITOR.ADD_BTN_TOOLTIP')"
+        @click="$emit('addNewNode')"
+      >
+        <span class="i-lucide-plus size-4 block" />
+        <span class="tracking-tight">{{
+          $t('MACROS.EDITOR.ADD_BTN_TOOLTIP')
+        }}</span>
+      </button>
     </div>
-    <div class="macro__node">
-      <div>
-        <span
-          class="bg-n-solid-blue text-n-blue-11 py-1 px-1.5 leading-none text-sm rounded-md"
-        >
-          {{ $t('MACROS.EDITOR.END_FLOW') }}
-        </span>
+
+    <!-- Line to End -->
+    <div class="w-px h-8 border-l border-dashed border-primary/40 z-0" />
+
+    <!-- End Flow Node -->
+    <div
+      class="flex items-center gap-3 px-6 h-[48px] bg-card border border-border/60 rounded-full shadow-sm z-10 mt-2"
+    >
+      <div
+        class="size-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground shrink-0"
+      >
+        <span class="i-lucide-square size-3 fill-current block" />
       </div>
+      <span class="text-[14px] font-semibold text-primary tracking-tight">
+        {{ $t('MACROS.EDITOR.END_FLOW') }}
+      </span>
     </div>
   </div>
 </template>
-
-<style scoped lang="scss">
-.macros__nodes {
-  max-width: 800px;
-}
-
-.macro__node:not(:last-child) {
-  position: relative;
-  padding-bottom: 2rem;
-}
-
-.macro__node:not(:last-child):not(.sortable-chosen):after,
-.macros__nodes-draggable:after {
-  @apply border-l dark:border-n-blue-11 border-n-blue-7 border-dashed ltr:ml-6 rtl:mr-6 absolute h-8 w-1 content-[""];
-}
-
-.macros__nodes-draggable {
-  position: relative;
-  padding-bottom: 2rem;
-}
-
-.macros__node-action-container {
-  position: relative;
-  .drag-handle {
-    position: absolute;
-    left: -1.5rem;
-    top: 0.25rem;
-    cursor: move;
-  }
-}
-</style>

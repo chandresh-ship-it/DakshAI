@@ -1,12 +1,5 @@
 <script>
-import NextButton from 'dashboard/components-next/button/Button.vue';
-import Icon from 'dashboard/components-next/icon/Icon.vue';
-
 export default {
-  components: {
-    NextButton,
-    Icon,
-  },
   inject: ['v$'],
   props: {
     macroName: {
@@ -48,11 +41,6 @@ export default {
     },
   },
   methods: {
-    isActive(key) {
-      return this.macroVisibility === key
-        ? 'bg-n-blue-2 dark:bg-n-blue-1 border-n-blue-3 dark:border-n-blue-4'
-        : 'bg-white dark:bg-n-solid-2 border-n-weak dark:border-n-strong';
-    },
     onUpdateName(value) {
       if (this.readOnly) return;
 
@@ -69,107 +57,143 @@ export default {
 </script>
 
 <template>
-  <div
-    class="p-4 bg-n-solid-2 border border-n-weak rounded-lg shadow-sm h-full flex flex-col"
-  >
-    <div>
-      <woot-input
-        :model-value="macroName"
-        :label="$t('MACROS.ADD.FORM.NAME.LABEL')"
-        :placeholder="$t('MACROS.ADD.FORM.NAME.PLACEHOLDER')"
-        :error="v$.macro.name.$error ? $t('MACROS.ADD.FORM.NAME.ERROR') : null"
-        :class="{ error: v$.macro.name.$error }"
-        :readonly="readOnly"
-        @update:model-value="onUpdateName"
-      />
-    </div>
-    <div class="mt-2">
-      <p class="block m-0 text-sm font-medium leading-[1.8] text-n-slate-12">
-        {{ $t('MACROS.EDITOR.VISIBILITY.LABEL') }}
-      </p>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <button
-          type="button"
-          class="p-2 relative rounded-md border border-solid justify-between items-start gap-2 flex flex-col text-start"
-          :class="isActive('global')"
-          :disabled="isPublicVisibilityDisabled || readOnly"
-          :aria-describedby="
-            isPublicVisibilityDisabled ? 'macro-public-visibility-help' : null
-          "
-          @click="onUpdateVisibility('global')"
-        >
-          <div class="flex items-center gap-2 min-w-0 justify-between w-full">
-            <p class="block m-0 text-heading-3 text-n-slate-12 line-clamp-1">
-              {{ $t('MACROS.EDITOR.VISIBILITY.GLOBAL.LABEL') }}
-            </p>
-            <Icon
-              v-if="macroVisibility === 'global'"
-              icon="i-lucide-circle-check-big"
-              class="text-n-brand size-4"
-            />
-          </div>
-          <p
-            id="macro-public-visibility-help"
-            class="text-n-slate-11 text-label-small"
-          >
-            {{ publicVisibilityDescription }}
-          </p>
-        </button>
-        <button
-          type="button"
-          class="p-2 relative rounded-md border border-solid justify-between items-start gap-2 flex flex-col text-start"
-          :class="isActive('personal')"
-          :disabled="readOnly"
-          @click="onUpdateVisibility('personal')"
-        >
-          <div class="flex items-center gap-2 min-w-0 justify-between w-full">
-            <p class="block m-0 text-heading-3 text-n-slate-12 line-clamp-1">
-              {{ $t('MACROS.EDITOR.VISIBILITY.PERSONAL.LABEL') }}
-            </p>
-            <Icon
-              v-if="macroVisibility === 'personal'"
-              icon="i-lucide-circle-check-big"
-              class="text-n-brand size-4"
-            />
-          </div>
-          <p class="text-n-slate-11 text-label-small">
-            {{ $t('MACROS.EDITOR.VISIBILITY.PERSONAL.DESCRIPTION') }}
-          </p>
-        </button>
-      </div>
-      <div
-        class="mt-2 flex items-start p-2 bg-n-alpha-1 gap-2 dark:bg-n-solid-3 rounded-md"
+  <div class="p-6 bg-card flex flex-col h-full justify-between select-none">
+    <div class="space-y-6">
+      <h3
+        class="text-base font-medium text-foreground pb-2 border-b border-border/40"
       >
-        <Icon
-          icon="i-lucide-info"
-          class="flex-shrink-0 mt-0.5 size-4 text-n-slate-11"
+        {{ $t('MACROS.ADD.FORM.NAME.LABEL') }}
+      </h3>
+
+      <!-- Name Field -->
+      <div class="flex flex-col gap-2">
+        <label class="text-[14px] font-semibold text-foreground">
+          {{ $t('MACROS.ADD.FORM.NAME.LABEL') }}
+        </label>
+        <input
+          :value="macroName"
+          type="text"
+          :placeholder="$t('MACROS.ADD.FORM.NAME.PLACEHOLDER')"
+          class="h-10 px-3 text-[14px] shadow-sm rounded-lg bg-background border border-border/60 focus:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/20 outline-none w-full"
+          :class="
+            v$.macro.name.$error
+              ? 'border-destructive/80 focus-visible:ring-destructive/30'
+              : ''
+          "
+          :readonly="readOnly"
+          @input="onUpdateName($event.target.value)"
         />
-        <p class="mb-0 text-n-slate-11 text-body-para">
+        <p
+          v-if="v$.macro.name.$error"
+          class="text-[12.5px] font-medium text-destructive mt-0.5"
+        >
+          {{ $t('MACROS.ADD.FORM.NAME.ERROR') }}
+        </p>
+      </div>
+
+      <!-- Visibility Selection -->
+      <div class="flex flex-col gap-2">
+        <label class="text-[14px] font-semibold text-foreground">
+          {{ $t('MACROS.EDITOR.VISIBILITY.LABEL') }}
+        </label>
+        <div class="grid grid-cols-1 gap-3">
+          <!-- Global/Public Button -->
+          <button
+            type="button"
+            class="flex flex-col text-left p-4 rounded-xl border transition-all text-[13px] relative overflow-hidden outline-none cursor-pointer"
+            :class="
+              macroVisibility === 'global'
+                ? 'border-primary ring-1 ring-primary/30 shadow-sm bg-primary/5'
+                : 'border-border/60 bg-background hover:border-primary/40 shadow-sm'
+            "
+            :disabled="isPublicVisibilityDisabled || readOnly"
+            @click="onUpdateVisibility('global')"
+          >
+            <div class="flex items-center gap-3 mb-2">
+              <div
+                class="size-7 rounded-full flex items-center justify-center bg-primary/10 text-primary shrink-0"
+              >
+                <span class="i-lucide-globe size-4 block" />
+              </div>
+              <div
+                v-if="macroVisibility === 'global'"
+                class="absolute top-3 right-3 flex items-center justify-center size-5 rounded-full bg-primary text-primary-foreground"
+              >
+                <span class="i-lucide-check size-3 block" />
+              </div>
+            </div>
+            <span
+              class="font-semibold text-[14.5px] text-foreground mb-1 block"
+            >
+              {{ $t('MACROS.EDITOR.VISIBILITY.GLOBAL.LABEL') }}
+            </span>
+            <span class="text-[12px] text-muted-foreground leading-relaxed">
+              {{ publicVisibilityDescription }}
+            </span>
+          </button>
+
+          <!-- Personal/Private Button -->
+          <button
+            type="button"
+            class="flex flex-col text-left p-4 rounded-xl border transition-all text-[13px] relative overflow-hidden outline-none cursor-pointer"
+            :class="
+              macroVisibility === 'personal'
+                ? 'border-primary ring-1 ring-primary/30 shadow-sm bg-primary/5'
+                : 'border-border/60 bg-background hover:border-primary/40 shadow-sm'
+            "
+            :disabled="readOnly"
+            @click="onUpdateVisibility('personal')"
+          >
+            <div class="flex items-center gap-3 mb-2">
+              <div
+                class="size-7 rounded-full flex items-center justify-center bg-muted border border-border/40 text-foreground shrink-0"
+              >
+                <span class="i-lucide-lock size-4 block" />
+              </div>
+              <div
+                v-if="macroVisibility === 'personal'"
+                class="absolute top-3 right-3 flex items-center justify-center size-5 rounded-full bg-primary text-primary-foreground"
+              >
+                <span class="i-lucide-check size-3 block" />
+              </div>
+            </div>
+            <span
+              class="font-semibold text-[14.5px] text-foreground mb-1 block"
+            >
+              {{ $t('MACROS.EDITOR.VISIBILITY.PERSONAL.LABEL') }}
+            </span>
+            <span class="text-[12px] text-muted-foreground leading-relaxed">
+              {{ $t('MACROS.EDITOR.VISIBILITY.PERSONAL.DESCRIPTION') }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Info Box -->
+      <div
+        class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-start gap-3"
+      >
+        <span
+          class="i-lucide-info size-4.5 text-primary shrink-0 mt-0.5 block"
+        />
+        <p
+          class="text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed mb-0"
+        >
           {{ $t('MACROS.ORDER_INFO') }}
         </p>
       </div>
     </div>
-    <div class="mt-4 w-full">
-      <NextButton
-        blue
-        solid
-        :label="$t('MACROS.HEADER_BTN_TXT_SAVE')"
-        class="w-full"
+
+    <!-- Submit Section -->
+    <div class="pt-6 border-t border-border/40">
+      <button
+        type="button"
+        class="w-full h-11 text-[14.5px] font-medium shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg border-0 cursor-pointer transition-colors"
         :disabled="readOnly"
         @click="$emit('submit')"
-      />
+      >
+        {{ $t('MACROS.HEADER_BTN_TXT_SAVE') }}
+      </button>
     </div>
   </div>
 </template>
-
-<style scoped lang="scss">
-:deep(input[type='text']) {
-  @apply mb-0;
-}
-
-:deep(.error) {
-  .message {
-    @apply mb-0;
-  }
-}
-</style>

@@ -3,9 +3,6 @@ import { computed } from 'vue';
 import Avatar from 'next/avatar/Avatar.vue';
 import { useI18n } from 'vue-i18n';
 
-import Button from 'dashboard/components-next/button/Button.vue';
-import { BaseTableRow, BaseTableCell } from 'dashboard/components-next/table';
-
 const props = defineProps({
   macro: {
     type: Object,
@@ -47,73 +44,73 @@ const editTooltip = computed(() =>
 </script>
 
 <template>
-  <BaseTableRow :item="macro">
-    <template #default>
-      <BaseTableCell class="max-w-0 min-w-0">
-        <span class="text-body-main text-n-slate-12 truncate block">
-          {{ macro.name }}
-        </span>
-      </BaseTableCell>
+  <div
+    class="grid grid-cols-[1.5fr_1fr_1fr_1fr_100px] items-center px-6 py-4 hover:bg-muted/20 transition-colors group"
+  >
+    <!-- Name -->
+    <div class="font-medium text-[14px] text-foreground pr-4 truncate">
+      {{ macro.name }}
+    </div>
 
-      <BaseTableCell class="max-w-0">
-        <div v-if="macro.created_by" class="flex items-center gap-2 min-w-0">
-          <Avatar
-            :name="createdByName"
-            :size="24"
-            rounded-full
-            class="flex-shrink-0"
-          />
-          <span class="text-body-main text-n-slate-12 truncate">
-            {{ createdByName }}
-          </span>
-        </div>
-        <span v-else class="text-body-main text-n-slate-11">--</span>
-      </BaseTableCell>
+    <!-- Created By -->
+    <div class="flex items-center gap-2.5">
+      <Avatar
+        v-if="macro.created_by"
+        :name="createdByName"
+        :src="macro.created_by.avatar_url"
+        :size="24"
+        rounded-full
+        class="flex-shrink-0"
+      />
+      <span class="text-[13.5px] text-muted-foreground truncate">{{
+        createdByName || '--'
+      }}</span>
+    </div>
 
-      <BaseTableCell class="max-w-0">
-        <div v-if="macro.updated_by" class="flex items-center gap-2 min-w-0">
-          <Avatar
-            :name="updatedByName"
-            :size="24"
-            rounded-full
-            class="flex-shrink-0"
-          />
-          <span class="text-body-main text-n-slate-12 truncate">
-            {{ updatedByName }}
-          </span>
-        </div>
-        <span v-else class="text-body-main text-n-slate-11">--</span>
-      </BaseTableCell>
+    <!-- Last Updated By -->
+    <div class="flex items-center gap-2.5">
+      <Avatar
+        v-if="macro.updated_by"
+        :name="updatedByName"
+        :src="macro.updated_by.avatar_url"
+        :size="24"
+        rounded-full
+        class="flex-shrink-0"
+      />
+      <span class="text-[13.5px] text-muted-foreground truncate">{{
+        updatedByName || '--'
+      }}</span>
+    </div>
 
-      <BaseTableCell class="max-w-0">
-        <span class="text-body-main text-n-slate-12 whitespace-nowrap">
-          {{ visibilityLabel }}
-        </span>
-      </BaseTableCell>
+    <!-- Visibility -->
+    <div>
+      <span
+        class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border/60 capitalize"
+      >
+        {{ visibilityLabel }}
+      </span>
+    </div>
 
-      <BaseTableCell align="end" class="w-24">
-        <div class="flex gap-3 justify-end flex-shrink-0">
-          <router-link
-            :to="{ name: 'macros_edit', params: { macroId: macro.id } }"
-          >
-            <Button
-              v-tooltip.top="editTooltip"
-              icon="i-woot-edit-pen"
-              slate
-              sm
-            />
-          </router-link>
-          <Button
-            v-if="canManageMacro"
-            v-tooltip.top="$t('MACROS.DELETE.TOOLTIP')"
-            icon="i-woot-bin"
-            slate
-            sm
-            class="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"
-            @click="$emit('delete')"
-          />
-        </div>
-      </BaseTableCell>
-    </template>
-  </BaseTableRow>
+    <!-- Actions -->
+    <div
+      class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+    >
+      <router-link :to="{ name: 'macros_edit', params: { macroId: macro.id } }">
+        <button
+          class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+          :title="editTooltip"
+        >
+          <span class="i-lucide-edit size-4 block" />
+        </button>
+      </router-link>
+      <button
+        v-if="canManageMacro"
+        class="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+        :title="$t('MACROS.DELETE.TOOLTIP')"
+        @click="$emit('delete')"
+      >
+        <span class="i-lucide-trash-2 size-4 block" />
+      </button>
+    </div>
+  </div>
 </template>

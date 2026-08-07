@@ -1,5 +1,5 @@
 <script>
-import { provide } from 'vue';
+import { provide, ref, computed } from 'vue';
 import MacroNodes from './MacroNodes.vue';
 import MacroProperties from './MacroProperties.vue';
 import { required } from '@vuelidate/validators';
@@ -30,7 +30,23 @@ export default {
     const v$ = useVuelidate();
     provide('v$', v$);
 
-    return { v$ };
+    const zoomLevel = ref(1);
+    const zoomIn = () => {
+      zoomLevel.value = Math.min(2, zoomLevel.value + 0.1);
+    };
+    const zoomOut = () => {
+      zoomLevel.value = Math.max(0.5, zoomLevel.value - 0.1);
+    };
+    const resetZoom = () => {
+      zoomLevel.value = 1;
+    };
+
+    const zoomStyle = computed(() => ({
+      transform: `scale(${zoomLevel.value})`,
+      transformOrigin: 'top center',
+    }));
+
+    return { v$, zoomLevel, zoomIn, zoomOut, resetZoom, zoomStyle };
   },
   data() {
     return {
@@ -116,11 +132,18 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-auto lg:flex-row lg:h-full">
+  <div
+    class="flex flex-col w-full h-[calc(100vh-10rem)] lg:flex-row border border-border/60 bg-card rounded-2xl shadow-2xl overflow-hidden"
+  >
     <div
-      class="flex-1 w-full h-full max-h-full ltr:pl-12 ltr:pr-6 rtl:pl-6 rtl:pr-12 py-4 overflow-y-auto lg:w-auto macro-gradient-radial dark:macro-dark-gradient-radial macro-gradient-radial-size"
+      class="flex-1 w-full h-full max-h-full ltr:pl-12 ltr:pr-6 rtl:pl-6 rtl:pr-12 py-12 overflow-y-auto lg:w-auto relative bg-[radial-gradient(#cbd5e1_1.25px,transparent_1.25px)] dark:bg-[radial-gradient(#334155_1.25px,transparent_1.25px)] [background-size:24px_24px]"
     >
-      <div :inert="readOnly" :class="{ 'opacity-75': readOnly }">
+      <div
+        :inert="readOnly"
+        :class="{ 'opacity-75': readOnly }"
+        class="transition-transform duration-200"
+        :style="zoomStyle"
+      >
         <MacroNodes
           v-model="macro.actions"
           :files="files"
@@ -130,8 +153,31 @@ export default {
           @reset-action="resetNode"
         />
       </div>
+      <!-- Zoom Controls -->
+      <div
+        class="absolute bottom-6 right-6 flex flex-col bg-card border border-border/60 rounded-xl shadow-sm overflow-hidden z-20"
+      >
+        <button
+          class="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border-b border-border/40"
+          @click="zoomIn"
+        >
+          <span class="i-lucide-plus size-4 block" />
+        </button>
+        <button
+          class="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border-b border-border/40"
+          @click="zoomOut"
+        >
+          <span class="i-lucide-minus size-4 block" />
+        </button>
+        <button
+          class="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          @click="resetZoom"
+        >
+          <span class="i-lucide-maximize size-4 block" />
+        </button>
+      </div>
     </div>
-    <div class="w-full lg:w-1/3 pb-4">
+    <div class="w-full lg:w-[380px] h-full shrink-0 border-l border-border/40">
       <MacroProperties
         :macro-name="macro.name"
         :macro-visibility="macro.visibility"
@@ -144,21 +190,3 @@ export default {
     </div>
   </div>
 </template>
-
-<style scoped>
-@tailwind components;
-
-@layer components {
-  .macro-gradient-radial {
-    background-image: radial-gradient(#ebf0f5 1.2px, transparent 0);
-  }
-
-  .macro-dark-gradient-radial {
-    background-image: radial-gradient(#293f51 1.2px, transparent 0);
-  }
-
-  .macro-gradient-radial-size {
-    background-size: 1rem 1rem;
-  }
-}
-</style>

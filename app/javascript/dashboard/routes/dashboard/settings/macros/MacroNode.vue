@@ -3,7 +3,6 @@ import { computed, inject } from 'vue';
 import { useMacros } from 'dashboard/composables/useMacros';
 import { useI18n } from 'vue-i18n';
 import ActionInput from 'dashboard/components/widgets/AutomationActionInput.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 
 const props = defineProps({
   singleNode: {
@@ -54,23 +53,23 @@ const dropdownValues = () => {
 </script>
 
 <template>
-  <div class="relative flex items-start w-full min-w-0 basis-full">
-    <NextButton
-      v-if="!singleNode"
-      ghost
-      sm
-      slate
-      icon="i-lucide-menu"
-      class="absolute cursor-move ltr:-left-10 rtl:-right-10 ltr:mr-2 rtl:ml-2 macros__node-drag-handle"
-    />
+  <div
+    class="w-full max-w-[600px] bg-muted/70 border border-border/60 rounded-xl p-2 shadow-sm relative group transition-colors hover:border-primary/20 flex items-center gap-2"
+    :class="
+      errorKey ? 'animate-shake bg-destructive/10 border-destructive/40' : ''
+    "
+  >
+    <!-- Drag Handle -->
     <div
-      class="flex-grow p-2 ltr:mr-2 rtl:ml-2 rounded-md shadow-sm outline outline-1 outline-n-weak"
-      :class="
-        errorKey
-          ? 'animate-shake bg-n-ruby-8/20 outline-n-ruby-5 dark:outline-n-ruby-5'
-          : 'bg-n-background dark:bg-n-solid-1'
-      "
+      v-if="!singleNode"
+      class="px-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing transition-colors macros__node-drag-handle shrink-0"
+      :title="$t('MACROS.EDITOR.DRAG_TOOLTIP')"
     >
+      <span class="i-lucide-menu size-4 block" />
+    </div>
+
+    <!-- Action Input Container -->
+    <div class="flex-grow min-w-0">
       <ActionInput
         v-model="actionData"
         :action-types="macroActionTypes"
@@ -83,15 +82,16 @@ const dropdownValues = () => {
         @reset-action="$emit('resetAction')"
       />
     </div>
-    <NextButton
+
+    <!-- Delete Action Button -->
+    <button
       v-if="!singleNode"
-      v-tooltip="$t('MACROS.EDITOR.DELETE_BTN_TOOLTIP')"
-      icon="i-lucide-trash-2"
-      sm
-      faded
-      ruby
-      class="flex-shrink-0"
+      type="button"
+      class="size-8 rounded-md bg-destructive/10 text-destructive/85 hover:text-destructive hover:bg-destructive/20 flex items-center justify-center transition-colors shrink-0 ml-1 cursor-pointer border-0"
+      :title="$t('MACROS.EDITOR.DELETE_BTN_TOOLTIP')"
       @click="$emit('deleteNode')"
-    />
+    >
+      <span class="i-lucide-trash-2 size-4 block" />
+    </button>
   </div>
 </template>
