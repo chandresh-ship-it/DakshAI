@@ -82,8 +82,16 @@ const toggle = () => {
           class="ml-2 flex min-w-0 list-none flex-col gap-0.5 border-l border-sidebar-border py-1 ltr:pl-3 rtl:pr-3"
         >
           <template v-for="child in children" :key="child.name">
+            <SidebarCollapsibleSubItem
+              v-if="child.collapsible && child.children"
+              :label="child.label"
+              :children="child.children"
+              :active-child="activeChild"
+              :is-parent-expanded="isParentExpanded && isOpen"
+              :default-open="child.defaultOpen !== false"
+            />
             <SidebarSubGroup
-              v-if="child.children"
+              v-else-if="child.children"
               :label="child.label"
               :icon="child.icon"
               :children="child.children"

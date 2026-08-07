@@ -310,7 +310,7 @@ const primaryMenuItems = computed(() => {
             {
               name: 'Teams',
               label: t('SIDEBAR.TEAMS'),
-              icon: 'i-lucide-users',
+              collapsible: true,
               activeOn: ['conversations_through_team'],
               children: sortedTeams.value.map(team => ({
                 name: `${team.name}-${team.id}`,
@@ -324,7 +324,7 @@ const primaryMenuItems = computed(() => {
             {
               name: 'Channels',
               label: t('SIDEBAR.CHANNELS'),
-              icon: 'i-lucide-mailbox',
+              collapsible: true,
               activeOn: ['conversation_through_inbox'],
               children: sortedInboxes.value.map(inbox => ({
                 name: `${inbox.name}-${inbox.id}`,
@@ -346,7 +346,7 @@ const primaryMenuItems = computed(() => {
             {
               name: 'Labels',
               label: t('SIDEBAR.LABELS'),
-              icon: 'i-lucide-tag',
+              collapsible: true,
               activeOn: ['conversations_through_label'],
               children: sortedLabels.value.map(label => ({
                 name: `${label.title}-${label.id}`,
