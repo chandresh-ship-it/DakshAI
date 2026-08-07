@@ -114,15 +114,16 @@ const statusDotClass = computed(() => {
   const priority = props.chat.priority;
   if (priority === 'urgent') return 'bg-destructive';
   if (priority === 'high') return 'bg-primary';
-  if (priority === 'medium') return 'bg-amber-500';
-  if (priority === 'low') return 'bg-emerald-500';
+  if (priority === 'medium') return 'bg-warning';
+  if (priority === 'low') return 'bg-success';
   if (hasUnread.value) return 'bg-primary';
   return 'bg-muted-foreground/30';
 });
 
 const statusTextColorClass = computed(() => {
-  return statusDotClass.value.replace('bg-', 'text-').split('/')[0];
+  return statusDotClass.value?.replace('bg-', 'text-').split('/')[0] || 'bg-white';
 });
+console.log('statusTextColorClass',statusTextColorClass);
 </script>
 
 <template>
@@ -148,7 +149,7 @@ const statusTextColorClass = computed(() => {
           </span>
           <span
             v-if="statusBadge"
-            class="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 border"
+            class="inline-flex items-center border transition-colors focus:outline-hidden focus:ring-1 focus:ring-ring border-transparent bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0 rounded-sm"
             :class="badgeClass"
           >
             {{ statusBadge.text }}
