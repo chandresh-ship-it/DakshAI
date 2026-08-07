@@ -120,8 +120,8 @@ const checkRouteAndOpenBuilder = async () => {
     isBuilderOpen.value = true;
   } else if (route.name === 'macros_edit' && route.params.macroId) {
     mode.value = 'EDIT';
-    await manifestMacro(route.params.macroId);
     isBuilderOpen.value = true;
+    await manifestMacro(route.params.macroId);
   } else {
     isBuilderOpen.value = false;
     macro.value = null;
@@ -306,11 +306,11 @@ const saveMacro = async macroData => {
           <!-- Table Body -->
           <div class="divide-y divide-border/40">
             <MacrosTableRow
-              v-for="macro in filteredRecords"
-              :key="macro.id"
-              :macro="macro"
+              v-for="macroRecord in filteredRecords"
+              :key="macroRecord.id"
+              :macro="macroRecord"
               :can-manage-public-macros="isAdmin"
-              @delete="openDeletePopup(macro)"
+              @delete="openDeletePopup(macroRecord)"
             />
           </div>
         </div>

@@ -184,7 +184,7 @@ const selectedModel = computed({
           </span>
           <span
             v-if="statusBadge"
-            class="text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 border"
+            class="text-[10px] font-medium px-2 rounded-full shrink-0 border"
             :class="badgeClass"
           >
             {{ statusBadge.text }}

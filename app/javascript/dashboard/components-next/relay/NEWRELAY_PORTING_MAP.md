@@ -55,8 +55,9 @@ Import Chatwoot components from `dashboard/components-next/relay`.
 | `Label` | `RelayLabel` | |
 | `Switch` | `RelaySwitch` | |
 | `Checkbox` | `RelayCheckbox` | |
-| `Tabs`/`TabsList`/`TabsTrigger`/`TabsContent` | `RelayTabs`/`RelayTabsList`/`RelayTabsTrigger`/`RelayTabsContent` | |
+| `Tabs`/`TabsList`/`TabsTrigger`/`TabsContent` | `RelayTabs`/`RelayTabsList`/`RelayTabsTrigger`/`RelayTabsContent` | active state uses `aria-selected:` (not reka's `data-[state=active]:`) |
 | `DropdownMenu*` (reka-ui) | `dashboard/components-next/dropdown-menu/DropdownMenu.vue` | different API: `:menu-items="[{label,value,action,icon}]"` + `@action` |
+| `GlobalToast` | `useAlert` composable (`dashboard/composables`) | Chatwoot has no toast component — call `useAlert(msg)` |
 | `KpiCard` | *no component* — use the **stat-card recipe** (§4) | |
 | `DateRangePicker` | existing report date pickers (`HeatmapDateRangeSelector`, `OverviewReportFilters`) | |
 
@@ -68,18 +69,26 @@ Legacy `woot-*` / `WootButton` / `WootModal` are being phased out — never add 
 
 Look at the NewRelay view file for the exact markup, then edit the matching Chatwoot file.
 
+NewRelay-UI grows fast — this table lists the stable, built-out mappings.
+For anything not listed, run `find …/NewRelay-UI/src/views -name '*.vue'` and open
+the matching view; the section recipes (§4) still apply.
+
 | NewRelay `src/views/…` | Chatwoot location |
 | --- | --- |
-| `reports/ReportsView.vue` | `routes/dashboard/settings/reports/` — Overview=`LiveReports.vue`, wrapper=`components/ReportsWrapper.vue`, tables=`components/SummaryReports.vue`, cards=`components/overview/MetricCard.vue`, heatmap=`components/heatmaps/BaseHeatmap.vue` |
-| `conversations/ConversationsView.vue` | `routes/dashboard/conversation/` |
-| `companies/CompaniesView.vue` | `routes/dashboard/companies/` |
-| `inbox/InboxView.vue` | `routes/dashboard/inbox/` |
-| `analytics/DashboardsView`, `RevenueAnalyticsView`, `CampaignAnalyticsView` | **not built** — sidebar shows them disabled "Coming soon" |
-| `settings/SettingsView.vue` | `routes/dashboard/settings/` |
-| sidebar/layout | `components-next/sidebar/Sidebar.vue` |
+| `reports/ReportsView.vue` | `routes/dashboard/settings/reports/` — Overview=`LiveReports.vue`, wrapper=`components/ReportsWrapper.vue`, tables=`components/SummaryReports.vue`, cards=`components/overview/MetricCard.vue` + `components/overview/{Agent,Team}Table.vue`, heatmap=`components/heatmaps/BaseHeatmap.vue`, CSAT=`CsatResponses.vue`+`components/Csat*` |
+| `conversations/ConversationsView.vue` | `routes/dashboard/conversation/`; list header + Mine/Unassigned/All tabs = `components/ChatList.vue`; rows = `components-next/Conversation/ConversationCard/` |
+| `inbox/InboxView.vue` | `routes/dashboard/inbox/`; inbox rows = `components-next/Inbox/InboxCard.vue` |
+| `companies/CompaniesView.vue` / `contacts/ContactsView.vue` | `routes/dashboard/companies/` / `routes/dashboard/contacts/` |
+| `campaigns/{LiveChat,SMS,WhatsApp}CampaignsView.vue` | `routes/dashboard/campaigns/` |
+| `settings/SettingsView.vue` + `settings/components/*` (AgentAssignment, Bots, CannedResponses, CustomAttributes, …) | `routes/dashboard/settings/` — one Chatwoot settings page per component |
+| `settings/ProfileSettingsView.vue`, `settings/ProfileMfaView.vue` | `routes/dashboard/settings/profile/` |
+| `captain/CaptainAiView.vue`, `copilot/CopilotView.vue` | Captain = `routes/dashboard/captain/` (enterprise); Copilot = conversation-side panel |
+| `analytics/DashboardsView`, `RevenueAnalyticsView`, `CampaignAnalyticsView`; `tasks/`, `calendar/`, `ecommerce/*` | **not built in Chatwoot** — sidebar shows the analytics ones disabled "Coming soon" |
+| sidebar/layout | `components-next/sidebar/Sidebar.vue` (leaf styling = `SidebarGroupLeaf.vue`) |
 
-To find any NewRelay page's markup fast:
-`ls /Users/deependrasankhala/Documents/chandresh/NewRelay-UI/src/views/**` then open the `.vue`.
+**Sidebar is now data-driven** in NewRelay: menu items live in `src/config/navigation.ts`
+(consumed by `components/layout/AppSidebar.vue`). To mirror menu structure/labels, read
+`navigation.ts` — don't scrape the markup.
 
 ---
 
