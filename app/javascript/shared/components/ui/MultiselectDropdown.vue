@@ -75,7 +75,20 @@ const hasIcon = computed(() => {
           () => toggleDropdown() // ensure that the event is not passed to the button
         "
       >
-        <div class="flex items-center justify-between w-full min-w-0">
+        <Avatar
+          v-if="hasValue && hasThumbnail && !hasIcon"
+          :src="selectedItem.thumbnail"
+          :status="selectedItem.availability_status"
+          :name="selectedItem.name"
+          :size="24"
+          rounded-full
+        />
+        <Icon
+          v-if="hasValue && hasIcon"
+          :icon="selectedItem.icon"
+          class="size-5 shrink-0 text-n-slate-11"
+        />
+        <div class="flex items-center justify-between flex-1 min-w-0">
           <h4 v-if="!hasValue" class="text-sm text-ellipsis text-n-slate-12">
             {{ multiselectorPlaceholder }}
           </h4>
@@ -87,20 +100,6 @@ const hasIcon = computed(() => {
             {{ selectedItem.name }}
           </h4>
         </div>
-        <Avatar
-          v-if="hasValue && hasThumbnail && !hasIcon"
-          :src="selectedItem.thumbnail"
-          :status="selectedItem.availability_status"
-          :name="selectedItem.name"
-          :size="24"
-          hide-offline-status
-          rounded-full
-        />
-        <Icon
-          v-if="hasValue && hasIcon"
-          :icon="selectedItem.icon"
-          class="size-5 text-n-slate-11"
-        />
       </Button>
       <div
         :class="{
