@@ -43,7 +43,26 @@ const toggleAiMenu = () => {
   isAiMenuOpen.value = !isAiMenuOpen.value;
 };
 
-const handleLauncherClick = () => {
+let startX = 0;
+let startY = 0;
+
+const handlePointerDown = e => {
+  startX = e.clientX || (e.touches && e.touches[0]?.clientX) || 0;
+  startY = e.clientY || (e.touches && e.touches[0]?.clientY) || 0;
+};
+
+const handleLauncherClick = e => {
+  const endX =
+    e.clientX || (e.changedTouches && e.changedTouches[0]?.clientX) || 0;
+  const endY =
+    e.clientY || (e.changedTouches && e.changedTouches[0]?.clientY) || 0;
+  const deltaX = Math.abs(endX - startX);
+  const deltaY = Math.abs(endY - startY);
+
+  // If moved by more than 5px, treat it as a drag, not a click
+  if (deltaX > 5 || deltaY > 5) {
+    return;
+  }
   toggleSidebar();
 };
 </script>
@@ -100,6 +119,7 @@ const handleLauncherClick = () => {
     <button
       class="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_-5px_rgba(0,0,0,0.3)] transition-colors duration-300 hover:bg-primary/90 focus:outline-none cursor-move"
       :title="$t('CAPTAIN.COPILOT.LAUNCHER.DRAG_TITLE')"
+      @pointerdown="handlePointerDown"
       @click="handleLauncherClick"
     >
       <span class="i-lucide-brain-circuit size-7 block" />
