@@ -441,6 +441,11 @@
       "TITLE": "Copilot",
       "TRY_THESE_PROMPTS": "Try these prompts",
       "PANEL_TITLE": "Get started with Copilot",
+      "LAUNCHER": {
+        "TITLE": "Relay AI here!",
+        "DESCRIPTION": "Ready to crush some tasks? Just point me at a problem and watch me turn your to-do list into a 'ta-da!' list. ⚡️",
+        "DRAG_TITLE": "Relay AI (Drag to move)"
+      },
       "KICK_OFF_MESSAGE": "Need a quick summary, want to check past conversations, or draft a better reply? Copilot’s here to speed things up.",
       "SEND_MESSAGE": "Send message...",
       "EMPTY_MESSAGE": "There was an error generating the response. Please try again.",
