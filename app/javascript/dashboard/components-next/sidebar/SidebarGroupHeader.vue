@@ -11,6 +11,7 @@ const props = defineProps({
   isExpanded: { type: Boolean, default: false },
   isActive: { type: Boolean, default: false },
   hasActiveChild: { type: Boolean, default: false },
+  danger: { type: Boolean, default: false },
   getterKeys: { type: Object, default: () => ({}) },
 });
 
@@ -28,16 +29,18 @@ const isHighlighted = computed(() => props.isActive || props.hasActiveChild);
 <template>
   <component
     :is="to ? 'router-link' : 'button'"
-    class="peer/menu-button relative flex min-w-0 w-full items-center gap-3 rounded-md p-2 py-2 text-left text-sm outline-none transition-colors"
+    class="group peer/menu-button relative flex min-w-0 w-full items-center gap-3 rounded-md p-2 py-2 text-left text-sm outline-none transition-colors"
     role="button"
     draggable="false"
     :to="to || undefined"
     :type="to ? undefined : 'button'"
     :title="label"
     :class="
-      isHighlighted
-        ? 'bg-sidebar-primary/10 font-medium text-sidebar-primary hover:bg-sidebar-primary/15'
-        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+      danger
+        ? 'text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive'
+        : isHighlighted
+          ? 'bg-sidebar-primary/10 font-medium text-sidebar-primary hover:bg-sidebar-primary/15'
+          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
     "
     @click.stop="emit('toggle')"
   >
@@ -51,7 +54,11 @@ const isHighlighted = computed(() => props.isActive || props.hasActiveChild);
         :icon="icon"
         class="size-4 shrink-0"
         :class="
-          isHighlighted ? 'text-sidebar-primary' : 'text-muted-foreground'
+          danger
+            ? 'text-muted-foreground group-hover:text-destructive'
+            : isHighlighted
+              ? 'text-sidebar-primary'
+              : 'text-muted-foreground'
         "
       />
       <span

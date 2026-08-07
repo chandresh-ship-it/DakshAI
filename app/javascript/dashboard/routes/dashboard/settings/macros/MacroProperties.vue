@@ -63,7 +63,7 @@ export default {
         class="flex items-center justify-between pb-4 border-b border-border/40 mb-6"
       >
         <h3 class="text-base font-medium text-foreground">
-          {{ $t('MACROS.ADD.FORM.NAME.LABEL') }}
+          {{ $t('MACROS.EDITOR.DETAILS_TITLE') }}
         </h3>
         <button
           type="button"

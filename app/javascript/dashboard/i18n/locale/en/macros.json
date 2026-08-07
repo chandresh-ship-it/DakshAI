@@ -62,6 +62,7 @@
     "EDITOR": {
       "START_FLOW": "Start Flow",
       "END_FLOW": "End Flow",
+      "DETAILS_TITLE": "Macro Details",
       "LOADING": "Fetching macro",
       "ADD_BTN_TOOLTIP": "Add new action",
       "DELETE_BTN_TOOLTIP": "Delete Action",

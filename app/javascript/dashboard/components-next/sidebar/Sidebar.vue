@@ -695,7 +695,8 @@ const settingsMenuItem = computed(() => ({
 const logoutMenuItem = computed(() => ({
   name: 'Logout',
   label: t('SIDEBAR_ITEMS.LOGOUT'),
-  icon: 'i-lucide-power',
+  icon: 'i-lucide-log-out',
+  danger: true,
   click: Auth.logout,
 }));
 </script>

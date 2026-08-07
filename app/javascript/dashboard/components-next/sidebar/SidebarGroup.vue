@@ -20,6 +20,7 @@ const props = defineProps({
   children: { type: Array, default: undefined },
   getterKeys: { type: Object, default: () => ({}) },
   click: { type: Function, default: null },
+  danger: { type: Boolean, default: false },
 });
 
 const flattenNavLeaves = items =>
@@ -314,6 +315,7 @@ watch(
         :name
         :label
         :to
+        :danger="danger"
         :getter-keys="getterKeys"
         :is-active="isActive"
         :has-active-child="hasActiveChild"
