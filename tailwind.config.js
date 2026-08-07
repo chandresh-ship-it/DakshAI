@@ -8,6 +8,12 @@ const {
   getIconCollections,
 } = require('@egoist/tailwindcss-icons');
 
+// Enable Tailwind opacity modifiers (e.g. bg-primary/10, border-border/60) on
+// our hex CSS-var tokens. A bare `var(--x)` can't carry an <alpha-value>;
+// color-mix can. At 100% (no modifier) it resolves to the original color.
+const withAlpha = v =>
+  `color-mix(in srgb, ${v} calc(<alpha-value> * 100%), transparent)`;
+
 const defaultSansFonts = [
   '-apple-system',
   'system-ui',
@@ -242,38 +248,38 @@ const tailwindConfig = {
       emerald: tailwindColors.emerald,
       body: slateDark.slate7,
       // new-ui / shadcn tokens (see _relay-theme.scss)
-      background: 'var(--background)',
-      foreground: 'var(--foreground)',
+      background: withAlpha('var(--background)'),
+      foreground: withAlpha('var(--foreground)'),
       card: {
-        DEFAULT: 'var(--card)',
+        DEFAULT: withAlpha('var(--card)'),
         foreground: 'var(--card-foreground)',
       },
       popover: {
-        DEFAULT: 'var(--popover)',
+        DEFAULT: withAlpha('var(--popover)'),
         foreground: 'var(--popover-foreground)',
       },
       primary: {
-        DEFAULT: 'var(--primary)',
+        DEFAULT: withAlpha('var(--primary)'),
         foreground: 'var(--primary-foreground)',
       },
       secondary: {
-        DEFAULT: 'var(--secondary)',
+        DEFAULT: withAlpha('var(--secondary)'),
         foreground: 'var(--secondary-foreground)',
       },
       muted: {
-        DEFAULT: 'var(--muted)',
+        DEFAULT: withAlpha('var(--muted)'),
         foreground: 'var(--muted-foreground)',
       },
       accent: {
-        DEFAULT: 'var(--accent)',
+        DEFAULT: withAlpha('var(--accent)'),
         foreground: 'var(--accent-foreground)',
       },
       destructive: {
-        DEFAULT: 'var(--destructive)',
+        DEFAULT: withAlpha('var(--destructive)'),
         foreground: 'var(--destructive-foreground)',
       },
-      border: 'var(--border)',
-      input: 'var(--input)',
+      border: withAlpha('var(--border)'),
+      input: withAlpha('var(--input)'),
       ring: 'var(--ring)',
       chart: {
         1: 'var(--chart-1)',
@@ -283,22 +289,22 @@ const tailwindConfig = {
         5: 'var(--chart-5)',
       },
       sidebar: {
-        DEFAULT: 'var(--sidebar)',
+        DEFAULT: withAlpha('var(--sidebar)'),
         foreground: 'var(--sidebar-foreground)',
-        primary: 'var(--sidebar-primary)',
+        primary: withAlpha('var(--sidebar-primary)'),
         'primary-foreground': 'var(--sidebar-primary-foreground)',
-        accent: 'var(--sidebar-accent)',
+        accent: withAlpha('var(--sidebar-accent)'),
         'accent-foreground': 'var(--sidebar-accent-foreground)',
-        border: 'var(--sidebar-border)',
+        border: withAlpha('var(--sidebar-border)'),
         ring: 'var(--sidebar-ring)',
       },
-      success: 'var(--success)',
-      warning: 'var(--warning)',
+      success: withAlpha('var(--success)'),
+      warning: withAlpha('var(--warning)'),
       priority: {
-        1: 'var(--priority-1)',
-        2: 'var(--priority-2)',
-        3: 'var(--priority-3)',
-        4: 'var(--priority-4)',
+        1: withAlpha('var(--priority-1)'),
+        2: withAlpha('var(--priority-2)'),
+        3: withAlpha('var(--priority-3)'),
+        4: withAlpha('var(--priority-4)'),
       },
     },
 

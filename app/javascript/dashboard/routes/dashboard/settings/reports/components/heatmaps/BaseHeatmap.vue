@@ -186,7 +186,7 @@ const tooltip = useHeatmapTooltip();
           <div
             v-for="data in row.data"
             :key="data.timestamp"
-            class="h-8 rounded-[8px] cursor-pointer transition-colors duration-200"
+            class="w-[36px] h-[22px] rounded-[8px] cursor-pointer transition-colors duration-200"
             :class="getHeatmapClass(data.value)"
             @mouseenter="tooltip.show($event, data.value)"
             @mouseleave="tooltip.hide"
