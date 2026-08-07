@@ -113,6 +113,7 @@
     "wavesurfer.js": "7.8.6"
   },
   "devDependencies": {
+    "@babel/runtime": "^8.0.0",
     "@egoist/tailwindcss-icons": "^1.9.2",
     "@histoire/plugin-vue": "0.17.15",
     "@iconify-json/logos": "^1.2.10",
