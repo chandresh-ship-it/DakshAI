@@ -10,11 +10,13 @@ import {
 } from 'dashboard/components-next/relay';
 import timezones from 'dashboard/routes/dashboard/settings/inbox/helpers/timezones.json';
 
-const emit = defineEmits(['create']);
+const emit = defineEmits(['create', 'update']);
 const { t } = useI18n();
 
 const agents = useMapGetter('agents/getAgents');
 const isOpen = ref(false);
+const editId = ref(null);
+const existingAdditional = ref({});
 const isSaving = ref(false);
 const showErrors = ref(false);
 const avatarInput = ref(null);
@@ -96,11 +98,31 @@ const selectedTimezoneLabel = computed(
     form.timezone
 );
 
+const isEditMode = computed(() => editId.value !== null);
+
 const isFormValid = computed(
   () =>
     form.firstName.trim() !== '' &&
-    form.lastName.trim() !== '' &&
+    (isEditMode.value || form.lastName.trim() !== '') &&
     form.email.trim() !== ''
+);
+
+const headerTitle = computed(() =>
+  isEditMode.value
+    ? t('CONTACTS_LAYOUT.ADD_CONTACT_DRAWER.EDIT_TITLE')
+    : t('CONTACTS_LAYOUT.ADD_CONTACT_DRAWER.TITLE')
+);
+
+const headerSubtitle = computed(() =>
+  isEditMode.value
+    ? t('CONTACTS_LAYOUT.ADD_CONTACT_DRAWER.EDIT_SUBTITLE')
+    : t('CONTACTS_LAYOUT.ADD_CONTACT_DRAWER.SUBTITLE')
+);
+
+const submitLabel = computed(() =>
+  isEditMode.value
+    ? t('CONTACTS_LAYOUT.ADD_CONTACT_DRAWER.UPDATE')
+    : t('CONTACTS_LAYOUT.ADD_CONTACT_DRAWER.CREATE')
 );
 
 const resetForm = () => {
@@ -125,11 +147,28 @@ const resetForm = () => {
   openMenu.value = null;
   contactTypeSearch.value = '';
   timeZoneSearch.value = '';
+  editId.value = null;
+  existingAdditional.value = {};
   if (avatarInput.value) avatarInput.value.value = '';
 };
 
-const open = () => {
+const prefillFromContact = contact => {
+  const additional = contact.additional_attributes || {};
+  existingAdditional.value = additional;
+  editId.value = contact.id;
+  const parts = (contact.name || '').trim().split(' ');
+  form.firstName = parts.shift() || '';
+  form.lastName = parts.join(' ');
+  form.email = contact.email || '';
+  form.phone = contact.phone_number || '';
+  form.company = additional.company_name || '';
+  form.timezone = additional.timezone || 'Etc/UTC';
+  avatarPreview.value = contact.thumbnail || '';
+};
+
+const open = contact => {
   resetForm();
+  if (contact && contact.id) prefillFromContact(contact);
   isOpen.value = true;
 };
 
@@ -177,6 +216,25 @@ const handleSubmit = async () => {
   }
 
   isSaving.value = true;
+
+  const name = `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
+
+  if (isEditMode.value) {
+    emit('update', {
+      id: editId.value,
+      name,
+      email: form.email.trim(),
+      phone_number: form.phone.trim(),
+      additional_attributes: {
+        ...existingAdditional.value,
+        company_name: form.company.trim(),
+        timezone: form.timezone,
+      },
+    });
+    isSaving.value = false;
+    close();
+    return;
+  }
 
   const emails = [
     form.email.trim(),
@@ -239,10 +297,10 @@ defineExpose({ open, close });
         >
           <div>
             <h2 class="text-lg font-semibold tracking-tight text-foreground">
-              {{ t('CONTACTS_LAYOUT.ADD_CONTACT_DRAWER.TITLE') }}
+              {{ headerTitle }}
             </h2>
             <p class="mt-1 text-sm text-muted-foreground">
-              {{ t('CONTACTS_LAYOUT.ADD_CONTACT_DRAWER.SUBTITLE') }}
+              {{ headerSubtitle }}
             </p>
           </div>
           <RelayButton
@@ -755,7 +813,7 @@ defineExpose({ open, close });
               :disabled="!isFormValid || isSaving"
               @click="handleSubmit"
             >
-              {{ t('CONTACTS_LAYOUT.ADD_CONTACT_DRAWER.CREATE') }}
+              {{ submitLabel }}
             </RelayButton>
           </div>
         </div>

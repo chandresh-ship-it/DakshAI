@@ -36,7 +36,7 @@ const toggleTheme = () => {
 
 <template>
   <header
-    class="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3 sm:px-6"
+    class="sticky top-0 z-50 flex h-16 w-full shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3 sm:px-6"
   >
     <div class="flex min-w-0 flex-none items-center gap-3">
       <button

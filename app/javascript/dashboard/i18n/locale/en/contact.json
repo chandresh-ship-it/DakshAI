@@ -701,6 +701,9 @@
     "ADD_CONTACT_DRAWER": {
       "TITLE": "Create Contact",
       "SUBTITLE": "Add a new lead or customer to your workspace.",
+      "EDIT_TITLE": "Edit Contact",
+      "EDIT_SUBTITLE": "Update this contact's details.",
+      "UPDATE": "Update Contact",
       "PROFILE_PICTURE": "Profile Picture",
       "UPLOAD_PICTURE": "Upload Picture",
       "AVATAR_HINT": "JPG, PNG or SVG. Max size 2MB.",

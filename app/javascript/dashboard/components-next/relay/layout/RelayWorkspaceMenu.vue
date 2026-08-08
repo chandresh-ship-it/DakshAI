@@ -4,6 +4,7 @@ import { useAccount } from 'dashboard/composables/useAccount';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import { vOnClickOutside } from '@vueuse/components';
+import Auth from 'dashboard/api/auth';
 
 const emit = defineEmits(['showCreateAccountModal']);
 
@@ -92,6 +93,11 @@ const onChangeAccount = newId => {
 const onAddWorkspace = () => {
   closeMenu();
   emit('showCreateAccountModal');
+};
+
+const onLogout = () => {
+  closeMenu();
+  Auth.logout();
 };
 </script>
 
@@ -198,6 +204,17 @@ const onAddWorkspace = () => {
         <span class="i-lucide-user size-4 shrink-0" />
         <span>{{ t('SIDEBAR_ITEMS.PROFILE_SETTING') }}</span>
       </router-link>
+
+      <div class="my-1 h-px bg-border" />
+
+      <button
+        type="button"
+        class="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10 focus:bg-destructive/10"
+        @click="onLogout"
+      >
+        <span class="i-lucide-log-out size-4 shrink-0" />
+        <span>{{ t('SIDEBAR_ITEMS.LOGOUT') }}</span>
+      </button>
     </div>
   </div>
 </template>

@@ -8,7 +8,7 @@ import {
 import { useAdmin } from 'dashboard/composables/useAdmin';
 import Avatar from 'next/avatar/Avatar.vue';
 import SocialIcons from './SocialIcons.vue';
-import EditContact from './EditContact.vue';
+import AddContactDrawer from 'dashboard/components-next/Contacts/Drawers/AddContactDrawer.vue';
 import ContactMergeModal from 'dashboard/modules/contact/ContactMergeModal.vue';
 import ContactDeleteModal from 'dashboard/modules/contact/ContactDeleteModal.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
@@ -19,7 +19,7 @@ import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue'
 export default {
   components: {
     NextButton,
-    EditContact,
+    AddContactDrawer,
     Avatar,
     ComposeConversation,
     SocialIcons,
@@ -47,7 +47,6 @@ export default {
   },
   data() {
     return {
-      showEditModal: false,
       isEditingName: false,
       editName: '',
     };
@@ -103,7 +102,10 @@ export default {
   },
   methods: {
     toggleEditModal() {
-      this.showEditModal = !this.showEditModal;
+      this.$refs.editContactDrawer?.open(this.contact);
+    },
+    async onContactUpdate(payload) {
+      await this.updateContactField(payload);
     },
     findCountryFlag(countryCode, cityAndCountry) {
       try {
@@ -346,10 +348,6 @@ export default {
       </ContactDeleteModal>
     </div>
 
-    <EditContact
-      :show="showEditModal"
-      :contact="contact"
-      @cancel="toggleEditModal"
-    />
+    <AddContactDrawer ref="editContactDrawer" @update="onContactUpdate" />
   </div>
 </template>
