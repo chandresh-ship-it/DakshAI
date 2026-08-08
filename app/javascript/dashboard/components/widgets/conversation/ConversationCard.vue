@@ -120,14 +120,14 @@ const selectedModel = computed({
 
 <template>
   <div
-    class="flex gap-3 px-4 py-3 border-b border-border/60 text-left transition-colors relative cursor-pointer group"
+    class="flex gap-3 p-3 mx-2 mb-1 rounded-lg text-left transition-colors relative cursor-pointer group"
     :class="[
       isActiveChat
         ? 'bg-primary/5'
         : selected
           ? 'bg-primary/10'
           : 'hover:bg-muted/40',
-      compact ? 'px-2' : '',
+      compact ? 'mx-0' : '',
     ]"
     @click="$emit('click', $event)"
     @contextmenu="$emit('contextmenu', $event)"

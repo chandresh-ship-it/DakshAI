@@ -905,7 +905,9 @@ watch(conversationFilters, (newVal, oldVal) => {
     ]"
   >
     <slot />
-    <div class="flex items-center justify-between px-4 h-14 shrink-0">
+    <div
+      class="flex items-center justify-between px-4 h-14 shrink-0 border-b border-border"
+    >
       <h1
         class="text-base font-medium truncate text-foreground flex items-center gap-1.5 min-w-0"
         :title="pageSubtitle ? `${pageTitle} / ${pageSubtitle}` : pageTitle"
@@ -948,7 +950,7 @@ watch(conversationFilters, (newVal, oldVal) => {
 
     <div
       v-if="!hasAppliedFiltersOrActiveFolders"
-      class="px-4 pt-1 pb-0 shrink-0 border-b border-border"
+      class="px-4 pt-1 pb-0 shrink-0"
     >
       <RelayTabs
         :model-value="activeAssigneeTab"
@@ -957,13 +959,13 @@ watch(conversationFilters, (newVal, oldVal) => {
       >
         <div class="flex items-center">
           <RelayTabsList
-            class="h-9 p-0 bg-transparent gap-4 overflow-hidden flex-1 justify-start"
+            class="h-9 !p-0 !bg-transparent gap-4 overflow-hidden flex-1 !justify-start !rounded-none"
           >
             <RelayTabsTrigger
               v-for="tab in assigneeTabItems"
               :key="tab.key"
               :value="tab.key"
-              class="px-0 py-2 border-b-2 border-transparent text-sm font-medium text-muted-foreground hover:text-foreground aria-selected:border-primary aria-selected:text-foreground aria-selected:shadow-none !rounded-none !bg-transparent"
+              class="!px-0 !py-2 border-b-2 border-transparent text-sm font-medium text-muted-foreground hover:text-foreground aria-selected:border-primary aria-selected:text-foreground aria-selected:!shadow-none !rounded-none !bg-transparent"
             >
               {{ tab.name }}
             </RelayTabsTrigger>

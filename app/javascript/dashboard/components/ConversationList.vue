@@ -67,7 +67,7 @@ defineExpose({ conversationListRef });
       ref="virtualListRef"
       v-slot="{ item }"
       :data="conversationList"
-      class="py-2"
+      class="pt-1 pb-2"
     >
       <ConversationItem
         :source="item"

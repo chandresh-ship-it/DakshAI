@@ -40,32 +40,29 @@ export default {
 </script>
 
 <template>
-  <div class="flex gap-2.5 items-center">
-    <div
-      class="flex items-center gap-1 whitespace-nowrap text-xs text-muted-foreground font-medium"
+  <div class="flex gap-1 items-center">
+    <span
+      class="whitespace-nowrap text-xs font-semibold text-muted-foreground tabular-nums bg-muted/30 px-2.5 py-1 rounded-md tracking-tight mr-1"
     >
-      <span class="tabular-nums text-foreground">
-        {{ totalLength <= 1 ? '1' : currentIndex }}
-      </span>
-      <span v-if="totalLength > 1" class="relative -top-px">/</span>
-      <span v-if="totalLength > 1" class="tabular-nums">
-        {{ totalLength }}
-      </span>
-    </div>
+      {{ totalLength <= 1 ? '1' : currentIndex }}
+      <template v-if="totalLength > 1"> / {{ totalLength }}</template>
+    </span>
     <div class="flex gap-0.5 items-center">
       <NextButton
         icon="i-lucide-chevron-up"
-        xs
+        sm
         slate
         ghost
+        class="size-8 [&_span]:size-4"
         :disabled="isUpDisabled"
         @click="handleUpClick"
       />
       <NextButton
         icon="i-lucide-chevron-down"
-        xs
+        sm
         slate
         ghost
+        class="size-8 [&_span]:size-4"
         :disabled="isDownDisabled"
         @click="handleDownClick"
       />
