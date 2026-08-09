@@ -266,15 +266,25 @@
 - name: CHATWOOT_CLOUD_PLANS
   display_title: 'Cloud Plans'
   value:
-    - name: Starter
+    - name: Hobby
       product_id: []
       price_ids: []
       price_per_agent: 0
       enabled: true
-    - name: Business
+    - name: Standard
       product_id: []
       price_ids: []
       price_per_agent: 19
+      enabled: true
+    - name: Business
+      product_id: []
+      price_ids: []
+      price_per_agent: 39
+      enabled: true
+    - name: Enterprise
+      product_id: []
+      price_ids: []
+      price_per_agent:
       enabled: true
   description: 'Config to store stripe plans for cloud'
 - name: CHATWOOT_CLOUD_PLAN_FEATURES
