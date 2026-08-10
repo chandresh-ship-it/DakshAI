@@ -17,6 +17,27 @@ export const hexToRgbSpace = color => {
   }
 };
 
+export const normalizeCssColorToken = color => {
+  if (!color || typeof color !== 'string') return color;
+  const trimmed = color.trim();
+  if (/^#[0-9a-fA-F]{8}$/.test(trimmed)) return trimmed;
+  if (/^\d{1,3} \d{1,3} \d{1,3}$/.test(trimmed)) return trimmed;
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
+    return hexToRgbSpace(trimmed) ?? trimmed;
+  }
+  return trimmed;
+};
+
+const HEX_BORDER_THEME_KEYS = new Set(['border', 'input', 'sidebar-border']);
+
+const setThemeCssVariable = (root, key, value) => {
+  if (!value) return;
+  const token = HEX_BORDER_THEME_KEYS.has(key)
+    ? value
+    : normalizeCssColorToken(value);
+  root.style.setProperty(`--${key}`, token ?? value);
+};
+
 export const generateThemeVariables = backgroundHex => {
   if (!backgroundHex) return null;
   const isDark = getLuminance(backgroundHex) < 0.5;
@@ -125,9 +146,10 @@ const applyLegacyPrimary = primary => {
       if (value) root.style.setProperty(key, value);
     });
   }
-  root.style.setProperty('--primary', primary);
-  root.style.setProperty('--ring', primary);
-  root.style.setProperty('--sidebar-primary', primary);
+  const primaryToken = normalizeCssColorToken(primary);
+  root.style.setProperty('--primary', primaryToken);
+  root.style.setProperty('--ring', primaryToken);
+  root.style.setProperty('--sidebar-primary', primaryToken);
 };
 
 /**
@@ -143,12 +165,14 @@ const applyPresetTokenMap = (preset, { dark = false } = {}) => {
     // Default / no token map — fall back to swatch accents only
     applyLegacyPrimary(preset?.primary);
     if (preset?.secondary) {
-      root.style.setProperty('--secondary', preset.secondary);
-      root.style.setProperty('--muted', preset.secondary);
+      const secondaryToken = normalizeCssColorToken(preset.secondary);
+      root.style.setProperty('--secondary', secondaryToken);
+      root.style.setProperty('--muted', secondaryToken);
     }
     if (preset?.accent) {
-      root.style.setProperty('--accent', preset.accent);
-      root.style.setProperty('--sidebar-accent', preset.accent);
+      const accentToken = normalizeCssColorToken(preset.accent);
+      root.style.setProperty('--accent', accentToken);
+      root.style.setProperty('--sidebar-accent', accentToken);
     }
     return;
   }
@@ -167,7 +191,7 @@ const applyPresetTokenMap = (preset, { dark = false } = {}) => {
         key.includes('chart');
       if (!isCoreBrand) return;
     }
-    root.style.setProperty(`--${key}`, value);
+    setThemeCssVariable(root, key, value);
   });
 
   // Keep legacy blue scale / woot-brand in sync with primary
@@ -226,8 +250,7 @@ export const applyBrandColorVariables = (
     removeServerBrandStyle();
     clearManagedThemeTokens();
     THEME_TOKEN_KEYS.forEach(key => {
-      const value = colors[key];
-      if (value) root.style.setProperty(`--${key}`, value);
+      setThemeCssVariable(root, key, colors[key]);
     });
     applyLegacyPrimary(colors.primary || colors['sidebar-primary']);
     if (colors.background || colors.foreground) {
@@ -253,13 +276,15 @@ export const applyBrandColorVariables = (
   if (primary) applyLegacyPrimary(primary);
 
   if (secondary) {
-    root.style.setProperty('--secondary', secondary);
-    root.style.setProperty('--muted', secondary);
+    const secondaryToken = normalizeCssColorToken(secondary);
+    root.style.setProperty('--secondary', secondaryToken);
+    root.style.setProperty('--muted', secondaryToken);
   }
 
   if (accent) {
-    root.style.setProperty('--accent', accent);
-    root.style.setProperty('--sidebar-accent', accent);
+    const accentToken = normalizeCssColorToken(accent);
+    root.style.setProperty('--accent', accentToken);
+    root.style.setProperty('--sidebar-accent', accentToken);
   }
 
   if (!structural) return;
@@ -267,7 +292,7 @@ export const applyBrandColorVariables = (
   if (text) {
     const textRgb = hexToRgbSpace(text);
     if (textRgb) root.style.setProperty('--slate-12', textRgb);
-    root.style.setProperty('--foreground', text);
+    root.style.setProperty('--foreground', normalizeCssColorToken(text));
   }
 
   if (background) {
@@ -277,9 +302,10 @@ export const applyBrandColorVariables = (
         if (value) root.style.setProperty(key, value);
       });
     }
-    root.style.setProperty('--background', background);
-    root.style.setProperty('--card', background);
-    root.style.setProperty('--popover', background);
+    const backgroundToken = normalizeCssColorToken(background);
+    root.style.setProperty('--background', backgroundToken);
+    root.style.setProperty('--card', backgroundToken);
+    root.style.setProperty('--popover', backgroundToken);
   }
 };
 

@@ -7,7 +7,7 @@ export const BRAND_THEME_PRESETS = [
   {
     id: 'default',
     name: 'Default',
-    primary: '#4f46e5',
+    primary: '#6f71fb',
     secondary: '#f2f4f9',
     accent: '#edf0ff',
     background: '#ffffff',

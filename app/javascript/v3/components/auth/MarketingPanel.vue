@@ -2,16 +2,20 @@
 import { computed } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
+import { formatInstallationDisplayName } from 'shared/helpers/installationNameHelper';
 
 const store = useStore();
 const { t } = useI18n();
 
 const globalConfig = computed(() => store.getters['globalConfig/get']);
 
-const installationInitial = computed(() => {
-  const name = globalConfig.value.installationName || 'Newrelay';
-  return name.charAt(0).toUpperCase();
-});
+const displayName = computed(() =>
+  formatInstallationDisplayName(globalConfig.value.installationName)
+);
+
+const installationInitial = computed(() =>
+  displayName.value.charAt(0).toUpperCase()
+);
 
 const features = computed(() => [
   {
@@ -34,36 +38,19 @@ const features = computed(() => [
 
 <template>
   <div
-    class="w-full md:w-[45%] bg-gradient-to-br from-[#f8f9ff] via-[#f3f5ff] to-[#ebebff] dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 p-10 flex flex-col relative overflow-hidden"
+    class="w-full md:w-[45%] bg-gradient-to-br from-auth-marketing-from via-auth-marketing-via to-auth-marketing-to p-10 flex flex-col relative overflow-hidden"
   >
     <div
       class="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"
     />
 
     <div class="flex items-center gap-2 mb-10 relative z-10">
-      <template v-if="globalConfig.logo">
-        <img
-          :src="globalConfig.logo"
-          :alt="globalConfig.installationName"
-          class="block w-auto h-8 dark:hidden"
-        />
-        <img
-          v-if="globalConfig.logoDark"
-          :src="globalConfig.logoDark"
-          :alt="globalConfig.installationName"
-          class="hidden w-auto h-8 dark:block"
-        />
-      </template>
-      <template v-else>
-        <div
-          class="size-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg"
-        >
-          {{ installationInitial }}
-        </div>
-        <span class="text-xl font-bold text-foreground">{{
-          globalConfig.installationName
-        }}</span>
-      </template>
+      <div
+        class="size-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg"
+      >
+        {{ installationInitial }}
+      </div>
+      <span class="text-xl font-bold text-foreground">{{ displayName }}</span>
     </div>
 
     <h1
@@ -103,7 +90,7 @@ const features = computed(() => [
 
     <!-- Glassmorphic floating graphic -->
     <div
-      class="absolute -bottom-24 left-4 sm:left-10 w-[280px] h-[220px] bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/60 dark:border-slate-700/60 rounded-3xl shadow-xl p-4 flex flex-col gap-3 -rotate-2 transform-gpu"
+      class="absolute -bottom-24 left-4 sm:left-10 w-[280px] h-[220px] bg-auth-mock-panel/40 backdrop-blur-md border border-auth-mock-border/60 rounded-3xl shadow-xl p-4 flex flex-col gap-3 -rotate-2 transform-gpu"
     >
       <div
         class="w-24 h-12 bg-primary/80 rounded-2xl rounded-bl-sm self-end shadow-lg flex items-center justify-center gap-1.5 backdrop-blur-sm -mt-6 mr-4 relative z-20"
@@ -114,30 +101,26 @@ const features = computed(() => [
           class="size-1.5 rounded-full bg-white/80 animate-pulse delay-150"
         />
       </div>
-      <div
-        class="flex items-center gap-3 bg-white/60 dark:bg-slate-700/60 p-2 rounded-xl"
-      >
-        <div class="size-8 rounded-full bg-blue-500/20" />
+      <div class="flex items-center gap-3 bg-auth-mock-row/60 p-2 rounded-xl">
+        <div class="size-8 rounded-full bg-auth-mock-avatar-blue/20" />
         <div class="flex-1 flex flex-col gap-1.5">
-          <div class="h-2 w-3/4 bg-slate-200 dark:bg-slate-600 rounded-full" />
-          <div class="h-2 w-1/2 bg-slate-200 dark:bg-slate-600 rounded-full" />
+          <div class="h-2 w-3/4 bg-auth-mock-skeleton rounded-full" />
+          <div class="h-2 w-1/2 bg-auth-mock-skeleton rounded-full" />
+        </div>
+      </div>
+      <div class="flex items-center gap-3 bg-auth-mock-row/60 p-2 rounded-xl">
+        <div class="size-8 rounded-full bg-auth-mock-avatar-purple/20" />
+        <div class="flex-1 flex flex-col gap-1.5">
+          <div class="h-2 w-2/3 bg-auth-mock-skeleton rounded-full" />
+          <div class="h-2 w-1/3 bg-auth-mock-skeleton rounded-full" />
         </div>
       </div>
       <div
-        class="flex items-center gap-3 bg-white/60 dark:bg-slate-700/60 p-2 rounded-xl"
-      >
-        <div class="size-8 rounded-full bg-purple-500/20" />
-        <div class="flex-1 flex flex-col gap-1.5">
-          <div class="h-2 w-2/3 bg-slate-200 dark:bg-slate-600 rounded-full" />
-          <div class="h-2 w-1/3 bg-slate-200 dark:bg-slate-600 rounded-full" />
-        </div>
-      </div>
-      <div
-        class="absolute bottom-6 -right-12 w-[160px] h-[90px] bg-white/90 dark:bg-slate-800/90 rounded-xl shadow-lg border border-white/50 dark:border-slate-700/50 p-3 z-30 flex items-center justify-center"
+        class="absolute bottom-6 -right-12 w-[160px] h-[90px] bg-auth-mock-panel/90 rounded-xl shadow-lg border border-auth-mock-border/50 p-3 z-30 flex items-center justify-center"
       >
         <svg
           viewBox="0 0 100 40"
-          class="w-full h-full text-blue-500"
+          class="w-full h-full text-auth-mock-chart"
           fill="none"
           stroke="currentColor"
           stroke-width="3"
@@ -147,8 +130,8 @@ const features = computed(() => [
           <path d="M5 30 Q 20 10 35 25 T 65 15 T 95 5" />
         </svg>
         <div class="absolute top-2 left-2 flex gap-1">
-          <div class="size-1.5 rounded-full bg-slate-200 dark:bg-slate-600" />
-          <div class="size-1.5 rounded-full bg-slate-200 dark:bg-slate-600" />
+          <div class="size-1.5 rounded-full bg-auth-mock-skeleton" />
+          <div class="size-1.5 rounded-full bg-auth-mock-skeleton" />
         </div>
       </div>
     </div>

@@ -1,9 +1,9 @@
 <script>
 import SnackbarContainer from './components/SnackBar/Container.vue';
-import {
-  applyBrandColorVariables,
-  isDarkBackground,
-} from 'dashboard/helper/colorHelper';
+import { applyBrandColorVariables } from 'dashboard/helper/colorHelper';
+import { setColorTheme } from 'dashboard/helper/themeHelper';
+import { LocalStorage } from 'shared/helpers/localStorage';
+import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 
 export default {
   components: { SnackbarContainer },
@@ -11,56 +11,43 @@ export default {
     return { theme: 'light' };
   },
   mounted() {
-    this.setColorTheme();
+    this.applyTheme();
     this.listenToThemeChanges();
+    window.addEventListener('theme-changed', this.onThemeChanged);
     this.setLocale(window.chatwootConfig.selectedLocale);
-    // Apply brand colors from server-injected globalConfig (for custom domain branding on login page)
     if (window.globalConfig && window.globalConfig.BRAND_COLORS) {
       this.applyBrandColors(window.globalConfig.BRAND_COLORS);
     }
   },
+  beforeUnmount() {
+    window.removeEventListener('theme-changed', this.onThemeChanged);
+  },
   methods: {
-    setColorTheme() {
-      const hasDomainBranding =
-        window.globalConfig && window.globalConfig.BRAND_COLORS;
-      const isBrandDark =
-        hasDomainBranding &&
-        window.globalConfig.BRAND_COLORS.background &&
-        isDarkBackground(window.globalConfig.BRAND_COLORS.background);
-
-      if (
-        isBrandDark ||
-        window.matchMedia('(prefers-color-scheme: dark)').matches
-      ) {
-        this.theme = 'dark';
-        document.documentElement.classList.add('dark');
-        document.body.classList.add('dark');
-      } else {
-        this.theme = 'light';
-        document.documentElement.classList.remove('dark');
-        document.body.classList.remove('dark');
+    applyTheme() {
+      setColorTheme(
+        window.matchMedia('(prefers-color-scheme: dark)').matches,
+        window.globalConfig?.BRAND_COLORS
+      );
+      this.theme = document.documentElement.classList.contains('dark')
+        ? 'dark'
+        : 'light';
+    },
+    onThemeChanged() {
+      this.theme = document.documentElement.classList.contains('dark')
+        ? 'dark'
+        : 'light';
+      if (window.globalConfig?.BRAND_COLORS) {
+        this.applyBrandColors(window.globalConfig.BRAND_COLORS);
       }
     },
     listenToThemeChanges() {
       const mql = window.matchMedia('(prefers-color-scheme: dark)');
 
-      mql.onchange = e => {
-        const hasDomainBranding =
-          window.globalConfig && window.globalConfig.BRAND_COLORS;
-        const isBrandDark =
-          hasDomainBranding &&
-          window.globalConfig.BRAND_COLORS.background &&
-          isDarkBackground(window.globalConfig.BRAND_COLORS.background);
-
-        if (isBrandDark || e.matches) {
-          this.theme = 'dark';
-          document.documentElement.classList.add('dark');
-          document.body.classList.add('dark');
-        } else {
-          this.theme = 'light';
-          document.documentElement.classList.remove('dark');
-          document.body.classList.remove('dark');
-        }
+      mql.onchange = () => {
+        const scheme =
+          LocalStorage.get(LOCAL_STORAGE_KEYS.COLOR_SCHEME) || 'auto';
+        if (scheme !== 'auto') return;
+        this.applyTheme();
       };
     },
     setLocale(locale) {
@@ -78,7 +65,10 @@ export default {
 </script>
 
 <template>
-  <div class="h-full min-h-screen w-full antialiased" :class="theme">
+  <div
+    class="h-full min-h-screen w-full antialiased bg-background text-foreground"
+    :class="theme"
+  >
     <router-view />
     <SnackbarContainer />
   </div>
@@ -96,7 +86,7 @@ export default {
 html,
 body {
   font-family: var(--font-sans);
-  @apply h-full w-full;
+  @apply h-full w-full bg-background text-foreground;
 
   input,
   select {

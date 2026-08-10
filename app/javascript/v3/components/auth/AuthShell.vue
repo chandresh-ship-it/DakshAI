@@ -1,6 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { LocalStorage } from 'shared/helpers/localStorage';
+import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
+import { setColorTheme } from 'dashboard/helper/themeHelper';
 
 defineProps({
   /** Centered icon-card pages use mirrored blob positions (forgot / SSO). */
@@ -16,14 +19,14 @@ const syncFromDom = () => {
 };
 
 const toggleTheme = () => {
-  isDark.value = !isDark.value;
-  if (isDark.value) {
-    document.documentElement.classList.add('dark');
-    document.body.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-    document.body.classList.remove('dark');
-  }
+  const nextTheme = isDark.value ? 'light' : 'dark';
+  LocalStorage.set(LOCAL_STORAGE_KEYS.COLOR_SCHEME, nextTheme);
+  setColorTheme(
+    window.matchMedia('(prefers-color-scheme: dark)').matches,
+    window.globalConfig?.BRAND_COLORS
+  );
+  isDark.value = nextTheme === 'dark';
+  window.dispatchEvent(new CustomEvent('theme-changed'));
 };
 
 onMounted(syncFromDom);
@@ -32,7 +35,7 @@ onMounted(syncFromDom);
 <template>
   <div
     data-relay
-    class="min-h-screen w-full flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 font-sans text-foreground relative overflow-hidden"
+    class="min-h-screen w-full flex items-center justify-center p-4 !bg-auth-canvas font-sans text-foreground relative overflow-hidden"
   >
     <div v-if="showThemeToggle" class="absolute top-6 right-6 z-50">
       <button

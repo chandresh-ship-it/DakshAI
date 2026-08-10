@@ -14,9 +14,9 @@ import SessionStorage from 'shared/helpers/sessionStorage';
 import AuthShell from '../../components/auth/AuthShell.vue';
 import MarketingPanel from '../../components/auth/MarketingPanel.vue';
 import AuthInput from '../../components/auth/AuthInput.vue';
-import GoogleOAuthButton from '../../components/GoogleOauth/Button.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import MfaVerification from 'dashboard/components/auth/MfaVerification.vue';
+import { formatInstallationDisplayName } from 'shared/helpers/installationNameHelper';
 
 const props = defineProps({
   ssoAuthToken: { type: String, default: '' },
@@ -62,24 +62,15 @@ const rules = {
 const v$ = useVuelidate(rules, { credentials });
 
 const globalConfig = computed(() => store.getters['globalConfig/get']);
+const installationDisplayName = computed(() =>
+  formatInstallationDisplayName(globalConfig.value.installationName)
+);
 const allowedLoginMethods = computed(
   () => window.chatwootConfig.allowedLoginMethods || ['email']
-);
-const showGoogleOAuth = computed(
-  () =>
-    allowedLoginMethods.value.includes('google_oauth') &&
-    Boolean(window.chatwootConfig.googleOAuthClientId)
-);
-const showSignupLink = computed(
-  () => window.chatwootConfig.signupEnabled === 'true'
 );
 const showSamlLogin = computed(() =>
   allowedLoginMethods.value.includes('saml')
 );
-const showSocialLogin = computed(
-  () => showGoogleOAuth.value || showSamlLogin.value
-);
-
 const getTranslatedMessage = key => {
   // Avoid dynamic key warning by handling each case explicitly
   switch (key) {
@@ -215,7 +206,7 @@ onMounted(() => {
 
     <div
       v-else
-      class="w-full max-w-[1000px] bg-card rounded-[2rem] shadow-xl border border-border flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[600px]"
+      class="w-full max-w-[1000px] bg-card rounded-[2rem] shadow-xl border border-border/50 flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[600px]"
     >
       <MarketingPanel />
 
@@ -231,14 +222,20 @@ onMounted(() => {
             <p class="text-[14px] text-muted-foreground">
               {{ t('LOGIN.CONTINUE_TO') }}
               <span class="text-primary font-medium">{{
-                globalConfig.installationName
+                installationDisplayName
               }}</span>
             </p>
           </div>
 
           <template v-if="!email">
-            <div v-if="showSocialLogin" class="flex flex-col gap-3 mb-6">
-              <GoogleOAuthButton v-if="showGoogleOAuth" />
+            <div class="flex flex-col gap-3 mb-6">
+              <button
+                type="button"
+                class="w-full h-11 bg-background border border-border rounded-lg shadow-sm flex items-center justify-center gap-3 hover:bg-muted/50 transition-colors text-[14px] font-medium text-foreground outline-none"
+              >
+                <span class="i-logos-google-icon size-5" />
+                {{ t('LOGIN.OAUTH.GOOGLE_LOGIN') }}
+              </button>
               <router-link
                 v-if="showSamlLogin"
                 to="/app/login/sso"
@@ -249,7 +246,7 @@ onMounted(() => {
               </router-link>
             </div>
 
-            <div v-if="showSocialLogin" class="flex items-center gap-4 mb-6">
+            <div class="flex items-center gap-4 mb-6">
               <div class="h-px bg-border flex-1" />
               <span
                 class="text-[12px] font-medium text-muted-foreground uppercase tracking-wide"
@@ -328,10 +325,7 @@ onMounted(() => {
               </button>
             </form>
 
-            <p
-              v-if="showSignupLink"
-              class="text-center text-[14px] text-muted-foreground mt-8"
-            >
+            <p class="text-center text-[14px] text-muted-foreground mt-8">
               {{ t('LOGIN.NO_ACCOUNT') }}
               <router-link
                 to="/app/auth/signup"

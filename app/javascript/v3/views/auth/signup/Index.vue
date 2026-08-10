@@ -10,7 +10,7 @@ const { t } = useI18n();
 <template>
   <AuthShell>
     <div
-      class="w-full max-w-[1000px] bg-card rounded-[2rem] shadow-xl border border-border flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[600px]"
+      class="w-full max-w-[1000px] bg-card rounded-[2rem] shadow-xl border border-border/50 flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[600px]"
     >
       <MarketingPanel />
 

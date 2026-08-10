@@ -1,4 +1,5 @@
 import { useMapGetter } from 'dashboard/composables/store.js';
+import { formatInstallationDisplayName } from 'shared/helpers/installationNameHelper';
 
 export function useBranding() {
   const globalConfig = useMapGetter('globalConfig/get');
@@ -24,11 +25,15 @@ export function useBranding() {
         account?.brand_name ||
         account?.custom_attributes?.brand_colors?.brand_name;
     }
-    const installationName =
-      customBrandName || globalConfig.value?.installationName;
+    const installationName = formatInstallationDisplayName(
+      customBrandName || globalConfig.value?.installationName
+    );
     if (!installationName) return text;
 
-    return text.replace(/Chatwoot|DakshAI|Newrelay/g, installationName);
+    return text.replace(
+      /Chatwoot|DakshAI|Newrelay|newrelay/gi,
+      installationName
+    );
   };
 
   return {
