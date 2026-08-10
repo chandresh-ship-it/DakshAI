@@ -14,16 +14,21 @@ const { t } = useI18n();
 const [showActionsDropdown, toggleDropdown] = useToggle(false);
 
 const currentChat = computed(() => store.getters.getSelectedChat);
-const isResolved = computed(() => currentChat.value.status === wootConstants.STATUS_TYPE.RESOLVED);
-const isPending = computed(() => currentChat.value.status === wootConstants.STATUS_TYPE.PENDING);
-const isSnoozed = computed(() => currentChat.value.status === wootConstants.STATUS_TYPE.SNOOZED);
+const isResolved = computed(
+  () => currentChat.value.status === wootConstants.STATUS_TYPE.RESOLVED
+);
+const isPending = computed(
+  () => currentChat.value.status === wootConstants.STATUS_TYPE.PENDING
+);
 
 const actionMenuSections = computed(() => {
   const primaryItems = [];
 
   primaryItems.push({
     icon: 'i-lucide-check',
-    label: isResolved.value ? t('CONVERSATION.HEADER.REOPEN_ACTION') : t('CONVERSATION.HEADER.RESOLVE_ACTION'),
+    label: isResolved.value
+      ? t('CONVERSATION.HEADER.REOPEN_ACTION')
+      : t('CONVERSATION.HEADER.RESOLVE_ACTION'),
     action: isResolved.value ? 'reopen' : 'resolve',
     value: isResolved.value ? 'reopen' : 'resolve',
   });
@@ -55,13 +60,10 @@ const actionMenuSections = computed(() => {
       label: t('CONVERSATION.CARD_CONTEXT_MENU.DELETE', 'Delete Thread'),
       action: 'delete',
       value: 'delete',
-    }
+    },
   ];
 
-  return [
-    { items: primaryItems },
-    { items: destructiveItems }
-  ];
+  return [{ items: primaryItems }, { items: destructiveItems }];
 });
 
 const openSnoozeModal = () => {
@@ -73,15 +75,24 @@ const handleActionClick = ({ action }) => {
   toggleDropdown(false);
 
   if (action === 'resolve') {
-    store.dispatch('toggleStatus', { conversationId: currentChat.value.id, status: wootConstants.STATUS_TYPE.RESOLVED });
+    store.dispatch('toggleStatus', {
+      conversationId: currentChat.value.id,
+      status: wootConstants.STATUS_TYPE.RESOLVED,
+    });
     useAlert(t('CONVERSATION.CHANGE_STATUS'));
   } else if (action === 'reopen') {
-    store.dispatch('toggleStatus', { conversationId: currentChat.value.id, status: wootConstants.STATUS_TYPE.OPEN });
+    store.dispatch('toggleStatus', {
+      conversationId: currentChat.value.id,
+      status: wootConstants.STATUS_TYPE.OPEN,
+    });
     useAlert(t('CONVERSATION.CHANGE_STATUS'));
   } else if (action === 'snooze') {
     openSnoozeModal();
   } else if (action === 'pending') {
-    store.dispatch('toggleStatus', { conversationId: currentChat.value.id, status: wootConstants.STATUS_TYPE.PENDING });
+    store.dispatch('toggleStatus', {
+      conversationId: currentChat.value.id,
+      status: wootConstants.STATUS_TYPE.PENDING,
+    });
     useAlert(t('CONVERSATION.CHANGE_STATUS'));
   } else if (action === 'delete') {
     store.dispatch('deleteConversation', currentChat.value.id);

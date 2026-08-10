@@ -30,6 +30,7 @@ class Voice::Provider::Twilio::RecordingAttachmentService
       attach_recording!(result)
       call.recording_sid = recording_sid
       call.duration_seconds ||= normalized_recording_duration
+      transcribe_recording! if call.account.audio_transcriptions.present?
       call.save!
     end
   end
@@ -77,5 +78,27 @@ class Voice::Provider::Twilio::RecordingAttachmentService
 
   def channel
     @channel ||= call.inbox.channel
+  end
+
+  def transcribe_recording!
+    return if call.transcript.present?
+    return unless call.recording.attached?
+
+    api_key = ENV.fetch('OPENAI_API_KEY', nil) || GlobalConfig.get_value('CAPTAIN_OPEN_AI_API_KEY')
+    return if api_key.blank?
+
+    call.recording.blob.open do |file|
+      client = OpenAI::Client.new(access_token: api_key)
+      response = client.audio.transcribe(
+        parameters: {
+          model: 'gpt-4o-mini-transcribe',
+          file: file,
+          temperature: 0.0
+        }
+      )
+      call.transcript = response['text'] if response['text'].present?
+    end
+  rescue StandardError => e
+    Rails.logger.warn("Twilio call recording transcription error: #{e.message}")
   end
 end

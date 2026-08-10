@@ -12,10 +12,6 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
-  totalResponseCount: {
-    type: Number,
-    default: 0,
-  },
   isLoading: {
     type: Boolean,
     default: false,
@@ -43,7 +39,11 @@ const getRatingLabel = value => {
   const rating = CSAT_RATINGS.find(r => r.value === value);
   // Translation strings are prefixed with the emoji (e.g. "😍 Excellent");
   // strip leading non-letters since the emoji is shown in its own circle.
-  return rating ? t(rating.translationKey).replace(/^[^\p{L}]+/u, '').trim() : '';
+  return rating
+    ? t(rating.translationKey)
+        .replace(/^[^\p{L}]+/u, '')
+        .trim()
+    : '';
 };
 
 const getRatingCount = value => {

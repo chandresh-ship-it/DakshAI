@@ -4,7 +4,6 @@ import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
 import Avatar from 'next/avatar/Avatar.vue';
-import { useInbox } from 'dashboard/composables/useInbox';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import MoreActions from './MoreActions.vue';
 import { RelayButton } from 'dashboard/components-next/relay';
@@ -17,7 +16,6 @@ const props = defineProps({
 });
 
 const store = useStore();
-const { isAWebWidgetInbox } = useInbox();
 const { uiSettings, updateUISettings } = useUISettings();
 const { t } = useI18n();
 const accountLabels = useMapGetter('labels/getLabels');
@@ -27,15 +25,6 @@ const toggleSidebar = () => {
     is_contact_sidebar_open: !uiSettings.value.is_contact_sidebar_open,
   });
 };
-
-const chatMetadata = computed(() => props.chat.meta);
-
-const isHMACVerified = computed(() => {
-  if (!isAWebWidgetInbox.value) {
-    return true;
-  }
-  return chatMetadata.value.hmac_verified;
-});
 
 const currentContact = computed(() =>
   store.getters['contacts/getContact'](props.chat.meta.sender.id)
@@ -50,11 +39,6 @@ const customerSince = computed(() => {
     day: 'numeric',
     year: 'numeric',
   });
-});
-
-const subject = computed(() => {
-  const attrs = props.chat.additional_attributes || {};
-  return attrs.mailSubject || `Conversation #${props.chat.id}`;
 });
 
 const unreadCount = computed(() => props.chat.unread_count);
@@ -121,9 +105,10 @@ const statusDotClass = computed(() => {
 });
 
 const statusTextColorClass = computed(() => {
-  return statusDotClass.value?.replace('bg-', 'text-').split('/')[0] || 'bg-white';
+  return (
+    statusDotClass.value?.replace('bg-', 'text-').split('/')[0] || 'bg-white'
+  );
 });
-console.log('statusTextColorClass',statusTextColorClass);
 </script>
 
 <template>
@@ -158,12 +143,14 @@ console.log('statusTextColorClass',statusTextColorClass);
             class="text-[11px] font-medium flex items-center gap-1 shrink-0"
             :class="statusTextColorClass"
           >
-            <span class="size-1.5 rounded-full" :class="statusDotClass"></span> {{ chat.id }}
+            <span class="size-1.5 rounded-full" :class="statusDotClass" />
+            {{ chat.id }}
           </span>
         </div>
         <div
           class="flex items-center gap-2 text-[13px] text-muted-foreground mt-0.5"
         >
+          <!-- eslint-disable-next-line @intlify/vue-i18n/no-raw-text, vue/no-bare-strings-in-template -->
           <span class="truncate">Customer Since {{ customerSince }}</span>
         </div>
       </div>

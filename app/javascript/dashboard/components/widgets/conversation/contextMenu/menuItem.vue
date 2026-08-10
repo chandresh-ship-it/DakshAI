@@ -15,9 +15,13 @@ defineProps({
 </script>
 
 <template>
-  <div 
+  <div
     class="flex items-center min-w-[12rem] min-h-8 px-2 py-1.5 rounded-sm cursor-pointer text-sm font-medium transition-colors"
-    :class="option.key === 'delete' ? 'text-destructive hover:bg-destructive/10' : 'text-foreground hover:bg-muted'"
+    :class="
+      option.key === 'delete'
+        ? 'text-destructive hover:bg-destructive/10'
+        : 'text-foreground hover:bg-muted'
+    "
     role="button"
   >
     <fluent-icon

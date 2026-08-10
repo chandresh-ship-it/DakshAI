@@ -97,7 +97,7 @@ export default {
     }"
   >
     <ConversationHeader
-      v-if="currentChat.id"
+      v-if="currentChat.id && !isInboxView"
       :chat="currentChat"
       :show-back-button="isOnExpandedLayout && !isInboxView"
     />

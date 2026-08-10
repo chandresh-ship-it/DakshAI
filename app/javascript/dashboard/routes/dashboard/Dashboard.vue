@@ -128,6 +128,9 @@ export default {
       if (String(routeName).startsWith('captain')) {
         return this.t('SIDEBAR.CAPTAIN');
       }
+      if (['inbox_view', 'inbox_view_conversation'].includes(routeName)) {
+        return this.t('INBOX.LIST.TITLE');
+      }
       if (
         [
           'home',
@@ -139,8 +142,6 @@ export default {
           'team_conversations',
           'inbox_dashboard',
           'label_conversations',
-          'inbox_view',
-          'inbox_view_conversation',
         ].includes(routeName)
       ) {
         return this.t('SIDEBAR.CUSTOMER_ENGAGEMENT');

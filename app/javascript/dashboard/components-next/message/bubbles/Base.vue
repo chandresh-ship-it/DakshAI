@@ -37,7 +37,8 @@ const varaintBaseMap = {
     'bg-primary text-primary-foreground shadow-xs border-transparent w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.TEMPLATE]:
     'bg-card border border-border shadow-xs text-foreground w-fit max-w-[85%]',
-  [MESSAGE_VARIANTS.ERROR]: 'bg-destructive/10 text-destructive w-fit max-w-[85%]',
+  [MESSAGE_VARIANTS.ERROR]:
+    'bg-destructive/10 text-destructive w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.EMAIL]: 'w-fit max-w-[85%]',
   [MESSAGE_VARIANTS.UNSUPPORTED]:
     'bg-amber-500/10 border border-dashed border-amber-500/50 text-amber-500 w-fit max-w-[85%]',
