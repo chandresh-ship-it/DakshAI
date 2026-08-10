@@ -1,110 +1,111 @@
-<script>
+<script setup>
+import { reactive } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
+import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import { required, minLength, email } from '@vuelidate/validators';
 import { useBranding } from 'shared/composables/useBranding';
-import FormInput from '../../../../components/Form/Input.vue';
+import AuthIconCard from '../../../../components/auth/AuthIconCard.vue';
+import AuthInput from '../../../../components/auth/AuthInput.vue';
 import { resetPassword } from '../../../../api/auth';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 
-export default {
-  components: { FormInput, NextButton },
-  setup() {
-    const { replaceInstallationName } = useBranding();
-    return { v$: useVuelidate(), replaceInstallationName };
-  },
-  data() {
-    return {
-      credentials: { email: '' },
-      resetPassword: {
-        message: '',
-        showLoading: false,
-      },
-      error: '',
-    };
-  },
-  validations() {
-    return {
-      credentials: {
-        email: {
-          required,
-          email,
-          minLength: minLength(4),
-        },
-      },
-    };
-  },
-  methods: {
-    showAlertMessage(message) {
-      // Reset loading, current selected agent
-      this.resetPassword.showLoading = false;
-      useAlert(message);
-    },
-    submit() {
-      this.resetPassword.showLoading = true;
-      resetPassword(this.credentials)
-        .then(res => {
-          let successMessage = this.$t('RESET_PASSWORD.API.SUCCESS_MESSAGE');
-          if (res.data && res.data.message) {
-            successMessage = res.data.message;
-          }
-          this.showAlertMessage(successMessage);
-        })
-        .catch(error => {
-          let errorMessage = this.$t('RESET_PASSWORD.API.ERROR_MESSAGE');
-          if (error?.response?.data?.message) {
-            errorMessage = error.response.data.message;
-          }
-          this.showAlertMessage(errorMessage);
-        });
+const { t } = useI18n();
+const { replaceInstallationName } = useBranding();
+
+const credentials = reactive({ email: '' });
+const resetPasswordApi = reactive({
+  message: '',
+  showLoading: false,
+});
+
+const rules = {
+  credentials: {
+    email: {
+      required,
+      email,
+      minLength: minLength(4),
     },
   },
+};
+const v$ = useVuelidate(rules, { credentials });
+
+const showAlertMessage = message => {
+  // Reset loading, current selected agent
+  resetPasswordApi.showLoading = false;
+  useAlert(message);
+};
+
+const submit = () => {
+  resetPasswordApi.showLoading = true;
+  resetPassword(credentials)
+    .then(res => {
+      let successMessage = t('RESET_PASSWORD.API.SUCCESS_MESSAGE');
+      if (res.data && res.data.message) {
+        successMessage = res.data.message;
+      }
+      showAlertMessage(successMessage);
+    })
+    .catch(error => {
+      let errorMessage = t('RESET_PASSWORD.API.ERROR_MESSAGE');
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      showAlertMessage(errorMessage);
+    });
 };
 </script>
 
 <template>
-  <div
-    class="flex flex-col justify-center w-full min-h-screen py-12 bg-n-brand/5 dark:bg-n-background sm:px-6 lg:px-8"
-  >
-    <form
-      class="bg-white shadow sm:mx-auto sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg"
-      @submit.prevent="submit"
+  <AuthIconCard icon="i-lucide-key-round">
+    <h1 class="text-[26px] font-bold text-foreground mb-3">
+      {{ t('RESET_PASSWORD.TITLE') }}
+    </h1>
+    <p
+      class="text-[14px] text-muted-foreground mb-8 px-2 leading-relaxed w-full"
     >
-      <h1
-        class="mb-1 text-2xl font-medium tracking-tight text-left text-n-slate-12"
+      {{ replaceInstallationName(t('RESET_PASSWORD.DESCRIPTION')) }}
+    </p>
+
+    <form class="w-full flex flex-col gap-5" @submit.prevent="submit">
+      <AuthInput
+        v-model="credentials.email"
+        name="email_address"
+        type="email"
+        icon="i-lucide-mail"
+        required
+        :placeholder="t('RESET_PASSWORD.EMAIL.PLACEHOLDER')"
+        :has-error="v$.credentials.email.$error"
+        :error-message="t('RESET_PASSWORD.EMAIL.ERROR')"
+        @input="v$.credentials.email.$touch"
+      />
+      <button
+        type="submit"
+        data-testid="submit_button"
+        :disabled="
+          v$.credentials.email.$invalid || resetPasswordApi.showLoading
+        "
+        class="w-full h-11 mt-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 font-medium text-[15px] outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary disabled:hover:shadow-md"
       >
-        {{ $t('RESET_PASSWORD.TITLE') }}
-      </h1>
-      <p
-        class="mb-4 text-sm font-normal leading-6 tracking-normal text-n-slate-11"
-      >
-        {{ replaceInstallationName($t('RESET_PASSWORD.DESCRIPTION')) }}
-      </p>
-      <div class="space-y-5">
-        <FormInput
-          v-model="credentials.email"
-          name="email_address"
-          :has-error="v$.credentials.email.$error"
-          :error-message="$t('RESET_PASSWORD.EMAIL.ERROR')"
-          :placeholder="$t('RESET_PASSWORD.EMAIL.PLACEHOLDER')"
-          @input="v$.credentials.email.$touch"
+        <span
+          v-if="resetPasswordApi.showLoading"
+          class="i-lucide-loader-circle size-4 animate-spin"
         />
-        <NextButton
-          lg
-          type="submit"
-          data-testid="submit_button"
-          class="w-full"
-          :label="$t('RESET_PASSWORD.SUBMIT')"
-          :disabled="v$.credentials.email.$invalid || resetPassword.showLoading"
-          :is-loading="resetPassword.showLoading"
+        {{ t('RESET_PASSWORD.SUBMIT') }}
+        <span
+          v-if="!resetPasswordApi.showLoading"
+          class="i-lucide-arrow-right size-4"
         />
-      </div>
-      <p class="mt-4 -mb-1 text-sm text-n-slate-11">
-        {{ $t('RESET_PASSWORD.GO_BACK_TO_LOGIN') }}
-        <router-link to="/auth/login" class="text-link text-n-brand">
-          {{ $t('COMMON.CLICK_HERE') }}.
-        </router-link>
-      </p>
+      </button>
     </form>
-  </div>
+
+    <p class="text-center text-[14px] text-muted-foreground mt-8">
+      {{ t('RESET_PASSWORD.GO_BACK_TO_LOGIN') }}
+      <router-link
+        to="/app/login"
+        class="text-primary font-medium hover:underline"
+      >
+        {{ t('COMMON.CLICK_HERE') }}.
+      </router-link>
+    </p>
+  </AuthIconCard>
 </template>

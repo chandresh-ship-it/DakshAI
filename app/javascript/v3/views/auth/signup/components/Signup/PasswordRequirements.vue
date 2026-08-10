@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const props = defineProps({
   password: { type: String, default: '' },
@@ -47,20 +46,22 @@ const requirements = computed(() => {
 
 <template>
   <div
-    class="absolute top-0 z-50 w-64 text-xs rounded-lg px-4 py-3 bg-white dark:bg-n-solid-3 shadow-lg outline outline-1 outline-n-weak start-full ms-4"
+    class="absolute top-full start-0 z-50 w-full mt-2 text-xs rounded-lg px-4 py-3 bg-popover text-popover-foreground border border-border shadow-lg"
   >
     <ul role="list" class="space-y-1.5">
       <li
         v-for="item in requirements"
         :key="item.id"
-        class="inline-flex gap-1.5 items-start"
+        class="flex gap-1.5 items-center"
       >
-        <Icon
-          class="flex-none flex-shrink-0 w-3 mt-0.5"
-          :icon="item.met ? 'i-lucide-circle-check-big' : 'i-lucide-circle'"
-          :class="item.met ? 'text-n-teal-10' : 'text-n-slate-10'"
+        <span
+          class="flex-none size-3 block"
+          :class="[
+            item.met ? 'i-lucide-circle-check-big' : 'i-lucide-circle',
+            item.met ? 'text-success' : 'text-muted-foreground',
+          ]"
         />
-        <span :class="item.met ? 'text-n-slate-11' : 'text-n-slate-10'">
+        <span :class="item.met ? 'text-foreground' : 'text-muted-foreground'">
           {{ item.label }}
         </span>
       </li>

@@ -1,139 +1,129 @@
-<script>
+<script setup>
+import { reactive, onMounted } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
+import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
-import FormInput from '../../../components/Form/Input.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import AuthIconCard from '../../../components/auth/AuthIconCard.vue';
+import AuthInput from '../../../components/auth/AuthInput.vue';
 import { DEFAULT_REDIRECT_URL } from 'dashboard/constants/globals';
 import { setNewPassword } from '../../../api/auth';
 
-export default {
-  components: {
-    FormInput,
-    NextButton,
-  },
-  props: {
-    resetPasswordToken: { type: String, default: '' },
-  },
-  setup() {
-    return { v$: useVuelidate() };
-  },
-  data() {
-    return {
-      // We need to initialize the component with any
-      // properties that will be used in it
-      credentials: {
-        confirmPassword: '',
-        password: '',
+const props = defineProps({
+  resetPasswordToken: { type: String, default: '' },
+});
+
+const { t } = useI18n();
+
+const credentials = reactive({
+  confirmPassword: '',
+  password: '',
+});
+const newPasswordAPI = reactive({
+  message: '',
+  showLoading: false,
+});
+
+const rules = {
+  credentials: {
+    password: {
+      required,
+      minLength: minLength(6),
+    },
+    confirmPassword: {
+      required,
+      minLength: minLength(6),
+      isEqPassword(value) {
+        return value === credentials.password;
       },
-      newPasswordAPI: {
-        message: '',
-        showLoading: false,
-      },
-      error: '',
-    };
+    },
   },
-  mounted() {
-    // If url opened without token
-    // redirect to login
-    if (!this.resetPasswordToken) {
+};
+const v$ = useVuelidate(rules, { credentials });
+
+onMounted(() => {
+  // If url opened without token, redirect to login
+  if (!props.resetPasswordToken) {
+    window.location = DEFAULT_REDIRECT_URL;
+  }
+});
+
+const showAlertMessage = message => {
+  // Reset loading, current selected agent
+  newPasswordAPI.showLoading = false;
+  useAlert(message);
+};
+
+const submitForm = () => {
+  newPasswordAPI.showLoading = true;
+  const payload = {
+    confirmPassword: credentials.confirmPassword,
+    password: credentials.password,
+    resetPasswordToken: props.resetPasswordToken,
+  };
+  setNewPassword(payload)
+    .then(() => {
       window.location = DEFAULT_REDIRECT_URL;
-    }
-  },
-  validations: {
-    credentials: {
-      password: {
-        required,
-        minLength: minLength(6),
-      },
-      confirmPassword: {
-        required,
-        minLength: minLength(6),
-        isEqPassword(value) {
-          if (value !== this.credentials.password) {
-            return false;
-          }
-          return true;
-        },
-      },
-    },
-  },
-  methods: {
-    showAlertMessage(message) {
-      // Reset loading, current selected agent
-      this.newPasswordAPI.showLoading = false;
-      useAlert(message);
-    },
-    submitForm() {
-      this.newPasswordAPI.showLoading = true;
-      const credentials = {
-        confirmPassword: this.credentials.confirmPassword,
-        password: this.credentials.password,
-        resetPasswordToken: this.resetPasswordToken,
-      };
-      setNewPassword(credentials)
-        .then(() => {
-          window.location = DEFAULT_REDIRECT_URL;
-        })
-        .catch(error => {
-          this.showAlertMessage(
-            error?.message || this.$t('SET_NEW_PASSWORD.API.ERROR_MESSAGE')
-          );
-        });
-    },
-  },
+    })
+    .catch(error => {
+      showAlertMessage(
+        error?.message || t('SET_NEW_PASSWORD.API.ERROR_MESSAGE')
+      );
+    });
 };
 </script>
 
 <template>
-  <div
-    class="flex flex-col justify-center w-full min-h-screen py-12 bg-n-brand/5 dark:bg-n-background sm:px-6 lg:px-8"
-  >
-    <form
-      class="bg-white shadow sm:mx-auto sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg"
-      @submit.prevent="submitForm"
-    >
-      <h1
-        class="mb-1 text-2xl font-medium tracking-tight text-left text-n-slate-12"
-      >
-        {{ $t('SET_NEW_PASSWORD.TITLE') }}
-      </h1>
+  <AuthIconCard icon="i-lucide-lock-keyhole">
+    <h1 class="text-[26px] font-bold text-foreground mb-8">
+      {{ t('SET_NEW_PASSWORD.TITLE') }}
+    </h1>
 
-      <div class="space-y-5">
-        <FormInput
-          v-model="credentials.password"
-          class="mt-3"
-          name="password"
-          type="password"
-          :has-error="v$.credentials.password.$error"
-          :error-message="$t('SET_NEW_PASSWORD.PASSWORD.ERROR')"
-          :placeholder="$t('SET_NEW_PASSWORD.PASSWORD.PLACEHOLDER')"
-          @blur="v$.credentials.password.$touch"
+    <form class="w-full flex flex-col gap-5" @submit.prevent="submitForm">
+      <AuthInput
+        v-model="credentials.password"
+        name="password"
+        type="password"
+        icon="i-lucide-lock"
+        required
+        :label="t('SET_NEW_PASSWORD.PASSWORD.LABEL')"
+        :placeholder="t('SET_NEW_PASSWORD.PASSWORD.PLACEHOLDER')"
+        :has-error="v$.credentials.password.$error"
+        :error-message="t('SET_NEW_PASSWORD.PASSWORD.ERROR')"
+        @blur="v$.credentials.password.$touch"
+      />
+      <AuthInput
+        v-model="credentials.confirmPassword"
+        name="confirm_password"
+        type="password"
+        icon="i-lucide-lock"
+        required
+        :label="t('SET_NEW_PASSWORD.CONFIRM_PASSWORD.LABEL')"
+        :placeholder="t('SET_NEW_PASSWORD.CONFIRM_PASSWORD.PLACEHOLDER')"
+        :has-error="v$.credentials.confirmPassword.$error"
+        :error-message="t('SET_NEW_PASSWORD.CONFIRM_PASSWORD.ERROR')"
+        @blur="v$.credentials.confirmPassword.$touch"
+      />
+      <button
+        type="submit"
+        data-testid="submit_button"
+        :disabled="
+          v$.credentials.password.$invalid ||
+          v$.credentials.confirmPassword.$invalid ||
+          newPasswordAPI.showLoading
+        "
+        class="w-full h-11 mt-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 font-medium text-[15px] outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary disabled:hover:shadow-md"
+      >
+        <span
+          v-if="newPasswordAPI.showLoading"
+          class="i-lucide-loader-circle size-4 animate-spin"
         />
-        <FormInput
-          v-model="credentials.confirmPassword"
-          class="mt-3"
-          name="confirm_password"
-          type="password"
-          :has-error="v$.credentials.confirmPassword.$error"
-          :error-message="$t('SET_NEW_PASSWORD.CONFIRM_PASSWORD.ERROR')"
-          :placeholder="$t('SET_NEW_PASSWORD.CONFIRM_PASSWORD.PLACEHOLDER')"
-          @blur="v$.credentials.confirmPassword.$touch"
+        {{ t('SET_NEW_PASSWORD.SUBMIT') }}
+        <span
+          v-if="!newPasswordAPI.showLoading"
+          class="i-lucide-arrow-right size-4"
         />
-        <NextButton
-          lg
-          type="submit"
-          data-testid="submit_button"
-          class="w-full"
-          :label="$t('SET_NEW_PASSWORD.SUBMIT')"
-          :disabled="
-            v$.credentials.password.$invalid ||
-            v$.credentials.confirmPassword.$invalid ||
-            newPasswordAPI.showLoading
-          "
-          :is-loading="newPasswordAPI.showLoading"
-        />
-      </div>
+      </button>
     </form>
-  </div>
+  </AuthIconCard>
 </template>

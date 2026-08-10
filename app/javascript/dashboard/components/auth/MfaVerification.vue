@@ -7,7 +7,7 @@ import { parseAPIErrorResponse } from 'dashboard/store/utils/api';
 import { useAccount } from 'dashboard/composables/useAccount';
 
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import FormInput from 'v3/components/Form/Input.vue';
+import AuthInput from 'v3/components/auth/AuthInput.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 
@@ -158,33 +158,33 @@ const handleTryAnotherMethod = () => {
 <template>
   <div class="w-full max-w-md mx-auto">
     <div
-      class="bg-white shadow sm:mx-auto sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg"
+      class="sm:mx-auto sm:w-full sm:max-w-lg p-11 bg-card border border-border/50 shadow-xl sm:rounded-[2rem]"
     >
       <!-- Header -->
       <div class="text-center mb-6">
         <div
-          class="inline-flex items-center justify-center size-14 bg-n-solid-1 outline outline-n-weak rounded-full mb-4"
+          class="inline-flex items-center justify-center size-14 bg-primary/10 border border-primary/20 rounded-2xl mb-4 shadow-sm"
         >
-          <Icon icon="i-lucide-lock-keyhole" class="size-6 text-n-slate-10" />
+          <Icon icon="i-lucide-lock-keyhole" class="size-6 text-primary" />
         </div>
-        <h2 class="text-2xl font-semibold text-n-slate-12">
+        <h2 class="text-2xl font-semibold text-foreground">
           {{ $t('MFA_VERIFICATION.TITLE') }}
         </h2>
-        <p class="text-sm text-n-slate-11 mt-2">
+        <p class="text-sm text-muted-foreground mt-2">
           {{ $t('MFA_VERIFICATION.DESCRIPTION') }}
         </p>
       </div>
 
       <!-- Tab Selection -->
-      <div class="flex rounded-lg bg-n-alpha-black2 p-1 mb-6">
+      <div class="flex rounded-lg bg-muted p-1 mb-6">
         <button
           v-for="method in [OTP, BACKUP]"
           :key="method"
           class="flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors"
           :class="
             verificationMethod === method
-              ? 'bg-n-solid-active text-n-slate-12 shadow-sm'
-              : 'text-n-slate-12'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
           "
           @click="verificationMethod = method"
         >
@@ -200,7 +200,7 @@ const handleTryAnotherMethod = () => {
       <form class="space-y-4" @submit.prevent="handleVerification">
         <!-- OTP Code Input -->
         <div v-if="verificationMethod === OTP">
-          <label class="block text-sm font-medium text-n-slate-12 mb-2">
+          <label class="block text-[13.5px] font-medium text-foreground mb-2">
             {{ $t('MFA_VERIFICATION.ENTER_OTP_CODE') }}
           </label>
           <div class="flex justify-between gap-2">
@@ -213,7 +213,7 @@ const handleTryAnotherMethod = () => {
               maxlength="1"
               pattern="[0-9]"
               inputmode="numeric"
-              class="w-12 h-12 text-center text-lg font-semibold border-2 border-n-weak hover:border-n-strong rounded-lg focus:border-n-brand bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10"
+              class="w-12 h-12 text-center text-lg font-semibold border border-input hover:border-border rounded-lg focus:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 outline-none bg-background text-foreground placeholder:text-muted-foreground transition-colors"
               @input="handleOtpInput(i)"
               @keydown.left.prevent="focusInput(i - 1)"
               @keydown.right.prevent="focusInput(i + 1)"
@@ -225,7 +225,7 @@ const handleTryAnotherMethod = () => {
 
         <!-- Backup Code Input -->
         <div v-if="verificationMethod === BACKUP">
-          <FormInput
+          <AuthInput
             v-model="backupCode"
             name="backup_code"
             type="text"
@@ -243,9 +243,9 @@ const handleTryAnotherMethod = () => {
         <!-- Error Message -->
         <div
           v-if="errorMessage"
-          class="p-3 bg-n-ruby-3 outline outline-n-ruby-5 outline-1 rounded-lg"
+          class="p-3 bg-destructive/10 border border-destructive/20 rounded-lg"
         >
-          <p class="text-sm text-n-ruby-9">{{ errorMessage }}</p>
+          <p class="text-sm text-destructive">{{ errorMessage }}</p>
         </div>
 
         <!-- Submit Button -->
@@ -287,7 +287,7 @@ const handleTryAnotherMethod = () => {
 
     <!-- Help Text -->
     <div class="mt-6 text-center">
-      <p class="text-sm text-n-slate-11">
+      <p class="text-sm text-muted-foreground">
         {{ $t('MFA_VERIFICATION.HELP_TEXT') }}
       </p>
       <NextButton
@@ -309,15 +309,15 @@ const handleTryAnotherMethod = () => {
       class="[&>dialog>div]:bg-n-alpha-3 [&>dialog>div]:rounded-lg"
       @confirm="helpModalRef?.close()"
     >
-      <div class="space-y-4 text-sm text-n-slate-11">
+      <div class="space-y-4 text-sm text-muted-foreground">
         <div v-for="section in ['AUTHENTICATOR', 'BACKUP']" :key="section">
-          <h4 class="font-medium text-n-slate-12 mb-2">
+          <h4 class="font-medium text-foreground mb-2">
             {{ $t(`MFA_VERIFICATION.HELP_MODAL.${section}_TITLE`) }}
           </h4>
           <p>{{ $t(`MFA_VERIFICATION.HELP_MODAL.${section}_DESC`) }}</p>
         </div>
         <div>
-          <h4 class="font-medium text-n-slate-12 mb-2">
+          <h4 class="font-medium text-foreground mb-2">
             {{ $t('MFA_VERIFICATION.HELP_MODAL.CONTACT_TITLE') }}
           </h4>
           <p>{{ $t(`MFA_VERIFICATION.HELP_MODAL.${contactDescKey}`) }}</p>

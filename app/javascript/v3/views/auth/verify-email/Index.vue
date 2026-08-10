@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { useAlert } from 'dashboard/composables';
 import VueHcaptcha from '@hcaptcha/vue3-hcaptcha';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import AuthIconCard from '../../../components/auth/AuthIconCard.vue';
 import { resendConfirmation } from '../../../api/auth';
 
 const props = defineProps({
@@ -69,42 +69,41 @@ const onCaptchaError = () => {
 </script>
 
 <template>
-  <main
-    class="flex flex-col w-full min-h-screen py-20 bg-n-brand/5 dark:bg-n-background sm:px-6 lg:px-8"
-  >
-    <section
-      class="bg-white shadow sm:mx-auto mt-11 sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg"
+  <AuthIconCard icon="i-lucide-mail-check">
+    <h1 class="text-[26px] font-bold text-foreground mb-3">
+      {{ t('REGISTER.VERIFY_EMAIL.TITLE') }}
+    </h1>
+    <p
+      class="text-[14px] text-muted-foreground mb-8 px-2 leading-relaxed w-full"
     >
-      <div class="mb-6">
-        <h2 class="text-2xl font-semibold text-n-slate-12">
-          {{ $t('REGISTER.VERIFY_EMAIL.TITLE') }}
-        </h2>
-        <p class="mt-2 text-sm text-n-slate-11">
-          {{ $t('REGISTER.VERIFY_EMAIL.DESCRIPTION', { email }) }}
-        </p>
-      </div>
-      <div class="space-y-4">
-        <VueHcaptcha
-          v-if="globalConfig.hCaptchaSiteKey"
-          ref="hCaptcha"
-          size="invisible"
-          :sitekey="globalConfig.hCaptchaSiteKey"
-          @verify="onCaptchaVerified"
-          @error="onCaptchaError"
-          @expired="onCaptchaError"
-          @challenge-expired="onCaptchaError"
-          @closed="onCaptchaError"
+      {{ t('REGISTER.VERIFY_EMAIL.DESCRIPTION', { email }) }}
+    </p>
+
+    <div class="w-full">
+      <VueHcaptcha
+        v-if="globalConfig.hCaptchaSiteKey"
+        ref="hCaptcha"
+        size="invisible"
+        :sitekey="globalConfig.hCaptchaSiteKey"
+        @verify="onCaptchaVerified"
+        @error="onCaptchaError"
+        @expired="onCaptchaError"
+        @challenge-expired="onCaptchaError"
+        @closed="onCaptchaError"
+      />
+      <button
+        type="button"
+        data-testid="resend_email_button"
+        :disabled="isResendingEmail"
+        class="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 font-medium text-[15px] outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary disabled:hover:shadow-md"
+        @click="handleResendEmail"
+      >
+        <span
+          v-if="isResendingEmail"
+          class="i-lucide-loader-circle size-4 animate-spin"
         />
-        <NextButton
-          lg
-          type="button"
-          data-testid="resend_email_button"
-          class="w-full"
-          :label="$t('REGISTER.VERIFY_EMAIL.RESEND')"
-          :is-loading="isResendingEmail"
-          @click="handleResendEmail"
-        />
-      </div>
-    </section>
-  </main>
+        {{ t('REGISTER.VERIFY_EMAIL.RESEND') }}
+      </button>
+    </div>
+  </AuthIconCard>
 </template>
