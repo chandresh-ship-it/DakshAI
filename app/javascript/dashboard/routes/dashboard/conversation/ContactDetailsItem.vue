@@ -10,8 +10,14 @@ export default {
 
 <template>
   <div class="overflow-auto" :class="compact ? 'py-0 px-0' : 'py-3 px-4'">
-    <div class="items-center flex justify-between mb-2">
-      <span class="text-sm font-semibold text-foreground">
+    <div
+      class="items-center flex justify-between"
+      :class="compact ? 'mb-0' : 'mb-2'"
+    >
+      <span
+        class="font-semibold text-foreground"
+        :class="compact ? 'text-[12px]' : 'text-sm'"
+      >
         {{ title }}
       </span>
       <slot name="button" />

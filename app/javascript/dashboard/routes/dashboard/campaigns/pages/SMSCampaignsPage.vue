@@ -62,7 +62,6 @@ const handleDelete = campaign => {
       v-else
       :title="t('CAMPAIGN.SMS.EMPTY_STATE.TITLE')"
       :subtitle="t('CAMPAIGN.SMS.EMPTY_STATE.SUBTITLE')"
-      class="pt-14"
     />
     <ConfirmDeleteCampaignDialog
       ref="confirmDeleteCampaignDialogRef"

@@ -11,8 +11,6 @@ import {
 } from 'dashboard/helper/routeHelpers';
 import { useEventListener } from '@vueuse/core';
 
-import Button from 'dashboard/components-next/button/Button.vue';
-
 const { t } = useI18n();
 const route = useRoute();
 
@@ -30,7 +28,6 @@ const bannerText = computed(() => {
   return t('NETWORK.NOTIFICATION.OFFLINE');
 });
 
-const iconName = computed(() => (isReconnected.value ? 'wifi' : 'wifi-off'));
 const canRefresh = computed(
   () => !isReconnecting.value && !isReconnected.value
 );
@@ -77,15 +74,6 @@ const handleReconnecting = () => {
 };
 
 const updateOnlineStatus = event => {
-  // Case: Websocket is not disconnected
-  // If the app goes offline, show the notification
-  // If the app goes online, close the notification
-
-  // Case: Websocket is disconnected
-  // If the app goes offline, show the notification
-  // If the app goes online but the websocket is disconnected, don't close the notification
-  // If the app goes online and the websocket is not disconnected, close the notification
-
   if (event.type === 'offline') {
     showNotification.value = true;
   } else if (event.type === 'online' && !isDisconnected.value) {
@@ -108,34 +96,55 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <transition name="network-notification-fade" tag="div">
-    <div v-show="showNotification" class="fixed z-50 top-2 left-2 group">
-      <div
-        class="relative flex items-center justify-between w-full px-2 py-1 bg-n-amber-4 dark:bg-n-amber-8 rounded-lg shadow-lg"
-      >
-        <fluent-icon :icon="iconName" class="text-n-amber-12" size="18" />
-        <span class="px-2 text-xs font-medium tracking-wide text-n-amber-12">
-          {{ bannerText }}
-        </span>
-        <Button
-          v-if="canRefresh"
-          ghost
-          sm
-          amber
-          icon="i-lucide-refresh-ccw"
-          :title="$t('NETWORK.BUTTON.REFRESH')"
-          class="!text-n-amber-12 dark:!text-n-amber-9"
-          @click="refreshPage"
-        />
+  <transition
+    enter-active-class="transition duration-300 ease-out"
+    enter-from-class="transform -translate-y-2 opacity-0"
+    enter-to-class="transform translate-y-0 opacity-100"
+    leave-active-class="transition duration-200 ease-in"
+    leave-from-class="transform translate-y-0 opacity-100"
+    leave-to-class="transform -translate-y-2 opacity-0"
+  >
+    <div
+      v-show="showNotification"
+      class="fixed top-4 left-4 z-50 flex items-center gap-2.5 rounded-xl border px-3 py-2 text-xs font-medium shadow-md backdrop-blur-sm transition-all"
+      :class="[
+        isReconnected
+          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+          : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+      ]"
+    >
+      <span
+        v-if="isReconnecting"
+        class="i-lucide-loader-2 size-4 shrink-0 animate-spin text-amber-500"
+      />
+      <span
+        v-else-if="isReconnected"
+        class="i-lucide-wifi size-4 shrink-0 text-emerald-500"
+      />
+      <span v-else class="i-lucide-wifi-off size-4 shrink-0 text-amber-500" />
 
-        <Button
-          ghost
-          sm
-          amber
-          icon="i-lucide-x"
-          class="!text-n-amber-12 dark:!text-n-amber-9"
+      <span class="font-medium tracking-tight">
+        {{ bannerText }}
+      </span>
+
+      <div class="ml-1 flex shrink-0 items-center gap-1">
+        <button
+          v-if="canRefresh"
+          type="button"
+          class="flex size-6 items-center justify-center rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/10"
+          :title="$t('NETWORK.BUTTON.REFRESH')"
+          @click="refreshPage"
+        >
+          <span class="i-lucide-refresh-cw size-3.5" />
+        </button>
+
+        <button
+          type="button"
+          class="flex size-6 items-center justify-center rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/10"
           @click="closeNotification"
-        />
+        >
+          <span class="i-lucide-x size-3.5" />
+        </button>
       </div>
     </div>
   </transition>

@@ -23,13 +23,13 @@ const handleButtonClick = () => {
 <template>
   <section class="flex flex-col w-full h-full overflow-hidden bg-background">
     <header
-      class="sticky top-0 z-10 px-6 lg:px-10 border-b border-border bg-background/80 backdrop-blur-md"
+      class="sticky top-0 z-10 px-8 border-b border-border/60 bg-background/80 backdrop-blur-md shrink-0"
     >
       <div class="w-full max-w-7xl mx-auto">
-        <div class="flex items-center justify-between w-full h-16 gap-2">
-          <span class="text-base font-semibold text-foreground">
+        <div class="flex items-center justify-between w-full h-16 gap-4">
+          <h1 class="text-xl font-semibold tracking-tight text-foreground">
             {{ headerTitle }}
-          </span>
+          </h1>
           <div
             v-on-click-outside="[
               () => emit('close'),
@@ -41,7 +41,7 @@ const handleButtonClick = () => {
             <RelayButton
               variant="default"
               size="sm"
-              class="group-hover/campaign-button:brightness-110 h-8 gap-2 font-medium"
+              class="h-9 gap-2 font-medium shadow-xs"
               @click="handleButtonClick"
             >
               <span class="i-lucide-plus size-4" />
@@ -53,8 +53,10 @@ const handleButtonClick = () => {
       </div>
     </header>
 
-    <main class="flex-1 px-6 lg:px-10 overflow-y-auto bg-background/50">
-      <div class="w-full max-w-7xl mx-auto py-8">
+    <main
+      class="flex-1 flex flex-col min-h-0 px-8 py-8 overflow-y-auto bg-background/50"
+    >
+      <div class="w-full max-w-7xl mx-auto flex-1 flex flex-col">
         <slot name="default" />
       </div>
     </main>

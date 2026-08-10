@@ -146,7 +146,7 @@ const inboxIcon = computed(() => {
         :title="t('CAMPAIGN.CONFIRM_DELETE.CONFIRM')"
         @click="emit('delete')"
       >
-        <span class="i-lucide-trash size-4" />
+        <span class="i-lucide-trash-2 size-4" />
       </RelayButton>
     </div>
   </div>

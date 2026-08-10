@@ -1,6 +1,4 @@
 <script setup>
-import Button from 'dashboard/components-next/button/Button.vue';
-
 const emit = defineEmits(['add']);
 
 const addLabel = () => {
@@ -9,12 +7,12 @@ const addLabel = () => {
 </script>
 
 <template>
-  <Button
-    faded
-    xs
-    icon="i-lucide-plus"
-    class="mb-0.5 ltr:mr-0.5 rtl:ml-0.5 !rounded-[4px]"
-    :label="$t('CONTACT_PANEL.LABELS.CONVERSATION.ADD_BUTTON')"
+  <button
+    type="button"
+    class="flex items-center gap-1 text-[13px] text-primary hover:text-primary/80 transition-colors self-start mb-0.5"
     @click="addLabel"
-  />
+  >
+    <span class="i-lucide-plus size-3.5" />
+    {{ $t('CONTACT_PANEL.LABELS.CONVERSATION.ADD_BUTTON') }}
+  </button>
 </template>

@@ -12,13 +12,14 @@ import AddContactDrawer from 'dashboard/components-next/Contacts/Drawers/AddCont
 import ContactMergeModal from 'dashboard/modules/contact/ContactMergeModal.vue';
 import ContactDeleteModal from 'dashboard/modules/contact/ContactDeleteModal.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 import VoiceCallButton from 'dashboard/components-next/Contacts/VoiceCallButton.vue';
 import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue';
+import ConversationAction from '../ConversationAction.vue';
 
 export default {
   components: {
-    NextButton,
+    RelayButton,
     AddContactDrawer,
     Avatar,
     ComposeConversation,
@@ -27,6 +28,7 @@ export default {
     ContactDeleteModal,
     VoiceCallButton,
     InlineInput,
+    ConversationAction,
   },
   props: {
     contact: {
@@ -36,6 +38,14 @@ export default {
     showAvatar: {
       type: Boolean,
       default: true,
+    },
+    conversationId: {
+      type: [Number, String],
+      default: undefined,
+    },
+    inboxId: {
+      type: Number,
+      default: undefined,
     },
   },
   emits: ['panelClose'],
@@ -47,8 +57,9 @@ export default {
   },
   data() {
     return {
-      isEditingName: false,
       editName: '',
+      isEditingName: false,
+      isConvMgmtOpen: true,
     };
   },
   computed: {
@@ -286,17 +297,18 @@ export default {
       </div>
     </div>
 
-    <!-- Actions (hidden in screenshot, kept for functionality) -->
+    <!-- Actions -->
     <div class="flex flex-wrap items-center gap-2 mt-6">
       <ComposeConversation :contact-id="String(contact.id)">
         <template #trigger>
-          <NextButton
+          <RelayButton
             v-tooltip.top-end="$t('CONTACT_PANEL.NEW_MESSAGE')"
-            icon="i-ph-chat-circle-dots"
-            slate
-            outline
-            sm
-          />
+            variant="ghost"
+            size="icon"
+            class="size-8 rounded-md border border-border text-muted-foreground hover:border-transparent hover:bg-muted hover:text-foreground"
+          >
+            <span class="i-ph-chat-circle-dots size-4" />
+          </RelayButton>
         </template>
       </ComposeConversation>
       <VoiceCallButton
@@ -304,29 +316,29 @@ export default {
         :contact-id="contact.id"
         :conversation-id="currentChat?.id"
         icon="i-lucide-phone"
-        sm
-        outline
-        slate
         :tooltip-label="$t('CONTACT_PANEL.CALL')"
+        class="size-8 rounded-md border border-border text-muted-foreground hover:border-transparent hover:bg-muted hover:text-foreground !p-0"
       />
-      <NextButton
+      <RelayButton
         v-tooltip.top-end="$t('EDIT_CONTACT.BUTTON_LABEL')"
-        icon="i-ph-pencil-simple"
-        slate
-        outline
-        sm
+        variant="ghost"
+        size="icon"
+        class="size-8 rounded-md border border-border text-muted-foreground hover:border-transparent hover:bg-muted hover:text-foreground"
         @click="toggleEditModal"
-      />
+      >
+        <span class="i-ph-pencil-simple size-4" />
+      </RelayButton>
       <ContactMergeModal :primary-contact="contact">
         <template #trigger>
-          <NextButton
+          <RelayButton
             v-tooltip.top-end="$t('CONTACT_PANEL.MERGE_CONTACT')"
-            icon="i-ph-arrows-merge"
-            slate
-            outline
-            sm
+            variant="ghost"
+            size="icon"
+            class="size-8 rounded-md border border-border text-muted-foreground hover:border-transparent hover:bg-muted hover:text-foreground"
             :disabled="uiFlags.isMerging"
-          />
+          >
+            <span class="i-ph-arrows-merge size-4" />
+          </RelayButton>
         </template>
       </ContactMergeModal>
       <ContactDeleteModal
@@ -335,17 +347,45 @@ export default {
         @deleted="$emit('panelClose')"
       >
         <template #trigger>
-          <NextButton
+          <RelayButton
             v-tooltip.top-end="$t('DELETE_CONTACT.BUTTON_LABEL')"
-            icon="i-ph-trash"
-            slate
-            outline
-            sm
-            ruby
+            variant="ghost"
+            size="icon"
+            class="size-8 rounded-md border border-border text-muted-foreground hover:border-transparent hover:bg-destructive/10 hover:text-destructive"
             :disabled="uiFlags.isDeleting"
-          />
+          >
+            <span class="i-ph-trash size-4" />
+          </RelayButton>
         </template>
       </ContactDeleteModal>
+    </div>
+
+    <!-- Conversation Management -->
+    <div
+      v-if="conversationId"
+      class="border-t border-border/60 pt-4 mt-6"
+    >
+      <button
+        type="button"
+        class="flex items-center justify-between w-full text-left"
+        @click="isConvMgmtOpen = !isConvMgmtOpen"
+      >
+        <span class="text-[13px] font-medium text-foreground">
+          {{ $t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_ACTIONS') }}
+        </span>
+        <span
+          class="size-4 text-muted-foreground shrink-0"
+          :class="
+            isConvMgmtOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'
+          "
+        />
+      </button>
+      <div v-if="isConvMgmtOpen" class="mt-4">
+        <ConversationAction
+          :conversation-id="conversationId"
+          :inbox-id="inboxId"
+        />
+      </div>
     </div>
 
     <AddContactDrawer ref="editContactDrawer" @update="onContactUpdate" />

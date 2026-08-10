@@ -212,8 +212,8 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 px-6 pt-2 pb-6">
-    <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-4 w-full">
+    <div class="flex flex-col gap-1.5 w-full">
       <ContactDetailsItem
         compact
         :title="$t('CONVERSATION_SIDEBAR.ASSIGNEE_LABEL')"
@@ -244,7 +244,7 @@ export default {
         @select="onClickAssignAgent"
       />
     </div>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-1.5 w-full">
       <ContactDetailsItem
         compact
         :title="$t('CONVERSATION_SIDEBAR.TEAM_LABEL')"
@@ -263,7 +263,7 @@ export default {
         @select="onClickAssignTeam"
       />
     </div>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-1.5 w-full">
       <ContactDetailsItem compact :title="$t('CONVERSATION.PRIORITY.TITLE')" />
       <MultiselectDropdown
         :options="priorityOptions"
@@ -281,7 +281,7 @@ export default {
         @select="onClickAssignPriority"
       />
     </div>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2 w-full mt-1">
       <ContactDetailsItem
         compact
         :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_LABELS')"

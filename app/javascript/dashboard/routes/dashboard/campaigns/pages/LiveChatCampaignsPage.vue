@@ -73,7 +73,6 @@ const handleDelete = campaign => {
       v-else
       :title="t('CAMPAIGN.LIVE_CHAT.EMPTY_STATE.TITLE')"
       :subtitle="t('CAMPAIGN.LIVE_CHAT.EMPTY_STATE.SUBTITLE')"
-      class="pt-14"
     />
     <EditLiveChatCampaignDialog
       ref="editLiveChatCampaignDialogRef"

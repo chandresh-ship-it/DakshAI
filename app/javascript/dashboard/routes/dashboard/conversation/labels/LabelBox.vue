@@ -98,7 +98,7 @@ export default {
           show-close
           :color="label.color"
           variant="smooth"
-          class="max-w-[calc(100%-0.5rem)]"
+          class="max-w-[calc(100%-0.5rem)] !bg-primary/10 !text-primary !border-none !rounded-full !px-3 !py-1 !h-6 !text-[11px] !font-normal"
           @remove="removeLabelFromConversation"
         />
 
@@ -107,7 +107,7 @@ export default {
             'block visible': showSearchDropdownLabel,
             'hidden invisible': !showSearchDropdownLabel,
           }"
-          class="border rounded-lg bg-n-alpha-3 top-6 backdrop-blur-[100px] absolute w-full shadow-lg border-n-strong dark:border-n-strong p-2 box-border z-[9999]"
+          class="absolute top-6 w-full rounded-md border border-border bg-popover text-popover-foreground shadow-md p-2 box-border z-[9999]"
         >
           <LabelDropdown
             v-if="showSearchDropdownLabel"

@@ -1,17 +1,11 @@
 <script>
-import WootDropdownItem from 'shared/components/ui/dropdown/DropdownItem.vue';
-import WootDropdownMenu from 'shared/components/ui/dropdown/DropdownMenu.vue';
 import Avatar from 'next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 
 export default {
   components: {
-    WootDropdownItem,
-    WootDropdownMenu,
     Avatar,
     Icon,
-    NextButton,
   },
 
   props: {
@@ -74,85 +68,63 @@ export default {
 </script>
 
 <template>
-  <div class="dropdown-wrap">
+  <div class="w-full flex flex-col max-h-[12.5rem]">
     <div class="flex-auto flex-grow-0 flex-shrink-0 mb-2 max-h-8">
       <input
         ref="searchbar"
         v-model="search"
         type="text"
-        class="search-input"
+        class="m-0 w-full h-8 px-2.5 text-[13px] text-foreground rounded-md border border-border/80 bg-background shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
         autofocus="true"
         :placeholder="inputPlaceholder"
       />
     </div>
     <div class="flex items-start justify-start flex-auto overflow-auto mt-2">
       <div class="w-full max-h-[10rem]">
-        <WootDropdownMenu>
-          <WootDropdownItem v-for="option in filteredOptions" :key="option.id">
-            <NextButton
-              slate
-              :variant="isActive(option) ? 'faded' : 'ghost'"
-              trailing-icon
-              :icon="isActive(option) ? 'i-lucide-check' : ''"
-              class="w-full !px-2.5"
+        <ul class="flex flex-col gap-0.5 m-0 p-0 list-none">
+          <li v-for="option in filteredOptions" :key="option.id">
+            <button
+              type="button"
+              class="flex items-center justify-between w-full min-w-0 gap-2 px-2 py-1.5 text-[13px] rounded-md text-left transition-colors hover:bg-accent hover:text-accent-foreground"
+              :class="isActive(option) ? 'bg-accent/50 text-accent-foreground' : 'text-foreground'"
               @click="() => onclick(option)"
             >
-              <div
-                class="flex items-center justify-between w-full min-w-0 gap-2"
+              <span
+                class="my-0 overflow-hidden leading-4 whitespace-nowrap text-ellipsis"
+                :title="option.name"
               >
+                {{ option.name }}
+              </span>
+              <span class="flex items-center gap-2 shrink-0">
+                <Avatar
+                  v-if="hasThumbnail && !option.icon"
+                  :src="option.thumbnail"
+                  :name="option.name"
+                  :status="option.availability_status"
+                  :size="24"
+                  hide-offline-status
+                  rounded-full
+                />
+                <Icon
+                  v-if="option.icon"
+                  :icon="option.icon"
+                  class="size-5 text-muted-foreground"
+                />
                 <span
-                  class="my-0 overflow-hidden text-sm leading-4 whitespace-nowrap text-ellipsis"
-                  :title="option.name"
-                >
-                  {{ option.name }}
-                </span>
-              </div>
-              <Avatar
-                v-if="hasThumbnail && !option.icon"
-                :src="option.thumbnail"
-                :name="option.name"
-                :status="option.availability_status"
-                :size="24"
-                hide-offline-status
-                rounded-full
-              />
-              <Icon
-                v-if="option.icon"
-                :icon="option.icon"
-                class="size-5 text-n-slate-11"
-              />
-            </NextButton>
-          </WootDropdownItem>
-        </WootDropdownMenu>
-        <h4
+                  v-if="isActive(option)"
+                  class="i-lucide-check size-4 text-primary shrink-0"
+                />
+              </span>
+            </button>
+          </li>
+        </ul>
+        <p
           v-if="noResult"
-          class="w-full justify-center items-center flex text-n-slate-10 py-2 px-2.5 overflow-hidden whitespace-nowrap text-ellipsis text-sm"
+          class="w-full justify-center items-center flex text-muted-foreground py-2 px-2.5 overflow-hidden whitespace-nowrap text-ellipsis text-[13px] m-0"
         >
           {{ noSearchResult }}
-        </h4>
+        </p>
       </div>
     </div>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.dropdown-wrap {
-  @apply w-full flex flex-col max-h-[12.5rem];
-}
-
-.search-input {
-  @apply m-0 w-full border border-solid border-transparent h-8 text-sm text-n-slate-12 rounded-md focus:border-n-brand bg-n-background dark:bg-n-background;
-}
-
-.multiselect-dropdown--item {
-  @apply justify-between w-full;
-
-  &.active {
-    @apply bg-n-slate-2 dark:bg-n-solid-3 border-n-weak/50 dark:border-n-weak font-medium;
-  }
-
-  &:hover {
-    @apply bg-n-slate-2 dark:bg-n-solid-3 text-n-slate-12;
-  }
-}
-</style>
