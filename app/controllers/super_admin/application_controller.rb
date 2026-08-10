@@ -13,6 +13,8 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   # authenticiation done via devise : SuperAdmin Model
   before_action :authenticate_super_admin!
 
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+
   # Override this value to specify the number of elements to display at a time
   # on index pages. Defaults to 20.
   # def records_per_page
@@ -27,6 +29,13 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   end
 
   private
+
+  def record_not_found
+    # rubocop:disable Rails/I18nLocaleTexts
+    flash[:error] = 'Requested resource not found'
+    # rubocop:enable Rails/I18nLocaleTexts
+    redirect_back(fallback_location: super_admin_root_path)
+  end
 
   def render_vue_component(component_name, props = {})
     html_options = {

@@ -8,6 +8,9 @@ Reference project: `/Users/deependrasankhala/Documents/chandresh/NewRelay-UI`
 (dev server: `http://localhost:5174`). Its tokens live in `src/style.css`; ours are a
 **direct 1:1 port** in `app/javascript/dashboard/assets/scss/_relay-theme.scss`.
 
+Last synced with NewRelay-UI `main`: **2026-08-10** (commit `ba1cbcf`). §2 UI components
+unchanged; §3 gained auth, help-center, and extra settings mappings.
+
 ---
 
 ## 0. The golden rule — tokens are identical
@@ -80,11 +83,13 @@ the matching view; the section recipes (§4) still apply.
 | `inbox/InboxView.vue` | `routes/dashboard/inbox/`; inbox rows = `components-next/Inbox/InboxCard.vue` |
 | `companies/CompaniesView.vue` / `contacts/ContactsView.vue` | `routes/dashboard/companies/` / `routes/dashboard/contacts/` |
 | `campaigns/{LiveChat,SMS,WhatsApp}CampaignsView.vue` | `routes/dashboard/campaigns/` |
-| `settings/SettingsView.vue` + `settings/components/*` (AgentAssignment, Bots, CannedResponses, CustomAttributes, …) | `routes/dashboard/settings/` — one Chatwoot settings page per component |
-| `settings/ProfileSettingsView.vue`, `settings/ProfileMfaView.vue` | `routes/dashboard/settings/profile/` |
+| `settings/SettingsView.vue` + `settings/components/*` (AgentAssignment, Bots, CannedResponses, CustomAttributes, **Macros**, **Sla**, Workflows, …) | `routes/dashboard/settings/` — one Chatwoot settings page per component (`macros/`, `sla/`, …) |
+| `settings/ProfileSettingsView.vue`, `settings/ProfileMfaView.vue` (+ `components/ProfileSettings.vue`, `ProfileMfa.vue`) | `routes/dashboard/settings/profile/` |
+| `auth/{Login,Register,ForgotPassword,SsoLogin,Onboarding2View}.vue` | Chatwoot auth = `app/javascript/v3/views/auth/` (signup, password, reset, confirmation, verify-email); login/SSO screens live there too |
+| `support/SupportView.vue` + `support/components/*` (Articles, ArticlesList, Categories, Locales, ArticleEditor, Settings, KeyboardShortcuts) | Help Center = `routes/dashboard/helpcenter/` |
 | `captain/CaptainAiView.vue`, `copilot/CopilotView.vue` | Captain = `routes/dashboard/captain/` (enterprise); Copilot = conversation-side panel |
-| `analytics/DashboardsView`, `RevenueAnalyticsView`, `CampaignAnalyticsView`; `tasks/`, `calendar/`, `ecommerce/*` | **not built in Chatwoot** — sidebar shows the analytics ones disabled "Coming soon" |
-| sidebar/layout | `components-next/sidebar/Sidebar.vue` (leaf styling = `SidebarGroupLeaf.vue`) |
+| `analytics/DashboardsView`, `RevenueAnalyticsView`, `CampaignAnalyticsView`; `tasks/`, `calendar/`, `ecommerce/*`; `reputation/`, `reviews/`, `deals/`, `funnels/`, `pipelines/`, `opportunities/`, `project-management/`, `surveys/`, `forms/`, `listings/` | **not built in Chatwoot** — sidebar shows the analytics ones disabled "Coming soon"; the rest have no Chatwoot equivalent |
+| sidebar/layout | `components-next/sidebar/Sidebar.vue` (leaf styling = `SidebarGroupLeaf.vue`). NewRelay `AppSidebar.vue` now carries an **online-status pill** (agent presence) and a **Relay AI floating button**; `AppHeader.vue` holds the top-bar search/profile |
 
 **Sidebar is now data-driven** in NewRelay: menu items live in `src/config/navigation.ts`
 (consumed by `components/layout/AppSidebar.vue`). To mirror menu structure/labels, read
