@@ -526,12 +526,14 @@ export default {
           />
         </div>
       </div>
-      <ResizableEditorWrapper
-        ref="resizableEditorWrapperRef"
-        :container-height="Math.max(0, containerHeight - topBannerHeight)"
-      >
-        <ReplyBox @toggle-editor-size="toggleReplyEditorSize" />
-      </ResizableEditorWrapper>
+      <div class="p-4 bg-muted/10 shrink-0 border-t border-border">
+        <ResizableEditorWrapper
+          ref="resizableEditorWrapperRef"
+          :container-height="Math.max(0, containerHeight - topBannerHeight)"
+        >
+          <ReplyBox @toggle-editor-size="toggleReplyEditorSize" />
+        </ResizableEditorWrapper>
+      </div>
     </div>
   </div>
 </template>

@@ -10,12 +10,11 @@ import { getAllowedFileTypesByChannel } from '@chatwoot/utils';
 import VideoCallButton from '../VideoCallButton.vue';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { mapGetters } from 'vuex';
-import NextButton from 'dashboard/components-next/button/Button.vue';
-import { useCaptain } from 'dashboard/composables/useCaptain';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 export default {
   name: 'ReplyBottomPanel',
-  components: { NextButton, FileUpload, VideoCallButton },
+  components: { RelayButton, FileUpload, VideoCallButton },
   mixins: [inboxMixin],
   props: {
     isNote: {
@@ -132,7 +131,6 @@ export default {
     'selectWhatsappTemplate',
     'selectContentTemplate',
     'toggleQuotedReply',
-    'toggleCopilot',
   ],
   setup(props) {
     const { setSignatureFlagForInbox, fetchSignatureFlagFromUISettings } =
@@ -161,7 +159,6 @@ export default {
 
     useKeyboardEvents(keyboardEvents);
 
-    const { captainTasksEnabled } = useCaptain();
 
     const handleEmojiPickerClick = e => {
       if (e) {
@@ -177,7 +174,6 @@ export default {
       setSignatureFlagForInbox,
       fetchSignatureFlagFromUISettings,
       uploadRef,
-      captainTasksEnabled,
       handleEmojiPickerClick,
     };
   },
@@ -297,37 +293,40 @@ export default {
   >
     <div class="flex items-center gap-1 flex-wrap">
       <!-- WhatsApp Templates -->
-      <NextButton
+      <RelayButton
         v-if="enableWhatsAppTemplates"
         v-tooltip.top-end="$t('CONVERSATION.FOOTER.WHATSAPP_TEMPLATES')"
-        icon="i-lucide-message-square"
         variant="ghost"
-        class="text-muted-foreground hover:text-foreground h-8 w-8"
         size="icon"
+        class="h-8 w-8 text-muted-foreground"
         @click="$emit('selectWhatsappTemplate')"
-      />
+      >
+        <span class="i-lucide-message-square size-4" />
+      </RelayButton>
 
       <!-- Content Templates -->
-      <NextButton
+      <RelayButton
         v-if="enableContentTemplates"
         v-tooltip.top-end="'Content Templates'"
-        icon="i-lucide-file-text"
         variant="ghost"
-        class="text-muted-foreground hover:text-foreground h-8 w-8"
         size="icon"
+        class="h-8 w-8 text-muted-foreground"
         @click="$emit('selectContentTemplate')"
-      />
+      >
+        <span class="i-lucide-file-text size-4" />
+      </RelayButton>
 
       <!-- Emoji Picker -->
-      <NextButton
+      <RelayButton
         v-if="!isEditorDisabled"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_EMOJI_ICON')"
-        icon="i-lucide-smile"
         variant="ghost"
-        class="text-muted-foreground hover:text-foreground h-8 w-8"
         size="icon"
+        class="h-8 w-8 text-muted-foreground"
         @click="handleEmojiPickerClick"
-      />
+      >
+        <span class="i-lucide-smile size-4" />
+      </RelayButton>
 
       <!-- Attach File -->
       <FileUpload
@@ -347,97 +346,93 @@ export default {
         class="inline-flex"
         @input-file="onFileUpload"
       >
-        <NextButton
+        <RelayButton
           v-if="!isEditorDisabled"
           v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_ATTACH_ICON')"
-          icon="i-lucide-paperclip"
           variant="ghost"
-          class="text-muted-foreground hover:text-foreground h-8 w-8"
           size="icon"
-        />
+          class="h-8 w-8 text-muted-foreground"
+        >
+          <span class="i-lucide-paperclip size-4" />
+        </RelayButton>
       </FileUpload>
 
       <!-- Audio Recorder -->
-      <NextButton
+      <RelayButton
         v-if="!isEditorDisabled"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"
-        :icon="!isRecordingAudio ? 'i-lucide-mic' : 'i-lucide-mic-off'"
         variant="ghost"
+        size="icon"
         :class="
           isRecordingAudio
-            ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600'
-            : 'text-muted-foreground hover:text-foreground'
+            ? 'h-8 w-8 bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600'
+            : 'h-8 w-8 text-muted-foreground'
         "
-        class="h-8 w-8"
-        size="icon"
         @click="toggleAudioRecorder"
-      />
+      >
+        <span
+          :class="!isRecordingAudio ? 'i-lucide-mic' : 'i-lucide-mic-off'"
+          class="size-4"
+        />
+      </RelayButton>
 
       <!-- Audio Play/Pause (only shown when recording) -->
-      <NextButton
+      <RelayButton
         v-if="showAudioPlayStopButton"
-        :icon="audioRecorderPlayStopIcon"
         variant="ghost"
-        class="text-muted-foreground hover:text-foreground h-8 px-2"
-        :label="recordingAudioDurationText"
+        class="h-8 px-2 text-muted-foreground"
         @click="toggleAudioRecorderPlayPause"
-      />
+      >
+        <span :class="audioRecorderPlayStopIcon" class="size-4" />
+        {{ recordingAudioDurationText }}
+      </RelayButton>
 
       <!-- Signature -->
-      <NextButton
-        v-if="!isEditorDisabled"
+      <RelayButton
+        v-if="showMessageSignatureButton"
         v-tooltip.top-end="signatureToggleTooltip"
-        icon="i-lucide-pen-line"
         variant="ghost"
-        class="text-muted-foreground hover:text-foreground h-8 w-8"
         size="icon"
+        class="h-8 w-8 text-muted-foreground"
         @click="toggleMessageSignature"
-      />
+      >
+        <span class="i-lucide-pen-line size-4" />
+      </RelayButton>
 
       <!-- Quoted Reply -->
-      <NextButton
+      <RelayButton
         v-if="showQuotedReplyToggle"
         v-tooltip.top-end="quotedReplyToggleTooltip"
-        icon="i-lucide-quote"
-        :variant="quotedReplyEnabled ? 'solid' : 'ghost'"
+        :variant="quotedReplyEnabled ? 'secondary' : 'ghost'"
+        size="icon"
         :class="
           quotedReplyEnabled
-            ? 'bg-muted text-foreground'
-            : 'text-muted-foreground hover:text-foreground'
+            ? 'h-8 w-8 bg-muted text-foreground'
+            : 'h-8 w-8 text-muted-foreground'
         "
-        class="h-8 w-8"
-        size="icon"
         :aria-pressed="quotedReplyEnabled"
         @click="$emit('toggleQuotedReply')"
-      />
+      >
+        <span class="i-lucide-quote size-4" />
+      </RelayButton>
 
       <!-- Insert Article -->
-      <NextButton
-        v-if="!isEditorDisabled"
+      <RelayButton
+        v-if="enableInsertArticleInReply && !isEditorDisabled"
         v-tooltip.top-end="$t('HELP_CENTER.ARTICLE_SEARCH.OPEN_ARTICLE_SEARCH')"
-        icon="i-lucide-file-text"
         variant="ghost"
-        class="text-muted-foreground hover:text-foreground h-8 w-8"
         size="icon"
+        class="h-8 w-8 text-muted-foreground"
         @click="toggleInsertArticle"
-      />
-
-      <!-- AI Reply -->
-      <NextButton
-        v-if="!isEditorDisabled"
-        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.AI_REPLY')"
-        icon="i-lucide-wand-sparkles"
-        variant="ghost"
-        class="text-muted-foreground hover:text-foreground h-8 w-8"
-        size="icon"
-        @click="$emit('toggleCopilot')"
-      />
+      >
+        <span class="i-lucide-file-text size-4" />
+      </RelayButton>
 
       <!-- Video Call -->
       <VideoCallButton
         v-if="!isEditorDisabled"
         :conversation-id="conversationId"
-        class="text-muted-foreground hover:text-foreground h-8 w-8"
+        class="h-8 w-8 text-muted-foreground"
       />
 
       <transition name="modal-fade">
@@ -455,20 +450,21 @@ export default {
 
     <!-- Right Side: Send Button -->
     <div class="flex items-center">
-      <button
+      <RelayButton
         type="submit"
-        class="inline-flex items-center gap-2 h-8 px-4 rounded-md text-sm font-semibold shadow-xs transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        variant="default"
+        class="px-4 h-8 gap-2 font-semibold shadow-xs"
         :class="
           isNote
             ? 'bg-amber-500 text-white hover:bg-amber-600'
-            : 'bg-primary text-primary-foreground hover:bg-primary/90'
+            : ''
         "
         :disabled="isSendDisabled"
         @click="onSend"
       >
         {{ sendButtonText }}
         <span class="i-lucide-corner-down-left size-3.5 opacity-70" />
-      </button>
+      </RelayButton>
     </div>
   </div>
 </template>

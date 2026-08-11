@@ -50,7 +50,6 @@ import {
   getEffectiveChannelType,
 } from 'dashboard/helper/editorHelper';
 import { useCopilotReply } from 'dashboard/composables/useCopilotReply';
-import { useKbd } from 'dashboard/composables/utils/useKbd';
 import { isFileTypeAllowedForChannel } from 'shared/helpers/FileHelper';
 
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
@@ -93,8 +92,6 @@ export default {
     const replyEditor = useTemplateRef('replyEditor');
     const messageEditor = useTemplateRef('messageEditor');
     const copilot = useCopilotReply();
-    const shortcutKey = useKbd(['$mod', '+', 'enter']);
-
     return {
       uiSettings,
       isEditorHotKeyEnabled,
@@ -104,7 +101,6 @@ export default {
       replyEditor,
       messageEditor,
       copilot,
-      shortcutKey,
     };
   },
   data() {
@@ -303,14 +299,10 @@ export default {
       );
     },
     replyButtonLabel() {
-      let sendMessageText = this.$t('CONVERSATION.REPLYBOX.SEND');
       if (this.isPrivate) {
-        sendMessageText = this.$t('CONVERSATION.REPLYBOX.CREATE');
+        return this.$t('CONVERSATION.REPLYBOX.CREATE');
       }
-      const keyLabel = this.isEditorHotKeyEnabled('cmd_enter')
-        ? `(${this.shortcutKey})`
-        : '(↵)';
-      return `${sendMessageText} ${keyLabel}`;
+      return this.$t('CONVERSATION.REPLYBOX.SEND');
     },
     replyBoxClass() {
       return {
@@ -1244,7 +1236,11 @@ export default {
 
 <template>
   <ReplyBoxBanner :message="message" :is-on-private-note="isOnPrivateNote" />
-  <div ref="replyEditor" class="reply-box" :class="replyBoxClass">
+  <div
+    ref="replyEditor"
+    class="reply-box bg-card border border-border rounded-xl shadow-xs overflow-hidden transition-shadow focus-within:ring-1 focus-within:ring-primary focus-within:border-primary"
+    :class="replyBoxClass"
+  >
     <ReplyTopPanel
       :mode="replyType"
       :contact-name="currentContact?.name"
@@ -1433,7 +1429,6 @@ export default {
         @select-content-template="openContentTemplateModal"
         @toggle-insert-article="toggleInsertArticle"
         @toggle-quoted-reply="toggleQuotedReply"
-        @toggle-copilot="copilot.toggleEditor"
       />
     </Transition>
 
@@ -1467,7 +1462,7 @@ export default {
 }
 
 .reply-box {
-  @apply relative mb-4 mx-4 border border-border rounded-xl bg-background overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary;
+  @apply relative mb-0 mx-0;
 }
 
 .reply-box :deep(.ProseMirror-menubar-wrapper) {

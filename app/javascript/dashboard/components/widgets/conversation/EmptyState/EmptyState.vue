@@ -36,12 +36,6 @@ export default {
       }
       return this.$t('CONVERSATION.LOADING_CONVERSATIONS');
     },
-    conversationMissingMessage() {
-      if (!this.isOnExpandedLayout) {
-        return this.$t('CONVERSATION.SELECT_A_CONVERSATION');
-      }
-      return this.$t('CONVERSATION.404');
-    },
     emptyClassName() {
       if (
         !this.inboxesList.length &&
@@ -82,7 +76,7 @@ export default {
 
     <div
       v-else-if="!uiFlags.isFetching && !loadingChatList"
-      class="flex flex-col items-center justify-center h-full"
+      class="flex flex-col items-center justify-center h-full w-full"
     >
       <!-- No conversations available -->
       <EmptyStateMessage
@@ -90,8 +84,14 @@ export default {
         :message="$t('CONVERSATION.NO_MESSAGE_1')"
       />
       <EmptyStateMessage
+        v-else-if="allConversations.length && !currentChat.id && isOnExpandedLayout"
+        :message="$t('CONVERSATION.404')"
+      />
+      <EmptyStateMessage
         v-else-if="allConversations.length && !currentChat.id"
-        :message="conversationMissingMessage"
+        variant="select"
+        :message="$t('CONVERSATION.SELECT_A_CONVERSATION')"
+        :description="$t('CONVERSATION.SELECT_A_CONVERSATION_DESCRIPTION')"
       />
     </div>
   </div>
