@@ -9,9 +9,14 @@ defineProps({
     type: String,
     default: '',
   },
+  variant: {
+    type: String,
+    default: 'default',
+    validator: value => ['default', 'composer'].includes(value),
+  },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'insert']);
 
 const { t } = useI18n();
 
@@ -26,8 +31,22 @@ const canSubmit = computed(
   () => Boolean(form.title.trim()) && Boolean(form.date)
 );
 
+const submitComposer = () => {
+  const date =
+    form.date || t('CONVERSATION.REPLYBOX.SCHEDULE_MEETING.DATE_FALLBACK');
+  const time =
+    form.time || t('CONVERSATION.REPLYBOX.SCHEDULE_MEETING.TIME_FALLBACK');
+  const link = t('CONVERSATION.REPLYBOX.SCHEDULE_MEETING.MEETING_LINK');
+  const text = t('CONVERSATION.REPLYBOX.SCHEDULE_MEETING.INSERT_TEMPLATE', {
+    date,
+    time,
+    link,
+  });
+  emit('insert', `\n\n${text}`);
+  emit('close');
+};
+
 const submit = () => {
-  // Gap: no meetings API yet — UI shell only.
   useAlert(t('CONTACTS_LAYOUT.DETAIL.SCHEDULE_MEETING.GAP_MESSAGE'));
   emit('close');
 };
@@ -35,6 +54,71 @@ const submit = () => {
 
 <template>
   <div
+    v-if="variant === 'composer'"
+    class="fixed inset-0 z-[100] flex items-center justify-center bg-n-alpha-black2 p-4 backdrop-blur-[4px] animate-in fade-in duration-200"
+    @click.self="emit('close')"
+  >
+    <div
+      class="flex w-full max-w-md flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+    >
+      <div
+        class="flex items-center justify-between border-b border-border bg-muted/30 px-6 py-4"
+      >
+        <h2
+          class="flex items-center gap-2 text-lg font-semibold text-foreground"
+        >
+          <span class="i-lucide-calendar size-5 text-primary" />
+          {{ t('CONVERSATION.REPLYBOX.SCHEDULE_MEETING.TITLE') }}
+        </h2>
+        <RelayButton
+          variant="ghost"
+          size="icon"
+          class="size-8 text-muted-foreground hover:text-foreground"
+          @click="emit('close')"
+        >
+          <span class="i-lucide-x size-4" />
+        </RelayButton>
+      </div>
+      <div class="flex flex-col gap-5 p-6">
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-foreground">{{
+            t('CONVERSATION.REPLYBOX.SCHEDULE_MEETING.DATE')
+          }}</label>
+          <input
+            v-model="form.date"
+            type="date"
+            class="w-full rounded-md border border-input bg-background p-2.5 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-foreground">{{
+            t('CONVERSATION.REPLYBOX.SCHEDULE_MEETING.TIME')
+          }}</label>
+          <input
+            v-model="form.time"
+            type="time"
+            class="w-full rounded-md border border-input bg-background p-2.5 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+          />
+        </div>
+      </div>
+      <div
+        class="flex justify-end gap-2 border-t border-border bg-muted/10 px-6 py-4"
+      >
+        <RelayButton
+          variant="outline"
+          class="border border-border text-sm font-medium hover:border-transparent"
+          @click="emit('close')"
+        >
+          {{ t('CONVERSATION.REPLYBOX.SCHEDULE_MEETING.CANCEL') }}
+        </RelayButton>
+        <RelayButton class="text-sm font-medium" @click="submitComposer">
+          {{ t('CONVERSATION.REPLYBOX.SCHEDULE_MEETING.INSERT_LINK') }}
+        </RelayButton>
+      </div>
+    </div>
+  </div>
+  <div
+    v-else
     class="fixed inset-0 z-[60] flex items-center justify-center bg-n-alpha-black2 p-4 backdrop-blur-[4px]"
     @click.self="emit('close')"
   >
@@ -122,7 +206,7 @@ const submit = () => {
       >
         <RelayButton
           variant="outline"
-          class="w-full text-sm font-medium"
+          class="w-full border border-border text-sm font-medium hover:border-transparent"
           @click="emit('close')"
         >
           {{ t('CONTACTS_LAYOUT.DETAIL.SCHEDULE_MEETING.CANCEL') }}

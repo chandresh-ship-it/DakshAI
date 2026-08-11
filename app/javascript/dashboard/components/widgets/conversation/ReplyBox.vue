@@ -1,5 +1,5 @@
 <script>
-import { defineAsyncComponent, useTemplateRef } from 'vue';
+import { useTemplateRef } from 'vue';
 import { mapGetters } from 'vuex';
 import { useAlert } from 'dashboard/composables';
 import { useUISettings } from 'dashboard/composables/useUISettings';
@@ -9,10 +9,15 @@ import keyboardEventListenerMixins from 'shared/mixins/keyboardEventListenerMixi
 import ReplyToMessage from './ReplyToMessage.vue';
 import AttachmentPreview from 'dashboard/components/widgets/AttachmentsPreview.vue';
 import ReplyTopPanel from 'dashboard/components/widgets/WootWriter/ReplyTopPanel.vue';
+import InboxReplyTopPanel from './InboxReplyTopPanel.vue';
+import InboxFormattingToolbar from './InboxFormattingToolbar.vue';
+import InboxReplyBottomPanel from './InboxReplyBottomPanel.vue';
 import ReplyEmailHead from './ReplyEmailHead.vue';
 import ReplyBottomPanel from 'dashboard/components/widgets/WootWriter/ReplyBottomPanel.vue';
 import ArticleSearchPopover from 'dashboard/routes/dashboard/helpcenter/components/ArticleSearch/SearchPopover.vue';
 import CopilotEditorSection from './CopilotEditorSection.vue';
+import ContactLogActivityModal from 'dashboard/components-next/Contacts/ContactDetail/ContactLogActivityModal.vue';
+import ContactScheduleMeetingModal from 'dashboard/components-next/Contacts/ContactDetail/ContactScheduleMeetingModal.vue';
 import MessageSignatureMissingAlert from './MessageSignatureMissingAlert.vue';
 import ReplyBoxBanner from './ReplyBoxBanner.vue';
 import QuotedEmailPreview from './QuotedEmailPreview.vue';
@@ -54,9 +59,6 @@ import { isFileTypeAllowedForChannel } from 'shared/helpers/FileHelper';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { emitter } from 'shared/helpers/mitt';
-const EmojiInput = defineAsyncComponent(
-  () => import('shared/components/emoji/EmojiInput.vue')
-);
 
 export default {
   components: {
@@ -64,19 +66,30 @@ export default {
     AttachmentPreview,
     AudioRecorder,
     ReplyBoxBanner,
-    EmojiInput,
     MessageSignatureMissingAlert,
     ReplyBottomPanel,
     ReplyEmailHead,
     ReplyToMessage,
     ReplyTopPanel,
+    InboxReplyTopPanel,
+    InboxFormattingToolbar,
+    InboxReplyBottomPanel,
     ContentTemplates,
     WhatsappTemplates,
     WootMessageEditor,
     QuotedEmailPreview,
     CopilotEditorSection,
+    ContactLogActivityModal,
+    ContactScheduleMeetingModal,
   },
   mixins: [inboxMixin, fileUploadMixin, keyboardEventListenerMixins],
+  props: {
+    variant: {
+      type: String,
+      default: 'conversation',
+      validator: value => ['conversation', 'inbox'].includes(value),
+    },
+  },
   emits: ['toggleEditorSize'],
   setup() {
     const {
@@ -120,6 +133,8 @@ export default {
       doAutoSaveDraft: () => {},
       showWhatsAppTemplatesModal: false,
       showContentTemplatesModal: false,
+      showLogCallModal: false,
+      showMeetingModal: false,
       updateEditorSelectionWith: '',
       undefinedVariableMessage: '',
       showMentions: false,
@@ -211,6 +226,9 @@ export default {
           return this.$t('CONVERSATION.FOOTER.MESSAGING_RESTRICTED_API');
         }
         return this.$t('CONVERSATION.FOOTER.MESSAGING_RESTRICTED');
+      }
+      if (this.isInboxVariant && this.isOnPrivateNote) {
+        return this.$t('CONVERSATION.REPLYBOX.INTERNAL_NOTE_INPUT');
       }
       return this.isPrivate
         ? this.$t('CONVERSATION.FOOTER.PRIVATE_MSG_INPUT')
@@ -307,9 +325,15 @@ export default {
         (this.isATiktokChannel && tiktokAttachmentSupported)
       );
     },
+    isInboxVariant() {
+      return this.variant === 'inbox';
+    },
     replyButtonLabel() {
       if (this.isPrivate) {
         return this.$t('CONVERSATION.REPLYBOX.CREATE');
+      }
+      if (this.isInboxVariant) {
+        return this.$t('CONVERSATION.REPLYBOX.SEND_WITH_SHORTCUT');
       }
       return this.$t('CONVERSATION.REPLYBOX.SEND');
     },
@@ -317,6 +341,7 @@ export default {
       return {
         'is-private': this.isPrivate,
         'is-focused': this.isFocused || this.hasAttachments,
+        'flex flex-col': this.isInboxVariant,
       };
     },
     hasAttachments() {
@@ -873,8 +898,7 @@ export default {
         if (this.copilot.generatedContent.value) {
           this.onSubmitCopilotReply();
         } else {
-          const prompt =
-            this.copilotEditorSection?.getPromptContent?.() || '';
+          const prompt = this.copilotEditorSection?.getPromptContent?.() || '';
           this.executeCopilotAction('reply_suggestion', prompt);
           return;
         }
@@ -957,6 +981,12 @@ export default {
     },
     clearEditorSelection() {
       this.updateEditorSelectionWith = '';
+    },
+    onLogCallSave() {
+      useAlert(this.$t('CONVERSATION.REPLYBOX.LOG_CALL.GAP_MESSAGE'));
+    },
+    onMeetingInsert(content) {
+      this.addIntoEditor(content);
     },
     addIntoEditor(content) {
       this.updateEditorSelectionWith = content;
@@ -1254,6 +1284,38 @@ export default {
       this.$emit('toggleEditorSize');
       this.$nextTick(() => this.messageEditor?.focusEditorInputField());
     },
+    toggleInboxCopilot() {
+      if (this.copilot.isActive.value) {
+        this.copilot.reset();
+        return;
+      }
+      if (this.isOnPrivateNote) {
+        this.setReplyMode(REPLY_EDITOR_MODES.REPLY);
+      }
+      this.copilot.toggleEditor();
+    },
+    toggleEditorMark(markName) {
+      this.messageEditor?.toggleEditorMark?.(markName);
+    },
+    togglePrivateNoteFromFooter() {
+      if (this.copilot.isActive.value) {
+        this.copilot.reset();
+      }
+      if (this.isOnPrivateNote) {
+        this.setReplyMode(REPLY_EDITOR_MODES.REPLY);
+      } else {
+        this.setReplyMode(REPLY_EDITOR_MODES.NOTE);
+      }
+    },
+    openCannedResponsesFromFooter() {
+      if (this.copilot.isActive.value) {
+        this.copilot.reset();
+        this.setReplyMode(REPLY_EDITOR_MODES.REPLY);
+      }
+      this.$nextTick(() => {
+        this.messageEditor?.openCannedResponsesMenu?.();
+      });
+    },
     onSubmitCopilotReply() {
       const acceptedMessage = this.copilot.accept();
       this.message = acceptedMessage;
@@ -1267,10 +1329,25 @@ export default {
   <ReplyBoxBanner :message="message" :is-on-private-note="isOnPrivateNote" />
   <div
     ref="replyEditor"
-    class="reply-box bg-card border border-border rounded-xl shadow-xs overflow-hidden transition-shadow focus-within:ring-1 focus-within:ring-primary focus-within:border-primary"
+    class="reply-box bg-card border border-border rounded-xl shadow-xs overflow-visible transition-shadow focus-within:ring-1 focus-within:ring-primary focus-within:border-primary"
     :class="replyBoxClass"
   >
+    <InboxReplyTopPanel
+      v-if="isInboxVariant"
+      :mode="replyType"
+      :contact-name="currentContact?.name"
+      :is-reply-restricted="isReplyRestricted"
+      :disabled="
+        (copilot.isActive.value && copilot.isGenerating.value) ||
+        showAudioRecorderEditor
+      "
+      :is-copilot-active="copilot.isActive.value"
+      @set-reply-mode="setReplyMode"
+      @toggle-editor-size="toggleEditorSize"
+      @reset-copilot="copilot.reset"
+    />
     <ReplyTopPanel
+      v-else
       :mode="replyType"
       :contact-name="currentContact?.name"
       :conversation-id="conversationId"
@@ -1291,6 +1368,12 @@ export default {
       @reset-copilot="copilot.reset"
       @execute-copilot-action="executeCopilotAction"
     />
+    <InboxFormattingToolbar
+      v-if="
+        isInboxVariant && !copilot.isActive.value && !showAudioRecorderEditor
+      "
+      @toggle-mark="toggleEditorMark"
+    />
     <ArticleSearchPopover
       v-if="showArticleSearchPopover && connectedPortalSlug"
       :selected-portal-slug="connectedPortalSlug"
@@ -1306,19 +1389,15 @@ export default {
       leave-from-class="opacity-100 translate-y-0 scale-100"
       leave-to-class="opacity-0 translate-y-2 scale-[0.98]"
     >
-      <div :key="copilot.editorTransitionKey.value" class="reply-box__top">
+      <div
+        :key="copilot.editorTransitionKey.value"
+        class="reply-box__top"
+        :class="{ 'reply-box__top--inbox': isInboxVariant }"
+      >
         <ReplyToMessage
           v-if="shouldShowReplyToMessage"
           :message="inReplyTo"
           @dismiss="resetReplyToMessage"
-        />
-        <EmojiInput
-          v-if="showEmojiPicker"
-          v-on-clickaway="hideEmojiPicker"
-          :class="{
-            'emoji-dialog--expanded': isOnExpandedLayout,
-          }"
-          :on-click="addIntoEditor"
         />
         <ReplyEmailHead
           v-if="showReplyHead && isDefaultEditorMode"
@@ -1353,34 +1432,42 @@ export default {
           @content-ready="copilot.setContentReady"
           @send="handleCopilotEditorSend"
         />
-        <WootMessageEditor
+        <div
           v-else-if="!showAudioRecorderEditor"
-          ref="messageEditor"
-          v-model="message"
-          :conversation-id="conversationId"
-          :editor-id="editorStateId"
-          class="input"
-          :is-private="isOnPrivateNote"
-          :placeholder="messagePlaceHolder"
-          :update-selection-with="updateEditorSelectionWith"
-          :min-height="4"
-          :disabled="isEditorDisabled"
-          enable-variables
-          :variables="messageVariables"
-          :signature="messageSignature"
-          allow-signature
-          :channel-type="channelType"
-          :medium="inbox.medium"
-          @typing-off="onTypingOff"
-          @typing-on="onTypingOn"
-          @focus="onFocus"
-          @blur="onBlur"
-          @toggle-user-mention="toggleUserMention"
-          @toggle-canned-menu="toggleCannedMenu"
-          @toggle-variables-menu="toggleVariablesMenu"
-          @clear-selection="clearEditorSelection"
-          @execute-copilot-action="executeCopilotAction"
-        />
+          :class="{
+            'inbox-note-editor bg-amber-500/5 text-amber-900':
+              isInboxVariant && isOnPrivateNote,
+          }"
+        >
+          <WootMessageEditor
+            ref="messageEditor"
+            v-model="message"
+            :conversation-id="conversationId"
+            :editor-id="editorStateId"
+            class="input"
+            :is-private="isOnPrivateNote"
+            :placeholder="messagePlaceHolder"
+            :update-selection-with="updateEditorSelectionWith"
+            :min-height="4"
+            :disabled="isEditorDisabled"
+            enable-variables
+            :variables="messageVariables"
+            :signature="messageSignature"
+            allow-signature
+            :channel-type="channelType"
+            :medium="inbox.medium"
+            :enable-menu-bar="false"
+            @typing-off="onTypingOff"
+            @typing-on="onTypingOn"
+            @focus="onFocus"
+            @blur="onBlur"
+            @toggle-user-mention="toggleUserMention"
+            @toggle-canned-menu="toggleCannedMenu"
+            @toggle-variables-menu="toggleVariablesMenu"
+            @clear-selection="clearEditorSelection"
+            @execute-copilot-action="executeCopilotAction"
+          />
+        </div>
 
         <QuotedEmailPreview
           v-if="shouldShowQuotedPreview && isDefaultEditorMode"
@@ -1407,45 +1494,95 @@ export default {
             !isSignatureAvailable &&
             isDefaultEditorMode
           "
-          class="mb-2"
+          :class="
+            isInboxVariant
+              ? 'text-xs text-amber-600 bg-amber-500/10 px-3 py-1.5 border-t border-amber-500/20'
+              : 'mb-2'
+          "
         />
       </div>
     </Transition>
 
+    <InboxReplyBottomPanel
+      v-if="isInboxVariant"
+      key="inbox-reply-bottom-panel"
+      :conversation-id="conversationId"
+      :enable-multiple-file-upload="enableMultipleFileUpload"
+      :enable-whats-app-templates="showWhatsappTemplates"
+      :enable-content-templates="showContentTemplates"
+      :inbox="inbox"
+      :is-on-private-note="isOnPrivateNote"
+      :is-recording-audio="isRecordingAudio"
+      :is-send-disabled="isReplyButtonDisabled"
+      :is-note="isPrivate"
+      :is-editor-disabled="isEditorDisabled"
+      :is-copilot-active="copilot.isActive.value"
+      :on-file-upload="onFileUpload"
+      :on-send="onSendReply"
+      :conversation-type="conversationType"
+      :recording-audio-duration-text="recordingAudioDurationText"
+      :recording-audio-state="recordingAudioState"
+      :send-button-text="replyButtonLabel"
+      :show-audio-recorder="showAudioRecorder"
+      :show-emoji-picker="showEmojiPicker"
+      :show-file-upload="showFileUpload"
+      :show-quoted-reply-toggle="shouldShowQuotedReplyToggle"
+      :quoted-reply-enabled="quotedReplyPreference"
+      :toggle-audio-recorder-play-pause="toggleAudioRecorderPlayPause"
+      :toggle-audio-recorder="toggleAudioRecorder"
+      :toggle-emoji-picker="toggleEmojiPicker"
+      :on-emoji-select="addIntoEditor"
+      :message="message"
+      :portal-slug="connectedPortalSlug"
+      :new-conversation-modal-active="newConversationModalActive"
+      @select-whatsapp-template="openWhatsappTemplateModal"
+      @select-content-template="openContentTemplateModal"
+      @toggle-insert-article="toggleInsertArticle"
+      @toggle-quoted-reply="toggleQuotedReply"
+      @open-canned-responses="openCannedResponsesFromFooter"
+      @toggle-copilot="toggleInboxCopilot"
+    />
     <ReplyBottomPanel
+      v-else
       key="reply-bottom-panel"
-        :conversation-id="conversationId"
-        :enable-multiple-file-upload="enableMultipleFileUpload"
-        :enable-whats-app-templates="showWhatsappTemplates"
-        :enable-content-templates="showContentTemplates"
-        :inbox="inbox"
-        :is-on-private-note="isOnPrivateNote"
-        :is-recording-audio="isRecordingAudio"
-        :is-send-disabled="isReplyButtonDisabled"
-        :is-note="isPrivate"
-        :is-editor-disabled="isEditorDisabled"
-        :on-file-upload="onFileUpload"
-        :on-send="onSendReply"
-        :conversation-type="conversationType"
-        :recording-audio-duration-text="recordingAudioDurationText"
-        :recording-audio-state="recordingAudioState"
-        :send-button-text="replyButtonLabel"
-        :show-audio-recorder="showAudioRecorder"
-        :show-emoji-picker="showEmojiPicker"
-        :show-file-upload="showFileUpload"
-        :show-quoted-reply-toggle="shouldShowQuotedReplyToggle"
-        :quoted-reply-enabled="quotedReplyPreference"
-        :toggle-audio-recorder-play-pause="toggleAudioRecorderPlayPause"
-        :toggle-audio-recorder="toggleAudioRecorder"
-        :toggle-emoji-picker="toggleEmojiPicker"
-        :message="message"
-        :portal-slug="connectedPortalSlug"
-        :new-conversation-modal-active="newConversationModalActive"
-        @select-whatsapp-template="openWhatsappTemplateModal"
-        @select-content-template="openContentTemplateModal"
-        @toggle-insert-article="toggleInsertArticle"
-        @toggle-quoted-reply="toggleQuotedReply"
-      />
+      :conversation-id="conversationId"
+      :enable-multiple-file-upload="enableMultipleFileUpload"
+      :enable-whats-app-templates="showWhatsappTemplates"
+      :enable-content-templates="showContentTemplates"
+      :inbox="inbox"
+      :is-on-private-note="isOnPrivateNote"
+      :is-recording-audio="isRecordingAudio"
+      :is-send-disabled="isReplyButtonDisabled"
+      :is-note="isPrivate"
+      :is-editor-disabled="isEditorDisabled"
+      :is-copilot-active="copilot.isActive.value"
+      :on-file-upload="onFileUpload"
+      :on-send="onSendReply"
+      :conversation-type="conversationType"
+      :recording-audio-duration-text="recordingAudioDurationText"
+      :recording-audio-state="recordingAudioState"
+      :send-button-text="replyButtonLabel"
+      :show-audio-recorder="showAudioRecorder"
+      :show-emoji-picker="showEmojiPicker"
+      :show-file-upload="showFileUpload"
+      :show-quoted-reply-toggle="shouldShowQuotedReplyToggle"
+      :quoted-reply-enabled="quotedReplyPreference"
+      :toggle-audio-recorder-play-pause="toggleAudioRecorderPlayPause"
+      :toggle-audio-recorder="toggleAudioRecorder"
+      :toggle-emoji-picker="toggleEmojiPicker"
+      :on-emoji-select="addIntoEditor"
+      :message="message"
+      :portal-slug="connectedPortalSlug"
+      :new-conversation-modal-active="newConversationModalActive"
+      @select-whatsapp-template="openWhatsappTemplateModal"
+      @select-content-template="openContentTemplateModal"
+      @toggle-insert-article="toggleInsertArticle"
+      @toggle-quoted-reply="toggleQuotedReply"
+      @toggle-private-note="togglePrivateNoteFromFooter"
+      @open-canned-responses="openCannedResponsesFromFooter"
+      @open-log-call="showLogCallModal = true"
+      @open-meeting="showMeetingModal = true"
+    />
 
     <WhatsappTemplates
       :inbox-id="inbox.id"
@@ -1461,6 +1598,23 @@ export default {
       @close="hideContentTemplatesModal"
       @on-send="onSendContentTemplateReply"
       @cancel="hideContentTemplatesModal"
+    />
+
+    <ContactLogActivityModal
+      v-if="showLogCallModal"
+      variant="composer"
+      :contact-name="currentContact?.name"
+      initial-type="Call"
+      @close="showLogCallModal = false"
+      @save="onLogCallSave"
+    />
+
+    <ContactScheduleMeetingModal
+      v-if="showMeetingModal"
+      variant="composer"
+      :contact-name="currentContact?.name"
+      @close="showMeetingModal = false"
+      @insert="onMeetingInsert"
     />
 
     <woot-confirm-modal
@@ -1480,15 +1634,8 @@ export default {
   @apply relative mb-0 mx-0;
 }
 
-.reply-box :deep(.ProseMirror-menubar-wrapper) {
-  @apply gap-0;
-}
-
 .reply-box :deep(.ProseMirror-menubar) {
-  @apply px-4 py-2 bg-transparent mb-0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100%;
+  @apply hidden !important;
 }
 
 .reply-box :deep(.ProseMirror) {
@@ -1501,6 +1648,18 @@ export default {
 
 .reply-box__top {
   @apply relative py-0 px-4 -mt-px;
+}
+
+.reply-box__top--inbox {
+  @apply px-0;
+}
+
+.inbox-note-editor :deep(.ProseMirror) {
+  @apply bg-transparent text-amber-900;
+
+  p.empty-node:first-child::before {
+    @apply text-amber-700/60;
+  }
 }
 
 .emoji-dialog {

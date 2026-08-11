@@ -44,6 +44,7 @@ import {
   Selection,
   imageResizeView,
 } from '@chatwoot/prosemirror-schema';
+import { toggleMark } from 'prosemirror-commands';
 import {
   suggestionsPlugin,
   triggerCharacters,
@@ -94,6 +95,7 @@ const props = defineProps({
   conversationId: { type: Number, default: null },
   medium: { type: String, default: '' },
   focusOnMount: { type: Boolean, default: true },
+  enableMenuBar: { type: Boolean, default: true },
 });
 
 const emit = defineEmits([
@@ -145,6 +147,8 @@ const editorSchema = computed(() => {
 });
 
 const editorMenuOptions = computed(() => {
+  if (!props.enableMenuBar) return [];
+
   const formatType = props.isPrivate
     ? PRIVATE_NOTE_FORMATTING
     : effectiveChannelType.value || DEFAULT_FORMATTING;
@@ -862,7 +866,19 @@ function openCannedResponsesMenu() {
   focusEditorInputField();
 }
 
-defineExpose({ focusEditorInputField, openCannedResponsesMenu });
+function toggleEditorMark(markName) {
+  if (!editorView) return;
+  const mark = editorView.state.schema.marks[markName];
+  if (!mark) return;
+  toggleMark(mark)(editorView.state, editorView.dispatch);
+  editorView.focus();
+}
+
+defineExpose({
+  focusEditorInputField,
+  openCannedResponsesMenu,
+  toggleEditorMark,
+});
 
 // BUS Event to insert text or markdown into the editor at the
 // current cursor position.

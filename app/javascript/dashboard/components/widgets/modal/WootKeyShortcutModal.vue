@@ -7,13 +7,15 @@ import {
   LAYOUT_QWERTZ,
   keysToModifyInQWERTZ,
 } from 'shared/helpers/KeyboardHelpers';
-import Hotkey from 'dashboard/components/base/Hotkey.vue';
 
 defineProps({ show: Boolean });
 defineEmits(['close']);
 
 const { t } = useI18n();
 const currentLayout = ref(null);
+
+const kbdClass =
+  'h-7 min-w-7 px-2 inline-flex items-center justify-center rounded-md border border-primary/20 bg-primary/5 text-primary text-[12px] font-medium';
 
 const title = computed(
   () => item => t(`KEYBOARD_SHORTCUTS.TITLE.${item.label}`)
@@ -38,52 +40,44 @@ onMounted(async () => {
 <template>
   <woot-modal :show="show" size="medium" :on-close="() => $emit('close')">
     <div class="flex flex-col h-auto overflow-auto">
-      <woot-modal-header
-        :header-title="$t('SIDEBAR_ITEMS.KEYBOARD_SHORTCUTS')"
-      />
-      <div class="grid grid-cols-2 px-8 pt-0 pb-4 mt-6 gap-x-5 gap-y-3">
-        <div class="flex justify-between items-center min-w-[25rem]">
-          <h5 class="text-sm text-n-slate-12">
-            {{ $t('KEYBOARD_SHORTCUTS.TOGGLE_MODAL') }}
-          </h5>
-          <div class="flex items-center gap-2 mb-1 ml-2">
-            <Hotkey custom-class="min-h-[28px] min-w-[60px] normal-case key">
-              {{ KEYS.WIN }}
-            </Hotkey>
-            <Hotkey custom-class="min-h-[28px] min-w-[36px] key">
-              {{ KEYS.SLASH }}
-            </Hotkey>
-          </div>
-        </div>
+      <div
+        class="flex items-center justify-between px-6 py-5 border-b border-border/40"
+      >
+        <h2 class="text-base font-medium text-foreground">
+          {{ $t('SIDEBAR_ITEMS.KEYBOARD_SHORTCUTS') }}
+        </h2>
       </div>
 
-      <div class="grid grid-cols-2 px-8 pt-0 pb-8 gap-x-5 gap-y-3">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-x-16 gap-y-0 px-8 py-2">
+        <div
+          class="flex items-center justify-between py-3.5 border-b border-border/40"
+        >
+          <span class="text-[14px] font-medium text-foreground">
+            {{ $t('KEYBOARD_SHORTCUTS.TOGGLE_MODAL') }}
+          </span>
+          <div class="flex items-center gap-2">
+            <kbd :class="kbdClass">{{ KEYS.WIN }}</kbd>
+            <kbd :class="kbdClass">{{ KEYS.SLASH }}</kbd>
+          </div>
+        </div>
+
         <div
           v-for="shortcut in SHORTCUT_KEYS"
           :key="shortcut.id"
-          class="flex justify-between items-center min-w-[25rem]"
+          class="flex items-center justify-between py-3.5 border-b border-border/40"
         >
-          <h5 class="text-sm text-n-slate-12 min-w-[36px]">
+          <span class="text-[14px] font-medium text-foreground">
             {{ title(shortcut) }}
-          </h5>
-          <div class="flex items-center gap-2 mb-1 ml-2">
-            <template v-if="needsShiftKey(shortcut.keySet)">
-              <Hotkey custom-class="min-h-[28px] min-w-[36px] key">
-                {{ KEYS.SHIFT }}
-              </Hotkey>
-            </template>
-
+          </span>
+          <div class="flex items-center gap-2">
+            <kbd v-if="needsShiftKey(shortcut.keySet)" :class="kbdClass">
+              {{ KEYS.SHIFT }}
+            </kbd>
             <template v-for="(key, index) in shortcut.displayKeys" :key="index">
-              <template v-if="key !== KEYS.SLASH">
-                <Hotkey
-                  custom-class="min-h-[28px] min-w-[36px] key normal-case"
-                >
-                  {{ key }}
-                </Hotkey>
-              </template>
+              <kbd v-if="key !== KEYS.SLASH" :class="kbdClass">{{ key }}</kbd>
               <span
                 v-else
-                class="flex items-center text-sm font-semibold text-n-slate-12"
+                class="text-[13px] font-medium text-muted-foreground"
               >
                 {{ key }}
               </span>
@@ -94,9 +88,3 @@ onMounted(async () => {
     </div>
   </woot-modal>
 </template>
-
-<style scoped>
-.key {
-  @apply py-2 px-2.5 font-semibold text-xs text-n-slate-12 bg-n-slate-4 dark:bg-n-slate-2 shadow border-b-2 rtl:border-l-2 ltr:border-r-2 border-n-strong;
-}
-</style>

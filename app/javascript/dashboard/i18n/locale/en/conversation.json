@@ -223,6 +223,14 @@
     },
     "REPLYBOX": {
       "REPLY": "Reply",
+      "REPLY_TO_CONTACT": "Reply to {contactName}",
+      "CONTACT": "contact",
+      "INTERNAL_COMMENT": "Internal comment",
+      "SEND_WITH_SHORTCUT": "Send (CTRL + ↵)",
+      "TOGGLE_EDITOR_SIZE": "Toggle editor size",
+      "FORMAT_BOLD": "Bold",
+      "FORMAT_ITALIC": "Italic",
+      "FORMAT_UNDERLINE": "Underline",
       "PRIVATE_NOTE": "Private Note",
       "AI_REPLY": "AI Reply",
       "SEND": "Send",
@@ -232,6 +240,9 @@
       "REPLYING_TO": "Replying to:",
       "TIP_EMOJI_ICON": "Show emoji selector",
       "TIP_ATTACH_ICON": "Attach files",
+      "TIP_CANNED_ICON": "Canned responses",
+      "TIP_LOG_CALL": "Log call",
+      "TIP_MEETING": "Meeting",
       "TIP_AUDIORECORDER_ICON": "Record audio",
       "TIP_AUDIORECORDER_PERMISSION": "Allow access to audio",
       "TIP_AUDIORECORDER_ERROR": "Could not open the audio",
@@ -269,7 +280,33 @@
         "REMOVE_PREVIEW": "Remove quoted email thread",
         "COLLAPSE": "Collapse preview",
         "EXPAND": "Expand preview"
-      }
+      },
+      "LOG_CALL": {
+        "TITLE": "Log a Call",
+        "OUTCOME": "Call Outcome",
+        "NOTES": "Call Notes",
+        "NOTES_PLACEHOLDER": "Summarize the call...",
+        "CANCEL": "Cancel",
+        "SAVE": "Save Log",
+        "GAP_MESSAGE": "Call logging is not connected yet. Your log was not saved.",
+        "OUTCOMES": {
+          "ANSWERED": "Answered",
+          "VOICEMAIL": "Voicemail",
+          "BUSY": "Busy"
+        }
+      },
+      "SCHEDULE_MEETING": {
+        "TITLE": "Schedule Meeting",
+        "DATE": "Date",
+        "TIME": "Time",
+        "CANCEL": "Cancel",
+        "INSERT_LINK": "Insert Link",
+        "DATE_FALLBACK": "tomorrow",
+        "TIME_FALLBACK": "10:00 AM",
+        "INSERT_TEMPLATE": "Let's meet on {date} at {time}.\nJoin here: {link}",
+        "MEETING_LINK": "https://meet.newrelay.com/j-smith"
+      },
+      "INTERNAL_NOTE_INPUT": "Write an internal note..."
     },
     "VISIBLE_TO_AGENTS": "Private Note: Only visible to you and your team",
     "CHANGE_STATUS": "Conversation status changed",

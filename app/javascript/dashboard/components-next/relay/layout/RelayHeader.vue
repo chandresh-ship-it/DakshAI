@@ -18,6 +18,7 @@ defineEmits([
   'openSearch',
   'toggleCollapse',
   'showCreateAccountModal',
+  'openKeyShortcutModal',
 ]);
 
 const { t } = useI18n();
@@ -99,6 +100,7 @@ const toggleTheme = () => {
       <slot name="profile">
         <RelayWorkspaceMenu
           @show-create-account-modal="$emit('showCreateAccountModal')"
+          @open-key-shortcut-modal="$emit('openKeyShortcutModal')"
         />
       </slot>
     </div>

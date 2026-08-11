@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
+import { useCaptain } from 'dashboard/composables/useCaptain';
 import FileUpload from 'vue-upload-component';
 import * as ActiveStorage from 'activestorage';
 import inboxMixin from 'shared/mixins/inboxMixin';
@@ -15,177 +16,72 @@ import EmojiInput from 'shared/components/emoji/EmojiInput.vue';
 import { vOnClickOutside } from '@vueuse/components';
 
 export default {
-  name: 'ReplyBottomPanel',
+  name: 'InboxReplyBottomPanel',
   components: { RelayButton, FileUpload, VideoCallButton, EmojiInput },
   directives: { OnClickOutside: vOnClickOutside },
   mixins: [inboxMixin],
   props: {
-    isNote: {
-      type: Boolean,
-      default: false,
-    },
-    onSend: {
-      type: Function,
-      default: () => {},
-    },
-    sendButtonText: {
-      type: String,
-      default: '',
-    },
-    recordingAudioDurationText: {
-      type: String,
-      default: '00:00',
-    },
-    // inbox prop is used in /mixins/inboxMixin,
-    // remove this props when refactoring to composable if not needed
+    isNote: { type: Boolean, default: false },
+    onSend: { type: Function, default: () => {} },
+    sendButtonText: { type: String, default: '' },
+    recordingAudioDurationText: { type: String, default: '00:00' },
     // eslint-disable-next-line vue/no-unused-properties
-    inbox: {
-      type: Object,
-      default: () => ({}),
-    },
-    showFileUpload: {
-      type: Boolean,
-      default: false,
-    },
-    showAudioRecorder: {
-      type: Boolean,
-      default: false,
-    },
-    onFileUpload: {
-      type: Function,
-      default: () => {},
-    },
-    toggleEmojiPicker: {
-      type: Function,
-      default: () => {},
-    },
-    showEmojiPicker: {
-      type: Boolean,
-      default: false,
-    },
-    onEmojiSelect: {
-      type: Function,
-      default: () => {},
-    },
-    toggleAudioRecorder: {
-      type: Function,
-      default: () => {},
-    },
-    toggleAudioRecorderPlayPause: {
-      type: Function,
-      default: () => {},
-    },
-    isRecordingAudio: {
-      type: Boolean,
-      default: false,
-    },
-    recordingAudioState: {
-      type: String,
-      default: '',
-    },
-    isSendDisabled: {
-      type: Boolean,
-      default: false,
-    },
-    isOnPrivateNote: {
-      type: Boolean,
-      default: false,
-    },
-    enableMultipleFileUpload: {
-      type: Boolean,
-      default: true,
-    },
-    enableWhatsAppTemplates: {
-      type: Boolean,
-      default: false,
-    },
-    enableContentTemplates: {
-      type: Boolean,
-      default: false,
-    },
-    conversationId: {
-      type: Number,
-      required: true,
-    },
-    // eslint-disable-next-line vue/no-unused-properties
-    message: {
-      type: String,
-      default: '',
-    },
-    newConversationModalActive: {
-      type: Boolean,
-      default: false,
-    },
-    portalSlug: {
-      type: String,
-      required: true,
-    },
-    conversationType: {
-      type: String,
-      default: '',
-    },
-    showQuotedReplyToggle: {
-      type: Boolean,
-      default: false,
-    },
-    quotedReplyEnabled: {
-      type: Boolean,
-      default: false,
-    },
-    isEditorDisabled: {
-      type: Boolean,
-      default: false,
-    },
-    isCopilotActive: {
-      type: Boolean,
-      default: false,
-    },
+    inbox: { type: Object, default: () => ({}) },
+    showFileUpload: { type: Boolean, default: false },
+    showAudioRecorder: { type: Boolean, default: false },
+    onFileUpload: { type: Function, default: () => {} },
+    toggleEmojiPicker: { type: Function, default: () => {} },
+    showEmojiPicker: { type: Boolean, default: false },
+    onEmojiSelect: { type: Function, default: () => {} },
+    toggleAudioRecorder: { type: Function, default: () => {} },
+    toggleAudioRecorderPlayPause: { type: Function, default: () => {} },
+    isRecordingAudio: { type: Boolean, default: false },
+    recordingAudioState: { type: String, default: '' },
+    isSendDisabled: { type: Boolean, default: false },
+    isOnPrivateNote: { type: Boolean, default: false },
+    enableMultipleFileUpload: { type: Boolean, default: true },
+    enableWhatsAppTemplates: { type: Boolean, default: false },
+    enableContentTemplates: { type: Boolean, default: false },
+    conversationId: { type: Number, required: true },
+    newConversationModalActive: { type: Boolean, default: false },
+    portalSlug: { type: String, required: true },
+    conversationType: { type: String, default: '' },
+    showQuotedReplyToggle: { type: Boolean, default: false },
+    quotedReplyEnabled: { type: Boolean, default: false },
+    isEditorDisabled: { type: Boolean, default: false },
+    isCopilotActive: { type: Boolean, default: false },
   },
   emits: [
     'toggleInsertArticle',
     'selectWhatsappTemplate',
     'selectContentTemplate',
     'toggleQuotedReply',
-    'togglePrivateNote',
     'openCannedResponses',
-    'openLogCall',
-    'openMeeting',
+    'toggleCopilot',
   ],
   setup(props) {
     const { setSignatureFlagForInbox, fetchSignatureFlagFromUISettings } =
       useUISettings();
-
+    const { captainTasksEnabled } = useCaptain();
     const uploadRef = ref(false);
 
-    const keyboardEvents = {
+    useKeyboardEvents({
       '$mod+Alt+KeyA': {
         action: () => {
-          // Skip if editor is disabled (e.g., WhatsApp 24-hour window expired)
           if (props.isEditorDisabled) return;
-
-          // TODO: This is really hacky, we need to replace the file picker component with
-          // a custom one, where the logic and the component markup is isolated.
-          // Once we have the custom component, we can remove the hacky logic below.
-
           const uploadTriggerButton = document.querySelector(
-            '#conversationAttachment'
+            '#inboxConversationAttachment'
           );
           if (uploadTriggerButton) uploadTriggerButton.click();
         },
         allowOnFocusedInput: true,
       },
-    };
-
-    useKeyboardEvents(keyboardEvents);
+    });
 
     const handleEmojiPickerClick = e => {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      if (props.toggleEmojiPicker) {
-        props.toggleEmojiPicker();
-      }
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      props.toggleEmojiPicker?.();
     };
 
     const hideEmojiPicker = () => {
@@ -200,6 +96,7 @@ export default {
       uploadRef,
       handleEmojiPickerClick,
       hideEmojiPicker,
+      captainTasksEnabled,
       toolbarIconButtonClass:
         'h-8 w-8 shrink-0 p-0 min-h-8 min-w-8 text-muted-foreground hover:text-foreground',
     };
@@ -208,33 +105,19 @@ export default {
     ...mapGetters({
       accountId: 'getCurrentAccountId',
       isFeatureEnabledonAccount: 'accounts/isFeatureEnabledonAccount',
-      uiFlags: 'integrations/getUIFlags',
     }),
-    wrapClass() {
-      return {
-        'is-note-mode': this.isNote,
-      };
-    },
     showAttachButton() {
       if (this.isEditorDisabled) return false;
       return this.showFileUpload || this.isNote;
     },
     showAudioRecorderButton() {
       if (this.isEditorDisabled) return false;
-      if (this.isALineChannel || this.isATiktokChannel) {
-        return false;
-      }
-      // Disable audio recorder for safari browser as recording is not supported
-      // const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(
-      //   navigator.userAgent
-      // );
-
+      if (this.isALineChannel || this.isATiktokChannel) return false;
       return (
         this.isFeatureEnabledonAccount(
           this.accountId,
           FEATURE_FLAGS.VOICE_RECORDER
         ) && this.showAudioRecorder
-        // !isSafari
       );
     },
     showAudioPlayStopButton() {
@@ -245,15 +128,11 @@ export default {
       return this.conversationType === 'instagram_direct_message';
     },
     allowedFileTypes() {
-      if (this.isOnPrivateNote) {
-        return getAllowedFileTypesByChannel();
-      }
-
+      if (this.isOnPrivateNote) return getAllowedFileTypesByChannel();
       let channelType = this.channelType || this.inbox?.channel_type;
       if (this.isAnInstagramChannel || this.isInstagramDM) {
         channelType = INBOX_TYPES.INSTAGRAM;
       }
-
       return getAllowedFileTypesByChannel({
         channelType,
         medium: this.inbox?.medium,
@@ -264,11 +143,9 @@ export default {
     },
     audioRecorderPlayStopIcon() {
       switch (this.recordingAudioState) {
-        // playing paused recording stopped inactive destroyed
         case 'playing':
           return 'i-ph-pause';
         case 'paused':
-          return 'i-ph-play';
         case 'stopped':
           return 'i-ph-play';
         default:
@@ -280,7 +157,6 @@ export default {
       return !this.isOnPrivateNote;
     },
     sendWithSignature() {
-      // channelType is sourced from inboxMixin
       return this.fetchSignatureFlagFromUISettings(this.channelType);
     },
     signatureToggleTooltip() {
@@ -290,9 +166,6 @@ export default {
     },
     enableInsertArticleInReply() {
       return this.portalSlug;
-    },
-    isFetchingAppIntegrations() {
-      return this.uiFlags.isFetching;
     },
     quotedReplyToggleTooltip() {
       return this.quotedReplyEnabled
@@ -309,6 +182,9 @@ export default {
       }
       return !this.enableWhatsAppTemplates && !this.enableContentTemplates;
     },
+    showSendShortcutIcon() {
+      return !this.isNote;
+    },
   },
   mounted() {
     ActiveStorage.start();
@@ -316,12 +192,6 @@ export default {
   methods: {
     toggleMessageSignature() {
       this.setSignatureFlagForInbox(this.channelType, !this.sendWithSignature);
-    },
-    toggleInsertArticle() {
-      this.$emit('toggleInsertArticle');
-    },
-    togglePrivateNote() {
-      this.$emit('togglePrivateNote');
     },
     openCannedResponses() {
       this.$emit('openCannedResponses');
@@ -332,15 +202,35 @@ export default {
 
 <template>
   <div
-    class="px-3 py-2 flex items-center justify-between border-t border-border bg-muted/20 overflow-visible"
+    class="px-3 py-2.5 flex items-center justify-between border-t border-border bg-muted/5 rounded-b-xl overflow-visible"
   >
     <div class="flex items-center gap-1 flex-wrap">
+      <!-- Emoji -->
+      <div
+        v-if="!isEditorDisabled"
+        class="relative flex items-center justify-center"
+      >
+        <RelayButton
+          v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_EMOJI_ICON')"
+          variant="ghost"
+          :class="toolbarIconButtonClass"
+          @click="handleEmojiPickerClick"
+        >
+          <span class="i-lucide-smile size-4 shrink-0" />
+        </RelayButton>
+        <EmojiInput
+          v-if="showEmojiPicker"
+          v-on-click-outside="hideEmojiPicker"
+          class="!left-0 !right-auto !top-auto !bottom-full !mb-2 z-50"
+          :on-click="onEmojiSelect"
+        />
+      </div>
+
       <!-- Attach -->
       <FileUpload
         v-if="showAttachButton"
         ref="uploadRef"
-        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_ATTACH_ICON')"
-        input-id="conversationAttachment"
+        input-id="inboxConversationAttachment"
         :size="4096 * 4096"
         :accept="allowedFileTypes"
         :multiple="enableMultipleFileUpload"
@@ -363,26 +253,52 @@ export default {
         </RelayButton>
       </FileUpload>
 
-      <!-- Emoji -->
-      <div
-        v-if="!isEditorDisabled"
-        class="relative flex items-center justify-center"
+      <!-- Audio Recorder -->
+      <RelayButton
+        v-if="showAudioRecorderButton"
+        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"
+        variant="ghost"
+        :class="[
+          toolbarIconButtonClass,
+          isRecordingAudio
+            ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600'
+            : '',
+        ]"
+        @click="toggleAudioRecorder"
       >
-        <RelayButton
-          v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_EMOJI_ICON')"
-          variant="ghost"
-          :class="toolbarIconButtonClass"
-          @click="handleEmojiPickerClick"
-        >
-          <span class="i-lucide-smile size-4 shrink-0" />
-        </RelayButton>
-        <EmojiInput
-          v-if="showEmojiPicker"
-          v-on-click-outside="hideEmojiPicker"
-          class="!left-0 !right-auto !top-auto !bottom-full !mb-2 z-50"
-          :on-click="onEmojiSelect"
+        <span
+          class="size-4 shrink-0"
+          :class="!isRecordingAudio ? 'i-lucide-mic' : 'i-lucide-mic-off'"
         />
-      </div>
+      </RelayButton>
+
+      <RelayButton
+        v-if="showAudioPlayStopButton"
+        variant="ghost"
+        class="h-8 px-2 text-muted-foreground"
+        @click="toggleAudioRecorderPlayPause"
+      >
+        <span :class="audioRecorderPlayStopIcon" class="size-4" />
+        {{ recordingAudioDurationText }}
+      </RelayButton>
+
+      <!-- Signature -->
+      <RelayButton
+        v-if="showMessageSignatureButton"
+        v-tooltip.top-end="signatureToggleTooltip"
+        variant="ghost"
+        :class="toolbarIconButtonClass"
+        @click="toggleMessageSignature"
+      >
+        <span class="i-lucide-pen-line size-4 shrink-0" />
+      </RelayButton>
+
+      <!-- Video Call -->
+      <VideoCallButton
+        v-if="!isEditorDisabled"
+        compact
+        :conversation-id="conversationId"
+      />
 
       <!-- WhatsApp Templates -->
       <RelayButton
@@ -417,76 +333,6 @@ export default {
         <span class="i-lucide-file-text size-4 shrink-0" />
       </RelayButton>
 
-      <!-- Log Call -->
-      <RelayButton
-        v-if="!isEditorDisabled"
-        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_LOG_CALL')"
-        variant="ghost"
-        :class="toolbarIconButtonClass"
-        @click="$emit('openLogCall')"
-      >
-        <span class="i-lucide-phone size-4 shrink-0" />
-      </RelayButton>
-
-      <!-- Meeting -->
-      <RelayButton
-        v-if="!isEditorDisabled"
-        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_MEETING')"
-        variant="ghost"
-        :class="toolbarIconButtonClass"
-        @click="$emit('openMeeting')"
-      >
-        <span class="i-lucide-calendar size-4 shrink-0" />
-      </RelayButton>
-
-      <!-- Audio Recorder -->
-      <RelayButton
-        v-if="showAudioRecorderButton"
-        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"
-        variant="ghost"
-        :class="[
-          toolbarIconButtonClass,
-          isRecordingAudio
-            ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600'
-            : '',
-        ]"
-        @click="toggleAudioRecorder"
-      >
-        <span
-          class="size-4 shrink-0"
-          :class="!isRecordingAudio ? 'i-lucide-mic' : 'i-lucide-mic-off'"
-        />
-      </RelayButton>
-
-      <!-- Audio Play/Pause -->
-      <RelayButton
-        v-if="showAudioPlayStopButton"
-        variant="ghost"
-        class="h-8 px-2 text-muted-foreground"
-        @click="toggleAudioRecorderPlayPause"
-      >
-        <span :class="audioRecorderPlayStopIcon" class="size-4" />
-        {{ recordingAudioDurationText }}
-      </RelayButton>
-
-      <!-- Signature -->
-      <RelayButton
-        v-if="showMessageSignatureButton"
-        v-tooltip.top-end="signatureToggleTooltip"
-        variant="ghost"
-        :class="toolbarIconButtonClass"
-        @click="toggleMessageSignature"
-      >
-        <span class="i-lucide-pen-line size-4 shrink-0" />
-      </RelayButton>
-
-      <!-- Video Call -->
-      <VideoCallButton
-        v-if="!isEditorDisabled"
-        compact
-        :conversation-id="conversationId"
-      />
-
       <!-- Quoted Reply -->
       <RelayButton
         v-if="showQuotedReplyToggle"
@@ -508,25 +354,30 @@ export default {
         v-tooltip.top-end="$t('HELP_CENTER.ARTICLE_SEARCH.OPEN_ARTICLE_SEARCH')"
         variant="ghost"
         :class="toolbarIconButtonClass"
-        @click="toggleInsertArticle"
+        @click="$emit('toggleInsertArticle')"
       >
         <span class="i-lucide-file-text size-4 shrink-0" />
       </RelayButton>
 
-      <!-- Private Note -->
+      <div
+        v-if="captainTasksEnabled && !isEditorDisabled && !isOnPrivateNote"
+        class="w-px h-4 bg-border mx-1"
+      />
+
+      <!-- AI Reply -->
       <RelayButton
-        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.PRIVATE_NOTE')"
+        v-if="captainTasksEnabled && !isEditorDisabled && !isOnPrivateNote"
+        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.AI_REPLY')"
         variant="ghost"
         :class="[
           toolbarIconButtonClass,
-          isOnPrivateNote
-            ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 hover:text-amber-700'
-            : '',
+          isCopilotActive
+            ? 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary'
+            : 'hover:bg-primary/10 hover:text-primary',
         ]"
-        :aria-pressed="isOnPrivateNote"
-        @click="togglePrivateNote"
+        @click="$emit('toggleCopilot')"
       >
-        <span class="i-lucide-sticky-note size-4 shrink-0" />
+        <span class="i-lucide-wand-sparkles size-4 shrink-0" />
       </RelayButton>
 
       <transition name="modal-fade">
@@ -542,18 +393,20 @@ export default {
       </transition>
     </div>
 
-    <!-- Right Side: Send Button -->
-    <div class="flex items-center">
+    <div class="flex items-center gap-2">
       <RelayButton
         type="submit"
         variant="default"
-        class="px-4 h-8 gap-2 font-semibold shadow-xs"
+        class="h-8 px-4 gap-1.5 font-semibold text-sm shadow-xs"
         :class="isNote ? 'bg-amber-500 text-white hover:bg-amber-600' : ''"
         :disabled="isSendDisabled"
         @click="onSend"
       >
         {{ sendButtonText }}
-        <span class="i-lucide-corner-down-left size-3.5 opacity-70" />
+        <span
+          v-if="showSendShortcutIcon"
+          class="i-lucide-corner-down-left size-3.5 opacity-70"
+        />
       </RelayButton>
     </div>
   </div>

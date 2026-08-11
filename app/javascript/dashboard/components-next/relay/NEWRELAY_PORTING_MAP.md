@@ -8,8 +8,10 @@ Reference project: `/Users/deependrasankhala/Documents/chandresh/NewRelay-UI`
 (dev server: `http://localhost:5174`). Its tokens live in `src/style.css`; ours are a
 **direct 1:1 port** in `app/javascript/dashboard/assets/scss/_relay-theme.scss`.
 
-Last synced with NewRelay-UI `main`: **2026-08-10** (commit `ba1cbcf`). §2 UI components
-unchanged; §3 gained auth, help-center, and extra settings mappings.
+Last synced with NewRelay-UI `main`: **2026-08-11** (commit `c704807`). §2 UI components
+unchanged; since `ba1cbcf`: new **inbox settings flow** mapping (§3), a **conversations
+onboarding empty state** and a restyled **sidebar network toaster** (§4). Companies /
+Contacts / Inbox views got styling refinements only — existing mappings still hold.
 
 ---
 
@@ -84,6 +86,7 @@ the matching view; the section recipes (§4) still apply.
 | `companies/CompaniesView.vue` / `contacts/ContactsView.vue` | `routes/dashboard/companies/` / `routes/dashboard/contacts/` |
 | `campaigns/{LiveChat,SMS,WhatsApp}CampaignsView.vue` | `routes/dashboard/campaigns/` |
 | `settings/SettingsView.vue` + `settings/components/*` (AgentAssignment, Bots, **CannedResponses / Quick Replies**, **CustomAttributes**, **Macros**, **Sla**, Workflows, …) | `routes/dashboard/settings/` — Quick Replies / Canned Responses = `canned/`, Custom Attributes = `attributes/` (`Index.vue`, `AttributeRow.vue`), Macros = `macros/`, SLA = `sla/` |
+| `settings/components/InboxSettingsFlow.vue` (per-inbox config; tabbed **Settings / Collaborators / Business Hours / CSAT / Pre Chat Form**) | `routes/dashboard/settings/inbox/` — `Settings.vue`, `PreChatForm/`, collaborators = `AddAgents.vue`, wrapper = `Index.vue` |
 | `settings/ProfileSettingsView.vue`, `settings/ProfileMfaView.vue` (+ `components/ProfileSettings.vue`, `ProfileMfa.vue`) | `routes/dashboard/settings/profile/` |
 | `auth/{Login,Register,ForgotPassword,SsoLogin,Onboarding2View}.vue` | Chatwoot auth = `app/javascript/v3/views/auth/` (signup, password, reset, confirmation, verify-email); login/SSO screens live there too |
 | `support/SupportView.vue` + `support/components/*` (Articles, ArticlesList, Categories, Locales, ArticleEditor, Settings, KeyboardShortcuts) | Help Center = `routes/dashboard/helpcenter/` |
@@ -176,6 +179,25 @@ Copy these; they are the NewRelay canonical markup.
   </div>
 </div>
 ```
+
+### Onboarding empty state (conversations — "connect a channel")
+Shown when no channels are connected. Centered column: `size-16 rounded-full bg-primary/10 …
+ring-8 ring-primary/5` icon → `text-base font-medium` heading → muted subtitle → a
+**getting-started stepper card** (`bg-card/50 border border-border/50 rounded-xl p-5`, "Step N
+of 4" pill = `text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase`;
+steps use `size-[22px] rounded-full` dots — done = `bg-primary` + `Check`, active = `border-2
+border-primary` + pulsing dot, connecting line `absolute left-[11px] w-px bg-border`) →
+**integration cards** grid `grid-cols-1 sm:grid-cols-2 gap-3` (connected = `border-2
+border-emerald-500 bg-emerald-50/50 dark:bg-emerald-500/10`). Wire to Chatwoot's real
+"no inboxes" onboarding state; don't fabricate step progress.
+
+### Network toaster (sidebar, restyled)
+Centered bottom pill (was top-left card): `fixed bottom-[50px] left-1/2 -translate-x-1/2
+z-[100]`, inner `flex items-center gap-3 px-4 py-2.5 rounded-full shadow-2xl border
+backdrop-blur-md`. State classes: offline `bg-destructive/10 text-destructive
+border-destructive/30`, reconnecting `bg-muted/80 text-foreground border-border/50`, online
+`bg-success/10 text-success border-success/30`. Enter/leave `Transition` slides from
+`translate-y-[60px] scale-95`.
 
 ### Heatmap cell intensity (via class binding)
 Empty `bg-muted/50 dark:bg-muted/30`; ramp `bg-primary/20 → /35 → /50 → /65 → /80 → bg-primary`

@@ -270,6 +270,7 @@ export default {
         @toggle-collapse="toggleSidebarCollapse"
         @open-search="openSearch"
         @show-create-account-modal="openCreateAccountModal"
+        @open-key-shortcut-modal="toggleKeyShortcutModal"
       />
 
       <main class="flex min-h-0 w-full flex-1 overflow-hidden bg-background">

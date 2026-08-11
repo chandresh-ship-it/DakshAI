@@ -7,6 +7,7 @@ import { useSnakeCase } from 'dashboard/composables/useTransformKeys';
 
 // components
 import ReplyBox from './ReplyBox.vue';
+import InboxReplyComposer from './InboxReplyComposer.vue';
 import MessageList from 'next/message/MessageList.vue';
 import ConversationLabelSuggestion from './conversation/LabelSuggestion.vue';
 import Banner from 'dashboard/components/ui/Banner.vue';
@@ -41,12 +42,19 @@ export default {
   components: {
     MessageList,
     ReplyBox,
+    InboxReplyComposer,
     Banner,
     ConversationLabelSuggestion,
     Spinner,
     ResizableEditorWrapper,
   },
   mixins: [inboxMixin],
+  props: {
+    isInboxView: {
+      type: Boolean,
+      default: false,
+    },
+  },
   setup() {
     const conversationPanelRef = ref(null);
     const resizableEditorWrapperRef = ref(null);
@@ -526,7 +534,17 @@ export default {
           />
         </div>
       </div>
-      <div class="p-4 bg-muted/10 shrink-0 border-t border-border">
+      <div v-if="isInboxView" class="shrink-0 px-8 py-6 bg-background">
+        <div class="max-w-4xl mx-auto w-full">
+          <ResizableEditorWrapper
+            ref="resizableEditorWrapperRef"
+            :container-height="Math.max(0, containerHeight - topBannerHeight)"
+          >
+            <InboxReplyComposer @toggle-editor-size="toggleReplyEditorSize" />
+          </ResizableEditorWrapper>
+        </div>
+      </div>
+      <div v-else class="p-4 bg-muted/10 shrink-0 border-t border-border">
         <ResizableEditorWrapper
           ref="resizableEditorWrapperRef"
           :container-height="Math.max(0, containerHeight - topBannerHeight)"

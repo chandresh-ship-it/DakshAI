@@ -2,16 +2,20 @@
 import { mapGetters } from 'vuex';
 import DyteAPI from 'dashboard/api/integrations/dyte';
 import { useAlert } from 'dashboard/composables';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton } from 'dashboard/components-next/relay';
 
 export default {
   components: {
-    NextButton,
+    RelayButton,
   },
   props: {
     conversationId: {
       type: Number,
       default: 0,
+    },
+    compact: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -47,15 +51,20 @@ export default {
 
 <!-- eslint-disable-next-line vue/no-root-v-if -->
 <template>
-  <NextButton
+  <RelayButton
     v-if="isVideoIntegrationEnabled"
     v-tooltip.top-end="
       $t('INTEGRATION_SETTINGS.DYTE.START_VIDEO_CALL_HELP_TEXT')
     "
-    icon="i-ph-video-camera"
-    slate
-    faded
-    sm
+    variant="ghost"
+    :class="
+      compact
+        ? 'h-8 w-8 shrink-0 p-0 min-h-8 min-w-8 text-muted-foreground hover:text-foreground'
+        : ''
+    "
+    :disabled="isLoading"
     @click="onClick"
-  />
+  >
+    <span class="i-lucide-video size-4 shrink-0" />
+  </RelayButton>
 </template>
