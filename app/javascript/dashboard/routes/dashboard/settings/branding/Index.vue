@@ -296,12 +296,12 @@ const handleMagicPaletteApplied = palette => {
         <!-- Brand Identity -->
         <SectionLayout
           as-card
-      :title="$t('BRANDING_SETTINGS.BRAND_IDENTITY.TITLE')"
-      :description="$t('BRANDING_SETTINGS.BRAND_IDENTITY.DESCRIPTION')"
-    >
-      <div class="space-y-8">
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div class="flex flex-col gap-2">
+          :title="$t('BRANDING_SETTINGS.BRAND_IDENTITY.TITLE')"
+          :description="$t('BRANDING_SETTINGS.BRAND_IDENTITY.DESCRIPTION')"
+        >
+          <div class="space-y-8">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div class="flex flex-col gap-2">
                 <RelayLabel html-for="company-name">
                   {{ $t('BRANDING_SETTINGS.COMPANY_NAME.LABEL') }}
                 </RelayLabel>
@@ -309,7 +309,9 @@ const handleMagicPaletteApplied = palette => {
                   id="company-name"
                   v-model="companyName"
                   class-name="h-10 shadow-xs bg-background transition-colors hover:bg-accent/30 focus:bg-background"
-                  :placeholder="$t('BRANDING_SETTINGS.COMPANY_NAME.PLACEHOLDER')"
+                  :placeholder="
+                    $t('BRANDING_SETTINGS.COMPANY_NAME.PLACEHOLDER')
+                  "
                 />
               </div>
               <div class="flex flex-col gap-2">
@@ -323,266 +325,282 @@ const handleMagicPaletteApplied = palette => {
                   :placeholder="$t('BRANDING_SETTINGS.BRAND_NAME.PLACEHOLDER')"
                 />
               </div>
-        </div>
-
-        <div>
-          <RelayLabel class="mb-4 block">
-            {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.TITLE') }}
-          </RelayLabel>
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <!-- Light Logo -->
-            <div
-              class="group flex cursor-pointer flex-col items-center rounded-xl border border-border/60 bg-card p-5 text-center shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-accent/50 hover:shadow-md"
-              @click="lightLogoInput?.click()"
-            >
-              <div
-                class="my-3 flex size-16 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border/80 bg-muted/40 transition-all duration-300 group-hover:scale-105 group-hover:border-primary/40 group-hover:bg-primary/5"
-              >
-                <img
-                  v-if="lightLogoPreview"
-                  :src="lightLogoPreview"
-                  class="size-full object-contain"
-                  :alt="$t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.TITLE')"
-                />
-                <span
-                  v-else
-                  class="i-lucide-sun size-6 text-muted-foreground/60 transition-colors group-hover:text-primary/80"
-                />
-              </div>
-              <h4 class="text-sm font-medium text-foreground">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.TITLE') }}
-              </h4>
-              <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.NOTE') }}
-              </p>
-              <input
-                ref="lightLogoInput"
-                type="file"
-                accept="image/*"
-                class="hidden"
-                @change="onLightLogoChange"
-                @click.stop
-              />
-              <RelayButton
-                variant="outline"
-                size="sm"
-                class="mt-5 h-8 w-full bg-background text-xs font-medium shadow-none transition-colors group-hover:border-transparent group-hover:bg-primary group-hover:text-primary-foreground"
-                type="button"
-                @click.stop="lightLogoInput?.click()"
-              >
-                {{
-                  lightLogoFile
-                    ? lightLogoFile.name
-                    : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
-                }}
-              </RelayButton>
             </div>
 
-            <!-- Dark Logo -->
-            <div
-              class="group flex cursor-pointer flex-col items-center rounded-xl border border-border/60 bg-card p-5 text-center shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-accent/50 hover:shadow-md"
-              @click="darkLogoInput?.click()"
-            >
-              <div
-                class="my-3 flex size-16 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border/80 bg-muted/40 transition-all duration-300 group-hover:scale-105 group-hover:border-primary/40 group-hover:bg-primary/5"
-              >
-                <img
-                  v-if="darkLogoPreview"
-                  :src="darkLogoPreview"
-                  class="size-full object-contain"
-                  :alt="$t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.TITLE')"
-                />
-                <span
-                  v-else
-                  class="i-lucide-moon size-6 text-muted-foreground/60 transition-colors group-hover:text-primary/80"
-                />
+            <div>
+              <RelayLabel class="mb-4 block">
+                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.TITLE') }}
+              </RelayLabel>
+              <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <!-- Light Logo -->
+                <div
+                  class="group flex cursor-pointer flex-col items-center rounded-xl border border-border/60 bg-card p-5 text-center shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-accent/50 hover:shadow-md"
+                  @click="lightLogoInput?.click()"
+                >
+                  <div
+                    class="my-3 flex size-16 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border/80 bg-muted/40 transition-all duration-300 group-hover:scale-105 group-hover:border-primary/40 group-hover:bg-primary/5"
+                  >
+                    <img
+                      v-if="lightLogoPreview"
+                      :src="lightLogoPreview"
+                      class="size-full object-contain"
+                      :alt="
+                        $t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.TITLE')
+                      "
+                    />
+                    <span
+                      v-else
+                      class="i-lucide-sun size-6 text-muted-foreground/60 transition-colors group-hover:text-primary/80"
+                    />
+                  </div>
+                  <h4 class="text-sm font-medium text-foreground">
+                    {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.TITLE') }}
+                  </h4>
+                  <p
+                    class="mt-1 text-[11px] leading-relaxed text-muted-foreground"
+                  >
+                    {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.LIGHT_LOGO.NOTE') }}
+                  </p>
+                  <input
+                    ref="lightLogoInput"
+                    type="file"
+                    accept="image/*"
+                    class="hidden"
+                    @change="onLightLogoChange"
+                    @click.stop
+                  />
+                  <RelayButton
+                    variant="outline"
+                    size="sm"
+                    class="mt-5 h-8 w-full bg-background text-xs font-medium shadow-none transition-colors group-hover:border-transparent group-hover:bg-primary group-hover:text-primary-foreground"
+                    type="button"
+                    @click.stop="lightLogoInput?.click()"
+                  >
+                    {{
+                      lightLogoFile
+                        ? lightLogoFile.name
+                        : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
+                    }}
+                  </RelayButton>
+                </div>
+
+                <!-- Dark Logo -->
+                <div
+                  class="group flex cursor-pointer flex-col items-center rounded-xl border border-border/60 bg-card p-5 text-center shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-accent/50 hover:shadow-md"
+                  @click="darkLogoInput?.click()"
+                >
+                  <div
+                    class="my-3 flex size-16 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border/80 bg-muted/40 transition-all duration-300 group-hover:scale-105 group-hover:border-primary/40 group-hover:bg-primary/5"
+                  >
+                    <img
+                      v-if="darkLogoPreview"
+                      :src="darkLogoPreview"
+                      class="size-full object-contain"
+                      :alt="
+                        $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.TITLE')
+                      "
+                    />
+                    <span
+                      v-else
+                      class="i-lucide-moon size-6 text-muted-foreground/60 transition-colors group-hover:text-primary/80"
+                    />
+                  </div>
+                  <h4 class="text-sm font-medium text-foreground">
+                    {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.TITLE') }}
+                  </h4>
+                  <p
+                    class="mt-1 text-[11px] leading-relaxed text-muted-foreground"
+                  >
+                    {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.NOTE') }}
+                  </p>
+                  <input
+                    ref="darkLogoInput"
+                    type="file"
+                    accept="image/*"
+                    class="hidden"
+                    @change="onDarkLogoChange"
+                    @click.stop
+                  />
+                  <RelayButton
+                    variant="outline"
+                    size="sm"
+                    class="mt-5 h-8 w-full bg-background text-xs font-medium shadow-none transition-colors group-hover:border-transparent group-hover:bg-primary group-hover:text-primary-foreground"
+                    type="button"
+                    @click.stop="darkLogoInput?.click()"
+                  >
+                    {{
+                      darkLogoFile
+                        ? darkLogoFile.name
+                        : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
+                    }}
+                  </RelayButton>
+                </div>
+
+                <!-- Favicon -->
+                <div
+                  class="group flex cursor-pointer flex-col items-center rounded-xl border border-border/60 bg-card p-5 text-center shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-accent/50 hover:shadow-md"
+                  @click="faviconInput?.click()"
+                >
+                  <div
+                    class="my-5 flex size-12 items-center justify-center overflow-hidden rounded-xl border border-dashed border-border/80 bg-muted/40 transition-all duration-300 group-hover:scale-105 group-hover:border-primary/40 group-hover:bg-primary/5"
+                  >
+                    <img
+                      v-if="faviconPreview"
+                      :src="faviconPreview"
+                      class="size-full object-contain"
+                      :alt="$t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.TITLE')"
+                    />
+                    <span
+                      v-else
+                      class="i-lucide-globe size-5 text-muted-foreground/60 transition-colors group-hover:text-primary/80"
+                    />
+                  </div>
+                  <h4 class="text-sm font-medium text-foreground">
+                    {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.TITLE') }}
+                  </h4>
+                  <p
+                    class="mt-1 text-[11px] leading-relaxed text-muted-foreground"
+                  >
+                    {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.NOTE') }}
+                  </p>
+                  <input
+                    ref="faviconInput"
+                    type="file"
+                    accept="image/x-icon,image/png,image/svg+xml"
+                    class="hidden"
+                    @change="onFaviconChange"
+                    @click.stop
+                  />
+                  <RelayButton
+                    variant="outline"
+                    size="sm"
+                    class="mt-5 h-8 w-full bg-background text-xs font-medium shadow-none transition-colors group-hover:border-transparent group-hover:bg-primary group-hover:text-primary-foreground"
+                    type="button"
+                    @click.stop="faviconInput?.click()"
+                  >
+                    {{
+                      faviconFile
+                        ? faviconFile.name
+                        : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
+                    }}
+                  </RelayButton>
+                </div>
               </div>
-              <h4 class="text-sm font-medium text-foreground">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.TITLE') }}
-              </h4>
-              <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.DARK_LOGO.NOTE') }}
-              </p>
-              <input
-                ref="darkLogoInput"
-                type="file"
-                accept="image/*"
-                class="hidden"
-                @change="onDarkLogoChange"
-                @click.stop
-              />
-              <RelayButton
-                variant="outline"
-                size="sm"
-                class="mt-5 h-8 w-full bg-background text-xs font-medium shadow-none transition-colors group-hover:border-transparent group-hover:bg-primary group-hover:text-primary-foreground"
-                type="button"
-                @click.stop="darkLogoInput?.click()"
-              >
-                {{
-                  darkLogoFile
-                    ? darkLogoFile.name
-                    : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
-                }}
-              </RelayButton>
             </div>
 
-            <!-- Favicon -->
+            <!-- Theme Preset (brand colors — light/dark stays in header) -->
             <div
-              class="group flex cursor-pointer flex-col items-center rounded-xl border border-border/60 bg-card p-5 text-center shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-accent/50 hover:shadow-md"
-              @click="faviconInput?.click()"
+              class="flex flex-col justify-between gap-4 border-t border-border/40 pt-6 md:flex-row md:items-center"
             >
-              <div
-                class="my-5 flex size-12 items-center justify-center overflow-hidden rounded-xl border border-dashed border-border/80 bg-muted/40 transition-all duration-300 group-hover:scale-105 group-hover:border-primary/40 group-hover:bg-primary/5"
-              >
-                <img
-                  v-if="faviconPreview"
-                  :src="faviconPreview"
-                  class="size-full object-contain"
-                  :alt="$t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.TITLE')"
-                />
-                <span
-                  v-else
-                  class="i-lucide-globe size-5 text-muted-foreground/60 transition-colors group-hover:text-primary/80"
-                />
+              <div>
+                <label
+                  class="flex items-center gap-2 text-sm font-medium text-foreground"
+                >
+                  <span class="i-lucide-palette size-4 text-muted-foreground" />
+                  {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.TITLE') }}
+                </label>
+                <p class="mt-1 text-sm text-muted-foreground">
+                  {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.DESCRIPTION') }}
+                </p>
               </div>
-              <h4 class="text-sm font-medium text-foreground">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.TITLE') }}
-              </h4>
-              <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.FAVICON.NOTE') }}
-              </p>
-              <input
-                ref="faviconInput"
-                type="file"
-                accept="image/x-icon,image/png,image/svg+xml"
-                class="hidden"
-                @change="onFaviconChange"
-                @click.stop
+              <ThemePresetSwitcher
+                :theme-preset="themePresetId"
+                :primary="primaryColor"
+                :secondary="secondaryColor"
+                :accent="accentColor"
+                :background="backgroundColor"
+                @select="applyPreset"
               />
-              <RelayButton
-                variant="outline"
-                size="sm"
-                class="mt-5 h-8 w-full bg-background text-xs font-medium shadow-none transition-colors group-hover:border-transparent group-hover:bg-primary group-hover:text-primary-foreground"
-                type="button"
-                @click.stop="faviconInput?.click()"
-              >
-                {{
-                  faviconFile
-                    ? faviconFile.name
-                    : $t('BRANDING_SETTINGS.LOGO_SETTINGS.CHOOSE_FILE')
-                }}
-              </RelayButton>
             </div>
           </div>
-        </div>
-
-        <!-- Theme Preset (brand colors — light/dark stays in header) -->
-        <div
-          class="flex flex-col justify-between gap-4 border-t border-border/40 pt-6 md:flex-row md:items-center"
-        >
-          <div>
-            <label
-              class="flex items-center gap-2 text-sm font-medium text-foreground"
-            >
-              <span class="i-lucide-palette size-4 text-muted-foreground" />
-              {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.TITLE') }}
-            </label>
-            <p class="mt-1 text-sm text-muted-foreground">
-              {{ $t('BRANDING_SETTINGS.THEME_SETTINGS.DESCRIPTION') }}
-            </p>
-          </div>
-          <ThemePresetSwitcher
-            :theme-preset="themePresetId"
-            :primary="primaryColor"
-            :secondary="secondaryColor"
-            :accent="accentColor"
-            :background="backgroundColor"
-            @select="applyPreset"
-          />
-        </div>
-      </div>
-    </SectionLayout>
+        </SectionLayout>
 
         <!-- Brand Colors -->
-    <SectionLayout
-      as-card
-      :title="$t('BRANDING_SETTINGS.COLOR_SETTINGS.TITLE')"
-      inline-header
-      :description="$t('BRANDING_SETTINGS.COLOR_SETTINGS.DESCRIPTION')"
-    >
-      <template #headerActions>
-        <div class="flex flex-wrap gap-2">
-          <RelayButton
-            variant="outline"
-            class="h-9 gap-2 text-[13px] shadow-none"
-            type="button"
-            @click="isMagicModalOpen = true"
-          >
-            <span class="i-lucide-globe size-3.5" />
-            {{ $t('BRANDING_SETTINGS.MAGIC_AI.GENERATE_FROM_WEBSITE') }}
-          </RelayButton>
-          <RelayButton
-            variant="outline"
-            class="h-9 text-[13px] shadow-none"
-            type="button"
-            @click="handleResetColors"
-          >
-            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.RESET') }}
-          </RelayButton>
-        </div>
-      </template>
+        <SectionLayout
+          as-card
+          :title="$t('BRANDING_SETTINGS.COLOR_SETTINGS.TITLE')"
+          inline-header
+          :description="$t('BRANDING_SETTINGS.COLOR_SETTINGS.DESCRIPTION')"
+        >
+          <template #headerActions>
+            <div class="flex flex-wrap gap-2">
+              <RelayButton
+                variant="outline"
+                class="h-9 gap-2 text-[13px] shadow-none"
+                type="button"
+                @click="isMagicModalOpen = true"
+              >
+                <span class="i-lucide-globe size-3.5" />
+                {{ $t('BRANDING_SETTINGS.MAGIC_AI.GENERATE_FROM_WEBSITE') }}
+              </RelayButton>
+              <RelayButton
+                variant="outline"
+                class="h-9 text-[13px] shadow-none"
+                type="button"
+                @click="handleResetColors"
+              >
+                {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.RESET') }}
+              </RelayButton>
+            </div>
+          </template>
 
-      <div class="border-t border-border/40 p-4 sm:p-6">
+          <div class="border-t border-border/40 p-4 sm:p-6">
             <div class="flex flex-wrap items-center gap-8">
-        <div>
-          <span class="mb-3 block text-xs font-medium text-muted-foreground">
-            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PRIMARY') }}
-          </span>
-          <ColorPicker v-model="primaryColor" />
-        </div>
-        <div>
-          <span class="mb-3 block text-xs font-medium text-muted-foreground">
-            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.SECONDARY') }}
-          </span>
-          <ColorPicker v-model="secondaryColor" />
-        </div>
-        <div>
-          <span class="mb-3 block text-xs font-medium text-muted-foreground">
-            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.ACCENT') }}
-          </span>
-          <ColorPicker v-model="accentColor" />
-        </div>
-        <div>
-          <span class="mb-3 block text-xs font-medium text-muted-foreground">
-            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.TEXT') }}
-          </span>
-          <ColorPicker v-model="textColor" />
+              <div>
+                <span
+                  class="mb-3 block text-xs font-medium text-muted-foreground"
+                >
+                  {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PRIMARY') }}
+                </span>
+                <ColorPicker v-model="primaryColor" />
               </div>
+              <div>
+                <span
+                  class="mb-3 block text-xs font-medium text-muted-foreground"
+                >
+                  {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.SECONDARY') }}
+                </span>
+                <ColorPicker v-model="secondaryColor" />
+              </div>
+              <div>
+                <span
+                  class="mb-3 block text-xs font-medium text-muted-foreground"
+                >
+                  {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.ACCENT') }}
+                </span>
+                <ColorPicker v-model="accentColor" />
+              </div>
+              <div>
+                <span
+                  class="mb-3 block text-xs font-medium text-muted-foreground"
+                >
+                  {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.TEXT') }}
+                </span>
+                <ColorPicker v-model="textColor" />
+              </div>
+            </div>
           </div>
-      </div>
-    </SectionLayout>
+        </SectionLayout>
 
-    <div
-      class="flex justify-end gap-3 border-t border-border/40 pb-2 pt-8"
-    >
-      <RelayButton variant="outline" type="button" @click="handleCancel">
-        {{ $t('BRANDING_SETTINGS.CANCEL') }}
-      </RelayButton>
-      <RelayButton
-        type="button"
-        class="shadow-sm"
-        :disabled="isUpdating"
-        @click="handleSave"
-      >
-        {{ $t('BRANDING_SETTINGS.SAVE') }}
-      </RelayButton>
-    </div>
+        <div class="flex justify-end gap-3 border-t border-border/40 pb-2 pt-8">
+          <RelayButton variant="outline" type="button" @click="handleCancel">
+            {{ $t('BRANDING_SETTINGS.CANCEL') }}
+          </RelayButton>
+          <RelayButton
+            type="button"
+            class="shadow-sm"
+            :disabled="isUpdating"
+            @click="handleSave"
+          >
+            {{ $t('BRANDING_SETTINGS.SAVE') }}
+          </RelayButton>
+        </div>
 
-    <MagicBrandingModal
-      :show="isMagicModalOpen"
-      @close="isMagicModalOpen = false"
-      @apply="handleMagicPaletteApplied"
-    />
+        <MagicBrandingModal
+          :show="isMagicModalOpen"
+          @close="isMagicModalOpen = false"
+          @apply="handleMagicPaletteApplied"
+        />
       </div>
     </template>
   </SettingsLayout>

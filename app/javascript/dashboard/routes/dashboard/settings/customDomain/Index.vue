@@ -8,11 +8,12 @@ import { useAlert } from 'dashboard/composables';
 import { useBranding } from 'shared/composables/useBranding';
 import AccountAPI from 'dashboard/api/account';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
+import SettingsLayout from '../SettingsLayout.vue';
 import SectionLayout from '../account/components/SectionLayout.vue';
 import {
   RelayButton,
   RelayInput,
+  RelayLabel,
   RelaySwitch,
 } from 'dashboard/components-next/relay';
 
@@ -27,6 +28,7 @@ const isFeatureEnabledonAccount = useMapGetter(
 const getAccount = useMapGetter('accounts/getAccount');
 const uiFlags = useMapGetter('accounts/getUIFlags');
 const isUpdating = computed(() => uiFlags.value.isUpdating);
+const isFetchingItem = computed(() => uiFlags.value.isFetchingItem);
 
 const customDomain = ref('');
 const activeAccount = computed(() => getAccount.value(accountId.value));
@@ -212,118 +214,114 @@ const handleRemove = async event => {
 </script>
 
 <template>
-  <div class="flex w-full max-w-3xl flex-col gap-8 ltr:mr-auto rtl:ml-auto">
-    <BaseSettingsHeader
-      :title="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PAGE_TITLE')"
-      :description="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PAGE_DESCRIPTION')"
-      feature-name="branding"
-    />
-
-    <SectionLayout
-      :title="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.EXPERIENCE_TITLE')"
-      :description="
-        $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.EXPERIENCE_DESCRIPTION')
-      "
-      as-card
-    >
-      <div class="flex flex-col gap-8">
-        <div class="max-w-xl space-y-2">
-          <label class="text-sm font-medium text-foreground">
-            {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.LABEL') }}
-          </label>
-          <form
-            class="mt-1 flex items-center gap-3"
-            @submit.prevent="handleVerify"
-          >
-            <template v-if="!isVerified">
-              <RelayInput
-                v-model="customDomain"
-                class-name="h-10 flex-1"
-                :placeholder="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PLACEHOLDER')"
-              />
-              <RelayButton
-                type="button"
-                variant="outline"
-                size="lg"
-                class="shrink-0 px-6 font-medium shadow-none"
-                :disabled="isUpdating || !normalizedDomain"
-                @click="handleVerify"
-              >
-                <span
-                  v-if="isUpdating"
-                  class="i-lucide-loader-2 size-4 animate-spin"
-                />
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VERIFY') }}
-              </RelayButton>
-              <RelayButton
-                v-if="hasSavedDomain"
-                type="button"
-                variant="outline"
-                size="lg"
-                class="shrink-0 px-6 font-medium shadow-none"
-                :disabled="isUpdating"
-                @click="handleRemove"
-              >
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.REMOVE') }}
-              </RelayButton>
-            </template>
-            <template v-else>
-              <div
-                class="flex h-10 min-w-0 flex-1 items-center justify-between rounded-md border border-border bg-background px-3 text-sm shadow-xs"
-              >
-                <span class="truncate text-foreground">{{ customDomain }}</span>
-                <span
-                  class="ml-2 inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700"
-                >
-                  {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VERIFIED') }}
-                  <span class="i-lucide-check-circle-2 size-3" />
-                </span>
-              </div>
-              <RelayButton
-                type="button"
-                variant="outline"
-                size="lg"
-                class="shrink-0 px-6 font-medium shadow-none"
-                :disabled="isUpdating"
-                @click="handleRemove"
-              >
-                <span
-                  v-if="isUpdating"
-                  class="i-lucide-loader-2 size-4 animate-spin"
-                />
-                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.REMOVE') }}
-              </RelayButton>
-            </template>
-          </form>
-
-          <p
-            v-if="!isVerified && normalizedDomain && isPending"
-            class="text-sm font-semibold text-amber-500"
-          >
-            {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PENDING') }}
-          </p>
-          <p
-            v-else-if="!isVerified"
-            class="text-[13px] leading-relaxed text-muted-foreground"
-          >
-            {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.AUTO_CONNECT_LABEL') }}
-          </p>
-        </div>
-
-        <div
-          v-if="showDnsInstructions"
-          class="flex flex-col gap-5 rounded-xl border border-border bg-muted/40 p-4"
+  <SettingsLayout :is-loading="isFetchingItem">
+    <template #body>
+      <div class="flex w-full max-w-3xl flex-col gap-8 ltr:mr-auto rtl:ml-auto">
+        <SectionLayout
+          as-card
+          :title="$t('BRANDING_SETTINGS.CUSTOM_DOMAIN.EXPERIENCE_TITLE')"
+          :description="
+            $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.EXPERIENCE_DESCRIPTION')
+          "
         >
-          <div v-if="!isRootDomain" class="flex flex-col gap-3">
-            <p class="text-xs font-semibold text-foreground">
-              {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_1_TITLE') }}
-            </p>
-            <p class="text-xs text-muted-foreground">
-              {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
-            </p>
+          <div class="flex flex-col gap-8">
+            <div class="flex max-w-xl flex-col gap-2">
+              <RelayLabel html-for="custom-domain">
+                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.LABEL') }}
+              </RelayLabel>
+              <form class="flex items-center gap-3" @submit.prevent="handleVerify">
+                <template v-if="!isVerified">
+                  <RelayInput
+                    id="custom-domain"
+                    v-model="customDomain"
+                    class-name="h-10 shadow-xs flex-1"
+                    :placeholder="
+                      $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PLACEHOLDER')
+                    "
+                  />
+                  <RelayButton
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    class="shrink-0 px-6 font-medium shadow-none"
+                    :disabled="isUpdating || !normalizedDomain"
+                    @click="handleVerify"
+                  >
+                    <span
+                      v-if="isUpdating"
+                      class="i-lucide-loader-2 size-4 animate-spin"
+                    />
+                    {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VERIFY') }}
+                  </RelayButton>
+                  <RelayButton
+                    v-if="hasSavedDomain"
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    class="shrink-0 px-6 font-medium shadow-none"
+                    :disabled="isUpdating"
+                    @click="handleRemove"
+                  >
+                    {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.REMOVE') }}
+                  </RelayButton>
+                </template>
+                <template v-else>
+                  <div
+                    class="flex h-10 min-w-0 flex-1 items-center justify-between rounded-md border border-border bg-background px-3 text-sm shadow-xs"
+                  >
+                    <span class="truncate text-foreground">{{ customDomain }}</span>
+                    <span
+                      class="ml-2 inline-flex shrink-0 items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[12px] font-medium text-emerald-600"
+                    >
+                      {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.VERIFIED') }}
+                      <span class="i-lucide-check-circle-2 size-3" />
+                    </span>
+                  </div>
+                  <RelayButton
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    class="shrink-0 px-6 font-medium shadow-none"
+                    :disabled="isUpdating"
+                    @click="handleRemove"
+                  >
+                    <span
+                      v-if="isUpdating"
+                      class="i-lucide-loader-2 size-4 animate-spin"
+                    />
+                    {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.REMOVE') }}
+                  </RelayButton>
+                </template>
+              </form>
+
+              <p
+                v-if="!isVerified && normalizedDomain && isPending"
+                class="text-sm font-semibold text-amber-500"
+              >
+                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.PENDING') }}
+              </p>
+              <p
+                v-else-if="!isVerified"
+                class="text-[13px] leading-relaxed text-muted-foreground"
+              >
+                {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.AUTO_CONNECT_LABEL') }}
+              </p>
+            </div>
+
             <div
-              class="grid grid-cols-[80px_1fr] gap-x-4 gap-y-2 rounded-lg border border-border bg-background p-3 text-xs"
+              v-if="showDnsInstructions"
+              class="flex flex-col gap-5 rounded-xl border border-border bg-muted/40 p-4"
             >
+              <div v-if="!isRootDomain" class="flex flex-col gap-3">
+              <p class="text-xs font-semibold text-foreground">
+              {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_1_TITLE') }}
+              </p>
+              <p class="text-xs text-muted-foreground">
+              {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.CNAME_INSTRUCTION') }}
+              </p>
+              <div
+              class="grid grid-cols-[80px_1fr] gap-x-4 gap-y-2 rounded-lg border border-border bg-background p-3 text-xs"
+              >
               <span class="text-muted-foreground">{{
                 $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TYPE')
               }}</span>
@@ -344,25 +342,25 @@ const handleRemove = async event => {
                 class="select-all bg-transparent p-0 font-mono font-semibold text-foreground"
                 >{{ cnameTarget }}</code
               >
-            </div>
-          </div>
+              </div>
+              </div>
 
-          <hr v-if="showTxtOption && !isRootDomain" class="border-border" />
+              <hr v-if="showTxtOption && !isRootDomain" class="border-border" />
 
-          <div v-if="showTxtOption" class="flex flex-col gap-3">
-            <p class="text-xs font-semibold text-foreground">
+              <div v-if="showTxtOption" class="flex flex-col gap-3">
+              <p class="text-xs font-semibold text-foreground">
               {{
                 isRootDomain
                   ? $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.ROOT_RECORDS_TITLE')
                   : $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.OPTION_2_TITLE')
               }}
-            </p>
-            <p class="text-xs text-muted-foreground">
+              </p>
+              <p class="text-xs text-muted-foreground">
               {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.TXT_INSTRUCTION') }}
-            </p>
-            <div
+              </p>
+              <div
               class="flex flex-col gap-3 rounded-lg border border-border bg-background p-3"
-            >
+              >
               <div
                 class="grid grid-cols-[80px_1fr] gap-x-4 gap-y-2 border-b border-border pb-3 text-xs"
                 :class="{ 'border-b-0 pb-0': !serverIp }"
@@ -421,22 +419,24 @@ const handleRemove = async event => {
                   >{{ serverIp }}</code
                 >
               </div>
+              </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <RelayLabel>
+                  {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.WHITE_LABEL.TITLE') }}
+                </RelayLabel>
+                <RelaySwitch :model-value="isWhiteLabelEnabled" disabled />
+              </div>
+              <p class="pr-12 text-[13px] leading-relaxed text-muted-foreground">
+                {{ whiteLabelDescription }}
+              </p>
             </div>
           </div>
-        </div>
-
-        <div>
-          <div class="mb-1 flex items-center justify-between">
-            <label class="text-sm font-medium text-foreground">
-              {{ $t('BRANDING_SETTINGS.CUSTOM_DOMAIN.WHITE_LABEL.TITLE') }}
-            </label>
-            <RelaySwitch :model-value="isWhiteLabelEnabled" disabled />
-          </div>
-          <p class="pr-12 text-sm leading-relaxed text-muted-foreground">
-            {{ whiteLabelDescription }}
-          </p>
-        </div>
+        </SectionLayout>
       </div>
-    </SectionLayout>
-  </div>
+    </template>
+  </SettingsLayout>
 </template>
