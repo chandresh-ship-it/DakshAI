@@ -194,11 +194,7 @@ export default {
         :disabled="disabled || isReplyRestricted"
         @click="handleReplyClick"
       >
-        {{
-          contactName
-            ? `Reply to ${contactName}`
-            : $t('CONVERSATION.REPLYBOX.REPLY')
-        }}
+        {{ $t('CONVERSATION.REPLYBOX.REPLY') }}
       </button>
 
       <!-- AI Reply -->

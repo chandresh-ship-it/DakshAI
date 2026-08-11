@@ -16,6 +16,10 @@ defineProps({
     type: String,
     default: '',
   },
+  placeholder: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits([
@@ -44,6 +48,10 @@ const onSend = () => {
   emit('send', copilotEditorContent.value);
   copilotEditorContent.value = '';
 };
+
+const getPromptContent = () => copilotEditorContent.value;
+
+defineExpose({ getPromptContent });
 </script>
 
 <template>
@@ -63,6 +71,7 @@ const onSend = () => {
       v-model="copilotEditorContent"
       class="copilot-editor"
       :generated-content="generatedContent"
+      :placeholder="placeholder"
       :min-height="4"
       :enabled-menu-options="[]"
       @focus="onFocus"
@@ -73,11 +82,11 @@ const onSend = () => {
     <div
       v-else-if="isGeneratingContent"
       key="loading-state"
-      class="bg-n-iris-5 rounded min-h-[4.75rem] w-full mb-4 p-4 flex items-start"
+      class="bg-primary/5 dark:bg-primary/10 rounded-md min-h-[4.75rem] w-full mb-2 p-4 flex items-start"
     >
       <div class="flex items-center gap-2">
-        <CaptainLoader class="text-n-iris-10 size-4" />
-        <span class="text-sm text-n-iris-10">
+        <CaptainLoader class="text-primary size-4" />
+        <span class="text-sm text-muted-foreground">
           {{ $t('CONVERSATION.REPLYBOX.COPILOT_THINKING') }}
         </span>
       </div>

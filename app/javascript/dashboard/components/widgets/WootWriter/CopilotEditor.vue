@@ -13,14 +13,12 @@ import {
 
 import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 
-import NextButton from 'dashboard/components-next/button/Button.vue';
-
 const props = defineProps({
   modelValue: { type: String, default: '' },
   editorId: { type: String, default: '' },
   placeholder: {
     type: String,
-    default: 'Give copilot additional prompts, or ask anything else...',
+    default: 'Write a prompt for the AI to generate a reply...',
   },
   generatedContent: { type: String, default: '' },
   autofocus: {
@@ -136,6 +134,8 @@ const enabledMenuOptions = computed(() => {
   return [];
 });
 
+const hasGeneratedContent = computed(() => !!props.generatedContent?.trim());
+
 function reloadState() {
   state = createState(
     props.modelValue,
@@ -203,24 +203,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-2 mb-4">
-    <div class="overflow-y-auto max-h-56">
+  <div class="mb-2">
+    <div
+      v-if="hasGeneratedContent"
+      class="overflow-y-auto max-h-56 mb-2 px-1"
+    >
       <p
         v-dompurify-html="formatMessage(generatedContent, false)"
-        class="text-n-iris-12 text-sm prose-sm font-normal !mb-4"
+        class="text-foreground text-sm prose-sm font-normal"
       />
     </div>
-    <div class="editor-root relative editor--copilot space-x-2">
+    <div class="editor-root relative editor--copilot">
       <div ref="editor" />
-      <div class="flex items-center justify-end absolute right-2 bottom-2">
-        <NextButton
-          class="bg-n-iris-9 text-white !rounded-full"
-          icon="i-lucide-arrow-up"
-          solid
-          sm
-          @click="handleSubmit"
-        />
-      </div>
     </div>
   </div>
 </template>
@@ -229,17 +223,17 @@ onMounted(() => {
 @import '@chatwoot/prosemirror-schema/src/styles/base.scss';
 
 .editor--copilot {
-  @apply bg-n-iris-5 rounded;
+  @apply bg-primary/5 dark:bg-primary/10 rounded-md;
 
   .ProseMirror-woot-style {
     min-height: 5rem;
     max-height: 7.5rem !important;
     overflow: auto;
-    @apply px-2 !important;
+    @apply px-4 py-3 !important;
 
     .empty-node {
       &::before {
-        @apply text-n-iris-9 dark:text-n-iris-11;
+        @apply text-muted-foreground;
       }
     }
   }

@@ -1,22 +1,17 @@
 <script setup>
-import { useAlert } from 'dashboard/composables';
-import AddCanned from './AddCanned.vue';
-import EditCanned from './EditCanned.vue';
-import SettingsLayout from '../SettingsLayout.vue';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useStoreGetters, useStore } from 'dashboard/composables/store';
 import { picoSearch } from '@scmmishra/pico-search';
+import { useAlert } from 'dashboard/composables';
+import { useStoreGetters, useStore } from 'dashboard/composables/store';
 import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 
-import Button from 'dashboard/components-next/button/Button.vue';
-import Icon from 'dashboard/components-next/icon/Icon.vue';
+import AddCanned from './AddCanned.vue';
+import EditCanned from './EditCanned.vue';
 import {
-  BaseTable,
-  BaseTableRow,
-  BaseTableCell,
-} from 'dashboard/components-next/table';
+  RelayButton,
+  RelayInput,
+} from 'dashboard/components-next/relay';
 
 defineOptions({
   name: 'CannedResponseSettings',
@@ -25,7 +20,6 @@ defineOptions({
 const getters = useStoreGetters();
 const store = useStore();
 const { t } = useI18n();
-
 const { getPlainText } = useMessageFormatter();
 
 const showAddPopup = ref(false);
@@ -50,6 +44,7 @@ const filteredRecords = computed(() => {
     'content',
   ]);
 });
+
 const uiFlags = computed(() => getters.getUIFlags.value);
 
 const deleteConfirmText = computed(
@@ -83,7 +78,7 @@ onMounted(() => {
 });
 
 const showAlertMessage = message => {
-  loading[activeResponse.value.id] = false;
+  loading.value[activeResponse.value.id] = false;
   activeResponse.value = {};
   cannedResponseAPI.value.message = message;
   useAlert(message);
@@ -125,127 +120,169 @@ const deleteCannedResponse = async id => {
 };
 
 const confirmDeletion = () => {
-  loading[activeResponse.value.id] = true;
+  loading.value[activeResponse.value.id] = true;
   closeDeletePopup();
   deleteCannedResponse(activeResponse.value.id);
 };
-
-const tableHeaders = computed(() => {
-  return [
-    t('CANNED_MGMT.LIST.TABLE_HEADER.SHORT_CODE'),
-    t('CANNED_MGMT.LIST.TABLE_HEADER.ACTIONS'),
-  ];
-});
 </script>
 
 <template>
-  <SettingsLayout
-    :is-loading="uiFlags.fetchingList"
-    :loading-message="$t('CANNED_MGMT.LOADING')"
-    :no-records-found="!records.length"
-    :no-records-message="$t('CANNED_MGMT.LIST.404')"
-  >
-    <template #header>
-      <BaseSettingsHeader
-        v-model:search-query="searchQuery"
-        :title="$t('CANNED_MGMT.HEADER')"
-        :description="$t('CANNED_MGMT.DESCRIPTION')"
-        :link-text="$t('CANNED_MGMT.LEARN_MORE')"
-        :search-placeholder="$t('CANNED_MGMT.SEARCH_PLACEHOLDER')"
-        feature-name="canned_responses"
+  <div class="px-8 pt-6 pb-12 flex flex-col gap-6 max-w-[1200px]">
+    <!-- Main Card Container -->
+    <div
+      class="bg-card border border-border/80 rounded-2xl p-6 shadow-xs flex flex-col gap-6"
+    >
+      <!-- Header Section -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-start justify-between gap-4"
       >
-        <template v-if="records?.length" #count>
-          <span class="text-body-main text-n-slate-11">
-            {{ $t('CANNED_MGMT.COUNT', { n: records.length }) }}
-          </span>
-        </template>
-        <template #actions>
-          <Button
-            :label="$t('CANNED_MGMT.HEADER_BTN_TXT')"
-            size="sm"
-            @click="openAddPopup"
+        <div class="flex flex-col">
+          <h1 class="text-xl font-semibold tracking-tight text-foreground">
+            {{ $t('CANNED_MGMT.HEADER', 'Quick Replies') }}
+          </h1>
+          <p class="mt-1 text-sm text-muted-foreground max-w-2xl leading-relaxed">
+            {{
+              $t(
+                'CANNED_MGMT.DESCRIPTION',
+                'Quick Replies are pre-written templates that help you quickly respond to a conversation. Agents can type the \'/\' character followed by the shortcode to insert a quick reply during a conversation.'
+              )
+            }}
+          </p>
+        </div>
+        <RelayButton
+          size="sm"
+          class="shrink-0 shadow-xs"
+          @click="openAddPopup"
+        >
+          <span class="i-lucide-plus size-4 mr-1.5" />
+          {{ $t('CANNED_MGMT.HEADER_BTN_TXT', 'Add reply') }}
+        </RelayButton>
+      </div>
+
+      <!-- Search Bar & Counter Bar -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/20 border border-border/60 rounded-xl p-3"
+      >
+        <div class="relative flex-1 max-w-md">
+          <span
+            class="i-lucide-search absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60"
           />
-        </template>
-      </BaseSettingsHeader>
-    </template>
+          <RelayInput
+            v-model="searchQuery"
+            type="text"
+            :placeholder="
+              $t('CANNED_MGMT.SEARCH_PLACEHOLDER', 'Search quick reply...')
+            "
+            class-name="h-9 pl-9 pr-4 text-sm bg-background border-border/80 focus-visible:ring-1 focus-visible:ring-primary/30"
+          />
+        </div>
+        <div class="text-xs font-medium text-muted-foreground px-1 shrink-0">
+          {{ filteredRecords.length }}
+          {{ $t('CANNED_MGMT.COUNT_SUFFIX', 'quick replies') }}
+        </div>
+      </div>
 
-    <template #body>
-      <BaseTable
-        :headers="tableHeaders"
-        :items="filteredRecords"
-        :no-data-message="
-          !records.length
-            ? $t('CANNED_MGMT.LIST.404')
-            : searchQuery
-              ? $t('CANNED_MGMT.NO_RESULTS')
-              : ''
-        "
+      <!-- Table Section -->
+      <div
+        class="w-full border border-border/60 rounded-xl overflow-hidden bg-card"
       >
-        <template #header-0>
-          <button
-            class="flex items-center gap-2 p-0 cursor-pointer"
-            @click="toggleSort"
-          >
-            <span class="mb-0">
-              {{ tableHeaders[0] }}
-            </span>
-            <Icon
-              class="size-5 text-n-slate-11 flex-shrink-0"
-              :icon="
-                sortOrder === 'desc'
-                  ? 'i-woot-sort-descending'
-                  : 'i-woot-sort-ascending'
-              "
-            />
-          </button>
-        </template>
-        <template #header-1>
-          {{ tableHeaders[1] }}
-        </template>
+        <div v-if="uiFlags.fetchingList" class="p-8 text-center text-sm text-muted-foreground">
+          <span class="i-lucide-loader-2 size-5 animate-spin mx-auto mb-2 text-primary" />
+          <p>{{ $t('CANNED_MGMT.LOADING', 'Loading quick replies...') }}</p>
+        </div>
 
-        <template #row="{ items }">
-          <BaseTableRow
-            v-for="cannedItem in items"
-            :key="cannedItem.short_code"
-            :item="cannedItem"
-          >
-            <template #default>
-              <BaseTableCell class="max-w-0">
-                <div class="flex flex-col gap-2 min-w-0">
-                  <span class="text-heading-3 text-n-slate-12 truncate block">
-                    {{ cannedItem.short_code }}
-                  </span>
-                  <p class="text-body-main text-n-slate-11 line-clamp-5">
-                    {{ getPlainText(cannedItem.content) }}
-                  </p>
+        <div
+          v-else-if="!filteredRecords.length"
+          class="p-12 text-center text-sm text-muted-foreground"
+        >
+          <span class="i-lucide-message-square-off size-8 mx-auto mb-3 opacity-40" />
+          <p class="font-medium text-foreground">
+            {{
+              searchQuery
+                ? $t('CANNED_MGMT.NO_RESULTS', 'No matching quick replies found')
+                : $t('CANNED_MGMT.LIST.404', 'No quick replies available')
+            }}
+          </p>
+        </div>
+
+        <table v-else class="w-full text-left border-collapse text-[13.5px]">
+          <thead>
+            <tr
+              class="border-b border-border/60 bg-muted/30 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
+            >
+              <th class="py-3 px-5 w-48">
+                <button
+                  class="flex items-center gap-1.5 font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  @click="toggleSort"
+                >
+                  <span>{{ $t('CANNED_MGMT.LIST.TABLE_HEADER.SHORT_CODE', 'SHORT CODE') }}</span>
+                  <span
+                    class="i-lucide-arrow-up-down size-3.5 opacity-60"
+                  />
+                </button>
+              </th>
+              <th class="py-3 px-5">
+                {{ $t('CANNED_MGMT.LIST.TABLE_HEADER.CONTENT', 'MESSAGE') }}
+              </th>
+              <th class="py-3 px-5 text-right w-24">
+                {{ $t('CANNED_MGMT.LIST.TABLE_HEADER.ACTIONS', 'ACTIONS') }}
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/50">
+            <tr
+              v-for="cannedItem in filteredRecords"
+              :key="cannedItem.id || cannedItem.short_code"
+              class="group hover:bg-muted/30 transition-colors"
+            >
+              <!-- Shortcode Badge Column -->
+              <td class="py-3.5 px-5 font-medium align-top">
+                <div
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-mono font-medium"
+                >
+                  <span class="i-lucide-terminal size-3 opacity-70" />
+                  {{ cannedItem.short_code }}
                 </div>
-              </BaseTableCell>
+              </td>
 
-              <BaseTableCell align="end" class="w-24">
-                <div class="flex gap-3 justify-end flex-shrink-0">
-                  <Button
-                    v-tooltip.top="$t('CANNED_MGMT.EDIT.BUTTON_TEXT')"
-                    icon="i-woot-edit-pen"
-                    slate
-                    sm
+              <!-- Message Content Column -->
+              <td class="py-3.5 px-5 text-foreground leading-relaxed align-top">
+                <p class="line-clamp-3">
+                  {{ getPlainText(cannedItem.content) }}
+                </p>
+              </td>
+
+              <!-- Actions Column -->
+              <td class="py-3.5 px-5 text-right align-top">
+                <div class="flex items-center justify-end gap-1">
+                  <RelayButton
+                    v-tooltip.top="$t('CANNED_MGMT.EDIT.BUTTON_TEXT', 'Edit')"
+                    variant="ghost"
+                    size="icon"
+                    class="size-8 text-muted-foreground hover:text-foreground"
                     @click="openEditPopup(cannedItem)"
-                  />
-                  <Button
-                    v-tooltip.top="$t('CANNED_MGMT.DELETE.BUTTON_TEXT')"
-                    icon="i-woot-bin"
-                    slate
-                    sm
-                    class="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"
-                    :is-loading="loading[cannedItem.id]"
+                  >
+                    <span class="i-lucide-pencil size-3.5" />
+                  </RelayButton>
+                  <RelayButton
+                    v-tooltip.top="$t('CANNED_MGMT.DELETE.BUTTON_TEXT', 'Delete')"
+                    variant="ghost"
+                    size="icon"
+                    class="size-8 text-muted-foreground hover:text-destructive"
+                    :disabled="loading[cannedItem.id]"
                     @click="openDeletePopup(cannedItem)"
-                  />
+                  >
+                    <span class="i-lucide-trash-2 size-3.5" />
+                  </RelayButton>
                 </div>
-              </BaseTableCell>
-            </template>
-          </BaseTableRow>
-        </template>
-      </BaseTable>
-    </template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modals -->
     <woot-modal v-model:show="showAddPopup" :on-close="hideAddPopup">
       <AddCanned :on-close="hideAddPopup" />
     </woot-modal>
@@ -270,5 +307,5 @@ const tableHeaders = computed(() => {
       :confirm-text="deleteConfirmText"
       :reject-text="deleteRejectText"
     />
-  </SettingsLayout>
+  </div>
 </template>

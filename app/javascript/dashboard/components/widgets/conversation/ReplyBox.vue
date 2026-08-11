@@ -11,7 +11,6 @@ import AttachmentPreview from 'dashboard/components/widgets/AttachmentsPreview.v
 import ReplyTopPanel from 'dashboard/components/widgets/WootWriter/ReplyTopPanel.vue';
 import ReplyEmailHead from './ReplyEmailHead.vue';
 import ReplyBottomPanel from 'dashboard/components/widgets/WootWriter/ReplyBottomPanel.vue';
-import CopilotReplyBottomPanel from 'dashboard/components/widgets/WootWriter/CopilotReplyBottomPanel.vue';
 import ArticleSearchPopover from 'dashboard/routes/dashboard/helpcenter/components/ArticleSearch/SearchPopover.vue';
 import CopilotEditorSection from './CopilotEditorSection.vue';
 import MessageSignatureMissingAlert from './MessageSignatureMissingAlert.vue';
@@ -76,7 +75,6 @@ export default {
     WootMessageEditor,
     QuotedEmailPreview,
     CopilotEditorSection,
-    CopilotReplyBottomPanel,
   },
   mixins: [inboxMixin, fileUploadMixin, keyboardEventListenerMixins],
   emits: ['toggleEditorSize'],
@@ -91,6 +89,7 @@ export default {
 
     const replyEditor = useTemplateRef('replyEditor');
     const messageEditor = useTemplateRef('messageEditor');
+    const copilotEditorSection = useTemplateRef('copilotEditorSection');
     const copilot = useCopilotReply();
     return {
       uiSettings,
@@ -100,6 +99,7 @@ export default {
       fetchQuotedReplyFlagFromUISettings,
       replyEditor,
       messageEditor,
+      copilotEditorSection,
       copilot,
     };
   },
@@ -225,6 +225,15 @@ export default {
     isReplyButtonDisabled() {
       if (this.isEditorDisabled) return true;
       if (this.isATwitterInbox) return true;
+      if (this.copilot.isActive.value && this.copilot.isGenerating.value) {
+        return true;
+      }
+      if (this.copilot.isActive.value && this.copilot.generatedContent.value) {
+        return false;
+      }
+      if (this.copilot.isActive.value) {
+        return false;
+      }
       if (this.hasAttachments || this.hasRecordedAudio) return false;
 
       return (
@@ -681,7 +690,7 @@ export default {
         '$mod+Enter': {
           action: () => {
             if (this.copilot.isActive.value && this.isFocused) {
-              this.onSubmitCopilotReply();
+              this.onSendReply();
             } else if (this.isAValidEvent('cmd_enter')) {
               this.onSendReply();
             }
@@ -850,7 +859,27 @@ export default {
             hasReplyTo: !!this.inReplyTo?.id,
           });
     },
+    handleCopilotEditorSend(prompt) {
+      if (this.copilot.followUpContext.value) {
+        this.copilot.sendFollowUp(prompt);
+        return;
+      }
+      this.executeCopilotAction('reply_suggestion', prompt);
+    },
     async onSendReply() {
+      if (this.copilot.isActive.value) {
+        if (this.copilot.isGenerating.value) return;
+
+        if (this.copilot.generatedContent.value) {
+          this.onSubmitCopilotReply();
+        } else {
+          const prompt =
+            this.copilotEditorSection?.getPromptContent?.() || '';
+          this.executeCopilotAction('reply_suggestion', prompt);
+          return;
+        }
+      }
+
       const undefinedVariables = getUndefinedVariablesInMessage({
         message: this.message,
         variables: this.messageVariables,
@@ -1309,16 +1338,20 @@ export default {
         />
         <CopilotEditorSection
           v-if="copilot.isActive.value && !showAudioRecorderEditor"
+          ref="copilotEditorSection"
           :show-copilot-editor="copilot.showEditor.value"
           :is-generating-content="copilot.isGenerating.value"
           :generated-content="copilot.generatedContent.value"
-          :placeholder="$t('CONVERSATION.FOOTER.COPILOT_MSG_INPUT')"
+          :placeholder="
+            copilot.generatedContent.value
+              ? $t('CONVERSATION.FOOTER.COPILOT_MSG_INPUT')
+              : $t('CONVERSATION.FOOTER.AI_REPLY_PROMPT_INPUT')
+          "
           @focus="onFocus"
           @blur="onBlur"
           @clear-selection="clearEditorSelection"
-          @close="copilot.showEditor.value = false"
           @content-ready="copilot.setContentReady"
-          @send="copilot.sendFollowUp"
+          @send="handleCopilotEditorSend"
         />
         <WootMessageEditor
           v-else-if="!showAudioRecorderEditor"
@@ -1379,25 +1412,8 @@ export default {
       </div>
     </Transition>
 
-    <Transition
-      mode="out-in"
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="opacity-0 translate-y-2 scale-[0.98]"
-      enter-to-class="opacity-100 translate-y-0 scale-100"
-      leave-active-class="transition-all duration-200 ease-in"
-      leave-from-class="opacity-100 translate-y-0 scale-100"
-      leave-to-class="opacity-0 translate-y-2 scale-[0.98]"
-    >
-      <CopilotReplyBottomPanel
-        v-if="copilot.isActive.value"
-        key="copilot-bottom-panel"
-        :is-generating-content="copilot.isButtonDisabled.value"
-        @submit="onSubmitCopilotReply"
-        @cancel="copilot.reset"
-      />
-      <ReplyBottomPanel
-        v-else
-        key="reply-bottom-panel"
+    <ReplyBottomPanel
+      key="reply-bottom-panel"
         :conversation-id="conversationId"
         :enable-multiple-file-upload="enableMultipleFileUpload"
         :enable-whats-app-templates="showWhatsappTemplates"
@@ -1430,7 +1446,6 @@ export default {
         @toggle-insert-article="toggleInsertArticle"
         @toggle-quoted-reply="toggleQuotedReply"
       />
-    </Transition>
 
     <WhatsappTemplates
       :inbox-id="inbox.id"
