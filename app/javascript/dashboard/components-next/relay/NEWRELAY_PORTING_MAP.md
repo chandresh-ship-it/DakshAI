@@ -9,9 +9,11 @@ Reference project: `/Users/deependrasankhala/Documents/chandresh/NewRelay-UI`
 **direct 1:1 port** in `app/javascript/dashboard/assets/scss/_relay-theme.scss`.
 
 Last synced with NewRelay-UI `main`: **2026-08-11** (commit `c704807`). §2 UI components
-unchanged; since `ba1cbcf`: new **inbox settings flow** mapping (§3), a **conversations
-onboarding empty state** and a restyled **sidebar network toaster** (§4). Companies /
-Contacts / Inbox views got styling refinements only — existing mappings still hold.
+unchanged; since `ba1cbcf`: **settings subpages** restyled with the shared settings shell
+(§3.1), **InboxReplyComposer** ported for inbox reply UX, inbox settings flow mapping (§3.1
+inboxes row), conversations **onboarding empty state** and a restyled **sidebar network
+toaster** (§4). Companies / Contacts / Inbox list views got styling refinements only —
+existing mappings still hold.
 
 ---
 
@@ -82,17 +84,72 @@ the matching view; the section recipes (§4) still apply.
 | --- | --- |
 | `reports/ReportsView.vue` | `routes/dashboard/settings/reports/` — Overview=`LiveReports.vue`, wrapper=`components/ReportsWrapper.vue`, tables=`components/SummaryReports.vue`, cards=`components/overview/MetricCard.vue` + `components/overview/{Agent,Team}Table.vue`, heatmap=`components/heatmaps/BaseHeatmap.vue`, CSAT=`CsatResponses.vue`+`components/Csat*` |
 | `conversations/ConversationsView.vue` | `routes/dashboard/conversation/`; list header + Mine/Unassigned/All tabs = `components/ChatList.vue`; rows = `components-next/Conversation/ConversationCard/` |
-| `inbox/InboxView.vue` | `routes/dashboard/inbox/`; inbox rows = `components-next/Inbox/InboxCard.vue` |
+| `inbox/InboxView.vue` | `routes/dashboard/inbox/`; inbox rows = `components-next/Inbox/InboxCard.vue`; thread reply composer = `components/widgets/conversation/InboxReplyComposer.vue` (used from conversation/inbox message views) |
 | `companies/CompaniesView.vue` / `contacts/ContactsView.vue` | `routes/dashboard/companies/` / `routes/dashboard/contacts/` |
 | `campaigns/{LiveChat,SMS,WhatsApp}CampaignsView.vue` | `routes/dashboard/campaigns/` |
-| `settings/SettingsView.vue` + `settings/components/*` (AgentAssignment, Bots, **CannedResponses / Quick Replies**, **CustomAttributes**, **Macros**, **Sla**, Workflows, …) | `routes/dashboard/settings/` — Quick Replies / Canned Responses = `canned/`, Custom Attributes = `attributes/` (`Index.vue`, `AttributeRow.vue`), Macros = `macros/`, SLA = `sla/` |
-| `settings/components/InboxSettingsFlow.vue` (per-inbox config; tabbed **Settings / Collaborators / Business Hours / CSAT / Pre Chat Form**) | `routes/dashboard/settings/inbox/` — `Settings.vue`, `PreChatForm/`, collaborators = `AddAgents.vue`, wrapper = `Index.vue` |
-| `settings/ProfileSettingsView.vue`, `settings/ProfileMfaView.vue` (+ `components/ProfileSettings.vue`, `ProfileMfa.vue`) | `routes/dashboard/settings/profile/` |
+| `settings/SettingsView.vue` + all settings subpages / modals / flows | **§3.1** — `routes/dashboard/settings/` |
 | `auth/{Login,Register,ForgotPassword,SsoLogin,Onboarding2View}.vue` | Chatwoot auth = `app/javascript/v3/views/auth/` (signup, password, reset, confirmation, verify-email); login/SSO screens live there too |
 | `support/SupportView.vue` + `support/components/*` (Articles, ArticlesList, Categories, Locales, ArticleEditor, Settings, KeyboardShortcuts) | Help Center = `routes/dashboard/helpcenter/` |
 | `captain/CaptainAiView.vue`, `copilot/CopilotView.vue` | Captain = `routes/dashboard/captain/` (enterprise); Copilot = conversation-side panel |
 | `analytics/DashboardsView`, `RevenueAnalyticsView`, `CampaignAnalyticsView`; `tasks/`, `calendar/`, `ecommerce/*`; `reputation/`, `reviews/`, `deals/`, `funnels/`, `pipelines/`, `opportunities/`, `project-management/`, `surveys/`, `forms/`, `listings/` | **not built in Chatwoot** — sidebar shows the analytics ones disabled "Coming soon"; the rest have no Chatwoot equivalent |
 | sidebar/layout | `components-next/sidebar/Sidebar.vue` (leaf styling = `SidebarGroupLeaf.vue`). NewRelay `AppSidebar.vue` now carries an **online-status pill** (agent presence) and a **Relay AI floating button**; `AppHeader.vue` holds the top-bar search/profile |
+
+### 3.1 Settings
+
+**Status:** updated design (Relay tokens + shared settings shell). NewRelay still uses one mega
+`SettingsView.vue` with `activeItem` ids; Chatwoot uses **real routes** per subpage inside
+`SettingsWrapper`.
+
+**Shared layout (use these — do not rebuild side nav or list chrome by hand)**
+
+| Piece | Chatwoot path | Role |
+| --- | --- | --- |
+| `SettingsWrapper` | `routes/dashboard/settings/SettingsWrapper.vue` | Outer shell: side menu + `<router-view>` |
+| `SettingsSideMenu` | `routes/dashboard/settings/components/SettingsSideMenu.vue` | Secondary nav (sections + items) |
+| `settings.navigation.js` | `routes/dashboard/settings/settings.navigation.js` | Nav sections / route names / `activeOn` / feature flags |
+| `BaseSettingsHeader` | `routes/dashboard/settings/components/BaseSettingsHeader.vue` | Form/list page title, description, help link, search, actions slots |
+| `SettingsSubPageHeader` | `routes/dashboard/settings/SettingsSubPageHeader.vue` | In-flow section title + muted description (inbox tabs, nested steps) |
+| `SettingsLayout` | `routes/dashboard/settings/SettingsLayout.vue` | List subpage wrapper: loading / empty / `#body` slot |
+| `SettingsListCard` / `SettingsListRow` | `routes/dashboard/settings/components/SettingsListCard.vue`, `SettingsListRow.vue` | Searchable list tables (agents, labels, macros, …) |
+
+**Subpage index** (NewRelay `SettingsView` item id or component → Chatwoot)
+
+| NewRelay | Chatwoot `routes/dashboard/settings/` |
+| --- | --- |
+| `workspace` (Account Setting) | `account/Index.vue` (+ `account/components/SectionLayout.vue` for form sections) |
+| `branding` | `branding/Index.vue` |
+| `custom_domain` | `customDomain/Index.vue` |
+| `billing` | `billing/Index.vue` |
+| `users` (Agents) | `agents/Index.vue`, `AddAgent.vue`, `EditAgent.vue` |
+| `teams` + `CreateTeamFlow.vue`, `ViewTeamPanel.vue`, `DeleteTeamModal.vue` | `teams/` |
+| `roles` + `AddCustomRoleModal.vue` | `customRoles/Index.vue`, `component/CustomRoleModal.vue` |
+| `agent_assignment` + `AgentAssignment.vue` | `assignmentPolicy/` |
+| `inboxes` + `InboxSettingsFlow.vue` / `AddInboxFlow.vue` | `inbox/Index.vue`, channel wizard under `inbox/channels/`, per-inbox `Settings.vue`, `settingsPage/*`, `PreChatForm/` |
+| `labels` | `labels/Index.vue`, `AddLabel.vue`, `EditLabel.vue` |
+| `notifications` | `notifications/Index.vue` |
+| `workflows` + `Workflows.vue` | `conversationWorkflow/index.vue` |
+| `bots` + `Bots.vue` | `agentBots/Index.vue` |
+| `macros` + `Macros.vue` | `macros/` |
+| `canned_responses` + `CannedResponses.vue` | `canned/Index.vue`, `AddCanned.vue`, `EditCanned.vue` |
+| `sla` + `Sla.vue` | `sla/Index.vue` |
+| `custom_attributes` + `CustomAttributes.vue` | `attributes/Index.vue`, `AttributeRow.vue` |
+| `apps` (Integrations) | `integrations/Index.vue`, `ShowIntegration.vue`, provider pages (`Slack.vue`, `Notion.vue`, …) |
+| `api_keys` | `integrations/ApiKeys/Index.vue` |
+| `webhooks` | `integrations/IntegrationHooks.vue` / webhook routes in `integrations/` |
+| `security` | `security/Index.vue` (+ SAML components under `security/components/`) |
+| `audit_logs` | `auditlogs/Index.vue` |
+| *(Chatwoot-only)* Automation rules | `automation/Index.vue` — not a NewRelay settings nav item; route `/settings/automation` |
+| `ProfileSettingsView.vue` + `ProfileSettings.vue` | `profile/Index.vue` |
+| `ProfileMfaView.vue` + `ProfileMfa.vue` | `profile/MfaSettings.vue` |
+| Reports (linked from settings) | `reports/` — see reports row in §3 table |
+
+**Adding a new settings page:** register the route in the relevant `*.routes.js` under
+`settings/`, add a nav item to `SETTINGS_NAV_SECTIONS` in `settings.navigation.js` (include
+`activeOn` for child routes), render inside `SettingsWrapper`, and use the **list** or **form**
+recipes in §4. Keep permissions / feature flags on route `meta` — `SettingsSideMenu` reads them
+via `usePolicy`.
+
+
 
 **Sidebar is now data-driven** in NewRelay: menu items live in `src/config/navigation.ts`
 (consumed by `components/layout/AppSidebar.vue`). To mirror menu structure/labels, read
@@ -117,6 +174,64 @@ Copy these; they are the NewRelay canonical markup.
 </div>
 <div class="px-8 pt-6 pb-12 flex flex-col gap-6"><!-- sections --></div>
 ```
+
+### Settings shell (list subpage)
+
+Prefer **`SettingsLayout` + `SettingsListCard`** (see `agents/Index.vue`). Page chrome lives
+inside the card toolbar; rows use **`SettingsListRow`**.
+
+```html
+<!-- SettingsLayout #body -->
+<div class="overflow-hidden rounded-xl border border-border/60 bg-card shadow-xs">
+  <div class="flex flex-col justify-between gap-4 border-b border-border/40 p-4 sm:p-6 md:flex-row md:items-center">
+    <div>
+      <h3 class="text-base font-medium text-foreground">Section title</h3>
+      <p class="mt-1 text-sm text-muted-foreground">Description.</p>
+    </div>
+    <div class="flex w-full flex-col items-center gap-3 sm:flex-row md:w-auto">
+      <div class="relative w-full sm:w-64">
+        <!-- i-lucide-search + RelayInput h-9 pl-9 -->
+      </div>
+      <!-- RelayButton primary action -->
+    </div>
+  </div>
+  <div class="divide-y divide-border/40">
+    <!-- SettingsListRow: group hover:bg-muted/10, actions opacity-0 group-hover:opacity-100 -->
+  </div>
+</div>
+```
+
+For pages that already use **`BaseSettingsHeader`** with search in the header (macros, canned,
+automation), keep that component and still wrap the list body in `SettingsListCard`.
+
+### Settings form subpage
+
+Prefer **`BaseSettingsHeader`** + stacked **`SectionLayout`** cards (`as-card`) inside a
+`max-w-3xl` column (see `account/Index.vue`). Use **`RelayInput` / `RelayLabel` / `RelaySwitch` /
+`RelayButton`** in form footers.
+
+```html
+<div class="flex w-full max-w-3xl flex-col gap-8 ltr:mr-auto rtl:ml-auto">
+  <!-- BaseSettingsHeader :title :description -->
+  <form class="flex min-w-0 flex-col gap-8" @submit.prevent="save">
+    <section class="grid grid-cols-1 gap-5 overflow-hidden rounded-xl border border-border/60 bg-card shadow-xs">
+      <header class="flex gap-4 border-b border-border/40 p-4 sm:p-6">
+        <span class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10"><!-- icon --></span>
+        <div>
+          <h4 class="text-base font-semibold text-foreground">Section title</h4>
+          <p class="mt-1 text-sm leading-relaxed text-muted-foreground">Section note.</p>
+        </div>
+      </header>
+      <div class="flex flex-col gap-1.5 p-4 sm:p-6"><!-- RelayLabel + RelayInput rows --></div>
+    </section>
+    <div class="flex justify-end gap-2"><!-- RelayButton outline cancel + default submit --></div>
+  </form>
+</div>
+```
+
+Use **`SettingsSubPageHeader`** when a sub-route needs a smaller heading block inside a
+multi-tab flow (e.g. inbox `settingsPage/*`) without replacing the whole `BaseSettingsHeader`.
+
 
 ### Live badge (emerald pill)
 ```html

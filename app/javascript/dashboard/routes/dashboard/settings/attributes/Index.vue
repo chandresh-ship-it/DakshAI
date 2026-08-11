@@ -11,10 +11,13 @@ import {
 import { useAccount } from 'dashboard/composables/useAccount';
 
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
-import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
+import { RelayButton } from 'dashboard/components-next/relay';
 import AddAttribute from './AddAttribute.vue';
 import EditAttribute from './EditAttribute.vue';
 import AttributeRow from './AttributeRow.vue';
+import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
+import SettingsLayout from '../SettingsLayout.vue';
+import SettingsListCard from '../components/SettingsListCard.vue';
 
 defineOptions({
   name: 'CustomAttributeSettings',
@@ -42,11 +45,11 @@ const uiFlags = computed(() => getters['attributes/getUIFlags'].value);
 const tabs = computed(() => [
   {
     key: 0,
-    name: t('ATTRIBUTES_MGMT.TABS.CONVERSATION', 'Conversation'),
+    name: t('ATTRIBUTES_MGMT.TABS.CONVERSATION'),
   },
   {
     key: 1,
-    name: t('ATTRIBUTES_MGMT.TABS.CONTACT', 'Contact'),
+    name: t('ATTRIBUTES_MGMT.TABS.CONTACT'),
   },
 ]);
 
@@ -107,8 +110,8 @@ const filteredAttributes = computed(() => {
 
 const emptyMessage = computed(() =>
   searchQuery.value.trim()
-    ? t('ATTRIBUTES_MGMT.NO_RESULTS', 'No attributes found matching your search')
-    : t('ATTRIBUTES_MGMT.LIST.EMPTY_RESULT.404', 'There are no custom attributes created')
+    ? t('ATTRIBUTES_MGMT.NO_RESULTS')
+    : t('ATTRIBUTES_MGMT.LIST.EMPTY_RESULT.404')
 );
 
 const selectedAttributeName = computed(
@@ -171,35 +174,22 @@ const confirmDeleteAttribute = async () => {
 </script>
 
 <template>
-  <div class="px-8 pt-6 pb-12 flex flex-col gap-6 max-w-[1200px]">
-    <!-- Main Card Container -->
-    <div
-      class="bg-card border border-border/80 rounded-2xl p-6 shadow-xs flex flex-col gap-6"
-    >
-      <!-- Header Section -->
-      <div class="flex flex-col">
-        <h1 class="text-xl font-semibold tracking-tight text-foreground">
-          {{ $t('ATTRIBUTES_MGMT.HEADER', 'Custom Attributes') }}
-        </h1>
-        <p class="mt-1 text-sm text-muted-foreground max-w-3xl leading-relaxed">
-          {{
-            $t(
-              'ATTRIBUTES_MGMT.DESCRIPTION',
-              'A custom attribute tracks additional details about your contacts, companies, or conversations—such as the subscription plan or the date of their first purchase. You can add different types of custom attributes, such as text, lists, or numbers, to capture the specific information you need.'
-            )
-          }}
-        </p>
-      </div>
-
-      <!-- Controls Bar: Tabs, Search & Add Action -->
-      <div
-        class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/20 border border-border/60 rounded-xl p-3"
+  <SettingsLayout
+    :is-loading="uiFlags.isFetching"
+    :loading-message="$t('ATTRIBUTES_MGMT.LOADING')"
+    :no-records-found="false"
+  >
+    <template #header>
+      <BaseSettingsHeader
+        v-model:search-query="searchQuery"
+        :title="$t('ATTRIBUTES_MGMT.HEADER')"
+        :description="$t('ATTRIBUTES_MGMT.DESCRIPTION')"
+        :search-placeholder="$t('ATTRIBUTES_MGMT.SEARCH_PLACEHOLDER')"
+        feature-name="custom_attributes"
       >
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
-          <!-- Tab Selector Pills -->
+        <template #tabs>
           <div
-            class="flex items-center rounded-xl bg-muted/40 p-1 border border-border/60 shrink-0"
-            role="tablist"
+            class="flex items-center gap-6 overflow-x-auto border-b border-border/60 text-[14px]"
           >
             <button
               v-for="tab in tabs"
@@ -207,75 +197,50 @@ const confirmDeleteAttribute = async () => {
               type="button"
               role="tab"
               :aria-selected="selectedTabIndex === tab.key"
-              class="px-4 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
+              class="-mb-px whitespace-nowrap border-b-2 pb-3 font-medium transition-colors"
               :class="
                 selectedTabIndex === tab.key
-                  ? 'bg-primary/20 text-primary border border-primary/30 font-semibold shadow-2xs'
-                  : 'bg-transparent text-muted-foreground hover:text-foreground'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               "
               @click="onClickTabChange(tab.key)"
             >
               {{ tab.name }}
             </button>
           </div>
+        </template>
+        <template #actions>
+          <RelayButton size="sm" @click="openAddPopup">
+            {{ $t('ATTRIBUTES_MGMT.HEADER_BTN_TXT') }}
+          </RelayButton>
+        </template>
+      </BaseSettingsHeader>
+    </template>
 
-          <!-- Search Input Box -->
-          <div class="relative flex-1 max-w-md">
-            <span
-              class="i-lucide-search absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60"
-            />
-            <RelayInput
-              v-model="searchQuery"
-              type="text"
-              :placeholder="
-                $t('ATTRIBUTES_MGMT.SEARCH_PLACEHOLDER', 'Search attributes...')
-              "
-              class-name="h-9 pl-9 pr-4 text-sm bg-background border-border/80 focus-visible:ring-1 focus-visible:ring-primary/30"
-            />
+    <template #body>
+      <SettingsListCard :show-column-headers="false">
+        <template v-if="!filteredAttributes.length" #empty>
+          <div class="px-6 py-20 text-center text-sm text-muted-foreground">
+            {{ emptyMessage }}
           </div>
-        </div>
-
-        <!-- Add Button -->
-        <RelayButton
-          size="sm"
-          class="shrink-0 shadow-xs"
-          @click="openAddPopup"
+        </template>
+        <div
+          v-if="filteredAttributes.length"
+          class="flex flex-col gap-3 p-4 sm:p-6"
         >
-          <span class="i-lucide-plus size-4 mr-1.5" />
-          {{ $t('ATTRIBUTES_MGMT.HEADER_BTN_TXT', 'Add Custom Attribute') }}
-        </RelayButton>
-      </div>
+          <AttributeRow
+            v-for="attribute in filteredAttributes"
+            :key="attribute.id"
+            :attribute="attribute"
+            :badges="attribute.badges"
+            :loading="loading[attribute.id]"
+            @edit="handleEditAttribute"
+            @delete="handleDeleteAttribute"
+          />
+        </div>
+      </SettingsListCard>
+    </template>
 
-      <!-- Attributes List Container -->
-      <div v-if="uiFlags.isFetching" class="p-12 text-center text-sm text-muted-foreground">
-        <span class="i-lucide-loader-2 size-5 animate-spin mx-auto mb-2 text-primary" />
-        <p>{{ $t('ATTRIBUTES_MGMT.LOADING', 'Fetching custom attributes...') }}</p>
-      </div>
-
-      <div
-        v-else-if="!filteredAttributes.length"
-        class="p-12 text-center text-sm text-muted-foreground border border-border/60 rounded-xl bg-card"
-      >
-        <span class="i-lucide-layers-slash size-8 mx-auto mb-3 opacity-40" />
-        <p class="font-medium text-foreground">
-          {{ emptyMessage }}
-        </p>
-      </div>
-
-      <div v-else class="flex flex-col gap-3">
-        <AttributeRow
-          v-for="attribute in filteredAttributes"
-          :key="attribute.id"
-          :attribute="attribute"
-          :badges="attribute.badges"
-          :loading="loading[attribute.id]"
-          @edit="handleEditAttribute"
-          @delete="handleDeleteAttribute"
-        />
-      </div>
-    </div>
-
-    <!-- Modals -->
     <Dialog
       ref="addDialogRef"
       type="edit"
@@ -325,5 +290,5 @@ const confirmDeleteAttribute = async () => {
       @confirm="confirmDeleteAttribute"
       @close="selectedAttribute = {}"
     />
-  </div>
+  </SettingsLayout>
 </template>

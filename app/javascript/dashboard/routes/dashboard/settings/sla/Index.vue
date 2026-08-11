@@ -3,14 +3,8 @@ import AddSLA from './AddSLA.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import BaseSettingsHeader from 'dashboard/routes/dashboard/settings/components/BaseSettingsHeader.vue';
 import SLAPaywallEnterprise from './SLAPaywallEnterprise.vue';
-import {
-  BaseTable,
-  BaseTableRow,
-  BaseTableCell,
-} from 'dashboard/components-next/table';
-import WootLabel from 'dashboard/components-next/label/Label.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
+import { RelayButton, RelayBadge } from 'dashboard/components-next/relay';
 
 import { mapGetters } from 'vuex';
 import { convertSecondsToTimeUnit } from '@chatwoot/utils';
@@ -23,12 +17,9 @@ export default {
     SettingsLayout,
     BaseSettingsHeader,
     SLAPaywallEnterprise,
-    BaseTable,
-    BaseTableRow,
-    BaseTableCell,
-    WootLabel,
     Icon,
-    NextButton,
+    RelayButton,
+    RelayBadge,
   },
   data() {
     return {
@@ -63,20 +54,19 @@ export default {
     isSuperAdmin() {
       return this.currentUser.type === 'SuperAdmin';
     },
-    tableHeaders() {
-      return [
-        this.$t('SLA.LIST.TABLE_HEADER.SLA'),
-        this.$t('SLA.LIST.TABLE_HEADER.BUSINESS_HOURS'),
-        this.$t('SLA.LIST.RESPONSE_TYPES.SHORT_HAND.FRT'),
-        this.$t('SLA.LIST.RESPONSE_TYPES.SHORT_HAND.NRT'),
-        this.$t('SLA.LIST.RESPONSE_TYPES.SHORT_HAND.RT'),
-        this.$t('INTEGRATION_APPS.LIST.ACTIONS'),
-      ];
-    },
     filteredRecords() {
       const query = this.searchQuery.trim();
       if (!query) return this.records;
       return picoSearch(this.records, query, ['name', 'description']);
+    },
+    emptyTableMessage() {
+      if (!this.records.length) {
+        return this.$t('SLA.LIST.404');
+      }
+      if (this.searchQuery && !this.filteredRecords.length) {
+        return this.$t('SLA.SEARCH.NO_RESULTS');
+      }
+      return '';
     },
   },
   mounted() {
@@ -153,16 +143,14 @@ export default {
         feature-name="sla"
       >
         <template v-if="!isBehindAPaywall && records?.length" #count>
-          <span class="text-body-main text-n-slate-11">
+          <span class="text-sm text-muted-foreground">
             {{ $t('SLA.COUNT', { n: records.length }) }}
           </span>
         </template>
         <template v-if="!isBehindAPaywall" #actions>
-          <NextButton
-            :label="$t('SLA.ADD_ACTION')"
-            size="sm"
-            @click="openAddPopup"
-          />
+          <RelayButton size="sm" @click="openAddPopup">
+            {{ $t('SLA.ADD_ACTION') }}
+          </RelayButton>
         </template>
       </BaseSettingsHeader>
     </template>
@@ -173,79 +161,108 @@ export default {
         :is-on-chatwoot-cloud="isOnChatwootCloud"
         @upgrade="onClickCTA"
       />
-      <BaseTable
+      <div
         v-else
-        :headers="tableHeaders"
-        :items="filteredRecords"
-        :no-data-message="
-          !records.length
-            ? $t('SLA.LIST.404')
-            : searchQuery && !filteredRecords.length
-              ? $t('SLA.SEARCH.NO_RESULTS')
-              : ''
-        "
+        class="overflow-hidden rounded-xl border border-border/60 bg-card shadow-xs"
       >
-        <template #header-2>
-          <div class="flex items-center gap-1">
-            <span class="text-heading-3">
-              {{ $t('SLA.LIST.RESPONSE_TYPES.SHORT_HAND.FRT') }}
-            </span>
-            <Icon
-              v-tooltip.left="$t('SLA.LIST.RESPONSE_TYPES.FRT')"
-              icon="i-lucide-info"
-              class="size-3.5 text-n-slate-10 cursor-help"
-            />
-          </div>
-        </template>
-        <template #header-3>
-          <div class="flex items-center gap-1">
-            <span class="text-heading-3">
-              {{ $t('SLA.LIST.RESPONSE_TYPES.SHORT_HAND.NRT') }}
-            </span>
-            <Icon
-              v-tooltip.left="$t('SLA.LIST.RESPONSE_TYPES.NRT')"
-              icon="i-lucide-info"
-              class="size-3.5 text-n-slate-10 cursor-help"
-            />
-          </div>
-        </template>
-        <template #header-4>
-          <div class="flex items-center gap-1">
-            <span class="text-heading-3">
-              {{ $t('SLA.LIST.RESPONSE_TYPES.SHORT_HAND.RT') }}
-            </span>
-            <Icon
-              v-tooltip.left="$t('SLA.LIST.RESPONSE_TYPES.RT')"
-              icon="i-lucide-info"
-              class="size-3.5 text-n-slate-10 cursor-help"
-            />
-          </div>
-        </template>
-        <template #row="{ items }">
-          <BaseTableRow v-for="sla in items" :key="sla.id" :item="sla">
-            <template #default>
-              <BaseTableCell>
-                <div class="flex flex-col gap-1 min-w-0">
-                  <span class="text-body-main text-n-slate-12 truncate">
-                    {{ sla.name }}
-                  </span>
-                  <span class="text-body-main text-n-slate-11 line-clamp-1">
-                    {{ sla.description }}
-                  </span>
-                </div>
-              </BaseTableCell>
-
-              <BaseTableCell class="w-40">
-                <WootLabel
-                  :label="
-                    sla.only_during_business_hours
-                      ? $t('SLA.LIST.BUSINESS_HOURS_ON')
-                      : $t('SLA.LIST.BUSINESS_HOURS_OFF')
-                  "
-                  :color="sla.only_during_business_hours ? 'teal' : 'slate'"
-                  compact
+        <div v-if="emptyTableMessage" class="py-20">
+          <p class="text-center text-sm text-muted-foreground">
+            {{ emptyTableMessage }}
+          </p>
+        </div>
+        <div v-else class="overflow-x-auto">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="border-b border-border/40 bg-background">
+                <th
+                  class="px-6 py-3.5 text-[13px] font-medium text-muted-foreground"
                 >
-                  <template #icon>
+                  {{ $t('SLA.LIST.TABLE_HEADER.SLA') }}
+                </th>
+                <th
+                  class="w-40 px-6 py-3.5 text-[13px] font-medium text-muted-foreground"
+                >
+                  {{ $t('SLA.LIST.TABLE_HEADER.BUSINESS_HOURS') }}
+                </th>
+                <th
+                  class="w-24 px-6 py-3.5 text-[13px] font-medium text-muted-foreground"
+                >
+                  <div class="flex items-center gap-1">
+                    <span>
+                      {{ $t('SLA.LIST.RESPONSE_TYPES.SHORT_HAND.FRT') }}
+                    </span>
+                    <Icon
+                      v-tooltip.left="$t('SLA.LIST.RESPONSE_TYPES.FRT')"
+                      icon="i-lucide-info"
+                      class="size-3.5 cursor-help text-muted-foreground"
+                    />
+                  </div>
+                </th>
+                <th
+                  class="w-24 px-6 py-3.5 text-[13px] font-medium text-muted-foreground"
+                >
+                  <div class="flex items-center gap-1">
+                    <span>
+                      {{ $t('SLA.LIST.RESPONSE_TYPES.SHORT_HAND.NRT') }}
+                    </span>
+                    <Icon
+                      v-tooltip.left="$t('SLA.LIST.RESPONSE_TYPES.NRT')"
+                      icon="i-lucide-info"
+                      class="size-3.5 cursor-help text-muted-foreground"
+                    />
+                  </div>
+                </th>
+                <th
+                  class="w-24 px-6 py-3.5 text-[13px] font-medium text-muted-foreground"
+                >
+                  <div class="flex items-center gap-1">
+                    <span>
+                      {{ $t('SLA.LIST.RESPONSE_TYPES.SHORT_HAND.RT') }}
+                    </span>
+                    <Icon
+                      v-tooltip.left="$t('SLA.LIST.RESPONSE_TYPES.RT')"
+                      icon="i-lucide-info"
+                      class="size-3.5 cursor-help text-muted-foreground"
+                    />
+                  </div>
+                </th>
+                <th
+                  class="w-32 px-6 py-3.5 text-[13px] font-medium text-muted-foreground"
+                >
+                  {{ $t('INTEGRATION_APPS.LIST.ACTIONS') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border/40">
+              <tr
+                v-for="sla in filteredRecords"
+                :key="sla.id"
+                class="bg-card transition-colors hover:bg-muted/10"
+              >
+                <td class="px-6 py-4">
+                  <div class="flex min-w-0 flex-col gap-1">
+                    <span
+                      class="truncate text-[14px] font-medium text-foreground"
+                    >
+                      {{ sla.name }}
+                    </span>
+                    <span
+                      class="line-clamp-1 text-[13px] text-muted-foreground"
+                    >
+                      {{ sla.description }}
+                    </span>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <RelayBadge
+                    variant="outline"
+                    class="inline-flex items-center gap-1.5 border-border bg-muted/30 text-foreground"
+                    :class="
+                      sla.only_during_business_hours
+                        ? 'border-primary/20 bg-primary/10 text-primary'
+                        : ''
+                    "
+                  >
                     <Icon
                       :icon="
                         sla.only_during_business_hours
@@ -253,51 +270,44 @@ export default {
                           : 'i-lucide-alarm-clock-off'
                       "
                       class="size-3.5"
-                      :class="
-                        sla.only_during_business_hours
-                          ? 'text-n-teal-11'
-                          : 'text-n-slate-11'
-                      "
                     />
-                  </template>
-                </WootLabel>
-              </BaseTableCell>
-
-              <BaseTableCell align="start" class="w-24">
-                <span class="text-body-main text-n-slate-12">
+                    {{
+                      sla.only_during_business_hours
+                        ? $t('SLA.LIST.BUSINESS_HOURS_ON')
+                        : $t('SLA.LIST.BUSINESS_HOURS_OFF')
+                    }}
+                  </RelayBadge>
+                </td>
+                <td class="px-6 py-4 text-[14px] text-foreground">
                   {{ displayTime(sla.first_response_time_threshold) }}
-                </span>
-              </BaseTableCell>
-
-              <BaseTableCell align="start" class="w-24">
-                <span class="text-body-main text-n-slate-12">
+                </td>
+                <td class="px-6 py-4 text-[14px] text-foreground">
                   {{ displayTime(sla.next_response_time_threshold) }}
-                </span>
-              </BaseTableCell>
-
-              <BaseTableCell align="start" class="w-24">
-                <span class="text-body-main text-n-slate-12">
+                </td>
+                <td class="px-6 py-4 text-[14px] text-foreground">
                   {{ displayTime(sla.resolution_time_threshold) }}
-                </span>
-              </BaseTableCell>
-
-              <BaseTableCell align="end" class="w-12">
-                <div class="flex justify-end">
-                  <NextButton
-                    v-tooltip.top="$t('SLA.FORM.DELETE')"
-                    icon="i-woot-bin"
-                    slate
-                    sm
-                    class="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"
-                    :is-loading="loading[sla.id]"
-                    @click="openDeletePopup(sla)"
-                  />
-                </div>
-              </BaseTableCell>
-            </template>
-          </BaseTableRow>
-        </template>
-      </BaseTable>
+                </td>
+                <td class="px-6 py-4">
+                  <div
+                    class="flex items-center justify-end gap-1.5 opacity-60 transition-opacity hover:opacity-100"
+                  >
+                    <RelayButton
+                      v-tooltip.top="$t('SLA.FORM.DELETE')"
+                      variant="ghost"
+                      size="icon"
+                      class="size-7 border border-transparent text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-destructive"
+                      :disabled="loading[sla.id]"
+                      @click="openDeletePopup(sla)"
+                    >
+                      <Icon icon="i-lucide-trash-2" class="size-3.5" />
+                    </RelayButton>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <woot-modal v-model:show="showAddPopup" :on-close="hideAddPopup">
         <AddSLA @close="hideAddPopup" />

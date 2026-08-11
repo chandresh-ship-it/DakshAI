@@ -97,61 +97,62 @@ onBeforeUnmount(() => {
 
 <template>
   <transition
-    enter-active-class="transition duration-300 ease-out"
-    enter-from-class="transform translate-y-[60px] scale-95 opacity-0"
-    enter-to-class="transform translate-y-0 scale-100 opacity-100"
-    leave-active-class="transition duration-200 ease-in"
-    leave-from-class="transform translate-y-0 scale-100 opacity-100"
-    leave-to-class="transform translate-y-[60px] scale-95 opacity-0"
+    enter-active-class="transition-all duration-500 ease-out"
+    enter-from-class="opacity-0 translate-y-[60px] scale-95"
+    enter-to-class="opacity-100 translate-y-0 scale-100"
+    leave-active-class="transition-all duration-500 ease-in-out"
+    leave-from-class="opacity-100 translate-y-0 scale-100"
+    leave-to-class="opacity-0 translate-y-[60px] scale-95"
   >
     <div
       v-show="showNotification"
       class="fixed bottom-[50px] left-1/2 z-[100] -translate-x-1/2"
     >
       <div
-        class="flex items-center gap-3 rounded-full border px-4 py-2.5 shadow-2xl backdrop-blur-md transition-all"
-        :class="[
-          isReconnected
-            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-            : isReconnecting
-              ? 'border-border/50 bg-muted/80 text-foreground'
-              : 'border-destructive/30 bg-destructive/10 text-destructive',
-        ]"
+        class="flex items-center justify-between gap-3 rounded-full border px-4 py-2.5 shadow-2xl backdrop-blur-md transition-all"
+        :class="{
+          'bg-destructive/10 text-destructive border-destructive/30':
+            !isReconnecting && !isReconnected,
+          'bg-muted/80 text-foreground border-border/50': isReconnecting,
+          'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30':
+            isReconnected,
+        }"
       >
-        <span
-          v-if="isReconnecting"
-          class="i-lucide-loader-2 size-4 shrink-0 animate-spin"
-        />
-        <span
-          v-else-if="isReconnected"
-          class="i-lucide-wifi size-4 shrink-0 text-emerald-500"
-        />
-        <span
-          v-else
-          class="i-lucide-wifi-off size-4 shrink-0 text-destructive"
-        />
+        <div class="flex items-center gap-2.5">
+          <span
+            v-if="isReconnecting"
+            class="i-lucide-loader-2 size-[16px] shrink-0 animate-spin"
+          />
+          <span
+            v-else-if="isReconnected"
+            class="i-lucide-wifi size-[16px] shrink-0"
+          />
+          <span v-else class="i-lucide-wifi-off size-[16px] shrink-0" />
 
-        <span class="whitespace-nowrap text-xs font-medium tracking-tight">
-          {{ bannerText }}
-        </span>
+          <span
+            class="whitespace-nowrap text-[13.5px] font-semibold tracking-tight"
+          >
+            {{ bannerText }}
+          </span>
+        </div>
 
-        <div class="ml-1 flex shrink-0 items-center gap-1">
+        <div class="ml-4 -mr-1 flex items-center gap-1">
           <button
             v-if="canRefresh"
             type="button"
-            class="flex size-5 items-center justify-center rounded-full transition-colors hover:bg-black/10 dark:hover:bg-white/10"
+            class="rounded-full p-1.5 transition-colors hover:bg-destructive/15 hover:text-destructive"
             :title="$t('NETWORK.BUTTON.REFRESH')"
             @click="refreshPage"
           >
-            <span class="i-lucide-refresh-cw size-3" />
+            <span class="i-lucide-refresh-cw size-[15px]" />
           </button>
 
           <button
             type="button"
-            class="flex size-5 items-center justify-center rounded-full transition-colors hover:bg-black/10 dark:hover:bg-white/10"
+            class="rounded-full p-1.5 transition-colors hover:bg-foreground/5"
             @click="closeNotification"
           >
-            <span class="i-lucide-x size-3" />
+            <span class="i-lucide-x size-[15px]" />
           </button>
         </div>
       </div>
