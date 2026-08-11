@@ -13,9 +13,20 @@ const routes = [...dashboard.routes];
 export const router = createRouter({ history: createWebHistory(), routes });
 
 export const validateAuthenticateRoutePermission = async (to, next) => {
-  const { isLoggedIn, getCurrentUser: user } = store.getters;
+  let user = store.getters.getCurrentUser;
 
-  if (!isLoggedIn) {
+  // Re-verify authentication state if user state is uninitialized or stale
+  if (!store.getters.isLoggedIn || !user || !user.id) {
+    try {
+      await store.dispatch('setUser');
+      user = store.getters.getCurrentUser;
+    } catch (error) {
+      window.location.assign('/app/login');
+      return next(false);
+    }
+  }
+
+  if (!store.getters.isLoggedIn || !user) {
     window.location.assign('/app/login');
     return next(false);
   }
@@ -29,8 +40,14 @@ export const validateAuthenticateRoutePermission = async (to, next) => {
     return next(frontendURL('no-accounts'));
   }
 
-  const routeAccountId = Number(to.params?.accountId || accountId);
-  const userAccount = accounts.find(a => a.id === routeAccountId);
+  // Safely resolve routeAccountId: fallback to user account_id or first account ID (avoids NaN)
+  const paramAccountId = Number(to.params?.accountId);
+  const routeAccountId =
+    !Number.isNaN(paramAccountId) && paramAccountId > 0
+      ? paramAccountId
+      : Number(accountId) || accounts[0]?.id;
+
+  const userAccount = accounts.find(a => a.id === routeAccountId) || accounts[0];
   const isAdmin = userAccount?.role === 'administrator';
   const isActive = userAccount?.status === 'active';
   const needsOnboarding =
@@ -50,7 +67,7 @@ export const validateAuthenticateRoutePermission = async (to, next) => {
     return next(frontendURL(`accounts/${routeAccountId}/dashboard`));
   }
 
-  const nextRoute = validateLoggedInRoutes(to, store.getters.getCurrentUser);
+  const nextRoute = validateLoggedInRoutes(to, user);
   return nextRoute ? next(frontendURL(nextRoute)) : next();
 };
 

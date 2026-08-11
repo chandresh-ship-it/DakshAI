@@ -326,9 +326,9 @@ const handleMagicPaletteApplied = palette => {
         </div>
 
         <div>
-          <label class="mb-4 block text-sm font-medium text-foreground">
+          <RelayLabel class="mb-4 block">
             {{ $t('BRANDING_SETTINGS.LOGO_SETTINGS.TITLE') }}
-          </label>
+          </RelayLabel>
           <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <!-- Light Logo -->
             <div
@@ -503,10 +503,11 @@ const handleMagicPaletteApplied = palette => {
       </div>
     </SectionLayout>
 
-    <!-- Brand Colors -->
+        <!-- Brand Colors -->
     <SectionLayout
       as-card
       :title="$t('BRANDING_SETTINGS.COLOR_SETTINGS.TITLE')"
+      inline-header
       :description="$t('BRANDING_SETTINGS.COLOR_SETTINGS.DESCRIPTION')"
     >
       <template #headerActions>
@@ -531,7 +532,8 @@ const handleMagicPaletteApplied = palette => {
         </div>
       </template>
 
-      <div class="flex flex-wrap items-center gap-8">
+      <div class="border-t border-border/40 p-4 sm:p-6">
+            <div class="flex flex-wrap items-center gap-8">
         <div>
           <span class="mb-3 block text-xs font-medium text-muted-foreground">
             {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.PRIMARY') }}
@@ -552,15 +554,16 @@ const handleMagicPaletteApplied = palette => {
         </div>
         <div>
           <span class="mb-3 block text-xs font-medium text-muted-foreground">
-            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.BACKGROUND') }}
+            {{ $t('BRANDING_SETTINGS.COLOR_SETTINGS.TEXT') }}
           </span>
-          <ColorPicker v-model="backgroundColor" />
-        </div>
+          <ColorPicker v-model="textColor" />
+              </div>
+          </div>
       </div>
     </SectionLayout>
 
     <div
-      class="mt-2 flex items-center justify-end gap-3 border-t border-border/40 pb-2 pt-6"
+      class="flex justify-end gap-3 border-t border-border/40 pb-2 pt-8"
     >
       <RelayButton variant="outline" type="button" @click="handleCancel">
         {{ $t('BRANDING_SETTINGS.CANCEL') }}
@@ -580,5 +583,7 @@ const handleMagicPaletteApplied = palette => {
       @close="isMagicModalOpen = false"
       @apply="handleMagicPaletteApplied"
     />
-  </div>
+      </div>
+    </template>
+  </SettingsLayout>
 </template>
