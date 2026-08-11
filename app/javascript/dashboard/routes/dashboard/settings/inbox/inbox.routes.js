@@ -94,9 +94,9 @@ export default {
       path: frontendURL('accounts/:accountId/settings/inboxes'),
       component: SettingsContent,
       props: () => ({
-        headerTitle: 'INBOX_MGMT.HEADER',
-        icon: 'mail-inbox-all',
-        showBackButton: true,
+        headerTitle: '',
+        icon: '',
+        showBackButton: false,
       }),
       children: [
         {

@@ -1,17 +1,10 @@
-<script>
-import NextButton from 'dashboard/components-next/button/Button.vue';
+<script setup>
+import { RelayButton } from 'dashboard/components-next/relay';
 import EmptyState from '../../../../components/widgets/EmptyState.vue';
-
-export default {
-  components: {
-    NextButton,
-    EmptyState,
-  },
-};
 </script>
 
 <template>
-  <div class="h-full w-full p-6 col-span-6">
+  <div class="col-span-6 h-full w-full p-6">
     <EmptyState
       :title="$t('TEAMS_SETTINGS.FINISH.TITLE')"
       :message="$t('TEAMS_SETTINGS.FINISH.MESSAGE')"
@@ -23,7 +16,9 @@ export default {
             name: 'settings_teams_list',
           }"
         >
-          <NextButton teal :label="$t('TEAMS_SETTINGS.FINISH.BUTTON_TEXT')" />
+          <RelayButton class="h-10 px-6 font-semibold shadow-sm">
+            {{ $t('TEAMS_SETTINGS.FINISH.BUTTON_TEXT') }}
+          </RelayButton>
         </router-link>
       </div>
     </EmptyState>

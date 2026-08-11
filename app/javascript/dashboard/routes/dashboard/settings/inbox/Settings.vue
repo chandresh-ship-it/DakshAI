@@ -4,7 +4,7 @@ import { shouldBeUrl } from 'shared/helpers/Validators';
 import { useAlert } from 'dashboard/composables';
 import { useVuelidate } from '@vuelidate/core';
 import Avatar from 'next/avatar/Avatar.vue';
-import SettingIntroBanner from 'dashboard/components/widgets/SettingIntroBanner.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection.vue';
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection.vue';
 import SettingsAccordion from 'dashboard/components-next/Settings/SettingsAccordion.vue';
@@ -54,7 +54,7 @@ export default {
     FacebookReauthorize,
     GreetingsEditor,
     PreChatFormSettings,
-    SettingIntroBanner,
+    Icon,
     SettingsToggleSection,
     SettingsFieldSection,
     SettingsAccordion,
@@ -666,33 +666,44 @@ export default {
     v-if="uiFlags.isFetching"
     class="flex items-center justify-center h-full w-full"
   >
-    <SpinnerLoader :size="28" class="text-n-blue-9" />
+    <SpinnerLoader :size="28" class="text-primary" />
   </div>
   <div
     v-else
-    class="grid grid-rows-[auto_1fr] h-full flex-grow flex-shrink pr-0 pl-0 w-full min-w-0 settings"
+    class="flex h-full min-h-0 flex-col bg-background"
   >
-    <SettingIntroBanner
-      :header-image="inbox.avatarUrl"
-      :header-title="inboxName"
-    >
-      <woot-tabs
-        class="[&_ul]:p-0 top-px relative"
-        :index="selectedTabIndex"
-        :border="false"
-        @change="onTabChange"
+    <div class="flex shrink-0 flex-col border-b border-border/40 px-6 pt-6 sm:px-8">
+      <router-link
+        :to="{ name: 'settings_inbox_list', params: { accountId } }"
+        class="group mb-2 flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
-        <woot-tabs-item
+        <Icon
+          icon="i-lucide-chevron-left"
+          class="mr-1 size-4 transition-transform group-hover:-translate-x-0.5"
+        />
+        {{ $t('INBOX_MGMT.HEADER') }}
+      </router-link>
+      <h2 class="mb-6 text-base font-medium text-foreground">
+        {{ inboxName }}
+      </h2>
+      <div class="flex items-center gap-6 overflow-x-auto">
+        <button
           v-for="(tab, index) in tabs"
           :key="tab.key"
-          :index="index"
-          :name="tab.name"
-          :show-badge="false"
-          is-compact
-        />
-      </woot-tabs>
-    </SettingIntroBanner>
-    <section class="w-full overflow-auto py-8">
+          type="button"
+          class="whitespace-nowrap border-b-2 pb-3 text-[14px] font-medium transition-colors"
+          :class="
+            selectedTabIndex === index
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:border-border/60 hover:text-foreground'
+          "
+          @click="onTabChange(index)"
+        >
+          {{ tab.name }}
+        </button>
+      </div>
+    </div>
+    <section class="flex-1 overflow-auto py-8">
       <div class="max-w-7xl mx-auto w-full">
         <MicrosoftReauthorize
           v-if="microsoftUnauthorized"

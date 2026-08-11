@@ -88,11 +88,17 @@ const goBack = () => {
           <div
             class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border text-[13px] font-medium transition-colors duration-200"
             :class="[
-              index <= activeIndex
+              index < activeIndex
                 ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border/80 bg-background text-muted-foreground',
+                : index === activeIndex
+                  ? 'border-primary bg-background text-primary'
+                  : 'border-border/80 bg-background text-muted-foreground',
             ]"
           >
+            <div
+              v-if="index === activeIndex"
+              class="absolute inset-0 rounded-full bg-primary/10"
+            />
             <Icon
               v-if="index < activeIndex"
               icon="i-lucide-check"

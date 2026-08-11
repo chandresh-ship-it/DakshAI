@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import { useStore } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import { useVuelidate } from '@vuelidate/core';
@@ -19,8 +19,13 @@ import {
   RelayCheckbox,
 } from 'dashboard/components-next/relay';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
 
 const props = defineProps({
+  show: {
+    type: Boolean,
+    default: false,
+  },
   mode: {
     type: String,
     default: 'add',
@@ -94,11 +99,18 @@ watch(
   { deep: true }
 );
 
-onMounted(() => {
-  if (props.mode === 'edit') {
-    populateEditForm();
+watch(
+  () => props.show,
+  newVal => {
+    if (newVal) {
+      if (props.mode === 'edit') {
+        populateEditForm();
+      } else {
+        resetForm();
+      }
+    }
   }
-});
+);
 
 const getTranslationKey = base => {
   return props.mode === 'edit'
@@ -166,19 +178,41 @@ const isSubmitDisabled = computed(
 </script>
 
 <template>
-  <div class="flex flex-col overflow-auto p-1">
-    <div class="relative mb-8">
-      <h3 class="text-base font-medium text-foreground">
-        {{ modalTitle }}
-      </h3>
-      <p class="mt-1.5 pr-8 text-[14px] leading-relaxed text-muted-foreground">
-        {{ modalDescription }}
-      </p>
-    </div>
+  <TeleportWithDirection to="body">
+    <div
+      v-if="show"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-n-alpha-black2 backdrop-blur-[4px]"
+      @click.self="emit('close')"
+    >
+      <div
+        class="mx-4 flex w-full max-w-[550px] flex-col overflow-hidden rounded-[10px] border border-border/40 bg-card shadow-xl"
+        @click.stop
+      >
+        <div class="px-7 py-6">
+          <div class="flex items-start justify-between">
+            <div class="space-y-1.5">
+              <h2 class="text-base font-medium text-foreground">
+                {{ modalTitle }}
+              </h2>
+              <p
+                class="pr-6 text-[13px] leading-relaxed text-muted-foreground"
+              >
+                {{ modalDescription }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="-mr-2 shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              @click="emit('close')"
+            >
+              <Icon icon="i-lucide-x" class="size-4" />
+            </button>
+          </div>
+        </div>
 
-    <form class="flex w-full flex-col" @submit.prevent="handleCustomRole">
-      <div class="space-y-6">
-        <div class="flex flex-col gap-1.5">
+        <form @submit.prevent="handleCustomRole">
+          <div class="space-y-5 px-7 pb-2">
+            <div class="flex flex-col gap-1.5">
           <RelayLabel
             html-for="custom-role-name"
             class="text-[13.5px] font-medium text-foreground"
@@ -218,15 +252,15 @@ const isSubmitDisabled = computed(
           </p>
         </div>
 
-        <div class="flex flex-col gap-1.5">
+        <div class="flex flex-col gap-1.5 pt-2">
           <RelayLabel class="text-[13.5px] font-medium text-foreground">
             {{ $t('CUSTOM_ROLE.FORM.PERMISSIONS.LABEL') }}
           </RelayLabel>
-          <div class="mt-2 flex flex-col gap-2.5">
+          <div class="space-y-3">
             <label
               v-for="permission in AVAILABLE_CUSTOM_ROLE_PERMISSIONS"
               :key="permission"
-              class="flex cursor-pointer items-center gap-2.5"
+              class="flex cursor-pointer items-center gap-3"
             >
               <RelayCheckbox
                 :model-value="isPermissionChecked(permission)"
@@ -234,7 +268,7 @@ const isSubmitDisabled = computed(
                   checked => setPermission(permission, checked)
                 "
               />
-              <span class="text-sm font-normal text-foreground">
+              <span class="text-[13px] font-normal text-foreground">
                 {{ $t(`CUSTOM_ROLE.PERMISSIONS.${permission.toUpperCase()}`) }}
               </span>
             </label>
@@ -245,29 +279,30 @@ const isSubmitDisabled = computed(
           >
             {{ $t('CUSTOM_ROLE.FORM.PERMISSIONS.ERROR') }}
           </p>
-        </div>
-      </div>
+            </div>
+          </div>
 
-      <div
-        class="mt-10 flex items-center justify-end gap-3 border-t border-border/40 pt-6"
-      >
-        <RelayButton
-          type="button"
-          variant="ghost"
-          class="h-10 rounded-md border border-border/40 px-5 text-[14px] font-semibold text-muted-foreground hover:border-transparent hover:bg-muted"
-          @click="emit('close')"
-        >
-          {{ $t('CUSTOM_ROLE.FORM.CANCEL_BUTTON_TEXT') }}
-        </RelayButton>
-        <RelayButton
-          type="submit"
-          class="h-10 rounded-md px-6 text-[14px] font-semibold shadow-sm"
-          :disabled="isSubmitDisabled"
-        >
-          {{ submitButtonText }}
-          <Icon icon="i-lucide-arrow-right" class="size-4" />
-        </RelayButton>
+          <div
+            class="flex justify-end gap-3 border-t border-border/40 px-7 py-6"
+          >
+            <RelayButton
+              type="button"
+              variant="outline"
+              class="h-9 border-border bg-muted px-5 text-[13px] font-medium text-foreground shadow-sm hover:bg-muted/80"
+              @click="emit('close')"
+            >
+              {{ $t('CUSTOM_ROLE.FORM.CANCEL_BUTTON_TEXT') }}
+            </RelayButton>
+            <RelayButton
+              type="submit"
+              class="h-9 px-5 text-[13px] font-medium shadow-sm"
+              :disabled="isSubmitDisabled"
+            >
+              {{ submitButtonText }}
+            </RelayButton>
+          </div>
+        </form>
       </div>
-    </form>
-  </div>
+    </div>
+  </TeleportWithDirection>
 </template>
