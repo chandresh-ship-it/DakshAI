@@ -10,7 +10,7 @@ When building or migrating a Vue page/component under the Relay shell (`[data-re
 
 1. **Composition API** — `<script setup>` only.
 2. **Tailwind only** — no scoped CSS, no inline `style=`, no custom CSS files for new UI.
-3. **Semantic tokens** — use `bg-background`, `text-foreground`, `bg-primary`, `border-input`, `text-muted-foreground`, `bg-sidebar`, etc. Never hardcode hex / invent purple/indigo one-offs (`bg-[#4f46e5]`, `bg-violet-*`). Primary is already indigo `#4f46e5` / dark `#6f71fb` via CSS vars.
+3. **Semantic tokens** — use `bg-background`, `text-foreground`, `bg-primary`, `border-input`, `text-muted-foreground`, `bg-sidebar`, etc. Never hardcode hex / invent purple/indigo one-offs (`bg-[#4f46e5]`, `bg-violet-*`). Primary is already indigo `#4f46e5` / dark `#4F46E5` via CSS vars.
 4. **Relay primitives** — `RelayButton`, `RelayInput`, `RelayLabel`, `RelayCheckbox`, `RelaySwitch`, `RelayBadge`, `RelayTabs*` from `dashboard/components-next/relay`. Do **not** use legacy `Button` / `Input` / form chrome for new Relay pages.
 5. **i18n** — no bare strings in templates; update **EN only** (`en.json` / `en.yml`).
 6. **Icons** — Lucide via Uno/iconify classes (`i-lucide-*`) or existing icon patterns. Size with `size-4` / `size-5`; inherit `currentColor`.

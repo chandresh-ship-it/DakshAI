@@ -13,7 +13,7 @@ Inside `[data-relay]`, prefer semantic Tailwind classes (`bg-primary`, `border-i
 | Default text | `text-foreground` | `--foreground` |
 | Card surface | `bg-card` / `text-card-foreground` | `--card` |
 | Popover | `bg-popover` / `text-popover-foreground` | `--popover` |
-| Primary / brand | `bg-primary` / `text-primary` | `--primary` (`#4f46e5` light / `#6f71fb` dark) |
+| Primary / brand | `bg-primary` / `text-primary` | `--primary` (`#4f46e5` light / `#4F46E5` dark) |
 | On-primary | `text-primary-foreground` | `--primary-foreground` |
 | Secondary | `bg-secondary` / `text-secondary-foreground` | `--secondary` |
 | Muted surface / text | `bg-muted` / `text-muted-foreground` | `--muted` |
@@ -64,7 +64,7 @@ Inside `[data-relay]`, prefer semantic Tailwind classes (`bg-primary`, `border-i
 | --- | --- | --- |
 | `--background` | `#ffffff` | `#10141d` |
 | `--foreground` | `#141822` | `#fafafa` |
-| `--primary` | `#4f46e5` | `#6f71fb` |
+| `--primary` | `#4f46e5` | `#4F46E5` |
 | `--muted` | `#f2f4f9` | `#242933` |
 | `--muted-foreground` | `#6c727e` | `#9ba2ae` |
 | `--border` | `#e4e7ee` | `#ffffff1a` |

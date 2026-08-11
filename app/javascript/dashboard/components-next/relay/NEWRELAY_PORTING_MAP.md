@@ -9,7 +9,7 @@ Reference project: `/Users/deependrasankhala/Documents/chandresh/NewRelay-UI`
 **direct 1:1 port** in `app/javascript/dashboard/assets/scss/_relay-theme.scss`.
 
 Last synced with NewRelay-UI `main`: **2026-08-11** (commit `c704807`). §2 UI components
-unchanged; since `ba1cbcf`: **settings subpages** restyled with the shared settings shell
+to unchanged; since `ba1cbcf`: **settings subpages** restyled with the shared settings shell
 (§3.1), **InboxReplyComposer** ported for inbox reply UX, inbox settings flow mapping (§3.1
 inboxes row), conversations **onboarding empty state** and a restyled **sidebar network
 toaster** (§4). Companies / Contacts / Inbox list views got styling refinements only —
@@ -27,7 +27,7 @@ When porting a NewRelay component, **keep its Tailwind classes as-is** (`bg-card
 
 | Thing | Value (light / dark) |
 | --- | --- |
-| Primary / brand | `#4f46e5` / `#6f71fb` (indigo) — class `bg-primary` / `text-primary` |
+| Primary / brand | `#4f46e5` / `#4F46E5` (indigo) — class `bg-primary` / `text-primary` |
 | Font (sans) | **Geist** — `font-sans` (already the default body font) |
 | Font (mono) | **Geist Mono** — `font-mono` |
 | Base radius | `0.75rem` → `rounded-lg`; cards use `rounded-xl` |

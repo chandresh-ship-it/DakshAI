@@ -111,7 +111,7 @@
   --success: 46 193 140;
   --warning: 233 185 40;
 
-  // #10141d / #6f71fb / #fafafa / #ffffff1a ≈ 24 29 39 surfaces
+  // #10141d / #4F46E5 / #fafafa / #ffffff1a ≈ 24 29 39 surfaces
   [data-relay] {
     --background-color: 16 20 29;
     --border-strong: 36 41 51;
@@ -154,6 +154,7 @@
 // `border-b` / `border` utilities get the design-token color in both themes.
 // Must stay in @layer base so utilities like `border-input` can override.
 @layer base {
+
   [data-relay],
   [data-relay] * {
     border-color: var(--border);

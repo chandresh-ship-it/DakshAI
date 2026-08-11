@@ -9,9 +9,13 @@ import AccountAPI from 'dashboard/api/account';
 import { setColorTheme } from 'dashboard/helper/themeHelper';
 import ColorPicker from 'dashboard/components-next/colorpicker/ColorPicker.vue';
 import { applyBrandColorVariables } from 'dashboard/helper/colorHelper';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
+import SettingsLayout from '../SettingsLayout.vue';
 import SectionLayout from '../account/components/SectionLayout.vue';
-import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
 import MagicBrandingModal from './components/MagicBrandingModal.vue';
 import ThemePresetSwitcher from './components/ThemePresetSwitcher.vue';
 import {
@@ -33,6 +37,7 @@ const { accountId } = useAccount();
 const getAccount = useMapGetter('accounts/getAccount');
 const uiFlags = useMapGetter('accounts/getUIFlags');
 const isUpdating = computed(() => uiFlags.value.isUpdating);
+const isFetchingItem = computed(() => uiFlags.value.isFetchingItem);
 
 const companyName = ref('');
 const brandName = ref('');
@@ -285,42 +290,39 @@ const handleMagicPaletteApplied = palette => {
 </script>
 
 <template>
-  <div class="flex w-full max-w-3xl flex-col gap-8 ltr:mr-auto rtl:ml-auto">
-    <BaseSettingsHeader
-      :title="$t('BRANDING_SETTINGS.TITLE')"
-      :description="$t('BRANDING_SETTINGS.DESCRIPTION')"
-      feature-name="branding"
-    />
-
-    <!-- Brand Identity -->
-    <SectionLayout
-      as-card
-      icon="i-lucide-paintbrush"
+  <SettingsLayout :is-loading="isFetchingItem">
+    <template #body>
+      <div class="flex w-full max-w-3xl flex-col gap-8 ltr:mr-auto rtl:ml-auto">
+        <!-- Brand Identity -->
+        <SectionLayout
+          as-card
       :title="$t('BRANDING_SETTINGS.BRAND_IDENTITY.TITLE')"
       :description="$t('BRANDING_SETTINGS.BRAND_IDENTITY.DESCRIPTION')"
     >
       <div class="space-y-8">
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-foreground">
-              {{ $t('BRANDING_SETTINGS.COMPANY_NAME.LABEL') }}
-            </label>
-            <RelayInput
-              v-model="companyName"
-              class-name="h-10 bg-background transition-colors hover:bg-accent/30 focus:bg-background"
-              :placeholder="$t('BRANDING_SETTINGS.COMPANY_NAME.PLACEHOLDER')"
-            />
-          </div>
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-foreground">
-              {{ $t('BRANDING_SETTINGS.BRAND_NAME.LABEL') }}
-            </label>
-            <RelayInput
-              v-model="brandName"
-              class-name="h-10 bg-background transition-colors hover:bg-accent/30 focus:bg-background"
-              :placeholder="$t('BRANDING_SETTINGS.BRAND_NAME.PLACEHOLDER')"
-            />
-          </div>
+          <div class="flex flex-col gap-2">
+                <RelayLabel html-for="company-name">
+                  {{ $t('BRANDING_SETTINGS.COMPANY_NAME.LABEL') }}
+                </RelayLabel>
+                <RelayInput
+                  id="company-name"
+                  v-model="companyName"
+                  class-name="h-10 shadow-xs bg-background transition-colors hover:bg-accent/30 focus:bg-background"
+                  :placeholder="$t('BRANDING_SETTINGS.COMPANY_NAME.PLACEHOLDER')"
+                />
+              </div>
+              <div class="flex flex-col gap-2">
+                <RelayLabel html-for="brand-name">
+                  {{ $t('BRANDING_SETTINGS.BRAND_NAME.LABEL') }}
+                </RelayLabel>
+                <RelayInput
+                  id="brand-name"
+                  v-model="brandName"
+                  class-name="h-10 shadow-xs bg-background transition-colors hover:bg-accent/30 focus:bg-background"
+                  :placeholder="$t('BRANDING_SETTINGS.BRAND_NAME.PLACEHOLDER')"
+                />
+              </div>
         </div>
 
         <div>

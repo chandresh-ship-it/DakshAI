@@ -7,11 +7,13 @@ import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useConfig } from 'dashboard/composables/useConfig';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { FEATURE_FLAGS } from '../../../../featureFlags';
-import WithLabel from 'v3/components/Form/WithLabel.vue';
-import NextInput from 'next/input/Input.vue';
-import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
-import { RelayButton } from 'dashboard/components-next/relay';
-import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
+import SettingsLayout from '../SettingsLayout.vue';
+import {
+  RelayButton,
+  RelayInput,
+  RelayLabel,
+} from 'dashboard/components-next/relay';
+import SiteLanguageSelect from './components/SiteLanguageSelect.vue';
 import AccountId from './components/AccountId.vue';
 import BuildInfo from './components/BuildInfo.vue';
 import AccountDelete from './components/AccountDelete.vue';
@@ -20,16 +22,16 @@ import SectionLayout from './components/SectionLayout.vue';
 
 export default {
   components: {
-    BaseSettingsHeader,
+    SettingsLayout,
     RelayButton,
-    ComboBox,
+    RelayInput,
+    RelayLabel,
+    SiteLanguageSelect,
     AccountId,
     BuildInfo,
     AccountDelete,
     AudioTranscription,
     SectionLayout,
-    WithLabel,
-    NextInput,
   },
   setup() {
     const { updateUISettings, uiSettings } = useUISettings();
@@ -154,64 +156,54 @@ export default {
         useAlert(this.$t('GENERAL_SETTINGS.UPDATE.ERROR'));
       }
     },
-    onLocaleChange(value) {
-      // ComboBox clears on re-select; keep required locale set
-      if (value) {
-        this.locale = value;
-      }
-    },
   },
 };
 </script>
 
 <template>
-  <div class="flex w-full max-w-3xl flex-col gap-8 ltr:mr-auto rtl:ml-auto">
-    <BaseSettingsHeader :title="$t('GENERAL_SETTINGS.TITLE')" />
-    <form
-      v-if="!uiFlags.isFetchingItem"
-      class="flex min-w-0 flex-col gap-8"
-      @submit.prevent="updateAccount"
-    >
-      <SectionLayout
-        :title="$t('GENERAL_SETTINGS.FORM.GENERAL_SECTION.TITLE')"
-        :description="$t('GENERAL_SETTINGS.FORM.GENERAL_SECTION.NOTE')"
-        icon="i-lucide-clipboard-list"
-        as-card
-      >
+  <SettingsLayout :is-loading="uiFlags.isFetchingItem">
+    <template #body>
+      <div class="flex w-full max-w-3xl flex-col gap-8 ltr:mr-auto rtl:ml-auto">
+        <form class="flex min-w-0 flex-col gap-8" @submit.prevent="updateAccount">
+          <SectionLayout
+            :title="$t('GENERAL_SETTINGS.FORM.GENERAL_SECTION.TITLE')"
+            :description="$t('GENERAL_SETTINGS.FORM.GENERAL_SECTION.NOTE')"
+            as-card
+          >
         <div class="grid gap-8">
           <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <WithLabel
-              name="account-name"
-              :has-error="v$.name.$error"
-              :label="$t('GENERAL_SETTINGS.FORM.NAME.LABEL')"
-              :error-message="$t('GENERAL_SETTINGS.FORM.NAME.ERROR')"
-            >
-              <NextInput
-                v-model="name"
-                type="text"
-                class="w-full"
-                :placeholder="$t('GENERAL_SETTINGS.FORM.NAME.PLACEHOLDER')"
-                @blur="v$.name.$touch"
-              />
-            </WithLabel>
-            <WithLabel
-              name="site-language"
-              :has-error="v$.locale.$error"
-              :label="$t('GENERAL_SETTINGS.FORM.LANGUAGE.LABEL')"
-              :error-message="$t('GENERAL_SETTINGS.FORM.LANGUAGE.ERROR')"
-            >
-              <ComboBox
-                :model-value="locale"
-                :options="languageOptions"
-                :placeholder="$t('GENERAL_SETTINGS.FORM.LANGUAGE.PLACEHOLDER')"
-                :search-placeholder="
-                  $t('GENERAL_SETTINGS.FORM.LANGUAGE.SEARCH_PLACEHOLDER')
-                "
-                :has-error="v$.locale.$error"
-                class="w-full [&>div>button]:!h-10 [&>div>button]:!rounded-md [&>div>button]:!border-input [&>div>button]:!bg-background [&>div>button]:!shadow-xs [&>div>button]:!text-foreground [&>div>button]:font-normal"
-                @update:model-value="onLocaleChange"
-              />
-            </WithLabel>
+                <div class="flex flex-col gap-2">
+                  <RelayLabel html-for="account-name">
+                    {{ $t('GENERAL_SETTINGS.FORM.NAME.LABEL') }}
+                  </RelayLabel>
+                  <RelayInput
+                    id="account-name"
+                    v-model="name"
+                    type="text"
+                    class-name="h-10 shadow-xs"
+                    :placeholder="$t('GENERAL_SETTINGS.FORM.NAME.PLACEHOLDER')"
+                    @blur="v$.name.$touch"
+                  />
+                  <p v-if="v$.name.$error" class="text-xs text-destructive">
+                    {{ $t('GENERAL_SETTINGS.FORM.NAME.ERROR') }}
+                  </p>
+                </div>
+                <div class="flex flex-col gap-2">
+                  <RelayLabel html-for="site-language">
+                    {{ $t('GENERAL_SETTINGS.FORM.LANGUAGE.LABEL') }}
+                  </RelayLabel>
+                  <SiteLanguageSelect
+                    id="site-language"
+                    v-model="locale"
+                    :options="languageOptions"
+                    :placeholder="$t('GENERAL_SETTINGS.FORM.LANGUAGE.PLACEHOLDER')"
+                    :search-placeholder="$t('GENERAL_SETTINGS.FORM.LANGUAGE.SEARCH_PLACEHOLDER')"
+                    :has-error="v$.locale.$error"
+                  />
+                  <p v-if="v$.locale.$error" class="text-xs text-destructive">
+                    {{ $t('GENERAL_SETTINGS.FORM.LANGUAGE.ERROR') }}
+                  </p>
+                </div>
           </div>
           <div
             v-if="
@@ -219,45 +211,39 @@ export default {
             "
             class="grid grid-cols-1 gap-8 md:grid-cols-2"
           >
-            <WithLabel
-              v-if="featureCustomReplyDomainEnabled"
-              name="custom-domain"
-              :label="$t('GENERAL_SETTINGS.FORM.DOMAIN.LABEL')"
-            >
-              <NextInput
-                v-model="domain"
-                type="text"
-                class="w-full"
-                :placeholder="$t('GENERAL_SETTINGS.FORM.DOMAIN.PLACEHOLDER')"
-              />
-              <template #help>
-                {{
-                  featureInboundEmailEnabled &&
-                  $t('GENERAL_SETTINGS.FORM.FEATURES.INBOUND_EMAIL_ENABLED')
-                }}
-
-                {{
-                  featureCustomReplyDomainEnabled &&
-                  $t(
-                    'GENERAL_SETTINGS.FORM.FEATURES.CUSTOM_EMAIL_DOMAIN_ENABLED'
-                  )
-                }}
-              </template>
-            </WithLabel>
-            <WithLabel
-              v-if="featureCustomReplyEmailEnabled"
-              name="support-email"
-              :label="$t('GENERAL_SETTINGS.FORM.SUPPORT_EMAIL.LABEL')"
-            >
-              <NextInput
-                v-model="supportEmail"
-                type="text"
-                class="w-full"
-                :placeholder="
-                  $t('GENERAL_SETTINGS.FORM.SUPPORT_EMAIL.PLACEHOLDER')
-                "
-              />
-            </WithLabel>
+                <div v-if="featureCustomReplyDomainEnabled" class="flex flex-col gap-2">
+                  <RelayLabel html-for="custom-domain">
+                    {{ $t('GENERAL_SETTINGS.FORM.DOMAIN.LABEL') }}
+                  </RelayLabel>
+                  <RelayInput
+                    id="custom-domain"
+                    v-model="domain"
+                    type="text"
+                    class-name="h-10 shadow-xs"
+                    :placeholder="$t('GENERAL_SETTINGS.FORM.DOMAIN.PLACEHOLDER')"
+                  />
+                  <p
+                    v-if="featureInboundEmailEnabled"
+                    class="text-[13px] leading-relaxed text-muted-foreground"
+                  >
+                    {{ $t('GENERAL_SETTINGS.FORM.FEATURES.INBOUND_EMAIL_ENABLED') }}
+                  </p>
+                </div>
+                <div v-if="featureCustomReplyEmailEnabled" class="flex flex-col gap-2">
+                  <RelayLabel html-for="support-email">
+                    {{ $t('GENERAL_SETTINGS.FORM.SUPPORT_EMAIL.LABEL') }}
+                  </RelayLabel>
+                  <RelayInput
+                    id="support-email"
+                    v-model="supportEmail"
+                    type="text"
+                    class-name="h-10 shadow-xs"
+                    :placeholder="$t('GENERAL_SETTINGS.FORM.SUPPORT_EMAIL.PLACEHOLDER')"
+                  />
+                  <p class="text-[13px] leading-relaxed text-muted-foreground">
+                    {{ $t('GENERAL_SETTINGS.FORM.SUPPORT_EMAIL.NOTE') }}
+                  </p>
+                </div>
           </div>
         </div>
       </SectionLayout>
@@ -279,8 +265,9 @@ export default {
           {{ $t('GENERAL_SETTINGS.SUBMIT') }}
         </RelayButton>
       </div>
-    </form>
-    <woot-loading-state v-if="uiFlags.isFetchingItem" />
-    <BuildInfo />
-  </div>
+        </form>
+        <BuildInfo />
+      </div>
+    </template>
+  </SettingsLayout>
 </template>
