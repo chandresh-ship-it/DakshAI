@@ -4,6 +4,7 @@ import { useAccount } from 'dashboard/composables/useAccount';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
+import { RelayLabel } from 'dashboard/components-next/relay';
 import SectionLayout from './SectionLayout.vue';
 
 const { t } = useI18n();
@@ -26,13 +27,12 @@ const copyAccountId = async () => {
   <SectionLayout
     :title="t('GENERAL_SETTINGS.FORM.DEVELOPER_SECTION.TITLE')"
     :description="t('GENERAL_SETTINGS.FORM.DEVELOPER_SECTION.NOTE')"
-    icon="i-lucide-code"
     as-card
   >
     <div class="flex flex-col gap-2">
-      <label class="block text-sm font-medium text-foreground">
+      <RelayLabel>
         {{ t('GENERAL_SETTINGS.FORM.ACCOUNT_ID.TITLE') }}
-      </label>
+      </RelayLabel>
       <div class="mt-1 flex w-full">
         <div
           class="flex h-10 min-w-0 flex-1 items-center rounded-l-md border border-border bg-background px-3 text-sm text-foreground shadow-xs"

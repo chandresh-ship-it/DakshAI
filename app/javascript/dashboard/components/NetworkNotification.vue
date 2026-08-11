@@ -140,7 +140,7 @@ onBeforeUnmount(() => {
           <button
             v-if="canRefresh"
             type="button"
-            class="rounded-full p-1.5 transition-colors hover:bg-destructive/15 hover:text-destructive"
+            class="flex size-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-destructive/20 hover:text-destructive"
             :title="$t('NETWORK.BUTTON.REFRESH')"
             @click="refreshPage"
           >
@@ -149,7 +149,7 @@ onBeforeUnmount(() => {
 
           <button
             type="button"
-            class="rounded-full p-1.5 transition-colors hover:bg-foreground/5"
+            class="flex size-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-foreground/10"
             @click="closeNotification"
           >
             <span class="i-lucide-x size-[15px]" />

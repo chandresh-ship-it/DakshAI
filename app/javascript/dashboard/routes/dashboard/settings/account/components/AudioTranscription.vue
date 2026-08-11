@@ -40,7 +40,6 @@ const toggleAudioTranscription = async () => {
   <SectionLayout
     :title="t('GENERAL_SETTINGS.FORM.PREFERENCES_SECTION.TITLE')"
     :description="t('GENERAL_SETTINGS.FORM.PREFERENCES_SECTION.NOTE')"
-    icon="i-lucide-sliders-horizontal"
     as-card
   >
     <div class="flex flex-row items-start justify-between gap-8">

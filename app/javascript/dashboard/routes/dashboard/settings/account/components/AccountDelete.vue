@@ -120,14 +120,22 @@ async function clearDeletionMark() {
           }}
         </RelayButton>
       </div>
-      <RelayButton
-        v-else
-        variant="destructive"
-        class="shadow-xs"
-        @click="toggleDeletePopup(true)"
-      >
-        {{ $t('GENERAL_SETTINGS.ACCOUNT_DELETE_SECTION.BUTTON_TEXT') }}
-      </RelayButton>
+      <div v-else class="flex items-center gap-3">
+        <RelayButton
+          variant="outline"
+          type="button"
+          class="border-red-200 text-red-500 hover:bg-red-50"
+        >
+          {{ $t('GENERAL_SETTINGS.ACCOUNT_DELETE_SECTION.DEACTIVATE_BUTTON') }}
+        </RelayButton>
+        <RelayButton
+          variant="destructive"
+          class="shadow-xs"
+          @click="toggleDeletePopup(true)"
+        >
+          {{ $t('GENERAL_SETTINGS.ACCOUNT_DELETE_SECTION.BUTTON_TEXT') }}
+        </RelayButton>
+      </div>
     </template>
   </SectionLayout>
   <WootConfirmDeleteModal
