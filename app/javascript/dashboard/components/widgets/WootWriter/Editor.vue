@@ -855,7 +855,14 @@ onMounted(() => {
   }
 });
 
-defineExpose({ focusEditorInputField });
+function openCannedResponsesMenu() {
+  if (props.isPrivate) return;
+  showCannedMenu.value = true;
+  cannedSearchTerm.value = '';
+  focusEditorInputField();
+}
+
+defineExpose({ focusEditorInputField, openCannedResponsesMenu });
 
 // BUS Event to insert text or markdown into the editor at the
 // current cursor position.

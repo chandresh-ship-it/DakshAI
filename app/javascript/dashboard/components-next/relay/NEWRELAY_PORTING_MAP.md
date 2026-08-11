@@ -83,7 +83,7 @@ the matching view; the section recipes (§4) still apply.
 | `inbox/InboxView.vue` | `routes/dashboard/inbox/`; inbox rows = `components-next/Inbox/InboxCard.vue` |
 | `companies/CompaniesView.vue` / `contacts/ContactsView.vue` | `routes/dashboard/companies/` / `routes/dashboard/contacts/` |
 | `campaigns/{LiveChat,SMS,WhatsApp}CampaignsView.vue` | `routes/dashboard/campaigns/` |
-| `settings/SettingsView.vue` + `settings/components/*` (AgentAssignment, Bots, **CannedResponses / Quick Replies**, CustomAttributes, **Macros**, **Sla**, Workflows, …) | `routes/dashboard/settings/` — Quick Replies / Canned Responses = `routes/dashboard/settings/canned/` (`Index.vue`, `AddCanned.vue`, `EditCanned.vue`), Macros = `macros/`, SLA = `sla/` |
+| `settings/SettingsView.vue` + `settings/components/*` (AgentAssignment, Bots, **CannedResponses / Quick Replies**, **CustomAttributes**, **Macros**, **Sla**, Workflows, …) | `routes/dashboard/settings/` — Quick Replies / Canned Responses = `canned/`, Custom Attributes = `attributes/` (`Index.vue`, `AttributeRow.vue`), Macros = `macros/`, SLA = `sla/` |
 | `settings/ProfileSettingsView.vue`, `settings/ProfileMfaView.vue` (+ `components/ProfileSettings.vue`, `ProfileMfa.vue`) | `routes/dashboard/settings/profile/` |
 | `auth/{Login,Register,ForgotPassword,SsoLogin,Onboarding2View}.vue` | Chatwoot auth = `app/javascript/v3/views/auth/` (signup, password, reset, confirmation, verify-email); login/SSO screens live there too |
 | `support/SupportView.vue` + `support/components/*` (Articles, ArticlesList, Categories, Locales, ArticleEditor, Settings, KeyboardShortcuts) | Help Center = `routes/dashboard/helpcenter/` |

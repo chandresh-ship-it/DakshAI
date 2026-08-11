@@ -154,10 +154,7 @@ export default {
         !this.isReplyRestricted
       );
     },
-    isNoteActive() {
-      return this.mode === REPLY_EDITOR_MODES.NOTE || this.isReplyRestricted;
-    },
-    isAiActive() {
+isAiActive() {
       return this.isCopilotActive;
     },
     charLengthClass() {
@@ -216,22 +213,6 @@ export default {
         {{ $t('CONVERSATION.REPLYBOX.AI_REPLY') }}
       </button>
 
-      <!-- Private Note -->
-      <button
-        type="button"
-        role="tab"
-        :aria-selected="isNoteActive"
-        class="rounded-none h-full border-b-2 transition-colors flex items-center gap-1.5 px-0 font-semibold text-sm"
-        :class="
-          isNoteActive
-            ? 'border-amber-500 text-amber-500 shadow-none bg-transparent'
-            : 'border-transparent text-muted-foreground hover:text-foreground shadow-none bg-transparent'
-        "
-        :disabled="disabled"
-        @click="handleNoteClick"
-      >
-        {{ $t('CONVERSATION.REPLYBOX.PRIVATE_NOTE') }}
-      </button>
     </div>
 
     <div class="flex items-center gap-2">
