@@ -13,6 +13,7 @@ import { MACRO_ACTION_TYPES } from './constants';
 import { useMacros } from 'dashboard/composables/useMacros';
 import actionQueryGenerator from 'dashboard/helper/actionQueryGenerator.js';
 import MacroForm from './MacroForm.vue';
+import { RelayConfirmModal } from 'dashboard/components-next/relay';
 
 const getters = useStoreGetters();
 const store = useStore();
@@ -328,15 +329,15 @@ const saveMacro = async macroData => {
         </div>
       </div>
 
-      <woot-delete-modal
-        v-model:show="showDeleteConfirmationPopup"
-        :on-close="closeDeletePopup"
-        :on-confirm="confirmDeletion"
+      <RelayConfirmModal
+        :show="showDeleteConfirmationPopup"
         :title="$t('LABEL_MGMT.DELETE.CONFIRM.TITLE')"
         :message="$t('MACROS.DELETE.CONFIRM.MESSAGE')"
         :message-value="deleteMessage"
         :confirm-text="$t('MACROS.DELETE.CONFIRM.YES')"
-        :reject-text="$t('MACROS.DELETE.CONFIRM.NO')"
+        :cancel-text="$t('MACROS.DELETE.CONFIRM.NO')"
+        @close="closeDeletePopup"
+        @confirm="confirmDeletion"
       />
 
       <!-- ==============================================

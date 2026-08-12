@@ -15,7 +15,12 @@ import EditAgent from './EditAgent.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import SettingsListCard from '../components/SettingsListCard.vue';
 import SettingsListRow from '../components/SettingsListRow.vue';
-import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
+import {
+  RelayButton,
+  RelayInput,
+  RelayModal,
+  RelayConfirmModal,
+} from 'dashboard/components-next/relay';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const getters = useStoreGetters();
@@ -318,11 +323,20 @@ const confirmDeletion = () => {
       </SettingsListCard>
     </template>
 
-    <woot-modal v-model:show="showAddPopup" :on-close="hideAddPopup">
+    <RelayModal
+      :show="showAddPopup"
+      :title="$t('AGENT_MGMT.ADD.TITLE')"
+      :description="$t('AGENT_MGMT.ADD.DESC')"
+      @close="hideAddPopup"
+    >
       <AddAgent @close="hideAddPopup" />
-    </woot-modal>
+    </RelayModal>
 
-    <woot-modal v-model:show="showEditPopup" :on-close="hideEditPopup">
+    <RelayModal
+      :show="showEditPopup"
+      :title="`${$t('AGENT_MGMT.EDIT.TITLE')} - ${currentAgent.name}`"
+      @close="hideEditPopup"
+    >
       <EditAgent
         v-if="showEditPopup"
         :id="currentAgent.id"
@@ -334,17 +348,17 @@ const confirmDeletion = () => {
         :custom-role-id="currentAgent.custom_role_id"
         @close="hideEditPopup"
       />
-    </woot-modal>
+    </RelayModal>
 
-    <woot-delete-modal
-      v-model:show="showDeletePopup"
-      :on-close="closeDeletePopup"
-      :on-confirm="confirmDeletion"
+    <RelayConfirmModal
+      :show="showDeletePopup"
       :title="$t('AGENT_MGMT.DELETE.CONFIRM.TITLE')"
       :message="$t('AGENT_MGMT.DELETE.CONFIRM.MESSAGE')"
       :message-value="deleteMessage"
       :confirm-text="deleteConfirmText"
-      :reject-text="deleteRejectText"
+      :cancel-text="deleteRejectText"
+      @close="closeDeletePopup"
+      @confirm="confirmDeletion"
     />
   </SettingsLayout>
 </template>

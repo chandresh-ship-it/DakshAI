@@ -9,7 +9,11 @@ import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { picoSearch } from '@scmmishra/pico-search';
 import { getI18nKey } from 'dashboard/routes/dashboard/settings/helper/settingsHelper';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { RelayButton, RelayInput } from 'dashboard/components-next/relay';
+import {
+  RelayButton,
+  RelayInput,
+  RelayConfirmModal,
+} from 'dashboard/components-next/relay';
 
 const store = useStore();
 const { t } = useI18n();
@@ -287,15 +291,15 @@ const confirmDeletion = () => {
       @close="hideCustomRoleModal"
     />
 
-    <woot-delete-modal
-      v-model:show="showDeleteConfirmationPopup"
-      :on-close="closeDeletePopup"
-      :on-confirm="confirmDeletion"
+    <RelayConfirmModal
+      :show="showDeleteConfirmationPopup"
       :title="$t('CUSTOM_ROLE.DELETE.CONFIRM.TITLE')"
       :message="$t('CUSTOM_ROLE.DELETE.CONFIRM.MESSAGE')"
       :message-value="deleteMessage"
       :confirm-text="deleteConfirmText"
-      :reject-text="deleteRejectText"
+      :cancel-text="deleteRejectText"
+      @close="closeDeletePopup"
+      @confirm="confirmDeletion"
     />
   </SettingsLayout>
 </template>

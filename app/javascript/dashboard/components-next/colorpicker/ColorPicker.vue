@@ -10,6 +10,11 @@ defineProps({
     type: String,
     default: '',
   },
+  variant: {
+    type: String,
+    default: 'default',
+    validator: value => ['default', 'swatch'].includes(value),
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -37,6 +42,7 @@ const pickerRef = ref(null);
   <div ref="pickerRef" class="relative w-fit">
     <OnClickOutside @trigger="closeTogglePicker">
       <Button
+        v-if="variant === 'default'"
         color="slate"
         icon="i-lucide-pipette"
         trailing-icon
@@ -51,6 +57,17 @@ const pickerRef = ref(null);
           <span class="min-w-0 truncate">{{ modelValue }}</span>
         </div>
       </Button>
+      <button
+        v-else
+        type="button"
+        class="relative size-9 shrink-0 overflow-hidden rounded-[4px] border border-border/80 bg-background p-0.5 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+        @click="toggleColorPicker"
+      >
+        <div
+          class="size-full rounded-[2px]"
+          :style="{ backgroundColor: modelValue }"
+        />
+      </button>
       <Chrome
         v-if="isPickerOpen"
         disable-alpha

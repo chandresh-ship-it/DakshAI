@@ -12,7 +12,11 @@ import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import SettingsListCard from '../components/SettingsListCard.vue';
 import SettingsListRow from '../components/SettingsListRow.vue';
-import { RelayButton } from 'dashboard/components-next/relay';
+import {
+  RelayButton,
+  RelayModal,
+  RelayConfirmModal,
+} from 'dashboard/components-next/relay';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 defineOptions({
@@ -236,11 +240,22 @@ const confirmDeletion = () => {
       </SettingsListCard>
     </template>
 
-    <woot-modal v-model:show="showAddPopup" :on-close="hideAddPopup">
+    <RelayModal
+      :show="showAddPopup"
+      :title="$t('CANNED_MGMT.ADD.TITLE')"
+      :description="$t('CANNED_MGMT.ADD.DESC')"
+      size="lg"
+      @close="hideAddPopup"
+    >
       <AddCanned :on-close="hideAddPopup" />
-    </woot-modal>
+    </RelayModal>
 
-    <woot-modal v-model:show="showEditPopup" :on-close="hideEditPopup">
+    <RelayModal
+      :show="showEditPopup"
+      :title="`${$t('CANNED_MGMT.EDIT.TITLE')} - ${activeResponse.short_code}`"
+      size="lg"
+      @close="hideEditPopup"
+    >
       <EditCanned
         v-if="showEditPopup"
         :id="activeResponse.id"
@@ -248,17 +263,17 @@ const confirmDeletion = () => {
         :edcontent="activeResponse.content"
         :on-close="hideEditPopup"
       />
-    </woot-modal>
+    </RelayModal>
 
-    <woot-delete-modal
-      v-model:show="showDeleteConfirmationPopup"
-      :on-close="closeDeletePopup"
-      :on-confirm="confirmDeletion"
+    <RelayConfirmModal
+      :show="showDeleteConfirmationPopup"
       :title="$t('CANNED_MGMT.DELETE.CONFIRM.TITLE')"
       :message="$t('CANNED_MGMT.DELETE.CONFIRM.MESSAGE')"
       :message-value="deleteMessage"
       :confirm-text="deleteConfirmText"
-      :reject-text="deleteRejectText"
+      :cancel-text="deleteRejectText"
+      @close="closeDeletePopup"
+      @confirm="confirmDeletion"
     />
   </SettingsLayout>
 </template>

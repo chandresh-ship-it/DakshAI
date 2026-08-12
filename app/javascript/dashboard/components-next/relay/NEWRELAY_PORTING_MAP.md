@@ -63,6 +63,8 @@ Import Chatwoot components from `dashboard/components-next/relay`.
 | `Switch` | `RelaySwitch` | |
 | `Checkbox` | `RelayCheckbox` | |
 | `Tabs`/`TabsList`/`TabsTrigger`/`TabsContent` | `RelayTabs`/`RelayTabsList`/`RelayTabsTrigger`/`RelayTabsContent` | active state uses `aria-selected:` (not reka's `data-[state=active]:`) |
+| Modal shell | `RelayModal` | settings add/edit forms |
+| Confirm/delete | `RelayConfirmModal` | delete confirmations |
 | `DropdownMenu*` (reka-ui) | `dashboard/components-next/dropdown-menu/DropdownMenu.vue` | different API: `:menu-items="[{label,value,action,icon}]"` + `@action` |
 | `GlobalToast` | `useAlert` composable (`dashboard/composables`) | Chatwoot has no toast component — call `useAlert(msg)` |
 | `KpiCard` | *no component* — use the **stat-card recipe** (§4) | |
@@ -125,7 +127,7 @@ the matching view; the section recipes (§4) still apply.
 | `roles` + `AddCustomRoleModal.vue` | `customRoles/Index.vue`, `component/CustomRoleModal.vue` |
 | `agent_assignment` + `AgentAssignment.vue` | `assignmentPolicy/` |
 | `inboxes` + `InboxSettingsFlow.vue` / `AddInboxFlow.vue` | `inbox/Index.vue`, channel wizard under `inbox/channels/`, per-inbox `Settings.vue`, `settingsPage/*`, `PreChatForm/` |
-| `labels` | `labels/Index.vue`, `AddLabel.vue`, `EditLabel.vue` |
+| `labels` | `labels/Index.vue`, `component/LabelModal.vue` |
 | `notifications` | `notifications/Index.vue` |
 | `workflows` + `Workflows.vue` | `conversationWorkflow/index.vue` |
 | `bots` + `Bots.vue` | `agentBots/Index.vue` |
@@ -231,6 +233,22 @@ Prefer **`BaseSettingsHeader`** + stacked **`SectionLayout`** cards (`as-card`) 
 
 Use **`SettingsSubPageHeader`** when a sub-route needs a smaller heading block inside a
 multi-tab flow (e.g. inbox `settingsPage/*`) without replacing the whole `BaseSettingsHeader`.
+
+### Settings modal (add/edit form)
+
+Never use `woot-modal` / `woot-modal-header` for new settings modals.
+
+```html
+<RelayModal :show="show" :title="..." :description="..." @close="close">
+  <form @submit.prevent="submit">
+    <div class="space-y-5 px-7 pb-2"><!-- RelayLabel + RelayInput fields --></div>
+    <div class="flex justify-end gap-3 border-t border-border/40 px-7 py-6">
+      <RelayButton variant="outline" class="h-9 border-border bg-muted px-5 text-[13px] font-medium text-foreground shadow-sm hover:bg-muted/80">Cancel</RelayButton>
+      <RelayButton type="submit" class="h-9 px-5 text-[13px] font-medium shadow-sm">Submit</RelayButton>
+    </div>
+  </form>
+</RelayModal>
+```
 
 
 ### Live badge (emerald pill)

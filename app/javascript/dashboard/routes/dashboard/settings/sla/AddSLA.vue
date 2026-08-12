@@ -27,15 +27,9 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-col h-auto overflow-auto">
-    <woot-modal-header
-      :header-title="$t('SLA.ADD.TITLE')"
-      :header-content="$t('SLA.ADD.DESC')"
-    />
-    <SlaForm
-      :submit-label="$t('SLA.FORM.CREATE')"
-      @submit-sla="addSLA"
-      @close="onClose"
-    />
-  </div>
+  <SlaForm
+    :submit-label="$t('SLA.FORM.CREATE')"
+    @submit-sla="addSLA"
+    @close="onClose"
+  />
 </template>

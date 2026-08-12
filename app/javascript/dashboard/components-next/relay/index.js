@@ -12,4 +12,6 @@ export { default as RelaySidebar } from './layout/RelaySidebar.vue';
 export { default as RelayHeader } from './layout/RelayHeader.vue';
 export { default as RelayNotificationsMenu } from './layout/RelayNotificationsMenu.vue';
 export { default as RelayWorkspaceMenu } from './layout/RelayWorkspaceMenu.vue';
+export { default as RelayModal } from './modal/RelayModal.vue';
+export { default as RelayConfirmModal } from './modal/RelayConfirmModal.vue';
 export { cn } from './utils/cn';

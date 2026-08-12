@@ -5,11 +5,13 @@ import { useI18n } from 'vue-i18n';
 import { useStoreGetters, useStore } from 'dashboard/composables/store';
 import { picoSearch } from '@scmmishra/pico-search';
 
-import AddLabel from './AddLabel.vue';
-import EditLabel from './EditLabel.vue';
+import LabelModal from './component/LabelModal.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
-import { RelayButton } from 'dashboard/components-next/relay';
+import {
+  RelayButton,
+  RelayConfirmModal,
+} from 'dashboard/components-next/relay';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const getters = useStoreGetters();
@@ -17,8 +19,8 @@ const store = useStore();
 const { t } = useI18n();
 
 const loading = ref({});
-const showAddPopup = ref(false);
-const showEditPopup = ref(false);
+const showLabelModal = ref(false);
+const labelModalMode = ref('add');
 const showDeleteConfirmationPopup = ref(false);
 const selectedLabel = ref({});
 const searchQuery = ref('');
@@ -38,20 +40,19 @@ const uiFlags = computed(() => getters['labels/getUIFlags'].value);
 const deleteMessage = computed(() => ` ${selectedLabel.value.title}?`);
 
 const openAddPopup = () => {
-  showAddPopup.value = true;
+  labelModalMode.value = 'add';
+  selectedLabel.value = {};
+  showLabelModal.value = true;
 };
-const hideAddPopup = () => {
-  showAddPopup.value = false;
+const hideLabelModal = () => {
+  showLabelModal.value = false;
 };
 
 const openEditPopup = response => {
-  showEditPopup.value = true;
+  labelModalMode.value = 'edit';
+  showLabelModal.value = true;
   selectedLabel.value = response;
 };
-const hideEditPopup = () => {
-  showEditPopup.value = false;
-};
-
 const openDeletePopup = response => {
   showDeleteConfirmationPopup.value = true;
   selectedLabel.value = response;
@@ -205,23 +206,22 @@ onBeforeMount(() => {
       </div>
     </template>
 
-    <woot-modal v-model:show="showAddPopup" :on-close="hideAddPopup">
-      <AddLabel @close="hideAddPopup" />
-    </woot-modal>
+    <LabelModal
+      :show="showLabelModal"
+      :mode="labelModalMode"
+      :selected-label="selectedLabel"
+      @close="hideLabelModal"
+    />
 
-    <woot-modal v-model:show="showEditPopup" :on-close="hideEditPopup">
-      <EditLabel :selected-response="selectedLabel" @close="hideEditPopup" />
-    </woot-modal>
-
-    <woot-delete-modal
-      v-model:show="showDeleteConfirmationPopup"
-      :on-close="closeDeletePopup"
-      :on-confirm="confirmDeletion"
+    <RelayConfirmModal
+      :show="showDeleteConfirmationPopup"
       :title="$t('LABEL_MGMT.DELETE.CONFIRM.TITLE')"
       :message="$t('LABEL_MGMT.DELETE.CONFIRM.MESSAGE')"
       :message-value="deleteMessage"
       :confirm-text="$t('LABEL_MGMT.DELETE.CONFIRM.YES')"
-      :reject-text="$t('LABEL_MGMT.DELETE.CONFIRM.NO')"
+      :cancel-text="$t('LABEL_MGMT.DELETE.CONFIRM.NO')"
+      @close="closeDeletePopup"
+      @confirm="confirmDeletion"
     />
   </SettingsLayout>
 </template>

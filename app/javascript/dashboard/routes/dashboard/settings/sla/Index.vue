@@ -4,7 +4,12 @@ import SettingsLayout from '../SettingsLayout.vue';
 import BaseSettingsHeader from 'dashboard/routes/dashboard/settings/components/BaseSettingsHeader.vue';
 import SLAPaywallEnterprise from './SLAPaywallEnterprise.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { RelayButton, RelayBadge } from 'dashboard/components-next/relay';
+import {
+  RelayButton,
+  RelayBadge,
+  RelayModal,
+  RelayConfirmModal,
+} from 'dashboard/components-next/relay';
 
 import { mapGetters } from 'vuex';
 import { convertSecondsToTimeUnit } from '@chatwoot/utils';
@@ -20,6 +25,8 @@ export default {
     Icon,
     RelayButton,
     RelayBadge,
+    RelayModal,
+    RelayConfirmModal,
   },
   data() {
     return {
@@ -309,19 +316,25 @@ export default {
         </div>
       </div>
 
-      <woot-modal v-model:show="showAddPopup" :on-close="hideAddPopup">
+      <RelayModal
+        :show="showAddPopup"
+        :title="$t('SLA.ADD.TITLE')"
+        :description="$t('SLA.ADD.DESC')"
+        size="lg"
+        @close="hideAddPopup"
+      >
         <AddSLA @close="hideAddPopup" />
-      </woot-modal>
+      </RelayModal>
 
-      <woot-delete-modal
-        v-model:show="showDeleteConfirmationPopup"
-        :on-close="closeDeletePopup"
-        :on-confirm="confirmDeletion"
+      <RelayConfirmModal
+        :show="showDeleteConfirmationPopup"
         :title="$t('SLA.DELETE.CONFIRM.TITLE')"
         :message="$t('SLA.DELETE.CONFIRM.MESSAGE')"
         :message-value="deleteMessage"
         :confirm-text="deleteConfirmText"
-        :reject-text="deleteRejectText"
+        :cancel-text="deleteRejectText"
+        @close="closeDeletePopup"
+        @confirm="confirmDeletion"
       />
     </template>
   </SettingsLayout>
